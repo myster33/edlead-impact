@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, Phone, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
-import edleadLogo from "@/assets/edlead-logo.png";
+import edleadLogoWhite from "@/assets/edlead-logo-white.png";
 
 const footerLinks = {
   programme: [
@@ -27,7 +27,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <img src={edleadLogo} alt="edLEAD" className="h-12 brightness-0 invert" />
+            <img src={edleadLogoWhite} alt="edLEAD" className="h-12" />
             <p className="text-secondary-foreground/80 text-sm leading-relaxed">
               Transforming Student Leaders. Transforming Schools. A national youth leadership programme in South Africa.
             </p>
