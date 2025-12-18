@@ -60,7 +60,7 @@ export const HeroSection = () => {
             <span className="animate-pulse">|</span>
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl">
-            An impactful youth leadership programme equipping young people with the leadership, academic, and social skills needed to drive community transformation and build successful futures.
+            Transforming Young Leaders for Positive Impact. A youth leadership programme empowering learners.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link to="/admissions">
@@ -71,7 +71,7 @@ export const HeroSection = () => {
             </Link>
             <Link to="/partners">
               <Button size="lg" variant="outline" className="w-full sm:w-auto text-base bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">
-                Partner With edLEAD
+                Partner with edLEAD
               </Button>
             </Link>
           </div>
