@@ -7,11 +7,14 @@ import heroImage3 from "@/assets/hero-students-3.jpg";
 import heroImage4 from "@/assets/hero-students-4.jpg";
 import heroImage5 from "@/assets/hero-students-5.jpg";
 import { useState, useEffect } from "react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5];
+const fullHeadline = "Empowering Young Leaders to create Positive Change";
 
 export const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { displayedText } = useTypingAnimation(fullHeadline, 50);
 
   useEffect(() => {
     const imageInterval = setInterval(() => {
@@ -46,7 +49,15 @@ export const HeroSection = () => {
       <div className="container relative z-10">
         <div className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6">
-            Empowering Young Leaders to create <span className="text-primary">Positive Change</span>
+            {displayedText.includes("Positive") ? (
+              <>
+                {displayedText.substring(0, displayedText.indexOf("Positive Change"))}
+                <span className="text-primary">{displayedText.substring(displayedText.indexOf("Positive Change"))}</span>
+              </>
+            ) : (
+              displayedText
+            )}
+            <span className="animate-pulse">|</span>
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl">
             An impactful youth leadership programme equipping young people with the leadership, academic, and social skills needed to drive community transformation and build successful futures.

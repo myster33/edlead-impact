@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowRight } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const requirements = [
   "High school learners (Grades 8–11)",
@@ -34,6 +35,8 @@ const steps = [
 ];
 
 const Admissions = () => {
+  const { displayedText } = useTypingAnimation("Become an edLEAD Captain", 50);
+  
   return (
     <Layout>
       {/* Hero */}
@@ -41,7 +44,7 @@ const Admissions = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Become an edLEAD Captain
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-primary-foreground/90 leading-relaxed">
               Take the first step towards transforming your school and developing your leadership potential.

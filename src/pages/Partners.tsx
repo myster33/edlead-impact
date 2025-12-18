@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { School, Users, Calendar, BookOpen, ArrowRight } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const partnershipTypes = [
   {
@@ -26,6 +27,8 @@ const partnershipTypes = [
 ];
 
 const Partners = () => {
+  const { displayedText } = useTypingAnimation("Partner With edLEAD", 50);
+  
   return (
     <Layout>
       {/* Hero */}
@@ -33,7 +36,7 @@ const Partners = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Partner With edLEAD
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-primary-foreground/90 leading-relaxed">
               Join us in building a generation of ethical, confident, and socially responsible student leaders.

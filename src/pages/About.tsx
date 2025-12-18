@@ -1,7 +1,10 @@
 import { Layout } from "@/components/layout/Layout";
 import { Target, Eye, Rocket } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const About = () => {
+  const { displayedText } = useTypingAnimation("About edLEAD", 50);
+  
   return (
     <Layout>
       {/* Hero */}
@@ -9,7 +12,7 @@ const About = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              About edLEAD
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
               Transforming Student Leaders. Transforming Schools.

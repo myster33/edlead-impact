@@ -1,5 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { Target, Shield, TrendingUp, Users } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const goals = [
   {
@@ -32,6 +33,8 @@ const outcomes = [
 ];
 
 const Impact = () => {
+  const { displayedText } = useTypingAnimation("Our Impact", 50);
+  
   return (
     <Layout>
       {/* Hero */}
@@ -39,7 +42,7 @@ const Impact = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Our Impact
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
               Measuring the change we create in schools and communities across South Africa.
