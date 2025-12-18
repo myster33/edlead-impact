@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { Calendar, User, ArrowRight } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const blogPosts = [
   {
@@ -38,6 +39,8 @@ const blogPosts = [
 ];
 
 const Blog = () => {
+  const { displayedText } = useTypingAnimation("edLEAD Voices", 50);
+  
   return (
     <Layout>
       {/* Hero */}
@@ -45,7 +48,7 @@ const Blog = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              edLEAD Voices
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
               Stories, reflections, and lessons from our edLEAD Captains' leadership journeys.

@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Monitor, Calendar, Users, FileText, ArrowRight, CheckCircle } from "lucide-react";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const programmeStructure = [
   {
@@ -31,6 +32,8 @@ const programmeStructure = [
 ];
 
 const Programme = () => {
+  const { displayedText } = useTypingAnimation("The edLEAD Programme", 50);
+  
   return (
     <Layout>
       {/* Hero */}
@@ -38,7 +41,7 @@ const Programme = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              The edLEAD Programme
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
               A year-long journey of growth, mentorship, and impact for aspiring student leaders.

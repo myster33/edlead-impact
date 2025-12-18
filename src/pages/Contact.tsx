@@ -5,8 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const Contact = () => {
+  const { displayedText } = useTypingAnimation("Contact Us", 50);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,7 +29,7 @@ const Contact = () => {
         <div className="container">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Contact Us
+              {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
               Have questions or want to get involved? We'd love to hear from you.
