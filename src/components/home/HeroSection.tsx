@@ -13,7 +13,7 @@ const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5];
 export const HeroSection = () => {
   const [displayedText, setDisplayedText] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const fullText = "Empowering Student Leaders to Create Positive Change";
+  const fullText = "Empowering Young Leaders to Create ";
   
   useEffect(() => {
     let index = 0;
@@ -63,7 +63,8 @@ export const HeroSection = () => {
         <div className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6">
             <span>{displayedText}</span>
-            <span className="animate-pulse">|</span>
+            {displayedText.length < fullText.length && <span className="animate-pulse">|</span>}
+            {displayedText.length >= fullText.length && <span className="text-primary">Positive Change</span>}
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl">
             An impactful youth leadership programme equipping young people with the leadership, academic, and social skills needed to drive community transformation and build successful futures.
@@ -71,7 +72,7 @@ export const HeroSection = () => {
           <div className="flex flex-col sm:flex-row gap-4">
             <Link to="/admissions">
               <Button size="lg" className="w-full sm:w-auto text-base gap-2">
-                Apply to Become an edLEAD Captain
+                Apply Now
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
