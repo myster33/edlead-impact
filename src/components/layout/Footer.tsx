@@ -29,7 +29,7 @@ export const Footer = () => {
           <div className="space-y-4">
             <img src={edleadLogoWhite} alt="edLEAD" className="h-12" />
             <p className="text-secondary-foreground/80 text-sm leading-relaxed">
-              Transforming Student Leaders. Transforming Schools. A national youth leadership programme in South Africa.
+              Transforming Young Leaders for Positive Impact. A youth leadership programme empowering learners.
             </p>
             <div className="flex gap-4 pt-2">
               <a href="#" className="text-secondary-foreground/60 hover:text-primary transition-colors">
