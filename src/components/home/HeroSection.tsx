@@ -11,23 +11,7 @@ import { useState, useEffect } from "react";
 const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5];
 
 export const HeroSection = () => {
-  const [displayedText, setDisplayedText] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const fullText = "Empowering Young Leaders to create Positive Change";
-  
-  useEffect(() => {
-    let index = 0;
-    const typingInterval = setInterval(() => {
-      if (index < fullText.length) {
-        setDisplayedText(fullText.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(typingInterval);
-      }
-    }, 50);
-    
-    return () => clearInterval(typingInterval);
-  }, []);
 
   useEffect(() => {
     const imageInterval = setInterval(() => {
@@ -62,13 +46,7 @@ export const HeroSection = () => {
       <div className="container relative z-10">
         <div className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6">
-            <span>
-              {displayedText.substring(0, displayedText.indexOf("Positive Change") >= 0 ? displayedText.indexOf("Positive Change") : displayedText.length)}
-              {displayedText.includes("Positive") && (
-                <span className="text-primary">{displayedText.substring(displayedText.indexOf("Positive Change"))}</span>
-              )}
-            </span>
-            {displayedText.length < fullText.length && <span className="animate-pulse">|</span>}
+            Empowering Young Leaders to create <span className="text-primary">Positive Change</span>
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl">
             An impactful youth leadership programme equipping young people with the leadership, academic, and social skills needed to drive community transformation and build successful futures.
