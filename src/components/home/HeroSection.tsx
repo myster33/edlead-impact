@@ -59,7 +59,7 @@ export const HeroSection = () => {
             )}
             <span className="animate-pulse">|</span>
           </h1>
-          <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl">
+          <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl animate-fade-in">
             An impactful youth leadership programme that equips young people with the leadership, academic, and social skills needed to drive community transformation and build successful futures.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
