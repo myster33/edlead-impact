@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5];
-const fullHeadline = "Empowering Young Leaders to create Positive Change";
+const fullHeadline = "Empowering Young Leaders to create Positive Impact";
 
 export const HeroSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -51,8 +51,8 @@ export const HeroSection = () => {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6">
             {displayedText.includes("Positive") ? (
               <>
-                {displayedText.substring(0, displayedText.indexOf("Positive Change"))}
-                <span className="text-primary">{displayedText.substring(displayedText.indexOf("Positive Change"))}</span>
+                {displayedText.substring(0, displayedText.indexOf("Positive Impact"))}
+                <span className="text-primary">{displayedText.substring(displayedText.indexOf("Positive Impact"))}</span>
               </>
             ) : (
               displayedText
