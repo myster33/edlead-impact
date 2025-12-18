@@ -2,8 +2,26 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-students.jpg";
+import { useState, useEffect } from "react";
 
 export const HeroSection = () => {
+  const [displayedText, setDisplayedText] = useState("");
+  const fullText = "Empowering Student Leaders to Create Positive Change";
+  
+  useEffect(() => {
+    let index = 0;
+    const typingInterval = setInterval(() => {
+      if (index < fullText.length) {
+        setDisplayedText(fullText.slice(0, index + 1));
+        index++;
+      } else {
+        clearInterval(typingInterval);
+      }
+    }, 50);
+    
+    return () => clearInterval(typingInterval);
+  }, []);
+
   return (
     <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center">
       {/* Background Image */}
@@ -24,11 +42,11 @@ export const HeroSection = () => {
       <div className="container relative z-10">
         <div className="max-w-3xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6">
-            Empowering Student Leaders to Create{" "}
-            <span className="text-primary">Positive Change</span>
+            <span>{displayedText}</span>
+            <span className="animate-pulse">|</span>
           </h1>
           <p className="text-lg md:text-xl text-primary-foreground/90 mb-8 leading-relaxed max-w-2xl">
-            A national youth leadership programme equipping high school learners with leadership, academic, and social skills to transform their schools from within.
+            An impactful youth leadership programme equipping young people with the leadership, academic, and social skills needed to drive community transformation and build successful futures.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link to="/admissions">
