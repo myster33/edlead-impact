@@ -1,11 +1,18 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import heroImage from "@/assets/hero-students.jpg";
+import heroImage1 from "@/assets/hero-students.jpg";
+import heroImage2 from "@/assets/hero-students-2.jpg";
+import heroImage3 from "@/assets/hero-students-3.jpg";
+import heroImage4 from "@/assets/hero-students-4.jpg";
+import heroImage5 from "@/assets/hero-students-5.jpg";
 import { useState, useEffect } from "react";
+
+const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5];
 
 export const HeroSection = () => {
   const [displayedText, setDisplayedText] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const fullText = "Empowering Student Leaders to Create Positive Change";
   
   useEffect(() => {
@@ -22,15 +29,28 @@ export const HeroSection = () => {
     return () => clearInterval(typingInterval);
   }, []);
 
+  useEffect(() => {
+    const imageInterval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 3000);
+    
+    return () => clearInterval(imageInterval);
+  }, []);
+
   return (
-    <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center">
-      {/* Background Image */}
+    <section className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden">
+      {/* Background Images with Crossfade */}
       <div className="absolute inset-0">
-        <img
-          src={heroImage}
-          alt="Student leaders collaborating"
-          className="w-full h-full object-cover"
-        />
+        {heroImages.map((image, index) => (
+          <img
+            key={index}
+            src={image}
+            alt={`Diverse student leaders collaborating ${index + 1}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              index === currentImageIndex ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
         <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-secondary/40" />
       </div>
 
@@ -62,6 +82,22 @@ export const HeroSection = () => {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Image Indicators */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        {heroImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentImageIndex(index)}
+            className={`w-2 h-2 rounded-full transition-all ${
+              index === currentImageIndex 
+                ? "bg-primary w-6" 
+                : "bg-primary-foreground/50 hover:bg-primary-foreground/70"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
       </div>
     </section>
   );
