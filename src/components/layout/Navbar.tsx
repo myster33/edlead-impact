@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import edleadLogo from "@/assets/edlead-logo.png";
 
 const navLinks = [
-  { name: "Home", path: "/" },
+  { name: "Why edLEAD", path: "/" },
   { name: "About", path: "/about" },
   { name: "Programme", path: "/programme" },
-  { name: "Admissions", path: "/admissions" },
-  { name: "Impact", path: "/impact" },
-  { name: "Blog", path: "/blog" },
+  { name: "Get Started", path: "/admissions" },
+  { name: "Our Impact", path: "/impact" },
+  { name: "Leaders' Blogs", path: "/blog" },
   { name: "Partners", path: "/partners" },
   { name: "Contact", path: "/contact" },
 ];
