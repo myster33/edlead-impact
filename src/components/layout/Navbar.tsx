@@ -12,7 +12,6 @@ const navLinks = [
   { name: "Our Impact", path: "/impact" },
   { name: "Leaders' Blogs", path: "/blog" },
   { name: "Partners", path: "/partners" },
-  { name: "Contact", path: "/contact" },
 ];
 
 export const Navbar = () => {
