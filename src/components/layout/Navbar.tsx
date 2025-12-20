@@ -116,7 +116,7 @@ export const Navbar = () => {
           </NavigationMenu>
 
           <div className="hidden lg:block">
-            <Link to="/admissions">
+            <Link to="/apply">
               <Button>Apply Now</Button>
             </Link>
           </div>
@@ -190,7 +190,7 @@ export const Navbar = () => {
                 </Link>
               ))}
               <div className="pt-4 px-4">
-                <Link to="/admissions" onClick={() => setIsOpen(false)}>
+                <Link to="/apply" onClick={() => setIsOpen(false)}>
                   <Button className="w-full">Apply Now</Button>
                 </Link>
               </div>
