@@ -14,7 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          academic_importance: string
+          created_at: string
+          date_of_birth: string
+          formally_nominated: boolean
+          full_name: string
+          gender: string | null
+          grade: string
+          has_device_access: boolean
+          id: string
+          is_learner_leader: boolean
+          leader_roles: string | null
+          leadership_meaning: string
+          learner_photo_url: string | null
+          learner_signature: string
+          learner_signature_date: string
+          manage_schoolwork: string
+          nominating_teacher: string
+          parent_consent: boolean
+          parent_email: string
+          parent_name: string
+          parent_phone: string
+          parent_relationship: string
+          parent_signature: string
+          parent_signature_date: string
+          parent_signature_name: string
+          project_benefit: string
+          project_idea: string
+          project_problem: string
+          project_team: string
+          province: string
+          school_activities: string
+          school_address: string
+          school_challenge: string
+          school_contact: string
+          school_email: string
+          school_name: string
+          status: string
+          student_email: string
+          student_phone: string
+          supporting_doc_url: string | null
+          teacher_position: string
+          video_link: string | null
+          why_edlead: string
+          willing_to_commit: boolean
+        }
+        Insert: {
+          academic_importance: string
+          created_at?: string
+          date_of_birth: string
+          formally_nominated?: boolean
+          full_name: string
+          gender?: string | null
+          grade: string
+          has_device_access?: boolean
+          id?: string
+          is_learner_leader?: boolean
+          leader_roles?: string | null
+          leadership_meaning: string
+          learner_photo_url?: string | null
+          learner_signature: string
+          learner_signature_date: string
+          manage_schoolwork: string
+          nominating_teacher: string
+          parent_consent?: boolean
+          parent_email: string
+          parent_name: string
+          parent_phone: string
+          parent_relationship: string
+          parent_signature: string
+          parent_signature_date: string
+          parent_signature_name: string
+          project_benefit: string
+          project_idea: string
+          project_problem: string
+          project_team: string
+          province: string
+          school_activities: string
+          school_address: string
+          school_challenge: string
+          school_contact: string
+          school_email: string
+          school_name: string
+          status?: string
+          student_email: string
+          student_phone: string
+          supporting_doc_url?: string | null
+          teacher_position: string
+          video_link?: string | null
+          why_edlead: string
+          willing_to_commit?: boolean
+        }
+        Update: {
+          academic_importance?: string
+          created_at?: string
+          date_of_birth?: string
+          formally_nominated?: boolean
+          full_name?: string
+          gender?: string | null
+          grade?: string
+          has_device_access?: boolean
+          id?: string
+          is_learner_leader?: boolean
+          leader_roles?: string | null
+          leadership_meaning?: string
+          learner_photo_url?: string | null
+          learner_signature?: string
+          learner_signature_date?: string
+          manage_schoolwork?: string
+          nominating_teacher?: string
+          parent_consent?: boolean
+          parent_email?: string
+          parent_name?: string
+          parent_phone?: string
+          parent_relationship?: string
+          parent_signature?: string
+          parent_signature_date?: string
+          parent_signature_name?: string
+          project_benefit?: string
+          project_idea?: string
+          project_problem?: string
+          project_team?: string
+          province?: string
+          school_activities?: string
+          school_address?: string
+          school_challenge?: string
+          school_contact?: string
+          school_email?: string
+          school_name?: string
+          status?: string
+          student_email?: string
+          student_phone?: string
+          supporting_doc_url?: string | null
+          teacher_position?: string
+          video_link?: string | null
+          why_edlead?: string
+          willing_to_commit?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
