@@ -349,10 +349,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Insert application into database
+    // Generate reference number (8 character alphanumeric)
+    const generateReference = (): string => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid confusing characters like 0/O, 1/I
+      let result = '';
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    };
+
+    const referenceNumber = generateReference();
+
+    // Insert application into database with reference number
     const { data: application, error: dbError } = await supabase
       .from("applications")
-      .insert([applicationData])
+      .insert([{ ...applicationData, reference_number: referenceNumber }])
       .select()
       .single();
 
@@ -388,7 +400,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Thank you for applying to the edLEAD for Student Leaders programme!</p>
             
             <div class="highlight">
-              <strong>Application Reference:</strong> ${application.id.slice(0, 8).toUpperCase()}<br>
+              <strong>Application Reference:</strong> ${referenceNumber}<br>
               <strong>Submitted:</strong> ${new Date().toLocaleDateString('en-ZA', { dateStyle: 'full' })}
             </div>
             
@@ -451,7 +463,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>We are writing to confirm that we have received an application for the edLEAD for Student Leaders programme from your child, <strong>${applicationData.full_name}</strong>.</p>
             
             <div class="highlight">
-              <strong>Application Reference:</strong> ${application.id.slice(0, 8).toUpperCase()}<br>
+              <strong>Application Reference:</strong> ${referenceNumber}<br>
               <strong>Applicant:</strong> ${applicationData.full_name}<br>
               <strong>School:</strong> ${applicationData.school_name}<br>
               <strong>Submitted:</strong> ${new Date().toLocaleDateString('en-ZA', { dateStyle: 'full' })}
@@ -489,6 +501,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         applicationId: application.id,
+        referenceNumber: referenceNumber,
         message: "Application submitted successfully" 
       }),
       {

@@ -107,6 +107,7 @@ export type Database = {
           project_problem: string
           project_team: string
           province: string
+          reference_number: string | null
           school_activities: string
           school_address: string
           school_challenge: string
@@ -154,6 +155,7 @@ export type Database = {
           project_problem: string
           project_team: string
           province: string
+          reference_number?: string | null
           school_activities: string
           school_address: string
           school_challenge: string
@@ -201,6 +203,7 @@ export type Database = {
           project_problem?: string
           project_team?: string
           province?: string
+          reference_number?: string | null
           school_activities?: string
           school_address?: string
           school_challenge?: string
