@@ -7,10 +7,11 @@ export interface ValidationErrors {
 interface RequiredField {
   field: string;
   label: string;
-  type?: "text" | "email" | "select" | "radio" | "checkbox";
+  type?: "text" | "email" | "select" | "radio" | "checkbox" | "phone";
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const saPhoneRegex = /^0\d{9}$/;
 
 export const useFormValidation = () => {
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -23,6 +24,13 @@ export const useFormValidation = () => {
     
     if (type === "email" && !emailRegex.test(value)) {
       return "Please enter a valid email address";
+    }
+
+    if (type === "phone") {
+      const cleanedValue = value.replace(/\s/g, "");
+      if (!saPhoneRegex.test(cleanedValue)) {
+        return "Please enter a valid phone number (10 digits starting with 0)";
+      }
     }
     
     return "";
