@@ -40,7 +40,8 @@ import {
   XCircle,
   Eye,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 
 interface Application {
@@ -48,6 +49,7 @@ interface Application {
   full_name: string;
   student_email: string;
   school_name: string;
+  school_address: string;
   grade: string;
   province: string;
   status: string;
@@ -219,6 +221,78 @@ export default function AdminDashboard() {
     "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"
   ];
 
+  const exportToCSV = () => {
+    if (filteredApplications.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No applications to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = [
+      "Full Name",
+      "Email",
+      "Phone",
+      "Date of Birth",
+      "Gender",
+      "Grade",
+      "School Name",
+      "School Address",
+      "Province",
+      "Parent Name",
+      "Parent Email",
+      "Parent Phone",
+      "Nominating Teacher",
+      "Status",
+      "Submitted Date"
+    ];
+
+    const escapeCSV = (value: string | null | undefined) => {
+      if (value == null) return "";
+      const str = String(value);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = filteredApplications.map(app => [
+      escapeCSV(app.full_name),
+      escapeCSV(app.student_email),
+      escapeCSV(app.student_phone),
+      escapeCSV(app.date_of_birth),
+      escapeCSV(app.gender),
+      escapeCSV(app.grade),
+      escapeCSV(app.school_name),
+      escapeCSV(app.school_address),
+      escapeCSV(app.province),
+      escapeCSV(app.parent_name),
+      escapeCSV(app.parent_email),
+      escapeCSV(app.parent_phone),
+      escapeCSV(app.nominating_teacher),
+      escapeCSV(app.status),
+      escapeCSV(new Date(app.created_at).toLocaleDateString("en-ZA"))
+    ].join(","));
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `edlead-applications-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Complete",
+      description: `Exported ${filteredApplications.length} applications to CSV.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
@@ -304,10 +378,16 @@ export default function AdminDashboard() {
                   Showing {filteredApplications.length} of {applications.length} applications
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={fetchApplications} disabled={isLoading}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={fetchApplications} disabled={isLoading}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
