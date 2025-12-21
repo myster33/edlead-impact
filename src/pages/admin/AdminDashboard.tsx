@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,8 @@ import {
   Users, 
   FileText, 
   Clock, 
-  CheckCircle, 
+  CheckCircle,
+  Shield,
   XCircle,
   Eye,
   Loader2,
@@ -229,6 +231,14 @@ export default function AdminDashboard() {
             </Badge>
           </div>
           <div className="flex items-center gap-4">
+            {adminUser?.role === "admin" && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin/users">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Manage Admins
+                </Link>
+              </Button>
+            )}
             <span className="text-sm text-muted-foreground hidden sm:inline">
               {adminUser?.email}
             </span>
