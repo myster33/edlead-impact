@@ -34,6 +34,28 @@ import { cn } from "@/lib/utils";
 
 const DRAFT_STORAGE_KEY = "edlead-application-draft";
 
+const toISODate = (d: Date) => d.toISOString().split("T")[0];
+
+const getAgeInYears = (dobStr: string) => {
+  const dob = new Date(dobStr);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+
+  return age;
+};
+
+const normalizeGradeValue = (value: string) => {
+  const match = value?.match(/^grade-(\d{1,2})$/i);
+  return match ? `Grade ${match[1]}` : value;
+};
+
+const slugify = (value: string) => value.toLowerCase().trim().replace(/\s+/g, "-");
+
 const countryRegions: Record<string, string[]> = {
   "South Africa": [
     "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
@@ -106,6 +128,13 @@ const countryRegions: Record<string, string[]> = {
     "Addis Ababa", "Afar", "Amhara", "Benishangul-Gumuz", "Dire Dawa",
     "Gambela", "Harari", "Oromia", "Sidama", "Somali", "SNNPR", "Tigray"
   ],
+};
+
+const normalizeRegionValue = (country: string, value: string) => {
+  const regions = countryRegions[country];
+  if (!regions || !value) return value;
+  const match = regions.find((r) => slugify(r) === value);
+  return match ?? value;
 };
 
 const countries = Object.keys(countryRegions).concat(["Other"]);
@@ -240,22 +269,51 @@ const ApplicationForm = () => {
   const { validateFields, markTouched, getFieldError, hasError, clearError, validateSingleField } = useFormValidation();
   const [hasDraft, setHasDraft] = useState(false);
 
+  const dobMin = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 25);
+    return toISODate(d);
+  }, []);
+
+  const dobMax = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 10);
+    return toISODate(d);
+  }, []);
+
   // Load draft from local storage on mount
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.formData) setFormData(parsed.formData);
-        if (parsed.declarations) setDeclarations(parsed.declarations);
-        setHasDraft(true);
-        toast({
-          title: "Draft Restored",
-          description: "Your previously saved progress has been restored.",
-        });
-      } catch (e) {
-        console.error("Failed to parse draft:", e);
+    if (!savedDraft) return;
+
+    try {
+      const parsed = JSON.parse(savedDraft);
+
+      if (parsed.formData) {
+        const fd = parsed.formData as Partial<FormData>;
+        const country =
+          typeof fd.country === "string" && fd.country.trim() ? fd.country : "South Africa";
+
+        const grade = typeof fd.grade === "string" ? normalizeGradeValue(fd.grade) : "";
+        const province = typeof fd.province === "string" ? normalizeRegionValue(country, fd.province) : "";
+
+        setFormData((prev) => ({
+          ...prev,
+          ...fd,
+          country,
+          grade,
+          province,
+        }));
       }
+
+      if (parsed.declarations) setDeclarations(parsed.declarations);
+      setHasDraft(true);
+      toast({
+        title: "Draft Restored",
+        description: "Your previously saved progress has been restored.",
+      });
+    } catch (e) {
+      console.error("Failed to parse draft:", e);
     }
   }, []);
 
@@ -391,10 +449,46 @@ const ApplicationForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const normalizedFormData = {
+      ...formData,
+      grade: normalizeGradeValue(formData.grade),
+      province: normalizeRegionValue(formData.country, formData.province),
+    };
+
+    // Client-side guardrails to match backend expectations
+    if (normalizedFormData.grade && !grades.includes(normalizedFormData.grade)) {
+      toast({
+        title: "Please select a valid grade",
+        description: "Choose a grade between Grade 7 and Grade 12.",
+        variant: "destructive",
+      });
+
+      const el = document.getElementById("grade");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      (el as HTMLElement | null)?.focus?.();
+      return;
+    }
+
+    if (normalizedFormData.date_of_birth) {
+      const age = getAgeInYears(normalizedFormData.date_of_birth);
+      if (age < 10 || age > 25) {
+        toast({
+          title: "Date of birth out of range",
+          description: "Applicant age must be between 10 and 25 years.",
+          variant: "destructive",
+        });
+
+        const el = document.getElementById("date_of_birth");
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        (el as HTMLElement | null)?.focus?.();
+        return;
+      }
+    }
+
     // Validate all required fields
     const allFieldsData = {
-      ...formData,
+      ...normalizedFormData,
       declaration1: declarations.declaration1,
       declaration2: declarations.declaration2,
       parentConsentFinal: declarations.parentConsentFinal,
@@ -431,46 +525,49 @@ const ApplicationForm = () => {
 
     try {
       const applicationPayload = {
-        full_name: formData.full_name,
-        date_of_birth: formData.date_of_birth,
-        gender: formData.gender || null,
-        grade: formData.grade,
-        school_name: formData.school_name,
-        school_address: formData.school_address,
-        country: formData.country,
-        province: formData.country !== "Other" && countryRegions[formData.country] ? formData.province : "",
-        student_email: formData.student_email,
-        student_phone: formData.student_phone,
-        parent_name: formData.parent_name,
-        parent_relationship: formData.parent_relationship,
-        parent_email: formData.parent_email,
-        parent_phone: formData.parent_phone,
-        parent_consent: formData.parent_consent === "yes",
-        nominating_teacher: formData.nominating_teacher,
-        teacher_position: formData.teacher_position,
-        school_email: formData.school_email,
-        school_contact: formData.school_contact,
-        formally_nominated: formData.formally_nominated === "yes",
-        is_learner_leader: formData.is_learner_leader === "yes",
-        leader_roles: formData.leader_roles || null,
-        school_activities: formData.school_activities,
-        why_edlead: formData.why_edlead,
-        leadership_meaning: formData.leadership_meaning,
-        school_challenge: formData.school_challenge,
-        project_idea: formData.project_idea,
-        project_problem: formData.project_problem,
-        project_benefit: formData.project_benefit,
-        project_team: formData.project_team,
-        manage_schoolwork: formData.manage_schoolwork,
-        academic_importance: formData.academic_importance,
-        willing_to_commit: formData.willing_to_commit === "yes",
-        has_device_access: formData.has_device_access === "yes",
-        learner_signature: formData.full_name, // Use full name as signature
-        learner_signature_date: new Date().toISOString().split('T')[0],
-        parent_signature_name: formData.parent_name,
-        parent_signature: formData.parent_name, // Use parent name as signature
-        parent_signature_date: new Date().toISOString().split('T')[0],
-        video_link: formData.video_link || null,
+        full_name: normalizedFormData.full_name,
+        date_of_birth: normalizedFormData.date_of_birth,
+        gender: normalizedFormData.gender || null,
+        grade: normalizedFormData.grade,
+        school_name: normalizedFormData.school_name,
+        school_address: normalizedFormData.school_address,
+        country: normalizedFormData.country,
+        province:
+          normalizedFormData.country !== "Other" && countryRegions[normalizedFormData.country]
+            ? normalizedFormData.province
+            : "",
+        student_email: normalizedFormData.student_email,
+        student_phone: normalizedFormData.student_phone,
+        parent_name: normalizedFormData.parent_name,
+        parent_relationship: normalizedFormData.parent_relationship,
+        parent_email: normalizedFormData.parent_email,
+        parent_phone: normalizedFormData.parent_phone,
+        parent_consent: normalizedFormData.parent_consent === "yes",
+        nominating_teacher: normalizedFormData.nominating_teacher,
+        teacher_position: normalizedFormData.teacher_position,
+        school_email: normalizedFormData.school_email,
+        school_contact: normalizedFormData.school_contact,
+        formally_nominated: normalizedFormData.formally_nominated === "yes",
+        is_learner_leader: normalizedFormData.is_learner_leader === "yes",
+        leader_roles: normalizedFormData.leader_roles || null,
+        school_activities: normalizedFormData.school_activities,
+        why_edlead: normalizedFormData.why_edlead,
+        leadership_meaning: normalizedFormData.leadership_meaning,
+        school_challenge: normalizedFormData.school_challenge,
+        project_idea: normalizedFormData.project_idea,
+        project_problem: normalizedFormData.project_problem,
+        project_benefit: normalizedFormData.project_benefit,
+        project_team: normalizedFormData.project_team,
+        manage_schoolwork: normalizedFormData.manage_schoolwork,
+        academic_importance: normalizedFormData.academic_importance,
+        willing_to_commit: normalizedFormData.willing_to_commit === "yes",
+        has_device_access: normalizedFormData.has_device_access === "yes",
+        learner_signature: normalizedFormData.full_name,
+        learner_signature_date: toISODate(new Date()),
+        parent_signature_name: normalizedFormData.parent_name,
+        parent_signature: normalizedFormData.parent_name,
+        parent_signature_date: toISODate(new Date()),
+        video_link: normalizedFormData.video_link || null,
       };
 
       const { data, error } = await supabase.functions.invoke("submit-application", {
@@ -686,6 +783,8 @@ const ApplicationForm = () => {
                     <Input 
                       id="date_of_birth" 
                       type="date" 
+                      min={dobMin}
+                      max={dobMax}
                       value={formData.date_of_birth}
                       onChange={(e) => updateField("date_of_birth", e.target.value)}
                       onBlur={() => markTouched("date_of_birth")}

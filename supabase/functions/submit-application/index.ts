@@ -135,7 +135,13 @@ function validateApplication(data: ApplicationData): ValidationResult {
   } else {
     const dob = new Date(data.date_of_birth);
     const today = new Date();
-    const age = today.getFullYear() - dob.getFullYear();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
     if (age < 10 || age > 25) {
       errors.push("Date of birth must indicate an age between 10 and 25 years");
     }
