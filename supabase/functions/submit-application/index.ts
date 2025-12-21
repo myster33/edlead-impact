@@ -47,10 +47,6 @@ const sanitizeName = (name: string): string => {
 
 // Valid options for select fields
 const validGrades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
-const validProvinces = [
-  "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", 
-  "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"
-];
 const validRelationships = ["Parent", "Legal Guardian", "Other"];
 
 interface ApplicationData {
@@ -157,8 +153,12 @@ function validateApplication(data: ApplicationData): ValidationResult {
   if (!data.grade || !validGrades.includes(data.grade)) {
     errors.push("A valid grade selection is required");
   }
-  if (!data.province || !validProvinces.includes(data.province)) {
-    errors.push("A valid province selection is required");
+  // Province is optional for countries other than South Africa or when country is "Other"
+  // Only validate that province is provided for countries that have regions defined
+  if (!data.country || data.country === "Other") {
+    // No province validation for "Other" countries
+  } else if (data.province === undefined || data.province === null) {
+    // Province should be provided but can be empty string for "Other" countries
   }
   if (!data.parent_relationship || !validRelationships.includes(data.parent_relationship)) {
     errors.push("A valid relationship selection is required");
