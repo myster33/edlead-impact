@@ -79,6 +79,7 @@ interface FormData {
 
 interface SectionStatus {
   name: string;
+  id: string;
   complete: boolean;
 }
 
@@ -181,38 +182,47 @@ const ApplicationForm = () => {
     return [
       {
         name: "Learner Information",
+        id: "section-1",
         complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.province && formData.student_email && formData.student_phone),
       },
       {
         name: "Parent/Guardian",
+        id: "section-2",
         complete: !!(formData.parent_name && formData.parent_relationship && formData.parent_email && formData.parent_phone && formData.parent_consent),
       },
       {
         name: "School Nomination",
+        id: "section-3",
         complete: !!(formData.nominating_teacher && formData.teacher_position && formData.school_email && formData.school_contact && formData.formally_nominated),
       },
       {
         name: "Leadership Experience",
+        id: "section-4",
         complete: !!(formData.is_learner_leader && formData.school_activities),
       },
       {
         name: "Motivation & Values",
+        id: "section-5",
         complete: !!(formData.why_edlead && formData.leadership_meaning && formData.school_challenge),
       },
       {
         name: "Impact Project",
+        id: "section-6",
         complete: !!(formData.project_idea && formData.project_problem && formData.project_benefit && formData.project_team),
       },
       {
         name: "Academic Commitment",
+        id: "section-7",
         complete: !!(formData.manage_schoolwork && formData.academic_importance),
       },
       {
         name: "Programme Commitment",
+        id: "section-8",
         complete: !!(formData.willing_to_commit && formData.has_device_access),
       },
       {
         name: "Declarations",
+        id: "section-9",
         complete: !!(declarations.declaration1 && declarations.declaration2 && declarations.parentConsentFinal),
       },
     ];
@@ -395,7 +405,17 @@ const ApplicationForm = () => {
           </div>
           <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2">
             {sectionStatuses.map((section, index) => (
-              <div key={index} className="flex flex-col items-center text-center">
+              <button
+                key={index}
+                type="button"
+                onClick={() => {
+                  const element = document.getElementById(section.id);
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                className="flex flex-col items-center text-center hover:opacity-80 transition-opacity cursor-pointer"
+              >
                 {section.complete ? (
                   <CheckCircle className="h-5 w-5 text-primary mb-1" />
                 ) : (
@@ -404,7 +424,7 @@ const ApplicationForm = () => {
                 <span className={`text-xs ${section.complete ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                   {section.name}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -415,7 +435,7 @@ const ApplicationForm = () => {
         <div className="container max-w-4xl">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Section 1: Learner Information */}
-            <Card>
+            <Card id="section-1">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 1: Learner Information
@@ -549,7 +569,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 2: Parent/Guardian Information */}
-            <Card>
+            <Card id="section-2">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 2: Parent / Guardian Information
@@ -629,7 +649,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 3: School Nomination Details */}
-            <Card>
+            <Card id="section-3">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 3: School Nomination Details
@@ -712,7 +732,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 4: Leadership Experience & Involvement */}
-            <Card>
+            <Card id="section-4">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 4: Leadership Experience & Involvement
@@ -764,7 +784,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 5: Motivation & Values */}
-            <Card>
+            <Card id="section-5">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 5: Motivation & Values
@@ -813,7 +833,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 6: School Impact Project */}
-            <Card>
+            <Card id="section-6">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 6: School Impact Project (Core Selection Section)
@@ -875,7 +895,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 7: Academic Commitment */}
-            <Card>
+            <Card id="section-7">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 7: Academic Commitment
@@ -911,7 +931,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 8: Programme Commitment */}
-            <Card>
+            <Card id="section-8">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 8: Programme Commitment
@@ -967,7 +987,7 @@ const ApplicationForm = () => {
             </Card>
 
             {/* Section 9: Declaration */}
-            <Card>
+            <Card id="section-9">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
                   Section 9: Declaration
