@@ -276,6 +276,10 @@ const ApplicationForm = () => {
     validateSingleField(field, formData[field], label, "email");
   };
 
+  const validatePhoneOnBlur = (field: keyof FormData, label: string) => {
+    validateSingleField(field, formData[field], label, "phone");
+  };
+
   const requiredFields = [
     { field: "full_name", label: "Full Name" },
     { field: "date_of_birth", label: "Date of Birth" },
@@ -285,16 +289,16 @@ const ApplicationForm = () => {
     { field: "country", label: "Country", type: "select" as const },
     ...(formData.country && formData.country !== "Other" && countryRegions[formData.country] ? [{ field: "province", label: "Province/Region", type: "select" as const }] : []),
     { field: "student_email", label: "Student Email", type: "email" as const },
-    { field: "student_phone", label: "Student Phone" },
+    { field: "student_phone", label: "Student Phone", type: "phone" as const },
     { field: "parent_name", label: "Parent/Guardian Name" },
     { field: "parent_relationship", label: "Relationship to Learner" },
     { field: "parent_email", label: "Parent/Guardian Email", type: "email" as const },
-    { field: "parent_phone", label: "Parent/Guardian Phone" },
+    { field: "parent_phone", label: "Parent/Guardian Phone", type: "phone" as const },
     { field: "parent_consent", label: "Parent Consent", type: "radio" as const },
     { field: "nominating_teacher", label: "Nominating Teacher" },
     { field: "teacher_position", label: "Teacher Position" },
     { field: "school_email", label: "School Email", type: "email" as const },
-    { field: "school_contact", label: "School Contact" },
+    { field: "school_contact", label: "School Contact", type: "phone" as const },
     { field: "formally_nominated", label: "School Nomination", type: "radio" as const },
     { field: "is_learner_leader", label: "Learner Leader Status", type: "radio" as const },
     { field: "school_activities", label: "School Activities" },
@@ -758,10 +762,10 @@ const ApplicationForm = () => {
                     <Input 
                       id="student_phone" 
                       type="tel" 
-                      placeholder="e.g. 072 123 4567"
+                      placeholder="e.g. 0721234567"
                       value={formData.student_phone}
                       onChange={(e) => updateField("student_phone", e.target.value)}
-                      onBlur={() => markTouched("student_phone")}
+                      onBlur={() => validatePhoneOnBlur("student_phone", "Student Phone")}
                       className={cn(hasError("student_phone") && "border-destructive")}
                     />
                   </FormFieldWrapper>
@@ -820,10 +824,10 @@ const ApplicationForm = () => {
                     <Input 
                       id="parent_phone" 
                       type="tel" 
-                      placeholder="e.g. 072 123 4567"
+                      placeholder="e.g. 0721234567"
                       value={formData.parent_phone}
                       onChange={(e) => updateField("parent_phone", e.target.value)}
-                      onBlur={() => markTouched("parent_phone")}
+                      onBlur={() => validatePhoneOnBlur("parent_phone", "Parent/Guardian Phone")}
                       className={cn(hasError("parent_phone") && "border-destructive")}
                     />
                   </FormFieldWrapper>
@@ -900,10 +904,10 @@ const ApplicationForm = () => {
                     <Input 
                       id="school_contact" 
                       type="tel" 
-                      placeholder="e.g. 011 123 4567"
+                      placeholder="e.g. 0111234567"
                       value={formData.school_contact}
                       onChange={(e) => updateField("school_contact", e.target.value)}
-                      onBlur={() => markTouched("school_contact")}
+                      onBlur={() => validatePhoneOnBlur("school_contact", "School Contact")}
                       className={cn(hasError("school_contact") && "border-destructive")}
                     />
                   </FormFieldWrapper>
