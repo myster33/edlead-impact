@@ -34,6 +34,17 @@ import { cn } from "@/lib/utils";
 
 const DRAFT_STORAGE_KEY = "edlead-application-draft";
 
+const countries = [
+  "South Africa",
+  "Botswana",
+  "Eswatini",
+  "Lesotho",
+  "Mozambique",
+  "Namibia",
+  "Zimbabwe",
+  "Other",
+];
+
 const provinces = [
   "Eastern Cape",
   "Free State",
@@ -55,6 +66,7 @@ interface FormData {
   grade: string;
   school_name: string;
   school_address: string;
+  country: string;
   province: string;
   student_email: string;
   student_phone: string;
@@ -109,6 +121,7 @@ const ApplicationForm = () => {
     grade: "",
     school_name: "",
     school_address: "",
+    country: "South Africa",
     province: "",
     student_email: "",
     student_phone: "",
@@ -212,7 +225,8 @@ const ApplicationForm = () => {
     { field: "grade", label: "Grade", type: "select" as const },
     { field: "school_name", label: "School Name" },
     { field: "school_address", label: "School Address" },
-    { field: "province", label: "Province", type: "select" as const },
+    { field: "country", label: "Country", type: "select" as const },
+    ...(formData.country === "South Africa" ? [{ field: "province", label: "Province", type: "select" as const }] : []),
     { field: "student_email", label: "Student Email", type: "email" as const },
     { field: "student_phone", label: "Student Phone" },
     { field: "parent_name", label: "Parent/Guardian Name" },
@@ -245,7 +259,7 @@ const ApplicationForm = () => {
       {
         name: "Learner Information",
         id: "section-1",
-        complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.province && formData.student_email && formData.student_phone),
+        complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.country && (formData.country !== "South Africa" || formData.province) && formData.student_email && formData.student_phone),
       },
       {
         name: "Parent/Guardian",
@@ -341,7 +355,8 @@ const ApplicationForm = () => {
         grade: formData.grade,
         school_name: formData.school_name,
         school_address: formData.school_address,
-        province: formData.province,
+        country: formData.country,
+        province: formData.country === "South Africa" ? formData.province : "",
         student_email: formData.student_email,
         student_phone: formData.student_phone,
         parent_name: formData.parent_name,
@@ -629,21 +644,44 @@ const ApplicationForm = () => {
                   />
                 </FormFieldWrapper>
 
-                <FormFieldWrapper error={getFieldError("province")}>
-                  <Label>Province *</Label>
-                  <Select value={formData.province} onValueChange={(v) => updateField("province", v)}>
-                    <SelectTrigger id="province" className={cn(hasError("province") && "border-destructive")}>
-                      <SelectValue placeholder="Select province" />
+                <FormFieldWrapper error={getFieldError("country")}>
+                  <Label>Country *</Label>
+                  <Select value={formData.country} onValueChange={(v) => {
+                    updateField("country", v);
+                    if (v !== "South Africa") {
+                      updateField("province", "");
+                    }
+                  }}>
+                    <SelectTrigger id="country" className={cn(hasError("country") && "border-destructive")}>
+                      <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent>
-                      {provinces.map((province) => (
-                        <SelectItem key={province} value={province.toLowerCase().replace(" ", "-")}>
-                          {province}
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </FormFieldWrapper>
+
+                {formData.country === "South Africa" && (
+                  <FormFieldWrapper error={getFieldError("province")}>
+                    <Label>Province *</Label>
+                    <Select value={formData.province} onValueChange={(v) => updateField("province", v)}>
+                      <SelectTrigger id="province" className={cn(hasError("province") && "border-destructive")}>
+                        <SelectValue placeholder="Select province" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {provinces.map((province) => (
+                          <SelectItem key={province} value={province.toLowerCase().replace(" ", "-")}>
+                            {province}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormFieldWrapper>
+                )}
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("student_email")}>
