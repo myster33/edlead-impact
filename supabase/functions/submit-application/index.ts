@@ -142,10 +142,11 @@ function validateApplication(data: ApplicationData): ValidationResult {
     }
   }
 
-  if (!data.learner_signature_date || !isValidDate(data.learner_signature_date)) {
+  // Signature dates are auto-generated, so just validate format if provided
+  if (data.learner_signature_date && !isValidDate(data.learner_signature_date)) {
     errors.push("A valid learner signature date is required");
   }
-  if (!data.parent_signature_date || !isValidDate(data.parent_signature_date)) {
+  if (data.parent_signature_date && !isValidDate(data.parent_signature_date)) {
     errors.push("A valid parent signature date is required");
   }
 
@@ -181,9 +182,6 @@ function validateApplication(data: ApplicationData): ValidationResult {
     { field: "project_team", label: "Project team" },
     { field: "manage_schoolwork", label: "Manage schoolwork" },
     { field: "academic_importance", label: "Academic importance" },
-    { field: "learner_signature", label: "Learner signature" },
-    { field: "parent_signature_name", label: "Parent signature name" },
-    { field: "parent_signature", label: "Parent signature" },
   ];
 
   for (const { field, label } of requiredTextFields) {
