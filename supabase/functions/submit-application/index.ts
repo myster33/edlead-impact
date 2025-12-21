@@ -8,8 +8,52 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Validation helpers
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidPhone = (phone: string): boolean => {
+  const phoneRegex = /^[0-9\s\-\+\(\)]+$/;
+  return phoneRegex.test(phone) && phone.length >= 7 && phone.length <= 25;
+};
+
+const isValidDate = (dateStr: string): boolean => {
+  const date = new Date(dateStr);
+  return !isNaN(date.getTime());
+};
+
+const isValidUrl = (url: string): boolean => {
+  if (!url || url.trim() === "") return true; // Optional field
+  try {
+    const parsed = new URL(url);
+    // Only allow YouTube and Google Drive links for video
+    const allowedHosts = ["youtube.com", "www.youtube.com", "youtu.be", "drive.google.com", "docs.google.com"];
+    return allowedHosts.some(host => parsed.hostname.includes(host));
+  } catch {
+    return false;
+  }
+};
+
+const sanitizeString = (str: string, maxLength: number = 1000): string => {
+  if (!str) return "";
+  return str.trim().substring(0, maxLength);
+};
+
+const sanitizeName = (name: string): string => {
+  return sanitizeString(name, 100);
+};
+
+// Valid options for select fields
+const validGrades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+const validProvinces = [
+  "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", 
+  "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"
+];
+const validRelationships = ["Parent", "Legal Guardian", "Other"];
+
 interface ApplicationData {
-  // Section 1: Learner Information
   full_name: string;
   date_of_birth: string;
   gender?: string;
@@ -19,56 +63,198 @@ interface ApplicationData {
   province: string;
   student_email: string;
   student_phone: string;
-  
-  // Section 2: Parent/Guardian Information
   parent_name: string;
   parent_relationship: string;
   parent_email: string;
   parent_phone: string;
   parent_consent: boolean;
-  
-  // Section 3: School Nomination Details
   nominating_teacher: string;
   teacher_position: string;
   school_email: string;
   school_contact: string;
   formally_nominated: boolean;
-  
-  // Section 4: Leadership Experience
   is_learner_leader: boolean;
   leader_roles?: string;
   school_activities: string;
-  
-  // Section 5: Motivation & Values
   why_edlead: string;
   leadership_meaning: string;
   school_challenge: string;
-  
-  // Section 6: School Impact Project
   project_idea: string;
   project_problem: string;
   project_benefit: string;
   project_team: string;
-  
-  // Section 7: Academic Commitment
   manage_schoolwork: string;
   academic_importance: string;
-  
-  // Section 8: Programme Commitment
   willing_to_commit: boolean;
   has_device_access: boolean;
-  
-  // Section 9: Declaration
   learner_signature: string;
   learner_signature_date: string;
-  
-  // Section 10: Parent/Guardian Consent
   parent_signature_name: string;
   parent_signature: string;
   parent_signature_date: string;
-  
-  // Optional
   video_link?: string;
+  country?: string;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+function validateApplication(data: ApplicationData): ValidationResult {
+  const errors: string[] = [];
+
+  // Required text fields with length limits
+  if (!data.full_name || data.full_name.trim().length < 2) {
+    errors.push("Full name is required and must be at least 2 characters");
+  }
+  if (data.full_name && data.full_name.length > 100) {
+    errors.push("Full name must be less than 100 characters");
+  }
+
+  // Email validations
+  if (!data.student_email || !isValidEmail(data.student_email)) {
+    errors.push("A valid student email is required");
+  }
+  if (!data.parent_email || !isValidEmail(data.parent_email)) {
+    errors.push("A valid parent/guardian email is required");
+  }
+  if (!data.school_email || !isValidEmail(data.school_email)) {
+    errors.push("A valid school email is required");
+  }
+
+  // Phone validations
+  if (!data.student_phone || !isValidPhone(data.student_phone)) {
+    errors.push("A valid student phone number is required");
+  }
+  if (!data.parent_phone || !isValidPhone(data.parent_phone)) {
+    errors.push("A valid parent/guardian phone number is required");
+  }
+  if (!data.school_contact || !isValidPhone(data.school_contact)) {
+    errors.push("A valid school contact number is required");
+  }
+
+  // Date validations
+  if (!data.date_of_birth || !isValidDate(data.date_of_birth)) {
+    errors.push("A valid date of birth is required");
+  } else {
+    const dob = new Date(data.date_of_birth);
+    const today = new Date();
+    const age = today.getFullYear() - dob.getFullYear();
+    if (age < 10 || age > 25) {
+      errors.push("Date of birth must indicate an age between 10 and 25 years");
+    }
+  }
+
+  if (!data.learner_signature_date || !isValidDate(data.learner_signature_date)) {
+    errors.push("A valid learner signature date is required");
+  }
+  if (!data.parent_signature_date || !isValidDate(data.parent_signature_date)) {
+    errors.push("A valid parent signature date is required");
+  }
+
+  // Select field validations
+  if (!data.grade || !validGrades.includes(data.grade)) {
+    errors.push("A valid grade selection is required");
+  }
+  if (!data.province || !validProvinces.includes(data.province)) {
+    errors.push("A valid province selection is required");
+  }
+  if (!data.parent_relationship || !validRelationships.includes(data.parent_relationship)) {
+    errors.push("A valid relationship selection is required");
+  }
+
+  // Required text fields
+  const requiredTextFields = [
+    { field: "school_name", label: "School name" },
+    { field: "school_address", label: "School address" },
+    { field: "parent_name", label: "Parent/guardian name" },
+    { field: "nominating_teacher", label: "Nominating teacher name" },
+    { field: "teacher_position", label: "Teacher position" },
+    { field: "school_activities", label: "School activities" },
+    { field: "why_edlead", label: "Why edLEAD motivation" },
+    { field: "leadership_meaning", label: "Leadership meaning" },
+    { field: "school_challenge", label: "School challenge" },
+    { field: "project_idea", label: "Project idea" },
+    { field: "project_problem", label: "Project problem" },
+    { field: "project_benefit", label: "Project benefit" },
+    { field: "project_team", label: "Project team" },
+    { field: "manage_schoolwork", label: "Manage schoolwork" },
+    { field: "academic_importance", label: "Academic importance" },
+    { field: "learner_signature", label: "Learner signature" },
+    { field: "parent_signature_name", label: "Parent signature name" },
+    { field: "parent_signature", label: "Parent signature" },
+  ];
+
+  for (const { field, label } of requiredTextFields) {
+    const value = data[field as keyof ApplicationData];
+    if (!value || (typeof value === "string" && value.trim().length === 0)) {
+      errors.push(`${label} is required`);
+    }
+  }
+
+  // Boolean consent validations
+  if (data.parent_consent !== true) {
+    errors.push("Parent/guardian consent is required");
+  }
+  if (data.willing_to_commit !== true) {
+    errors.push("Commitment to the programme is required");
+  }
+
+  // Optional URL validation
+  if (data.video_link && !isValidUrl(data.video_link)) {
+    errors.push("Video link must be a valid YouTube or Google Drive URL");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
+}
+
+function sanitizeApplication(data: ApplicationData): ApplicationData {
+  return {
+    full_name: sanitizeName(data.full_name),
+    date_of_birth: data.date_of_birth,
+    gender: data.gender ? sanitizeString(data.gender, 50) : undefined,
+    grade: data.grade,
+    school_name: sanitizeName(data.school_name),
+    school_address: sanitizeString(data.school_address, 500),
+    province: data.province,
+    student_email: data.student_email?.toLowerCase().trim(),
+    student_phone: sanitizeString(data.student_phone, 25),
+    parent_name: sanitizeName(data.parent_name),
+    parent_relationship: data.parent_relationship,
+    parent_email: data.parent_email?.toLowerCase().trim(),
+    parent_phone: sanitizeString(data.parent_phone, 25),
+    parent_consent: Boolean(data.parent_consent),
+    nominating_teacher: sanitizeName(data.nominating_teacher),
+    teacher_position: sanitizeString(data.teacher_position, 100),
+    school_email: data.school_email?.toLowerCase().trim(),
+    school_contact: sanitizeString(data.school_contact, 25),
+    formally_nominated: Boolean(data.formally_nominated),
+    is_learner_leader: Boolean(data.is_learner_leader),
+    leader_roles: data.leader_roles ? sanitizeString(data.leader_roles, 500) : undefined,
+    school_activities: sanitizeString(data.school_activities),
+    why_edlead: sanitizeString(data.why_edlead),
+    leadership_meaning: sanitizeString(data.leadership_meaning),
+    school_challenge: sanitizeString(data.school_challenge),
+    project_idea: sanitizeString(data.project_idea),
+    project_problem: sanitizeString(data.project_problem),
+    project_benefit: sanitizeString(data.project_benefit),
+    project_team: sanitizeString(data.project_team),
+    manage_schoolwork: sanitizeString(data.manage_schoolwork),
+    academic_importance: sanitizeString(data.academic_importance),
+    willing_to_commit: Boolean(data.willing_to_commit),
+    has_device_access: Boolean(data.has_device_access),
+    learner_signature: sanitizeName(data.learner_signature),
+    learner_signature_date: data.learner_signature_date,
+    parent_signature_name: sanitizeName(data.parent_signature_name),
+    parent_signature: sanitizeName(data.parent_signature),
+    parent_signature_date: data.parent_signature_date,
+    video_link: data.video_link ? sanitizeString(data.video_link, 500) : undefined,
+    country: data.country ? sanitizeString(data.country, 100) : "South Africa",
+  };
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -89,7 +275,7 @@ async function sendEmail(to: string, subject: string, html: string) {
   if (!response.ok) {
     const error = await response.text();
     console.error("Email send error:", error);
-    throw new Error(`Failed to send email: ${error}`);
+    throw new Error("email_send_failed");
   }
 
   return response.json();
@@ -102,13 +288,61 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const applicationData: ApplicationData = await req.json();
-    console.log("Received application from:", applicationData.full_name);
+    // Check request size (max 100KB)
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > 100000) {
+      console.error("Request too large:", contentLength);
+      return new Response(
+        JSON.stringify({ error: "Request is too large. Please reduce the size of your submission." }),
+        { status: 413, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const rawData = await req.json();
+    console.log("Received application submission");
+
+    // Validate the application data
+    const validation = validateApplication(rawData);
+    if (!validation.isValid) {
+      console.error("Validation failed:", validation.errors);
+      return new Response(
+        JSON.stringify({ 
+          error: "Please check your application and correct the following issues.",
+          details: validation.errors 
+        }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Sanitize the application data
+    const applicationData = sanitizeApplication(rawData);
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Check for duplicate submission by email
+    const { data: existingApplication, error: checkError } = await supabase
+      .from("applications")
+      .select("id, created_at")
+      .eq("student_email", applicationData.student_email)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking for duplicate:", checkError);
+      // Continue with submission - don't block on check error
+    }
+
+    if (existingApplication) {
+      console.log("Duplicate application detected for:", applicationData.student_email);
+      return new Response(
+        JSON.stringify({ 
+          error: "An application with this email address has already been submitted. If you need to make changes, please contact us."
+        }),
+        { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     // Insert application into database
     const { data: application, error: dbError } = await supabase
@@ -119,7 +353,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (dbError) {
       console.error("Database error:", dbError);
-      throw new Error(`Failed to save application: ${dbError.message}`);
+      throw new Error("database_error");
     }
 
     console.log("Application saved with ID:", application.id);
@@ -175,12 +409,17 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    await sendEmail(
-      applicationData.student_email,
-      "Your edLEAD Application Has Been Received!",
-      studentEmailHtml
-    );
-    console.log("Student email sent to:", applicationData.student_email);
+    try {
+      await sendEmail(
+        applicationData.student_email,
+        "Your edLEAD Application Has Been Received!",
+        studentEmailHtml
+      );
+      console.log("Student email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send student email:", emailError);
+      // Continue - don't fail the whole submission for email failure
+    }
 
     // Send notification email to parent/guardian
     const parentEmailHtml = `
@@ -229,12 +468,17 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    await sendEmail(
-      applicationData.parent_email,
-      `edLEAD Application Received for ${applicationData.full_name}`,
-      parentEmailHtml
-    );
-    console.log("Parent email sent to:", applicationData.parent_email);
+    try {
+      await sendEmail(
+        applicationData.parent_email,
+        `edLEAD Application Received for ${applicationData.full_name}`,
+        parentEmailHtml
+      );
+      console.log("Parent email sent successfully");
+    } catch (emailError) {
+      console.error("Failed to send parent email:", emailError);
+      // Continue - don't fail the whole submission for email failure
+    }
 
     return new Response(
       JSON.stringify({ 
@@ -249,10 +493,23 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in submit-application function:", error);
+    
+    // Return generic error messages - never expose internal details
+    let userMessage = "We couldn't process your application at this time. Please try again later.";
+    let statusCode = 500;
+    
+    if (error.message === "database_error") {
+      userMessage = "We couldn't save your application. Please try again.";
+    } else if (error.message === "email_send_failed") {
+      // Application was saved but email failed - this shouldn't reach here normally
+      userMessage = "Application saved but we couldn't send confirmation emails. We'll be in touch.";
+      statusCode = 207; // Partial success
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: userMessage }),
       {
-        status: 500,
+        status: statusCode,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
