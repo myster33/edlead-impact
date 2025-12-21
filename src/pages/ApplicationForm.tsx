@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { FormFieldWrapper } from "@/components/form/FormFieldWrapper";
-import { Send, CheckCircle, Circle } from "lucide-react";
+import { Send, CheckCircle, Circle, Save, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+
+const DRAFT_STORAGE_KEY = "edlead-application-draft";
 
 const provinces = [
   "Eastern Cape",
@@ -138,6 +140,55 @@ const ApplicationForm = () => {
   });
 
   const { validateFields, markTouched, getFieldError, hasError, clearError } = useFormValidation();
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // Load draft from local storage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.formData) setFormData(parsed.formData);
+        if (parsed.declarations) setDeclarations(parsed.declarations);
+        setHasDraft(true);
+        toast({
+          title: "Draft Restored",
+          description: "Your previously saved progress has been restored.",
+        });
+      } catch (e) {
+        console.error("Failed to parse draft:", e);
+      }
+    }
+  }, []);
+
+  // Auto-save to local storage when form changes
+  useEffect(() => {
+    const hasAnyData = Object.values(formData).some(v => v !== "");
+    if (hasAnyData) {
+      const draft = { formData, declarations, savedAt: new Date().toISOString() };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      setHasDraft(true);
+    }
+  }, [formData, declarations]);
+
+  const saveDraft = useCallback(() => {
+    const draft = { formData, declarations, savedAt: new Date().toISOString() };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    setHasDraft(true);
+    toast({
+      title: "Draft Saved",
+      description: "Your progress has been saved. You can return to complete this form later.",
+    });
+  }, [formData, declarations, toast]);
+
+  const clearDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    setHasDraft(false);
+    toast({
+      title: "Draft Cleared",
+      description: "Your saved draft has been removed.",
+    });
+  }, [toast]);
 
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -324,6 +375,7 @@ const ApplicationForm = () => {
 
       setApplicationRef(data.applicationId?.slice(0, 8).toUpperCase() || "");
       setIsSubmitted(true);
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
       
       toast({
         title: "Application Submitted!",
@@ -395,7 +447,33 @@ const ApplicationForm = () => {
         <div className="container max-w-4xl">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">Application Progress</span>
-            <span className="text-sm text-muted-foreground">{completedSections} of {totalSections} sections complete</span>
+            <div className="flex items-center gap-4">
+              {hasDraft && (
+                <div className="flex items-center gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={saveDraft}
+                    className="gap-1"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save Draft
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearDraft}
+                    className="gap-1 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Clear
+                  </Button>
+                </div>
+              )}
+              <span className="text-sm text-muted-foreground">{completedSections} of {totalSections} sections complete</span>
+            </div>
           </div>
           <div className="w-full bg-muted rounded-full h-2 mb-4">
             <div 
