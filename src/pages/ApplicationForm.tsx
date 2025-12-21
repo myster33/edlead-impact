@@ -110,6 +110,27 @@ const countryRegions: Record<string, string[]> = {
 
 const countries = Object.keys(countryRegions).concat(["Other"]);
 
+const countryCodes: Record<string, string> = {
+  "South Africa": "+27",
+  "Nigeria": "+234",
+  "Kenya": "+254",
+  "Ghana": "+233",
+  "Tanzania": "+255",
+  "Uganda": "+256",
+  "Zimbabwe": "+263",
+  "Botswana": "+267",
+  "Namibia": "+264",
+  "Zambia": "+260",
+  "Mozambique": "+258",
+  "Rwanda": "+250",
+  "Ethiopia": "+251",
+  "Egypt": "+20",
+  "Morocco": "+212",
+  "Malawi": "+265",
+  "Lesotho": "+266",
+  "Eswatini": "+268",
+};
+
 const grades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 
 interface FormData {
@@ -759,15 +780,20 @@ const ApplicationForm = () => {
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("student_phone")}>
                     <Label htmlFor="student_phone">Student Mobile Number *</Label>
-                    <Input 
-                      id="student_phone" 
-                      type="tel" 
-                      placeholder="e.g. 0721234567"
-                      value={formData.student_phone}
-                      onChange={(e) => updateField("student_phone", e.target.value)}
-                      onBlur={() => validatePhoneOnBlur("student_phone", "Student Phone")}
-                      className={cn(hasError("student_phone") && "border-destructive")}
-                    />
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
+                        {countryCodes[formData.country] || "+"}
+                      </span>
+                      <Input 
+                        id="student_phone" 
+                        type="tel" 
+                        placeholder="e.g. 0721234567"
+                        value={formData.student_phone}
+                        onChange={(e) => updateField("student_phone", e.target.value)}
+                        onBlur={() => validatePhoneOnBlur("student_phone", "Student Phone")}
+                        className={cn("rounded-l-none", hasError("student_phone") && "border-destructive")}
+                      />
+                    </div>
                   </FormFieldWrapper>
                 </div>
               </CardContent>
@@ -821,15 +847,20 @@ const ApplicationForm = () => {
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("parent_phone")}>
                     <Label htmlFor="parent_phone">Parent/Guardian Mobile Number *</Label>
-                    <Input 
-                      id="parent_phone" 
-                      type="tel" 
-                      placeholder="e.g. 0721234567"
-                      value={formData.parent_phone}
-                      onChange={(e) => updateField("parent_phone", e.target.value)}
-                      onBlur={() => validatePhoneOnBlur("parent_phone", "Parent/Guardian Phone")}
-                      className={cn(hasError("parent_phone") && "border-destructive")}
-                    />
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
+                        {countryCodes[formData.country] || "+"}
+                      </span>
+                      <Input 
+                        id="parent_phone" 
+                        type="tel" 
+                        placeholder="e.g. 0721234567"
+                        value={formData.parent_phone}
+                        onChange={(e) => updateField("parent_phone", e.target.value)}
+                        onBlur={() => validatePhoneOnBlur("parent_phone", "Parent/Guardian Phone")}
+                        className={cn("rounded-l-none", hasError("parent_phone") && "border-destructive")}
+                      />
+                    </div>
                   </FormFieldWrapper>
                 </div>
 
@@ -901,15 +932,20 @@ const ApplicationForm = () => {
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("school_contact")}>
                     <Label htmlFor="school_contact">Contact Number *</Label>
-                    <Input 
-                      id="school_contact" 
-                      type="tel" 
-                      placeholder="e.g. 0111234567"
-                      value={formData.school_contact}
-                      onChange={(e) => updateField("school_contact", e.target.value)}
-                      onBlur={() => validatePhoneOnBlur("school_contact", "School Contact")}
-                      className={cn(hasError("school_contact") && "border-destructive")}
-                    />
+                    <div className="flex">
+                      <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
+                        {countryCodes[formData.country] || "+"}
+                      </span>
+                      <Input 
+                        id="school_contact" 
+                        type="tel" 
+                        placeholder="e.g. 0111234567"
+                        value={formData.school_contact}
+                        onChange={(e) => updateField("school_contact", e.target.value)}
+                        onBlur={() => validatePhoneOnBlur("school_contact", "School Contact")}
+                        className={cn("rounded-l-none", hasError("school_contact") && "border-destructive")}
+                      />
+                    </div>
                   </FormFieldWrapper>
                 </div>
 
