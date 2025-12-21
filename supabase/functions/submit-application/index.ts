@@ -47,7 +47,6 @@ const sanitizeName = (name: string): string => {
 
 // Valid options for select fields
 const validGrades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
-const validRelationships = ["Parent", "Legal Guardian", "Other"];
 
 interface ApplicationData {
   full_name: string;
@@ -161,8 +160,10 @@ function validateApplication(data: ApplicationData): ValidationResult {
   } else if (data.province === undefined || data.province === null) {
     // Province should be provided but can be empty string for "Other" countries
   }
-  if (!data.parent_relationship || !validRelationships.includes(data.parent_relationship)) {
-    errors.push("A valid relationship selection is required");
+  if (!data.parent_relationship || data.parent_relationship.trim().length < 2) {
+    errors.push("Relationship to learner is required");
+  } else if (data.parent_relationship.length > 100) {
+    errors.push("Relationship to learner must be less than 100 characters");
   }
 
   // Required text fields
@@ -222,7 +223,7 @@ function sanitizeApplication(data: ApplicationData): ApplicationData {
     student_email: data.student_email?.toLowerCase().trim(),
     student_phone: sanitizeString(data.student_phone, 25),
     parent_name: sanitizeName(data.parent_name),
-    parent_relationship: data.parent_relationship,
+    parent_relationship: sanitizeString(data.parent_relationship, 100),
     parent_email: data.parent_email?.toLowerCase().trim(),
     parent_phone: sanitizeString(data.parent_phone, 25),
     parent_consent: Boolean(data.parent_consent),
