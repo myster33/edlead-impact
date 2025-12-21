@@ -47,6 +47,7 @@ import {
 
 interface Application {
   id: string;
+  reference_number?: string;
   full_name: string;
   student_email: string;
   school_name: string;
@@ -139,7 +140,8 @@ export default function AdminDashboard() {
         (app) =>
           app.full_name.toLowerCase().includes(term) ||
           app.student_email.toLowerCase().includes(term) ||
-          app.school_name.toLowerCase().includes(term)
+          app.school_name.toLowerCase().includes(term) ||
+          (app.reference_number && app.reference_number.toLowerCase().includes(term))
       );
     }
 
@@ -233,6 +235,7 @@ export default function AdminDashboard() {
     }
 
     const headers = [
+      "Reference",
       "Full Name",
       "Email",
       "Phone",
@@ -260,6 +263,7 @@ export default function AdminDashboard() {
     };
 
     const rows = filteredApplications.map(app => [
+      escapeCSV(app.reference_number || app.id.slice(0, 8).toUpperCase()),
       escapeCSV(app.full_name),
       escapeCSV(app.student_email),
       escapeCSV(app.student_phone),
@@ -451,6 +455,7 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Ref</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead className="hidden md:table-cell">School</TableHead>
                       <TableHead className="hidden sm:table-cell">Grade</TableHead>
@@ -463,6 +468,11 @@ export default function AdminDashboard() {
                   <TableBody>
                     {filteredApplications.map((app) => (
                       <TableRow key={app.id}>
+                        <TableCell>
+                          <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
+                            {app.reference_number || app.id.slice(0, 8).toUpperCase()}
+                          </code>
+                        </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">{app.full_name}</p>
@@ -500,7 +510,12 @@ export default function AdminDashboard() {
       <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Application Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              Application Details
+              <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                {selectedApplication?.reference_number || selectedApplication?.id.slice(0, 8).toUpperCase()}
+              </code>
+            </DialogTitle>
             <DialogDescription>
               Submitted on {selectedApplication && new Date(selectedApplication.created_at).toLocaleDateString("en-ZA", { dateStyle: "full" })}
             </DialogDescription>
