@@ -41,7 +41,8 @@ import {
   Eye,
   Loader2,
   RefreshCw,
-  Download
+  Download,
+  BarChart3
 } from "lucide-react";
 
 interface Application {
@@ -305,6 +306,12 @@ export default function AdminDashboard() {
             </Badge>
           </div>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/analytics">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Analytics
+              </Link>
+            </Button>
             {adminUser?.role === "admin" && (
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/admin/users">
