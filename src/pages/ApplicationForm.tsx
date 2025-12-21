@@ -277,7 +277,7 @@ const ApplicationForm = () => {
   };
 
   const validatePhoneOnBlur = (field: keyof FormData, label: string) => {
-    validateSingleField(field, formData[field], label, "phone");
+    validateSingleField(field, formData[field], label, "phone", formData.country);
   };
 
   const requiredFields = [
