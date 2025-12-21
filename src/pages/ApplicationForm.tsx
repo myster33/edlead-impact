@@ -334,11 +334,6 @@ const ApplicationForm = () => {
     { field: "academic_importance", label: "Academic Importance" },
     { field: "willing_to_commit", label: "Programme Commitment", type: "radio" as const },
     { field: "has_device_access", label: "Device Access", type: "radio" as const },
-    { field: "learner_signature", label: "Learner Signature" },
-    { field: "learner_signature_date", label: "Learner Signature Date" },
-    { field: "parent_signature_name", label: "Parent Signature Name" },
-    { field: "parent_signature", label: "Parent Signature" },
-    { field: "parent_signature_date", label: "Parent Signature Date" },
   ];
 
   const sectionStatuses = useMemo((): SectionStatus[] => {
@@ -384,9 +379,9 @@ const ApplicationForm = () => {
         complete: !!(formData.willing_to_commit && formData.has_device_access),
       },
       {
-        name: "Declarations & Signatures",
+        name: "Declarations",
         id: "section-9",
-        complete: !!(declarations.declaration1 && declarations.declaration2 && declarations.parentConsentFinal && formData.learner_signature && formData.learner_signature_date && formData.parent_signature_name && formData.parent_signature && formData.parent_signature_date),
+        complete: !!(declarations.declaration1 && declarations.declaration2 && declarations.parentConsentFinal),
       },
     ];
   }, [formData, declarations]);
@@ -470,11 +465,11 @@ const ApplicationForm = () => {
         academic_importance: formData.academic_importance,
         willing_to_commit: formData.willing_to_commit === "yes",
         has_device_access: formData.has_device_access === "yes",
-        learner_signature: formData.learner_signature,
-        learner_signature_date: formData.learner_signature_date,
-        parent_signature_name: formData.parent_signature_name,
-        parent_signature: formData.parent_signature,
-        parent_signature_date: formData.parent_signature_date,
+        learner_signature: formData.full_name, // Use full name as signature
+        learner_signature_date: new Date().toISOString().split('T')[0],
+        parent_signature_name: formData.parent_name,
+        parent_signature: formData.parent_name, // Use parent name as signature
+        parent_signature_date: new Date().toISOString().split('T')[0],
         video_link: formData.video_link || null,
       };
 
@@ -1236,7 +1231,7 @@ const ApplicationForm = () => {
             <Card id="section-9">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
-                  Section 9: Declaration & Signatures
+                  Section 9: Declaration
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1264,75 +1259,6 @@ const ApplicationForm = () => {
                   <Label htmlFor="declaration2" className="font-normal leading-relaxed">
                     I understand that selection into edLEAD is competitive and based on leadership potential, commitment, and school nomination. *
                   </Label>
-                </div>
-
-                <div className="border-t pt-6 mt-6">
-                  <h4 className="font-medium mb-4">Learner Signature</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormFieldWrapper error={getFieldError("learner_signature")}>
-                      <Label htmlFor="learner_signature">Type your full name as signature *</Label>
-                      <Input 
-                        id="learner_signature" 
-                        placeholder="Type your full name"
-                        value={formData.learner_signature}
-                        onChange={(e) => updateField("learner_signature", e.target.value)}
-                        onBlur={() => markTouched("learner_signature")}
-                        className={cn(hasError("learner_signature") && "border-destructive")}
-                      />
-                    </FormFieldWrapper>
-                    <FormFieldWrapper error={getFieldError("learner_signature_date")}>
-                      <Label htmlFor="learner_signature_date">Date *</Label>
-                      <Input 
-                        id="learner_signature_date" 
-                        type="date"
-                        value={formData.learner_signature_date}
-                        onChange={(e) => updateField("learner_signature_date", e.target.value)}
-                        onBlur={() => markTouched("learner_signature_date")}
-                        className={cn(hasError("learner_signature_date") && "border-destructive")}
-                      />
-                    </FormFieldWrapper>
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <h4 className="font-medium mb-4">Parent/Guardian Signature</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormFieldWrapper error={getFieldError("parent_signature_name")}>
-                      <Label htmlFor="parent_signature_name">Parent/Guardian Full Name *</Label>
-                      <Input 
-                        id="parent_signature_name" 
-                        placeholder="Parent/Guardian full name"
-                        value={formData.parent_signature_name}
-                        onChange={(e) => updateField("parent_signature_name", e.target.value)}
-                        onBlur={() => markTouched("parent_signature_name")}
-                        className={cn(hasError("parent_signature_name") && "border-destructive")}
-                      />
-                    </FormFieldWrapper>
-                    <FormFieldWrapper error={getFieldError("parent_signature")}>
-                      <Label htmlFor="parent_signature">Type full name as signature *</Label>
-                      <Input 
-                        id="parent_signature" 
-                        placeholder="Type full name as signature"
-                        value={formData.parent_signature}
-                        onChange={(e) => updateField("parent_signature", e.target.value)}
-                        onBlur={() => markTouched("parent_signature")}
-                        className={cn(hasError("parent_signature") && "border-destructive")}
-                      />
-                    </FormFieldWrapper>
-                  </div>
-                  <div className="mt-4 max-w-xs">
-                    <FormFieldWrapper error={getFieldError("parent_signature_date")}>
-                      <Label htmlFor="parent_signature_date">Date *</Label>
-                      <Input 
-                        id="parent_signature_date" 
-                        type="date"
-                        value={formData.parent_signature_date}
-                        onChange={(e) => updateField("parent_signature_date", e.target.value)}
-                        onBlur={() => markTouched("parent_signature_date")}
-                        className={cn(hasError("parent_signature_date") && "border-destructive")}
-                      />
-                    </FormFieldWrapper>
-                  </div>
                 </div>
 
               </CardContent>
