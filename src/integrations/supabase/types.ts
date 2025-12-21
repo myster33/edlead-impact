@@ -17,6 +17,7 @@ export type Database = {
       applications: {
         Row: {
           academic_importance: string
+          country: string
           created_at: string
           date_of_birth: string
           formally_nominated: boolean
@@ -63,6 +64,7 @@ export type Database = {
         }
         Insert: {
           academic_importance: string
+          country?: string
           created_at?: string
           date_of_birth: string
           formally_nominated?: boolean
@@ -109,6 +111,7 @@ export type Database = {
         }
         Update: {
           academic_importance?: string
+          country?: string
           created_at?: string
           date_of_birth?: string
           formally_nominated?: boolean
