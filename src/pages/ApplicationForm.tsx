@@ -595,11 +595,19 @@ const ApplicationForm = () => {
 
       // Try to surface validation details from the backend function response
       try {
-        const response: Response | undefined = error?.context?.response;
+        const response: Response | undefined =
+          typeof Response !== "undefined" && error?.context instanceof Response
+            ? error.context
+            : error?.context?.response;
+
         if (response) {
           const body: any = await response.clone().json().catch(async () => {
             const text = await response.clone().text();
-            return text ? JSON.parse(text) : null;
+            try {
+              return text ? JSON.parse(text) : null;
+            } catch {
+              return text ? { error: text } : null;
+            }
           });
 
           if (body?.details && Array.isArray(body.details) && body.details.length) {
