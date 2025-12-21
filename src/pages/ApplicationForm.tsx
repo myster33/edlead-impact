@@ -34,28 +34,81 @@ import { cn } from "@/lib/utils";
 
 const DRAFT_STORAGE_KEY = "edlead-application-draft";
 
-const countries = [
-  "South Africa",
-  "Botswana",
-  "Eswatini",
-  "Lesotho",
-  "Mozambique",
-  "Namibia",
-  "Zimbabwe",
-  "Other",
-];
+const countryRegions: Record<string, string[]> = {
+  "South Africa": [
+    "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo",
+    "Mpumalanga", "North West", "Northern Cape", "Western Cape"
+  ],
+  "Botswana": [
+    "Central", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng",
+    "North-East", "North-West", "South-East", "Southern"
+  ],
+  "Eswatini": [
+    "Hhohho", "Lubombo", "Manzini", "Shiselweni"
+  ],
+  "Lesotho": [
+    "Berea", "Butha-Buthe", "Leribe", "Mafeteng", "Maseru",
+    "Mohale's Hoek", "Mokhotlong", "Qacha's Nek", "Quthing", "Thaba-Tseka"
+  ],
+  "Mozambique": [
+    "Cabo Delgado", "Gaza", "Inhambane", "Manica", "Maputo City",
+    "Maputo Province", "Nampula", "Niassa", "Sofala", "Tete", "Zambezia"
+  ],
+  "Namibia": [
+    "Erongo", "Hardap", "Karas", "Kavango East", "Kavango West",
+    "Khomas", "Kunene", "Ohangwena", "Omaheke", "Omusati",
+    "Oshana", "Oshikoto", "Otjozondjupa", "Zambezi"
+  ],
+  "Zimbabwe": [
+    "Bulawayo", "Harare", "Manicaland", "Mashonaland Central",
+    "Mashonaland East", "Mashonaland West", "Masvingo",
+    "Matabeleland North", "Matabeleland South", "Midlands"
+  ],
+  "Kenya": [
+    "Central", "Coast", "Eastern", "Nairobi", "North Eastern",
+    "Nyanza", "Rift Valley", "Western"
+  ],
+  "Tanzania": [
+    "Arusha", "Dar es Salaam", "Dodoma", "Geita", "Iringa", "Kagera",
+    "Katavi", "Kigoma", "Kilimanjaro", "Lindi", "Manyara", "Mara",
+    "Mbeya", "Morogoro", "Mtwara", "Mwanza", "Njombe", "Pemba North",
+    "Pemba South", "Pwani", "Rukwa", "Ruvuma", "Shinyanga", "Simiyu",
+    "Singida", "Songwe", "Tabora", "Tanga", "Zanzibar North",
+    "Zanzibar South", "Zanzibar West"
+  ],
+  "Uganda": [
+    "Central", "Eastern", "Northern", "Western"
+  ],
+  "Rwanda": [
+    "Eastern", "Kigali", "Northern", "Southern", "Western"
+  ],
+  "Malawi": [
+    "Central", "Northern", "Southern"
+  ],
+  "Zambia": [
+    "Central", "Copperbelt", "Eastern", "Luapula", "Lusaka",
+    "Muchinga", "Northern", "North-Western", "Southern", "Western"
+  ],
+  "Ghana": [
+    "Ahafo", "Ashanti", "Bono", "Bono East", "Central", "Eastern",
+    "Greater Accra", "North East", "Northern", "Oti", "Savannah",
+    "Upper East", "Upper West", "Volta", "Western", "Western North"
+  ],
+  "Nigeria": [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa",
+    "Benue", "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti",
+    "Enugu", "FCT Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano",
+    "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger",
+    "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto",
+    "Taraba", "Yobe", "Zamfara"
+  ],
+  "Ethiopia": [
+    "Addis Ababa", "Afar", "Amhara", "Benishangul-Gumuz", "Dire Dawa",
+    "Gambela", "Harari", "Oromia", "Sidama", "Somali", "SNNPR", "Tigray"
+  ],
+};
 
-const provinces = [
-  "Eastern Cape",
-  "Free State",
-  "Gauteng",
-  "KwaZulu-Natal",
-  "Limpopo",
-  "Mpumalanga",
-  "North West",
-  "Northern Cape",
-  "Western Cape",
-];
+const countries = Object.keys(countryRegions).concat(["Other"]);
 
 const grades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 
@@ -226,7 +279,7 @@ const ApplicationForm = () => {
     { field: "school_name", label: "School Name" },
     { field: "school_address", label: "School Address" },
     { field: "country", label: "Country", type: "select" as const },
-    ...(formData.country === "South Africa" ? [{ field: "province", label: "Province", type: "select" as const }] : []),
+    ...(formData.country && formData.country !== "Other" && countryRegions[formData.country] ? [{ field: "province", label: "Province/Region", type: "select" as const }] : []),
     { field: "student_email", label: "Student Email", type: "email" as const },
     { field: "student_phone", label: "Student Phone" },
     { field: "parent_name", label: "Parent/Guardian Name" },
@@ -259,7 +312,7 @@ const ApplicationForm = () => {
       {
         name: "Learner Information",
         id: "section-1",
-        complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.country && (formData.country !== "South Africa" || formData.province) && formData.student_email && formData.student_phone),
+        complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.country && (formData.country === "Other" || !countryRegions[formData.country] || formData.province) && formData.student_email && formData.student_phone),
       },
       {
         name: "Parent/Guardian",
@@ -356,7 +409,7 @@ const ApplicationForm = () => {
         school_name: formData.school_name,
         school_address: formData.school_address,
         country: formData.country,
-        province: formData.country === "South Africa" ? formData.province : "",
+        province: formData.country !== "Other" && countryRegions[formData.country] ? formData.province : "",
         student_email: formData.student_email,
         student_phone: formData.student_phone,
         parent_name: formData.parent_name,
@@ -665,17 +718,17 @@ const ApplicationForm = () => {
                   </Select>
                 </FormFieldWrapper>
 
-                {formData.country === "South Africa" && (
+                {formData.country && formData.country !== "Other" && countryRegions[formData.country] && (
                   <FormFieldWrapper error={getFieldError("province")}>
-                    <Label>Province *</Label>
+                    <Label>Province/Region *</Label>
                     <Select value={formData.province} onValueChange={(v) => updateField("province", v)}>
                       <SelectTrigger id="province" className={cn(hasError("province") && "border-destructive")}>
-                        <SelectValue placeholder="Select province" />
+                        <SelectValue placeholder="Select province/region" />
                       </SelectTrigger>
                       <SelectContent>
-                        {provinces.map((province) => (
-                          <SelectItem key={province} value={province.toLowerCase().replace(" ", "-")}>
-                            {province}
+                        {countryRegions[formData.country].map((region) => (
+                          <SelectItem key={region} value={region.toLowerCase().replace(/\s+/g, "-")}>
+                            {region}
                           </SelectItem>
                         ))}
                       </SelectContent>
