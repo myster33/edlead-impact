@@ -51,7 +51,7 @@ const Partners = () => {
           <div className="max-w-3xl mx-auto text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-6">Partnership Opportunities</h2>
             <p className="text-lg text-muted-foreground">
-              We work with schools, education organisations, NGOs, and corporate partners to expand youth leadership development across South Africa.
+              We work with schools, education organisations, NGOs, and corporate partners to expand youth leadership development across Africa.
             </p>
           </div>
 
@@ -79,7 +79,7 @@ const Partners = () => {
                 {[
                   "Make a meaningful impact on youth development",
                   "Support safer, more positive school environments",
-                  "Connect with a network of schools across South Africa",
+                  "Connect with a network of schools across Africa",
                   "Align your organisation with education transformation",
                   "Receive recognition for your contribution",
                 ].map((benefit, index) => (
