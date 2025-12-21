@@ -550,8 +550,8 @@ const ApplicationForm = () => {
         </div>
       </section>
 
-      {/* Progress Indicator */}
-      <section className="py-6 bg-background border-b">
+      {/* Progress Indicator - Sticky on md+ screens */}
+      <section className="py-6 bg-background border-b md:sticky md:top-0 md:z-40 md:shadow-sm">
         <div className="container max-w-4xl">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">Application Progress</span>
