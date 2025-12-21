@@ -491,9 +491,33 @@ const ApplicationForm = () => {
       });
     } catch (error: any) {
       console.error("Submission error:", error);
+
+      let description =
+        error?.message ||
+        "There was an error submitting your application. Please try again.";
+
+      // Try to surface validation details from the backend function response
+      try {
+        const response: Response | undefined = error?.context?.response;
+        if (response) {
+          const body: any = await response.clone().json().catch(async () => {
+            const text = await response.clone().text();
+            return text ? JSON.parse(text) : null;
+          });
+
+          if (body?.details && Array.isArray(body.details) && body.details.length) {
+            description = body.details.slice(0, 3).join(" • ");
+          } else if (body?.error) {
+            description = String(body.error);
+          }
+        }
+      } catch {
+        // ignore parsing errors
+      }
+
       toast({
         title: "Submission Failed",
-        description: error.message || "There was an error submitting your application. Please try again.",
+        description,
         variant: "destructive",
       });
     } finally {
@@ -693,7 +717,7 @@ const ApplicationForm = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {grades.map((grade) => (
-                          <SelectItem key={grade} value={grade.toLowerCase().replace(" ", "-")}>
+                          <SelectItem key={grade} value={grade}>
                             {grade}
                           </SelectItem>
                         ))}
@@ -756,7 +780,7 @@ const ApplicationForm = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {countryRegions[formData.country].map((region) => (
-                          <SelectItem key={region} value={region.toLowerCase().replace(/\s+/g, "-")}>
+                          <SelectItem key={region} value={region}>
                             {region}
                           </SelectItem>
                         ))}
