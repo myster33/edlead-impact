@@ -216,7 +216,7 @@ const ApplicationForm = () => {
     parentConsentFinal: false,
   });
 
-  const { validateFields, markTouched, getFieldError, hasError, clearError } = useFormValidation();
+  const { validateFields, markTouched, getFieldError, hasError, clearError, validateSingleField } = useFormValidation();
   const [hasDraft, setHasDraft] = useState(false);
 
   // Load draft from local storage on mount
@@ -270,6 +270,10 @@ const ApplicationForm = () => {
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     clearError(field);
+  };
+
+  const validateEmailOnBlur = (field: keyof FormData, label: string) => {
+    validateSingleField(field, formData[field], label, "email");
   };
 
   const requiredFields = [
@@ -745,7 +749,7 @@ const ApplicationForm = () => {
                       placeholder="your.email@example.com"
                       value={formData.student_email}
                       onChange={(e) => updateField("student_email", e.target.value)}
-                      onBlur={() => markTouched("student_email")}
+                      onBlur={() => validateEmailOnBlur("student_email", "Student Email")}
                       className={cn(hasError("student_email") && "border-destructive")}
                     />
                   </FormFieldWrapper>
@@ -807,7 +811,7 @@ const ApplicationForm = () => {
                       placeholder="parent.email@example.com"
                       value={formData.parent_email}
                       onChange={(e) => updateField("parent_email", e.target.value)}
-                      onBlur={() => markTouched("parent_email")}
+                      onBlur={() => validateEmailOnBlur("parent_email", "Parent/Guardian Email")}
                       className={cn(hasError("parent_email") && "border-destructive")}
                     />
                   </FormFieldWrapper>
@@ -887,7 +891,7 @@ const ApplicationForm = () => {
                       placeholder="teacher@school.edu.za"
                       value={formData.school_email}
                       onChange={(e) => updateField("school_email", e.target.value)}
-                      onBlur={() => markTouched("school_email")}
+                      onBlur={() => validateEmailOnBlur("school_email", "School Email")}
                       className={cn(hasError("school_email") && "border-destructive")}
                     />
                   </FormFieldWrapper>

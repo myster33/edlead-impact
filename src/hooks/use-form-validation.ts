@@ -32,6 +32,26 @@ export const useFormValidation = () => {
     setTouched((prev) => ({ ...prev, [field]: true }));
   }, []);
 
+  const validateSingleField = useCallback((
+    field: string,
+    value: string,
+    label: string,
+    type?: string
+  ) => {
+    const error = validateField(field, value, label, type);
+    setErrors((prev) => {
+      if (error) {
+        return { ...prev, [field]: error };
+      } else {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      }
+    });
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    return error;
+  }, [validateField]);
+
   const validateFields = useCallback((
     formData: { [key: string]: string | boolean },
     requiredFields: RequiredField[]
@@ -88,6 +108,7 @@ export const useFormValidation = () => {
     touched,
     validateFields,
     validateField,
+    validateSingleField,
     markTouched,
     clearError,
     getFieldError,
