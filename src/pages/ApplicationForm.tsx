@@ -31,7 +31,7 @@ const provinces = [
   "Western Cape",
 ];
 
-const grades = ["Grade 8", "Grade 9", "Grade 10", "Grade 11"];
+const grades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 
 interface FormData {
   full_name: string;
@@ -317,7 +317,7 @@ const ApplicationForm = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Grade (8–11) *</Label>
+                    <Label>Grade (7–12) *</Label>
                     <Select value={formData.grade} onValueChange={(v) => updateField("grade", v)} required>
                       <SelectTrigger>
                         <SelectValue placeholder="Select grade" />
@@ -761,7 +761,7 @@ const ApplicationForm = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Are you willing and able to commit to this for one year? *</Label>
+                  <Label>Are you willing and able to commit to this for three months? *</Label>
                   <RadioGroup 
                     value={formData.willing_to_commit} 
                     onValueChange={(v) => updateField("willing_to_commit", v)}
@@ -832,30 +832,6 @@ const ApplicationForm = () => {
                   </Label>
                 </div>
 
-                <Separator />
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="learnerSignature">Learner Signature (Typed) *</Label>
-                    <Input 
-                      id="learnerSignature" 
-                      required 
-                      placeholder="Type your full name as signature"
-                      value={formData.learner_signature}
-                      onChange={(e) => updateField("learner_signature", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="learnerSignatureDate">Date *</Label>
-                    <Input 
-                      id="learnerSignatureDate" 
-                      type="date" 
-                      required
-                      value={formData.learner_signature_date}
-                      onChange={(e) => updateField("learner_signature_date", e.target.value)}
-                    />
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
@@ -880,38 +856,6 @@ const ApplicationForm = () => {
                   </Label>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="parentSignatureName">Parent/Guardian Name *</Label>
-                    <Input 
-                      id="parentSignatureName" 
-                      required 
-                      placeholder="Enter full name"
-                      value={formData.parent_signature_name}
-                      onChange={(e) => updateField("parent_signature_name", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parentSignature">Signature (Typed) *</Label>
-                    <Input 
-                      id="parentSignature" 
-                      required 
-                      placeholder="Type name as signature"
-                      value={formData.parent_signature}
-                      onChange={(e) => updateField("parent_signature", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parentSignatureDate">Date *</Label>
-                    <Input 
-                      id="parentSignatureDate" 
-                      type="date" 
-                      required
-                      value={formData.parent_signature_date}
-                      onChange={(e) => updateField("parent_signature_date", e.target.value)}
-                    />
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
