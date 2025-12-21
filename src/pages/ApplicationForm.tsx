@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Send, CheckCircle } from "lucide-react";
+import { Send, CheckCircle, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const provinces = [
@@ -73,6 +72,11 @@ interface FormData {
   parent_signature: string;
   parent_signature_date: string;
   video_link: string;
+}
+
+interface SectionStatus {
+  name: string;
+  complete: boolean;
 }
 
 const ApplicationForm = () => {
@@ -132,6 +136,50 @@ const ApplicationForm = () => {
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const sectionStatuses = useMemo((): SectionStatus[] => {
+    return [
+      {
+        name: "Learner Information",
+        complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.province && formData.student_email && formData.student_phone),
+      },
+      {
+        name: "Parent/Guardian",
+        complete: !!(formData.parent_name && formData.parent_relationship && formData.parent_email && formData.parent_phone && formData.parent_consent),
+      },
+      {
+        name: "School Nomination",
+        complete: !!(formData.nominating_teacher && formData.teacher_position && formData.school_email && formData.school_contact && formData.formally_nominated),
+      },
+      {
+        name: "Leadership Experience",
+        complete: !!(formData.is_learner_leader && formData.school_activities),
+      },
+      {
+        name: "Motivation & Values",
+        complete: !!(formData.why_edlead && formData.leadership_meaning && formData.school_challenge),
+      },
+      {
+        name: "Impact Project",
+        complete: !!(formData.project_idea && formData.project_problem && formData.project_benefit && formData.project_team),
+      },
+      {
+        name: "Academic Commitment",
+        complete: !!(formData.manage_schoolwork && formData.academic_importance),
+      },
+      {
+        name: "Programme Commitment",
+        complete: !!(formData.willing_to_commit && formData.has_device_access),
+      },
+      {
+        name: "Declarations",
+        complete: !!(declarations.declaration1 && declarations.declaration2 && declarations.parentConsentFinal),
+      },
+    ];
+  }, [formData, declarations]);
+
+  const completedSections = sectionStatuses.filter(s => s.complete).length;
+  const totalSections = sectionStatuses.length;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,6 +311,36 @@ const ApplicationForm = () => {
           <p className="text-xl text-primary-foreground/90">
             Learner Application Form
           </p>
+        </div>
+      </section>
+
+      {/* Progress Indicator */}
+      <section className="py-6 bg-background border-b">
+        <div className="container max-w-4xl">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium">Application Progress</span>
+            <span className="text-sm text-muted-foreground">{completedSections} of {totalSections} sections complete</span>
+          </div>
+          <div className="w-full bg-muted rounded-full h-2 mb-4">
+            <div 
+              className="bg-primary h-2 rounded-full transition-all duration-300" 
+              style={{ width: `${(completedSections / totalSections) * 100}%` }}
+            />
+          </div>
+          <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2">
+            {sectionStatuses.map((section, index) => (
+              <div key={index} className="flex flex-col items-center text-center">
+                {section.complete ? (
+                  <CheckCircle className="h-5 w-5 text-primary mb-1" />
+                ) : (
+                  <Circle className="h-5 w-5 text-muted-foreground mb-1" />
+                )}
+                <span className={`text-xs ${section.complete ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                  {section.name}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
