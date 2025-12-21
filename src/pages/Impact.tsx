@@ -6,7 +6,7 @@ const goals = [
   {
     icon: Users,
     title: "Build Student Leadership Capacity",
-    description: "Developing confident, capable student leaders across South African schools.",
+    description: "Developing confident, capable student leaders across African schools.",
   },
   {
     icon: Shield,
@@ -45,7 +45,7 @@ const Impact = () => {
               {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
-              Measuring the change we create in schools and communities across South Africa.
+              Measuring the change we create in schools and communities across Africa.
             </p>
           </div>
         </div>

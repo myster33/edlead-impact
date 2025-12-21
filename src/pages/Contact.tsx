@@ -133,7 +133,7 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-foreground">Location</h3>
                     <p className="text-muted-foreground">
-                      Johannesburg, South Africa
+                      Johannesburg, Africa
                     </p>
                   </div>
                 </div>

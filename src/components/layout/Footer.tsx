@@ -12,7 +12,6 @@ const footerLinks = {
   community: [
     { name: "Student Blog", path: "/blog" },
     { name: "Partner With Us", path: "/partners" },
-    { name: "Recognition & Awards", path: "/recognition" },
   ],
   support: [
     { name: "Contact Us", path: "/contact" },
@@ -106,7 +105,7 @@ export const Footer = () => {
       <div className="border-t border-secondary-foreground/10">
         <div className="container py-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-secondary-foreground/60">
-            © {new Date().getFullYear()} edLEAD for Student Leaders. All rights reserved.
+            © 2026 edLEAD for Student Leaders. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-secondary-foreground/60">
             <Link to="/privacy" className="hover:text-primary transition-colors">

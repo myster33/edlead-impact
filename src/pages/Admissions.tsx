@@ -2,9 +2,10 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
+import { Link } from "react-router-dom";
 
 const requirements = [
-  "High school learners (Grades 8–11)",
+  "High school learners (Grades 7–12)",
   "Nominated by their school",
   "Demonstrated leadership potential or commitment to positive change",
   "Willingness to participate in year-long programme",
@@ -76,12 +77,14 @@ const Admissions = () => {
               <p className="text-muted-foreground mb-6">
                 Start your journey to becoming an edLEAD Captain today. Complete our online application form to be considered for the programme.
               </p>
-              <Button size="lg" className="w-full gap-2">
-                Start Application
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <Link to="/apply">
+                <Button size="lg" className="w-full gap-2">
+                  Start Application
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
               <p className="text-sm text-muted-foreground mt-4 text-center">
-                Applications for 2025 are now open
+                Applications for 2026 are now open
               </p>
             </div>
           </div>

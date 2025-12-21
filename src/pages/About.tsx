@@ -31,7 +31,7 @@ const About = () => {
                 edLEAD is a youth leadership development programme aligned with EduSchools' mission of creating intelligent, well-managed, and positive learning environments.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                We identify and nurture high-potential learners, equipping them to become change-makers within their schools and communities. Through structured mentorship, practical training, and real-world leadership experiences, we prepare young South Africans to lead with integrity and purpose.
+                We identify and nurture high-potential learners, equipping them to become change-makers within their schools and communities. Through structured mentorship, practical training, and real-world leadership experiences, we prepare young Africans to lead with integrity and purpose.
               </p>
             </div>
             <div className="bg-muted rounded-2xl p-8 md:p-12">
@@ -43,7 +43,7 @@ const About = () => {
                   <div>
                     <h3 className="font-semibold text-lg text-foreground mb-2">Our Vision</h3>
                     <p className="text-muted-foreground text-sm">
-                      To build a generation of ethical, confident, and socially responsible student leaders across South Africa.
+                      To build a generation of ethical, confident, and socially responsible student leaders across Africa.
                     </p>
                   </div>
                 </div>
