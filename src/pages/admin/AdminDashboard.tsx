@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   LogOut, 
   Search, 
@@ -43,7 +44,8 @@ import {
   RefreshCw,
   Download,
   BarChart3,
-  BookOpen
+  BookOpen,
+  CheckSquare
 } from "lucide-react";
 
 interface Application {
@@ -83,6 +85,7 @@ export default function AdminDashboard() {
   const [provinceFilter, setProvinceFilter] = useState<string>("all");
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Stats
   const [stats, setStats] = useState({
@@ -255,6 +258,105 @@ export default function AdminDashboard() {
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  // Bulk selection handlers
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredApplications.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredApplications.map(app => app.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const bulkUpdateStatus = async (newStatus: string) => {
+    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to update application status.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select applications to update.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      
+      const { error } = await supabase
+        .from("applications")
+        .update({ status: newStatus })
+        .in("id", idsArray);
+
+      if (error) throw error;
+
+      // Update local state
+      setApplications((prev) =>
+        prev.map((app) =>
+          selectedIds.has(app.id) ? { ...app, status: newStatus } : app
+        )
+      );
+
+      // Send email notifications for each application
+      const selectedApps = applications.filter(app => selectedIds.has(app.id));
+      for (const app of selectedApps) {
+        const referenceNumber = app.reference_number || app.id.slice(0, 8).toUpperCase();
+        
+        if (newStatus === "approved") {
+          supabase.functions.invoke("notify-applicant-approved", {
+            body: {
+              applicantEmail: app.student_email,
+              applicantName: app.full_name,
+              referenceNumber,
+            },
+          }).catch(err => console.error("Failed to send approval notification:", err));
+        } else if (newStatus === "rejected") {
+          supabase.functions.invoke("notify-applicant-rejected", {
+            body: {
+              applicantEmail: app.student_email,
+              applicantName: app.full_name,
+              referenceNumber,
+            },
+          }).catch(err => console.error("Failed to send rejection notification:", err));
+        }
+      }
+
+      // Clear selection
+      setSelectedIds(new Set());
+
+      toast({
+        title: "Bulk Update Complete",
+        description: `${idsArray.length} applications ${newStatus}.`,
+      });
+    } catch (error) {
+      console.error("Error updating applications:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update applications. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -507,6 +609,49 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
+        {/* Bulk Actions */}
+        {selectedIds.size > 0 && (
+          <Card className="mb-4 border-primary/50 bg-primary/5">
+            <CardContent className="py-3">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-primary" />
+                  <span className="font-medium">{selectedIds.size} selected</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => bulkUpdateStatus("approved")}
+                    disabled={isUpdating}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                    Approve Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => bulkUpdateStatus("rejected")}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
+                    Reject Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedIds(new Set())}
+                    disabled={isUpdating}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Applications Table */}
         <Card>
           <CardContent className="p-0">
@@ -524,6 +669,12 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={selectedIds.size === filteredApplications.length && filteredApplications.length > 0}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Ref</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead className="hidden md:table-cell">School</TableHead>
@@ -536,7 +687,13 @@ export default function AdminDashboard() {
                   </TableHeader>
                   <TableBody>
                     {filteredApplications.map((app) => (
-                      <TableRow key={app.id}>
+                      <TableRow key={app.id} className={selectedIds.has(app.id) ? "bg-primary/5" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.has(app.id)}
+                            onCheckedChange={() => toggleSelect(app.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
                             {app.reference_number || app.id.slice(0, 8).toUpperCase()}
