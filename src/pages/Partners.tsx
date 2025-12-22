@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { School, Users, Calendar, BookOpen, ArrowRight } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
+import { Link } from "react-router-dom";
 
 const partnershipTypes = [
   {
@@ -97,9 +98,11 @@ const Partners = () => {
               <p className="text-muted-foreground mb-6">
                 Interested in partnering with edLEAD? We'd love to discuss how we can work together to empower student leaders.
               </p>
-              <Button size="lg" className="w-full gap-2">
-                Contact Our Team
-                <ArrowRight className="h-4 w-4" />
+              <Button size="lg" className="w-full gap-2" asChild>
+                <Link to="/contact">
+                  Contact Our Team
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </div>
