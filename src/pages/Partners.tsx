@@ -144,7 +144,7 @@ const Partners = () => {
             {[
               { name: "Goodwall", logo: goodwallLogo, url: "https://www.goodwall.io/" },
               { name: "Yoma", logo: yomaLogo, url: "https://yoma.world/" },
-              { name: "ALX", logo: alxLogo, url: "https://www.alxafrica.com/" },
+              { name: "ALX", logo: alxLogo, url: "https://www.alxafrica.com/south-africa/" },
               { name: "NCUK", logo: ncukLogo, url: "https://www.ncuk.ac.uk/" },
               { name: "EduSchools", logo: eduschoolsLogo, url: "https://eduschools.co.za" },
               { name: "AWS", logo: awsLogo, url: "https://aws.amazon.com/" },
