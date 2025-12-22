@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ interface BlogPost {
   approved_at: string;
   featured_image_url: string | null;
   slug: string;
+  category: string;
 }
 
 const BlogPost = () => {
@@ -168,6 +170,9 @@ const BlogPost = () => {
 
         {/* Header */}
         <header className="mb-8">
+          <Badge variant="secondary" className="mb-4">
+            {post.category}
+          </Badge>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
             {post.title}
           </h1>

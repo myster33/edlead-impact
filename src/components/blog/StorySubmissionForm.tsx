@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PenLine, Upload, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, PenLine, X, Image as ImageIcon } from "lucide-react";
 
 const provinces = [
   "Eastern Cape",
@@ -37,6 +37,15 @@ const provinces = [
   "Western Cape",
 ];
 
+export const categories = [
+  "Leadership",
+  "Impact Stories",
+  "Personal Growth",
+  "Academic Excellence",
+  "Community Projects",
+  "Tips & Advice",
+];
+
 const storySchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters").max(150, "Title must be less than 150 characters"),
   summary: z.string().min(50, "Summary must be at least 50 characters").max(300, "Summary must be less than 300 characters"),
@@ -45,6 +54,7 @@ const storySchema = z.object({
   author_school: z.string().min(2, "School name must be at least 2 characters").max(200, "School name must be less than 200 characters"),
   author_province: z.string().min(1, "Please select your province"),
   author_email: z.string().email("Please enter a valid email address"),
+  category: z.string().min(1, "Please select a category"),
 });
 
 type StoryFormData = z.infer<typeof storySchema>;
@@ -157,6 +167,7 @@ export const StorySubmissionForm = () => {
         author_school: data.author_school,
         author_province: data.author_province,
         author_email: data.author_email,
+        category: data.category,
         featured_image_url: featuredImageUrl,
       });
 
@@ -208,6 +219,26 @@ export const StorySubmissionForm = () => {
             />
             {errors.title && (
               <p className="text-sm text-destructive">{errors.title.message}</p>
+            )}
+          </div>
+
+          {/* Category Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="category">Category *</Label>
+            <Select onValueChange={(value) => setValue("category", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category for your story" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.category && (
+              <p className="text-sm text-destructive">{errors.category.message}</p>
             )}
           </div>
 
