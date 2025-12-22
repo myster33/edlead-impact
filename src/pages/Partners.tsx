@@ -20,7 +20,6 @@ import goodwallLogo from "@/assets/partners/goodwall.png";
 import yomaLogo from "@/assets/partners/yoma.png";
 import alxLogo from "@/assets/partners/alx.jpg";
 import ncukLogo from "@/assets/partners/ncuk.png";
-import romasoftLogo from "@/assets/partners/romasoft.png";
 import eduschoolsLogo from "@/assets/partners/eduschools.jpg";
 
 const partnershipTypes = [
@@ -146,7 +145,6 @@ const Partners = () => {
               { name: "Yoma", logo: yomaLogo },
               { name: "ALX", logo: alxLogo },
               { name: "NCUK", logo: ncukLogo },
-              { name: "Romasoft", logo: romasoftLogo },
               { name: "EduSchools", logo: eduschoolsLogo },
             ].map((partner, index) => (
               <div
