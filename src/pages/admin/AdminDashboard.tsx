@@ -45,7 +45,9 @@ import {
   Download,
   BarChart3,
   BookOpen,
-  CheckSquare
+  CheckSquare,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 interface Application {
@@ -86,6 +88,8 @@ export default function AdminDashboard() {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Stats
   const [stats, setStats] = useState({
@@ -176,7 +180,15 @@ export default function AdminDashboard() {
     }
 
     setFilteredApplications(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
+  const paginatedApplications = filteredApplications.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const updateApplicationStatus = async (id: string, newStatus: string) => {
     if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
@@ -665,14 +677,27 @@ export default function AdminDashboard() {
                 <p>No applications found</p>
               </div>
             ) : (
+              <>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedIds.size === filteredApplications.length && filteredApplications.length > 0}
-                          onCheckedChange={toggleSelectAll}
+                          checked={selectedIds.size === paginatedApplications.length && paginatedApplications.length > 0}
+                          onCheckedChange={() => {
+                            if (selectedIds.size === paginatedApplications.length) {
+                              // Deselect all on current page
+                              const newSelected = new Set(selectedIds);
+                              paginatedApplications.forEach(app => newSelected.delete(app.id));
+                              setSelectedIds(newSelected);
+                            } else {
+                              // Select all on current page
+                              const newSelected = new Set(selectedIds);
+                              paginatedApplications.forEach(app => newSelected.add(app.id));
+                              setSelectedIds(newSelected);
+                            }
+                          }}
                         />
                       </TableHead>
                       <TableHead>Ref</TableHead>
@@ -686,7 +711,7 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredApplications.map((app) => (
+                    {paginatedApplications.map((app) => (
                       <TableRow key={app.id} className={selectedIds.has(app.id) ? "bg-primary/5" : ""}>
                         <TableCell>
                           <Checkbox
@@ -727,6 +752,75 @@ export default function AdminDashboard() {
                   </TableBody>
                 </Table>
               </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredApplications.length)} of {filteredApplications.length}
+                    </span>
+                    <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                      <SelectTrigger className="w-[70px] h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span>per page</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            className="w-8 h-8 p-0"
+                            onClick={() => setCurrentPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
             )}
           </CardContent>
         </Card>
