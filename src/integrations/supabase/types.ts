@@ -221,6 +221,63 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          author_email: string
+          author_name: string
+          author_province: string
+          author_school: string
+          content: string
+          created_at: string
+          featured_image_url: string | null
+          id: string
+          slug: string | null
+          status: string
+          submitted_at: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_email: string
+          author_name: string
+          author_province: string
+          author_school: string
+          content: string
+          created_at?: string
+          featured_image_url?: string | null
+          id?: string
+          slug?: string | null
+          status?: string
+          submitted_at?: string
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          author_email?: string
+          author_name?: string
+          author_province?: string
+          author_school?: string
+          content?: string
+          created_at?: string
+          featured_image_url?: string | null
+          id?: string
+          slug?: string | null
+          status?: string
+          submitted_at?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

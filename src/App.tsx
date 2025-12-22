@@ -13,6 +13,7 @@ import Admissions from "./pages/Admissions";
 import ApplicationForm from "./pages/ApplicationForm";
 import Impact from "./pages/Impact";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import Partners from "./pages/Partners";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
@@ -23,6 +24,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminBlogManagement from "./pages/admin/AdminBlogManagement";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,7 @@ const App = () => (
             <Route path="/apply" element={<ApplicationForm />} />
             <Route path="/impact" element={<Impact />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/partners" element={<Partners />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy" element={<Privacy />} />
@@ -52,6 +55,14 @@ const App = () => (
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
               path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
@@ -71,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AdminAnalytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/blog"
+              element={
+                <ProtectedRoute>
+                  <AdminBlogManagement />
                 </ProtectedRoute>
               }
             />
