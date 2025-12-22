@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,11 +78,16 @@ export const Navbar = () => {
                       to="/programme"
                       className="block w-[340px] p-4 bg-background rounded-lg no-underline outline-none transition-colors hover:bg-accent focus:bg-accent"
                     >
-                      <img 
-                        src={programmeConference} 
-                        alt="Student leadership conference" 
-                        className="w-full h-40 object-cover rounded-md mb-3"
-                      />
+                      <div className="relative">
+                        <img 
+                          src={programmeConference} 
+                          alt="Student leadership conference" 
+                          className="w-full h-40 object-cover rounded-md"
+                        />
+                        <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
+                          Applications Open
+                        </Badge>
+                      </div>
                       <div className="text-base font-semibold text-foreground mb-1">
                         Leadership Programme
                       </div>
