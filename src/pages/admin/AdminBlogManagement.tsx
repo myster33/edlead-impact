@@ -129,13 +129,15 @@ const AdminBlogManagement = () => {
 
   const handleApprove = async (post: BlogPost) => {
     setSaving(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("blog_posts")
       .update({ 
         status: "approved", 
         approved_at: new Date().toISOString() 
       })
-      .eq("id", post.id);
+      .eq("id", post.id)
+      .select("slug")
+      .single();
 
     if (error) {
       toast({
@@ -144,9 +146,21 @@ const AdminBlogManagement = () => {
         variant: "destructive",
       });
     } else {
+      // Send approval notification to author (fire and forget)
+      supabase.functions.invoke("notify-author-approval", {
+        body: {
+          author_email: post.author_email,
+          author_name: post.author_name,
+          title: post.title,
+          slug: data?.slug || post.slug,
+        },
+      }).catch((err) => {
+        console.error("Failed to send author notification:", err);
+      });
+
       toast({
         title: "Post Approved",
-        description: "The blog post has been published.",
+        description: "The blog post has been published and the author has been notified.",
       });
       fetchPosts();
     }
