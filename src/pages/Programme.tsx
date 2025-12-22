@@ -44,7 +44,7 @@ const Programme = () => {
               {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
-              A year-long journey of growth, mentorship, and impact for aspiring student leaders.
+              A three-month journey of growth, mentorship, and impact for aspiring student leaders.
             </p>
           </div>
         </div>
@@ -56,7 +56,7 @@ const Programme = () => {
           <div className="max-w-3xl mx-auto text-center mb-16">
             <h2 className="text-3xl font-bold text-foreground mb-6">Programme Overview</h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              edLEAD selects learners nominated by their schools to become <strong className="text-foreground">edLEAD Captains</strong>. Captains participate in a structured, year-long programme combining mentorship, training, collaboration, and practical leadership experience.
+              edLEAD selects learners nominated by their schools to become <strong className="text-foreground">edLEAD Captains</strong>. Captains participate in a structured, three-month programme combining mentorship, training, collaboration, and practical leadership experience.
             </p>
           </div>
 

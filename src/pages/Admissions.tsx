@@ -8,7 +8,7 @@ const requirements = [
   "High school learners (Grades 7–12)",
   "Nominated by their school",
   "Demonstrated leadership potential or commitment to positive change",
-  "Willingness to participate in year-long programme",
+  "Willingness to participate in three-month programme",
   "Commitment to complete school-based projects",
 ];
 

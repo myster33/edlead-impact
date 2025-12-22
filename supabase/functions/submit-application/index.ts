@@ -497,6 +497,70 @@ const handler = async (req: Request): Promise<Response> => {
       // Continue - don't fail the whole submission for email failure
     }
 
+    // Send notification email to admin
+    const adminNotificationHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
+          .content { padding: 30px; background: #f9f9f9; }
+          .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+          h1 { margin: 0; }
+          .highlight { background: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          td { padding: 8px; border-bottom: 1px solid #ddd; }
+          td:first-child { font-weight: bold; width: 40%; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Application Received</h1>
+          </div>
+          <div class="content">
+            <div class="highlight">
+              <strong>Reference Number:</strong> ${referenceNumber}<br>
+              <strong>Submitted:</strong> ${new Date().toLocaleDateString('en-ZA', { dateStyle: 'full', timeStyle: 'short' })}
+            </div>
+            
+            <table>
+              <tr><td>Applicant Name</td><td>${applicationData.full_name}</td></tr>
+              <tr><td>Student Email</td><td>${applicationData.student_email}</td></tr>
+              <tr><td>School</td><td>${applicationData.school_name}</td></tr>
+              <tr><td>Grade</td><td>${applicationData.grade}</td></tr>
+              <tr><td>Country</td><td>${applicationData.country || 'South Africa'}</td></tr>
+              <tr><td>Province/Region</td><td>${applicationData.province}</td></tr>
+              <tr><td>Nominating Teacher</td><td>${applicationData.nominating_teacher}</td></tr>
+              <tr><td>Parent/Guardian</td><td>${applicationData.parent_name} (${applicationData.parent_relationship})</td></tr>
+            </table>
+            
+            <p style="margin-top: 20px;">
+              View and manage this application in the admin dashboard.
+            </p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} edLEAD for Student Leaders. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    try {
+      await sendEmail(
+        "info@edlead.co.za",
+        `[New Application] ${applicationData.full_name} - ${referenceNumber}`,
+        adminNotificationHtml
+      );
+      console.log("Admin notification email sent");
+    } catch (emailError) {
+      console.error("Failed to send admin notification email:", emailError);
+      // Continue - don't fail the submission
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
