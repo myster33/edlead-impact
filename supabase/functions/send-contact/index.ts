@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const FROM_EMAIL = "edLEAD <info@edlead.co.za>";
 const ADMIN_EMAIL = "info@edlead.co.za";
 
 const corsHeaders = {
@@ -26,6 +27,11 @@ const sanitizeString = (str: string, maxLength: number = 1000): string => {
 };
 
 async function sendEmail(to: string, subject: string, html: string) {
+  if (!RESEND_API_KEY) {
+    console.error("Missing RESEND_API_KEY secret");
+    throw new Error("missing_resend_api_key");
+  }
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -33,20 +39,30 @@ async function sendEmail(to: string, subject: string, html: string) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "edLEAD <onboarding@resend.dev>",
+      from: FROM_EMAIL,
       to: [to],
       subject,
       html,
     }),
   });
 
+  const text = await response.text();
+
   if (!response.ok) {
-    const error = await response.text();
-    console.error("Email send error:", error);
+    console.error("Email send error:", text);
+
+    if (response.status === 403 && text.includes("verify a domain")) {
+      throw new Error("resend_testing_mode");
+    }
+
     throw new Error("email_send_failed");
   }
 
-  return response.json();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { ok: true };
+  }
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -93,6 +109,14 @@ const handler = async (req: Request): Promise<Response> => {
     const sanitizedSubject = sanitizeString(subject, 200);
     const sanitizedMessage = sanitizeString(message, 5000);
 
+    const formattedDate = new Intl.DateTimeFormat("en-ZA", {
+      year: "numeric",
+      month: "long",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
+
     // Send notification email to admin
     const adminEmailHtml = `
       <!DOCTYPE html>
@@ -119,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
               <strong>From:</strong> ${sanitizedName}<br>
               <strong>Email:</strong> ${sanitizedEmail}<br>
               <strong>Subject:</strong> ${sanitizedSubject}<br>
-              <strong>Date:</strong> ${new Date().toLocaleString('en-ZA', { dateStyle: 'full', timeStyle: 'short' })}
+              <strong>Date:</strong> ${formattedDate}
             </div>
             
             <div class="message-box">
@@ -202,6 +226,24 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-contact function:", error);
+
+    if (error?.message === "resend_testing_mode") {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Email sending is in testing mode. Please verify the edlead.co.za domain in Resend and use a sender like info@edlead.co.za, then try again.",
+        }),
+        { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (error?.message === "missing_resend_api_key") {
+      return new Response(
+        JSON.stringify({ error: "Email service is not configured yet. Please try again later." }),
+        { status: 503, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Failed to send message. Please try again later." }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }

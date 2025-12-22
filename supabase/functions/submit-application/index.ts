@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const FROM_EMAIL = "edLEAD <info@edlead.co.za>";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -263,6 +264,11 @@ function sanitizeApplication(data: ApplicationData): ApplicationData {
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
+  if (!RESEND_API_KEY) {
+    console.error("Missing RESEND_API_KEY secret");
+    throw new Error("missing_resend_api_key");
+  }
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -270,7 +276,7 @@ async function sendEmail(to: string, subject: string, html: string) {
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "edLEAD <onboarding@resend.dev>",
+      from: FROM_EMAIL,
       to: [to],
       subject,
       html,
