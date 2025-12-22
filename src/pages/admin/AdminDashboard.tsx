@@ -42,7 +42,8 @@ import {
   Loader2,
   RefreshCw,
   Download,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from "lucide-react";
 
 interface Application {
@@ -314,6 +315,12 @@ export default function AdminDashboard() {
               <Link to="/admin/analytics">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Analytics
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/blog">
+                <BookOpen className="h-4 w-4 mr-2" />
+                Blog
               </Link>
             </Button>
             {adminUser?.role === "admin" && (
