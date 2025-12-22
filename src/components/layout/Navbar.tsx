@@ -67,12 +67,14 @@ export const Navbar = () => {
               
               {/* Programme Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className={`${
-                  location.pathname === "/programme" ? "text-primary" : ""
-                }`}>
-                  Programme
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <Link to="/programme">
+                  <NavigationMenuTrigger className={`${
+                    location.pathname === "/programme" ? "text-primary" : ""
+                  }`}>
+                    Programme
+                  </NavigationMenuTrigger>
+                </Link>
+                <NavigationMenuContent className="top-full">
                   <NavigationMenuLink asChild>
                     <Link
                       to="/programme"
@@ -101,12 +103,14 @@ export const Navbar = () => {
 
               {/* Get Started Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className={`${
-                  location.pathname === "/admissions" ? "text-primary" : ""
-                }`}>
-                  Get Started
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <Link to="/admissions">
+                  <NavigationMenuTrigger className={`${
+                    location.pathname === "/admissions" ? "text-primary" : ""
+                  }`}>
+                    Get Started
+                  </NavigationMenuTrigger>
+                </Link>
+                <NavigationMenuContent className="top-full">
                   <NavigationMenuLink asChild>
                     <Link
                       to="/admissions"
@@ -135,12 +139,14 @@ export const Navbar = () => {
 
               {/* Our Impact Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className={`${
-                  location.pathname === "/impact" ? "text-primary" : ""
-                }`}>
-                  Our Impact
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <Link to="/impact">
+                  <NavigationMenuTrigger className={`${
+                    location.pathname === "/impact" ? "text-primary" : ""
+                  }`}>
+                    Our Impact
+                  </NavigationMenuTrigger>
+                </Link>
+                <NavigationMenuContent className="top-full">
                   <NavigationMenuLink asChild>
                     <Link
                       to="/impact"
@@ -166,12 +172,14 @@ export const Navbar = () => {
 
               {/* Leaders' Blogs Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger className={`${
-                  location.pathname === "/blog" ? "text-primary" : ""
-                }`}>
-                  Leaders' Blogs
-                </NavigationMenuTrigger>
-                <NavigationMenuContent>
+                <Link to="/blog">
+                  <NavigationMenuTrigger className={`${
+                    location.pathname === "/blog" ? "text-primary" : ""
+                  }`}>
+                    Leaders' Blogs
+                  </NavigationMenuTrigger>
+                </Link>
+                <NavigationMenuContent className="top-full">
                   <NavigationMenuLink asChild>
                     <Link
                       to="/blog"
