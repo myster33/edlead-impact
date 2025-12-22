@@ -21,6 +21,7 @@ import yomaLogo from "@/assets/partners/yoma.png";
 import alxLogo from "@/assets/partners/alx.jpg";
 import ncukLogo from "@/assets/partners/ncuk.png";
 import eduschoolsLogo from "@/assets/partners/eduschools.jpg";
+import awsLogo from "@/assets/partners/aws.png";
 
 const partnershipTypes = [
   {
@@ -146,6 +147,7 @@ const Partners = () => {
               { name: "ALX", logo: alxLogo },
               { name: "NCUK", logo: ncukLogo },
               { name: "EduSchools", logo: eduschoolsLogo },
+              { name: "AWS", logo: awsLogo },
             ].map((partner, index) => (
               <div
                 key={index}
