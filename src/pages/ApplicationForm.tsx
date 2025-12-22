@@ -347,6 +347,61 @@ const ApplicationForm = () => {
     });
   }, [toast]);
 
+  const resetForm = useCallback(() => {
+    setFormData({
+      full_name: "",
+      date_of_birth: "",
+      gender: "",
+      grade: "",
+      school_name: "",
+      school_address: "",
+      country: "South Africa",
+      province: "",
+      student_email: "",
+      student_phone: "",
+      parent_name: "",
+      parent_relationship: "",
+      parent_email: "",
+      parent_phone: "",
+      parent_consent: "",
+      nominating_teacher: "",
+      teacher_position: "",
+      school_email: "",
+      school_contact: "",
+      formally_nominated: "",
+      is_learner_leader: "",
+      leader_roles: "",
+      school_activities: "",
+      why_edlead: "",
+      leadership_meaning: "",
+      school_challenge: "",
+      project_idea: "",
+      project_problem: "",
+      project_benefit: "",
+      project_team: "",
+      manage_schoolwork: "",
+      academic_importance: "",
+      willing_to_commit: "",
+      has_device_access: "",
+      learner_signature: "",
+      learner_signature_date: "",
+      parent_signature_name: "",
+      parent_signature: "",
+      parent_signature_date: "",
+      video_link: "",
+    });
+    setDeclarations({
+      declaration1: false,
+      declaration2: false,
+      parentConsentFinal: false,
+    });
+    setIsSubmitted(false);
+    setApplicationRef("");
+    setHasDraft(false);
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     clearError(field);
@@ -656,9 +711,13 @@ const ApplicationForm = () => {
                   <p className="text-2xl font-mono font-bold">{applicationRef}</p>
                 </div>
               )}
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-6">
                 Please keep this reference number for your records. Our team will review your application and contact you regarding the next steps.
               </p>
+              <Button onClick={resetForm} className="gap-2">
+                <Send className="h-4 w-4" />
+                Submit Another Application
+              </Button>
             </div>
           </div>
         </section>
