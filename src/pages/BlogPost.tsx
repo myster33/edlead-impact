@@ -28,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface BlogPost {
+interface BlogPostData {
   id: string;
   title: string;
   summary: string;
@@ -42,9 +42,20 @@ interface BlogPost {
   category: string;
 }
 
+interface RelatedPost {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  author_name: string;
+  featured_image_url: string | null;
+  category: string;
+}
+
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
-  const [post, setPost] = useState<BlogPost | null>(null);
+  const [post, setPost] = useState<BlogPostData | null>(null);
+  const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -66,6 +77,18 @@ const BlogPost = () => {
         setNotFound(true);
       } else {
         setPost(data);
+        
+        // Fetch related posts in the same category
+        const { data: related } = await supabase
+          .from("blog_posts")
+          .select("id, slug, title, summary, author_name, featured_image_url, category")
+          .eq("status", "approved")
+          .eq("category", data.category)
+          .neq("id", data.id)
+          .order("approved_at", { ascending: false })
+          .limit(3);
+        
+        setRelatedPosts(related || []);
       }
       setLoading(false);
     };
@@ -315,6 +338,45 @@ const BlogPost = () => {
             </DropdownMenu>
           </div>
         </footer>
+
+        {/* Related Stories */}
+        {relatedPosts.length > 0 && (
+          <section className="mt-16 pt-8 border-t">
+            <h2 className="text-2xl font-bold mb-6">Related Stories</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {relatedPosts.map((relatedPost) => (
+                <Link 
+                  key={relatedPost.id} 
+                  to={`/blog/${relatedPost.slug}`}
+                  className="group"
+                >
+                  <div className="bg-card border rounded-lg overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1">
+                    {relatedPost.featured_image_url && (
+                      <div className="h-32 overflow-hidden">
+                        <img
+                          src={relatedPost.featured_image_url}
+                          alt={relatedPost.title}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <Badge variant="secondary" className="mb-2 text-xs">
+                        {relatedPost.category}
+                      </Badge>
+                      <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                        {relatedPost.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        By {relatedPost.author_name}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </article>
     </Layout>
   );
