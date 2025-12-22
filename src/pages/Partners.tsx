@@ -142,15 +142,18 @@ const Partners = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center justify-items-center max-w-5xl mx-auto">
             {[
-              { name: "Goodwall", logo: goodwallLogo },
-              { name: "Yoma", logo: yomaLogo },
-              { name: "ALX", logo: alxLogo },
-              { name: "NCUK", logo: ncukLogo },
-              { name: "EduSchools", logo: eduschoolsLogo },
-              { name: "AWS", logo: awsLogo },
+              { name: "Goodwall", logo: goodwallLogo, url: "https://www.goodwall.io/" },
+              { name: "Yoma", logo: yomaLogo, url: "https://yoma.world/" },
+              { name: "ALX", logo: alxLogo, url: "https://www.alxafrica.com/" },
+              { name: "NCUK", logo: ncukLogo, url: "https://www.ncuk.ac.uk/" },
+              { name: "EduSchools", logo: eduschoolsLogo, url: "https://eduschools.co.za" },
+              { name: "AWS", logo: awsLogo, url: "https://aws.amazon.com/" },
             ].map((partner, index) => (
-              <div
+              <a
                 key={index}
+                href={partner.url}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-32 h-24 rounded-xl bg-background border border-border flex items-center justify-center p-4 hover:border-primary/30 hover:shadow-md transition-all"
                 title={partner.name}
               >
@@ -159,7 +162,7 @@ const Partners = () => {
                   alt={partner.name} 
                   className="max-w-full max-h-full object-contain"
                 />
-              </div>
+              </a>
             ))}
           </div>
           <p className="text-center text-sm text-muted-foreground mt-8">
