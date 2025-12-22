@@ -5,7 +5,7 @@ import { Calendar, Monitor, Users, Award, FileText, ArrowRight } from "lucide-re
 const features = [
   {
     icon: Calendar,
-    title: "Year-Long Programme",
+    title: "Three-Month Programme",
     description: "A comprehensive hybrid leadership journey",
   },
   {
@@ -40,7 +40,7 @@ export const ProgrammeSnapshot = () => {
               Programme Snapshot
             </h2>
             <p className="text-secondary-foreground/80 text-lg mb-8 leading-relaxed">
-              edLEAD Captains participate in a structured, year-long programme combining mentorship, training, collaboration, and practical leadership experience.
+              edLEAD Captains participate in a structured, three-month programme combining mentorship, training, collaboration, and practical leadership experience.
             </p>
             <Link to="/programme">
               <Button size="lg" className="gap-2">

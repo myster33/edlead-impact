@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Mail, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import edleadLogoWhite from "@/assets/edlead-logo-white.png";
 
 const footerLinks = {
@@ -87,14 +87,8 @@ export const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-sm text-secondary-foreground/70">
                 <Mail className="h-4 w-4 text-primary" />
-                <a href="mailto:info@edlead.org" className="hover:text-primary transition-colors">
-                  info@edlead.org
-                </a>
-              </li>
-              <li className="flex items-center gap-3 text-sm text-secondary-foreground/70">
-                <Phone className="h-4 w-4 text-primary" />
-                <a href="tel:+27123456789" className="hover:text-primary transition-colors">
-                  +27 12 345 6789
+                <a href="mailto:info@edlead.co.za" className="hover:text-primary transition-colors">
+                  info@edlead.co.za
                 </a>
               </li>
             </ul>

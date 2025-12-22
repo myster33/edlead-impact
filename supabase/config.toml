@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.check-application-status]
 verify_jwt = false
+
+[functions.send-contact]
+verify_jwt = false

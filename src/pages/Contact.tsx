@@ -2,13 +2,15 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
+import { supabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const { displayedText } = useTypingAnimation("Contact Us", 50);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,10 +18,25 @@ const Contact = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Thank you for your message! We'll get back to you soon.");
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      toast.success("Thank you for your message! We'll get back to you soon.");
+      setFormData({ name: "", email: "", subject: "", message: "" });
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      toast.error(error.message || "Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,6 +73,7 @@ const Contact = () => {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div>
@@ -68,6 +86,7 @@ const Contact = () => {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -80,6 +99,7 @@ const Contact = () => {
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -92,10 +112,11 @@ const Contact = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
-                <Button type="submit" size="lg" className="w-full">
-                  Send Message
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </div>
@@ -110,19 +131,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">Email</h3>
-                    <a href="mailto:info@edlead.org" className="text-muted-foreground hover:text-primary transition-colors">
-                      info@edlead.org
-                    </a>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-                    <Phone className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">Phone</h3>
-                    <a href="tel:+27123456789" className="text-muted-foreground hover:text-primary transition-colors">
-                      +27 12 345 6789
+                    <a href="mailto:info@edlead.co.za" className="text-muted-foreground hover:text-primary transition-colors">
+                      info@edlead.co.za
                     </a>
                   </div>
                 </div>

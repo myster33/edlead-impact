@@ -173,8 +173,7 @@ const Terms = () => {
               </p>
               <div className="bg-muted p-6 rounded-lg mt-4">
                 <p className="text-foreground font-semibold">edLEAD for Student Leaders</p>
-                <p className="text-muted-foreground">Email: info@edlead.org</p>
-                <p className="text-muted-foreground">Phone: +27 12 345 6789</p>
+                <p className="text-muted-foreground">Email: info@edlead.co.za</p>
               </div>
             </div>
           </div>
