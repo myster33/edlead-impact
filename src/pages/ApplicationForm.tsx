@@ -28,7 +28,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { FormFieldWrapper } from "@/components/form/FormFieldWrapper";
-import { Send, CheckCircle, Circle, Save, Trash2, Search } from "lucide-react";
+import { Send, CheckCircle, Circle, Save, Trash2, Search, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -1465,7 +1465,10 @@ const ApplicationForm = () => {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  "Submitting..."
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Submitting...
+                  </>
                 ) : (
                   <>
                     <Send className="mr-2 h-5 w-5" />
