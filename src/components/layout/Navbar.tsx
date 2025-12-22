@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -26,6 +26,11 @@ const navLinks = [
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleTriggerClick = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -67,14 +72,13 @@ export const Navbar = () => {
               
               {/* Programme Dropdown */}
               <NavigationMenuItem>
-                <Link to="/programme">
-                  <NavigationMenuTrigger className={`${
-                    location.pathname === "/programme" ? "text-primary" : ""
-                  }`}>
-                    Programme
-                  </NavigationMenuTrigger>
-                </Link>
-                <NavigationMenuContent className="top-full">
+                <NavigationMenuTrigger 
+                  onClick={() => handleTriggerClick("/programme")}
+                  className={`${location.pathname === "/programme" ? "text-primary" : ""}`}
+                >
+                  Programme
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
                       to="/programme"
@@ -103,14 +107,13 @@ export const Navbar = () => {
 
               {/* Get Started Dropdown */}
               <NavigationMenuItem>
-                <Link to="/admissions">
-                  <NavigationMenuTrigger className={`${
-                    location.pathname === "/admissions" ? "text-primary" : ""
-                  }`}>
-                    Get Started
-                  </NavigationMenuTrigger>
-                </Link>
-                <NavigationMenuContent className="top-full">
+                <NavigationMenuTrigger 
+                  onClick={() => handleTriggerClick("/admissions")}
+                  className={`${location.pathname === "/admissions" ? "text-primary" : ""}`}
+                >
+                  Get Started
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
                       to="/admissions"
@@ -139,14 +142,13 @@ export const Navbar = () => {
 
               {/* Our Impact Dropdown */}
               <NavigationMenuItem>
-                <Link to="/impact">
-                  <NavigationMenuTrigger className={`${
-                    location.pathname === "/impact" ? "text-primary" : ""
-                  }`}>
-                    Our Impact
-                  </NavigationMenuTrigger>
-                </Link>
-                <NavigationMenuContent className="top-full">
+                <NavigationMenuTrigger 
+                  onClick={() => handleTriggerClick("/impact")}
+                  className={`${location.pathname === "/impact" ? "text-primary" : ""}`}
+                >
+                  Our Impact
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
                       to="/impact"
@@ -172,14 +174,13 @@ export const Navbar = () => {
 
               {/* Leaders' Blogs Dropdown */}
               <NavigationMenuItem>
-                <Link to="/blog">
-                  <NavigationMenuTrigger className={`${
-                    location.pathname === "/blog" ? "text-primary" : ""
-                  }`}>
-                    Leaders' Blogs
-                  </NavigationMenuTrigger>
-                </Link>
-                <NavigationMenuContent className="top-full">
+                <NavigationMenuTrigger 
+                  onClick={() => handleTriggerClick("/blog")}
+                  className={`${location.pathname === "/blog" ? "text-primary" : ""}`}
+                >
+                  Leaders' Blogs
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
                       to="/blog"
