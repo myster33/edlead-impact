@@ -91,10 +91,26 @@ export default function AdminDashboard() {
     approved: 0,
     rejected: 0,
   });
+  const [pendingBlogPosts, setPendingBlogPosts] = useState(0);
 
   useEffect(() => {
     fetchApplications();
+    fetchPendingBlogPosts();
   }, []);
+
+  const fetchPendingBlogPosts = async () => {
+    try {
+      const { count, error } = await supabase
+        .from("blog_posts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+
+      if (error) throw error;
+      setPendingBlogPosts(count || 0);
+    } catch (error) {
+      console.error("Error fetching pending blog posts:", error);
+    }
+  };
 
   useEffect(() => {
     filterApplications();
@@ -344,7 +360,7 @@ export default function AdminDashboard() {
 
       <main className="container px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Applications</CardDescription>
@@ -380,6 +396,20 @@ export default function AdminDashboard() {
                 {stats.rejected}
               </CardTitle>
             </CardHeader>
+          </Card>
+          <Card className="border-orange-200 bg-orange-50/50 dark:border-orange-900 dark:bg-orange-950/20">
+            <CardHeader className="pb-2">
+              <CardDescription>Pending Blog Posts</CardDescription>
+              <CardTitle className="text-3xl flex items-center gap-2">
+                <BookOpen className="h-6 w-6 text-orange-500" />
+                {pendingBlogPosts}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Link to="/admin/blog" className="text-sm text-orange-600 hover:underline">
+                Review posts →
+              </Link>
+            </CardContent>
           </Card>
         </div>
 
