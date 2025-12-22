@@ -402,9 +402,21 @@ const ApplicationForm = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     clearError(field);
+  };
+
+  const validateEmailRealtime = (field: keyof FormData, value: string, label: string) => {
+    if (value && !emailRegex.test(value)) {
+      validateSingleField(field, value, label, "email");
+    } else if (value) {
+      clearError(field);
+    }
   };
 
   const validateEmailOnBlur = (field: keyof FormData, label: string) => {
@@ -503,7 +515,7 @@ const ApplicationForm = () => {
   const completedSections = sectionStatuses.filter(s => s.complete).length;
   const totalSections = sectionStatuses.length;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const normalizedFormData = {
@@ -577,7 +589,19 @@ const ApplicationForm = () => {
       return;
     }
 
+    // Show confirmation dialog
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setShowConfirmDialog(false);
     setIsSubmitting(true);
+
+    const normalizedFormData = {
+      ...formData,
+      grade: normalizeGradeValue(formData.grade),
+      province: normalizeRegionValue(formData.country, formData.province),
+    };
 
     try {
       const applicationPayload = {
@@ -837,7 +861,7 @@ const ApplicationForm = () => {
       {/* Form Section */}
       <section className="py-12 bg-muted/30">
         <div className="container max-w-4xl">
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handlePreSubmit} className="space-y-8">
             {/* Section 1: Learner Information */}
             <Card id="section-1">
               <CardHeader>
@@ -976,7 +1000,10 @@ const ApplicationForm = () => {
                       type="email" 
                       placeholder="your.email@example.com"
                       value={formData.student_email}
-                      onChange={(e) => updateField("student_email", e.target.value)}
+                      onChange={(e) => {
+                        updateField("student_email", e.target.value);
+                        validateEmailRealtime("student_email", e.target.value, "Student Email");
+                      }}
                       onBlur={() => validateEmailOnBlur("student_email", "Student Email")}
                       className={cn(hasError("student_email") && "border-destructive")}
                     />
@@ -1043,7 +1070,10 @@ const ApplicationForm = () => {
                       type="email" 
                       placeholder="parent.email@example.com"
                       value={formData.parent_email}
-                      onChange={(e) => updateField("parent_email", e.target.value)}
+                      onChange={(e) => {
+                        updateField("parent_email", e.target.value);
+                        validateEmailRealtime("parent_email", e.target.value, "Parent/Guardian Email");
+                      }}
                       onBlur={() => validateEmailOnBlur("parent_email", "Parent/Guardian Email")}
                       className={cn(hasError("parent_email") && "border-destructive")}
                     />
@@ -1128,7 +1158,10 @@ const ApplicationForm = () => {
                       type="email" 
                       placeholder="teacher@school.edu.za"
                       value={formData.school_email}
-                      onChange={(e) => updateField("school_email", e.target.value)}
+                      onChange={(e) => {
+                        updateField("school_email", e.target.value);
+                        validateEmailRealtime("school_email", e.target.value, "School Email");
+                      }}
                       onBlur={() => validateEmailOnBlur("school_email", "School Email")}
                       className={cn(hasError("school_email") && "border-destructive")}
                     />
@@ -1531,12 +1564,87 @@ const ApplicationForm = () => {
                 ) : (
                   <>
                     <Send className="mr-2 h-5 w-5" />
-                    Submit Application
+                    Review & Submit
                   </>
                 )}
               </Button>
             </div>
           </form>
+
+          {/* Confirmation Dialog */}
+          <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+            <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Review Your Application</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Please review your details before submitting. You cannot edit your application after submission.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium text-foreground">Full Name</p>
+                      <p className="text-muted-foreground">{formData.full_name}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Date of Birth</p>
+                      <p className="text-muted-foreground">{formData.date_of_birth}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Grade</p>
+                      <p className="text-muted-foreground">{formData.grade}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">School</p>
+                      <p className="text-muted-foreground">{formData.school_name}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Location</p>
+                      <p className="text-muted-foreground">{formData.province}, {formData.country}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-medium text-foreground">Student Email</p>
+                      <p className="text-muted-foreground">{formData.student_email}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Student Phone</p>
+                      <p className="text-muted-foreground">{formData.student_phone}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Parent/Guardian</p>
+                      <p className="text-muted-foreground">{formData.parent_name} ({formData.parent_relationship})</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Parent Email</p>
+                      <p className="text-muted-foreground">{formData.parent_email}</p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Nominating Teacher</p>
+                      <p className="text-muted-foreground">{formData.nominating_teacher}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel>Go Back & Edit</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Confirm & Submit"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </section>
     </Layout>
