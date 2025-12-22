@@ -15,6 +15,14 @@ import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+// Partner logos
+import goodwallLogo from "@/assets/partners/goodwall.png";
+import yomaLogo from "@/assets/partners/yoma.png";
+import alxLogo from "@/assets/partners/alx.jpg";
+import ncukLogo from "@/assets/partners/ncuk.png";
+import romasoftLogo from "@/assets/partners/romasoft.png";
+import eduschoolsLogo from "@/assets/partners/eduschools.jpg";
+
 const partnershipTypes = [
   {
     icon: School,
@@ -132,21 +140,25 @@ const Partners = () => {
               Proudly working with leading organizations committed to youth development
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center justify-items-center max-w-5xl mx-auto">
             {[
-              { name: "Department of Education", abbr: "DoE" },
-              { name: "UNICEF", abbr: "UNICEF" },
-              { name: "Save the Children", abbr: "STC" },
-              { name: "World Vision", abbr: "WV" },
-              { name: "MTN Foundation", abbr: "MTN" },
-              { name: "Standard Bank", abbr: "SB" },
+              { name: "Goodwall", logo: goodwallLogo },
+              { name: "Yoma", logo: yomaLogo },
+              { name: "ALX", logo: alxLogo },
+              { name: "NCUK", logo: ncukLogo },
+              { name: "Romasoft", logo: romasoftLogo },
+              { name: "EduSchools", logo: eduschoolsLogo },
             ].map((partner, index) => (
               <div
                 key={index}
-                className="w-28 h-28 rounded-xl bg-background border border-border flex items-center justify-center p-4 hover:border-primary/30 hover:shadow-md transition-all"
+                className="w-32 h-24 rounded-xl bg-background border border-border flex items-center justify-center p-4 hover:border-primary/30 hover:shadow-md transition-all"
                 title={partner.name}
               >
-                <span className="text-xl font-bold text-muted-foreground/70">{partner.abbr}</span>
+                <img 
+                  src={partner.logo} 
+                  alt={partner.name} 
+                  className="max-w-full max-h-full object-contain"
+                />
               </div>
             ))}
           </div>
