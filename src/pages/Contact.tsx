@@ -112,7 +112,9 @@ const Contact = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     required
+                    minLength={5}
                     disabled={isSubmitting}
+                    placeholder="Please enter your message here (minimum 5 characters)"
                   />
                 </div>
                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
