@@ -9,7 +9,6 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import edleadLogo from "@/assets/edlead-logo.png";
 import programmeConference from "@/assets/programme-conference.jpg";
@@ -23,14 +22,34 @@ const navLinks = [
   { name: "Partners", path: "/partners" },
 ];
 
+interface DropdownTriggerProps {
+  to: string;
+  isActive: boolean;
+  children: React.ReactNode;
+}
+
+const DropdownTrigger = ({ to, isActive, children }: DropdownTriggerProps) => {
+  const navigate = useNavigate();
+  
+  return (
+    <button
+      onClick={() => navigate(to)}
+      className={`group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none ${
+        isActive ? "text-primary" : ""
+      }`}
+    >
+      {children}
+      <ChevronDown
+        className="relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180"
+        aria-hidden="true"
+      />
+    </button>
+  );
+};
+
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleTriggerClick = (path: string) => {
-    navigate(path);
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -72,12 +91,9 @@ export const Navbar = () => {
               
               {/* Programme Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger 
-                  onClick={() => handleTriggerClick("/programme")}
-                  className={`${location.pathname === "/programme" ? "text-primary" : ""}`}
-                >
+                <DropdownTrigger to="/programme" isActive={location.pathname === "/programme"}>
                   Programme
-                </NavigationMenuTrigger>
+                </DropdownTrigger>
                 <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
@@ -107,12 +123,9 @@ export const Navbar = () => {
 
               {/* Get Started Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger 
-                  onClick={() => handleTriggerClick("/admissions")}
-                  className={`${location.pathname === "/admissions" ? "text-primary" : ""}`}
-                >
+                <DropdownTrigger to="/admissions" isActive={location.pathname === "/admissions"}>
                   Get Started
-                </NavigationMenuTrigger>
+                </DropdownTrigger>
                 <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
@@ -142,12 +155,9 @@ export const Navbar = () => {
 
               {/* Our Impact Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger 
-                  onClick={() => handleTriggerClick("/impact")}
-                  className={`${location.pathname === "/impact" ? "text-primary" : ""}`}
-                >
+                <DropdownTrigger to="/impact" isActive={location.pathname === "/impact"}>
                   Our Impact
-                </NavigationMenuTrigger>
+                </DropdownTrigger>
                 <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
@@ -174,12 +184,9 @@ export const Navbar = () => {
 
               {/* Leaders' Blogs Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuTrigger 
-                  onClick={() => handleTriggerClick("/blog")}
-                  className={`${location.pathname === "/blog" ? "text-primary" : ""}`}
-                >
+                <DropdownTrigger to="/blog" isActive={location.pathname === "/blog"}>
                   Leaders' Blogs
-                </NavigationMenuTrigger>
+                </DropdownTrigger>
                 <NavigationMenuContent>
                   <NavigationMenuLink asChild>
                     <Link
