@@ -234,6 +234,7 @@ export type Database = {
           created_at: string
           featured_image_url: string | null
           id: string
+          is_featured: boolean
           slug: string | null
           status: string
           submitted_at: string
@@ -253,6 +254,7 @@ export type Database = {
           created_at?: string
           featured_image_url?: string | null
           id?: string
+          is_featured?: boolean
           slug?: string | null
           status?: string
           submitted_at?: string
@@ -272,6 +274,7 @@ export type Database = {
           created_at?: string
           featured_image_url?: string | null
           id?: string
+          is_featured?: boolean
           slug?: string | null
           status?: string
           submitted_at?: string
