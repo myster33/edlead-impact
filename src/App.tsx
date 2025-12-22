@@ -17,6 +17,7 @@ import Partners from "./pages/Partners";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import CheckStatus from "./pages/CheckStatus";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/check-status" element={<CheckStatus />} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
