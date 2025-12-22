@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/navigation-menu";
 import edleadLogo from "@/assets/edlead-logo.png";
 import programmeConference from "@/assets/programme-conference.jpg";
+import admissionsHero from "@/assets/admissions-hero.jpg";
 
 const navLinks = [
   { name: "Why edLEAD", path: "/" },
   { name: "About", path: "/about" },
-  { name: "Get Started", path: "/admissions" },
   { name: "Our Impact", path: "/impact" },
   { name: "Leaders' Blogs", path: "/blog" },
   { name: "Partners", path: "/partners" },
@@ -99,6 +99,40 @@ export const Navbar = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
+              {/* Get Started Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={`${
+                  location.pathname === "/admissions" ? "text-primary" : ""
+                }`}>
+                  Get Started
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      to="/admissions"
+                      className="group block w-[340px] p-4 bg-background rounded-lg no-underline outline-none transition-colors hover:bg-accent focus:bg-accent"
+                    >
+                      <div className="relative overflow-hidden rounded-md mb-3">
+                        <img 
+                          src={admissionsHero} 
+                          alt="Student leaders ready to apply" 
+                          className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground animate-pulse">
+                          Applications Open
+                        </Badge>
+                      </div>
+                      <div className="text-base font-semibold text-foreground mb-1">
+                        Apply Now
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Ready to lead? Check eligibility, gather your documents, and submit your application today.
+                      </p>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
               {navLinks.slice(2).map((link) => (
                 <NavigationMenuItem key={link.path}>
                   <Link
@@ -166,6 +200,19 @@ export const Navbar = () => {
                 }`}
               >
                 Programme
+              </Link>
+
+              {/* Get Started mobile link */}
+              <Link
+                to="/admissions"
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 text-sm font-medium rounded-md transition-colors ${
+                  location.pathname === "/admissions"
+                    ? "bg-accent text-primary"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                Get Started
               </Link>
 
               {navLinks.slice(2).map((link) => (
