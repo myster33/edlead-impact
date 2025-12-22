@@ -6,7 +6,8 @@ import { BlogCard } from "@/components/blog/BlogCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { BookOpen, Search } from "lucide-react";
 
 interface BlogPost {
   id: string;
@@ -26,6 +27,7 @@ const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -46,9 +48,13 @@ const Blog = () => {
     fetchPosts();
   }, []);
 
-  const filteredPosts = selectedCategory === "all" 
-    ? posts 
-    : posts.filter(post => post.category === selectedCategory);
+  const filteredPosts = posts.filter(post => {
+    const matchesCategory = selectedCategory === "all" || post.category === selectedCategory;
+    const matchesSearch = searchQuery === "" || 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.summary.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <Layout>
@@ -67,9 +73,21 @@ const Blog = () => {
         </div>
       </section>
 
-      {/* Category Filter */}
+      {/* Search and Category Filter */}
       <section className="py-8 border-b">
         <div className="container">
+          <div className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search stories by title or content..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2 justify-center">
             <Button
               variant={selectedCategory === "all" ? "default" : "outline"}
