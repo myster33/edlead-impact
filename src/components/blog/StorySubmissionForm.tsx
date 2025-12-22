@@ -173,6 +173,21 @@ export const StorySubmissionForm = () => {
 
       if (error) throw error;
 
+      // Notify admins about the new submission (fire and forget)
+      supabase.functions.invoke("notify-blog-submission", {
+        body: {
+          title: data.title,
+          author_name: data.author_name,
+          author_school: data.author_school,
+          author_province: data.author_province,
+          author_email: data.author_email,
+          category: data.category,
+          summary: data.summary,
+        },
+      }).catch((err) => {
+        console.error("Failed to send admin notification:", err);
+      });
+
       toast({
         title: "Story Submitted!",
         description: "Thank you for sharing your story. Our team will review it and get back to you soon.",
