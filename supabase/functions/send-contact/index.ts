@@ -119,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
               <strong>From:</strong> ${sanitizedName}<br>
               <strong>Email:</strong> ${sanitizedEmail}<br>
               <strong>Subject:</strong> ${sanitizedSubject}<br>
-              <strong>Date:</strong> ${new Date().toLocaleDateString('en-ZA', { dateStyle: 'full', timeStyle: 'short' })}
+              <strong>Date:</strong> ${new Date().toLocaleString('en-ZA', { dateStyle: 'full', timeStyle: 'short' })}
             </div>
             
             <div class="message-box">
