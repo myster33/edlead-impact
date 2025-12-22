@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MapPin, ArrowRight, Share2, Facebook, Twitter, Linkedin, Link as LinkIcon } from "lucide-react";
+import { Calendar, MapPin, ArrowRight, Share2, Facebook, Twitter, Linkedin, Link as LinkIcon, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -60,6 +60,9 @@ export const BlogCard = ({
         break;
       case "linkedin":
         url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+        break;
+      case "whatsapp":
+        url = `https://wa.me/?text=${encodeURIComponent(title + " " + shareUrl)}`;
         break;
       case "copy":
         navigator.clipboard.writeText(shareUrl);
@@ -124,6 +127,10 @@ export const BlogCard = ({
               <DropdownMenuItem onClick={(e) => handleShare("linkedin", e)}>
                 <Linkedin className="mr-2 h-4 w-4" />
                 LinkedIn
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => handleShare("whatsapp", e)}>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp
               </DropdownMenuItem>
               <DropdownMenuItem onClick={(e) => handleShare("copy", e)}>
                 <LinkIcon className="mr-2 h-4 w-4" />
