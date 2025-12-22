@@ -96,9 +96,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!message || message.trim().length < 10) {
+    if (!message || message.trim().length < 5) {
       return new Response(
-        JSON.stringify({ error: "Please provide a message (at least 10 characters)" }),
+        JSON.stringify({ error: "Please provide a message (at least 5 characters)" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
