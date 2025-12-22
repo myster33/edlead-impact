@@ -15,6 +15,7 @@ interface BlogCardProps {
   authorSchool: string;
   authorProvince: string;
   approvedAt: string;
+  category: string;
   featuredImageUrl?: string;
 }
 
@@ -26,6 +27,7 @@ export const BlogCard = ({
   authorSchool,
   authorProvince,
   approvedAt,
+  category,
   featuredImageUrl,
 }: BlogCardProps) => {
   const initials = authorName
@@ -44,9 +46,17 @@ export const BlogCard = ({
             alt={title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
+          <Badge className="absolute top-3 left-3 bg-primary text-primary-foreground">
+            {category}
+          </Badge>
         </div>
       )}
       <CardHeader className="pb-3">
+        {!featuredImageUrl && (
+          <Badge variant="secondary" className="w-fit mb-2">
+            {category}
+          </Badge>
+        )}
         <div className="flex items-center gap-3 mb-3">
           <Avatar className="h-10 w-10">
             <AvatarFallback className="bg-primary text-primary-foreground text-sm">

@@ -229,6 +229,7 @@ export type Database = {
           author_name: string
           author_province: string
           author_school: string
+          category: string
           content: string
           created_at: string
           featured_image_url: string | null
@@ -247,6 +248,7 @@ export type Database = {
           author_name: string
           author_province: string
           author_school: string
+          category?: string
           content: string
           created_at?: string
           featured_image_url?: string | null
@@ -265,6 +267,7 @@ export type Database = {
           author_name?: string
           author_province?: string
           author_school?: string
+          category?: string
           content?: string
           created_at?: string
           featured_image_url?: string | null

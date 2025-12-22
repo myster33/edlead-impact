@@ -43,6 +43,15 @@ import {
   ExternalLink 
 } from "lucide-react";
 
+const blogCategories = [
+  "Leadership",
+  "Impact Stories",
+  "Personal Growth",
+  "Academic Excellence",
+  "Community Projects",
+  "Tips & Advice",
+];
+
 interface BlogPost {
   id: string;
   title: string;
@@ -56,6 +65,7 @@ interface BlogPost {
   submitted_at: string;
   approved_at: string | null;
   slug: string;
+  category: string;
 }
 
 const AdminBlogManagement = () => {
@@ -74,6 +84,7 @@ const AdminBlogManagement = () => {
     title: "",
     summary: "",
     content: "",
+    category: "",
   });
 
   useEffect(() => {
@@ -169,6 +180,7 @@ const AdminBlogManagement = () => {
       title: post.title,
       summary: post.summary,
       content: post.content,
+      category: post.category,
     });
     setEditDialogOpen(true);
   };
@@ -183,6 +195,7 @@ const AdminBlogManagement = () => {
         title: editForm.title,
         summary: editForm.summary,
         content: editForm.content,
+        category: editForm.category,
       })
       .eq("id", selectedPost.id);
 
@@ -294,7 +307,7 @@ const AdminBlogManagement = () => {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Author</TableHead>
-                  <TableHead>School</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Submitted</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -307,7 +320,9 @@ const AdminBlogManagement = () => {
                       {post.title}
                     </TableCell>
                     <TableCell>{post.author_name}</TableCell>
-                    <TableCell className="max-w-xs truncate">{post.author_school}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{post.category}</Badge>
+                    </TableCell>
                     <TableCell>{getStatusBadge(post.status)}</TableCell>
                     <TableCell>
                       {format(new Date(post.submitted_at), "MMM d, yyyy")}
@@ -448,6 +463,24 @@ const AdminBlogManagement = () => {
                 value={editForm.title}
                 onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-category">Category</Label>
+              <Select 
+                value={editForm.category} 
+                onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {blogCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-summary">Summary</Label>
