@@ -1,8 +1,19 @@
+import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { School, Users, Calendar, BookOpen, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { School, Users, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
-import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const partnershipTypes = [
   {
@@ -27,8 +38,50 @@ const partnershipTypes = [
   },
 ];
 
+const partnershipOptions = [
+  "School Participation",
+  "Mentorship Support",
+  "Event Sponsorship",
+  "Leadership Resources",
+  "Other",
+];
+
 const Partners = () => {
   const { displayedText } = useTypingAnimation("Partner With edLEAD", 50);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    organization: "",
+    partnershipType: "",
+    message: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.functions.invoke('send-contact', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          subject: `Partnership Inquiry: ${formData.partnershipType} - ${formData.organization}`,
+          message: `Organization: ${formData.organization}\nPartnership Type: ${formData.partnershipType}\n\nMessage:\n${formData.message}`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Thank you for your interest! We'll be in touch soon.");
+      setFormData({ name: "", email: "", organization: "", partnershipType: "", message: "" });
+    } catch (error: any) {
+      console.error("Error sending inquiry:", error);
+      toast.error(error.message || "Failed to send inquiry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   return (
     <Layout>
@@ -93,17 +146,98 @@ const Partners = () => {
                 ))}
               </ul>
             </div>
+
+            {/* Partnership Inquiry Form */}
             <div className="bg-background rounded-2xl p-8 border border-border">
-              <h3 className="text-2xl font-bold text-foreground mb-4">Get in Touch</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-4">Partnership Inquiry</h3>
               <p className="text-muted-foreground mb-6">
-                Interested in partnering with edLEAD? We'd love to discuss how we can work together to empower student leaders.
+                Interested in partnering with edLEAD? Fill out the form below and we'll get in touch.
               </p>
-              <Button size="lg" className="w-full gap-2" asChild>
-                <Link to="/contact">
-                  Contact Our Team
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
+                    Your Name
+                  </label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                    Email Address
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="organization" className="block text-sm font-medium text-foreground mb-2">
+                    Organization Name
+                  </label>
+                  <Input
+                    id="organization"
+                    value={formData.organization}
+                    onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="partnershipType" className="block text-sm font-medium text-foreground mb-2">
+                    Partnership Interest
+                  </label>
+                  <Select
+                    value={formData.partnershipType}
+                    onValueChange={(value) => setFormData({ ...formData, partnershipType: value })}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select partnership type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {partnershipOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
+                    Message
+                  </label>
+                  <Textarea
+                    id="message"
+                    rows={4}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    required
+                    minLength={5}
+                    disabled={isSubmitting}
+                    placeholder="Tell us about your organization and how you'd like to partner with edLEAD"
+                  />
+                </div>
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Submit Inquiry"
+                  )}
+                </Button>
+              </form>
             </div>
           </div>
         </div>
