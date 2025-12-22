@@ -40,7 +40,8 @@ import {
   Edit, 
   Trash2, 
   Loader2,
-  ExternalLink 
+  ExternalLink,
+  Star
 } from "lucide-react";
 
 const blogCategories = [
@@ -66,6 +67,7 @@ interface BlogPost {
   approved_at: string | null;
   slug: string;
   category: string;
+  is_featured: boolean;
 }
 
 const AdminBlogManagement = () => {
@@ -242,6 +244,31 @@ const AdminBlogManagement = () => {
     setSaving(false);
   };
 
+  const handleToggleFeatured = async (post: BlogPost) => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ is_featured: !post.is_featured })
+      .eq("id", post.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update featured status.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: post.is_featured ? "Removed from Featured" : "Added to Featured",
+        description: post.is_featured 
+          ? "The post is no longer featured." 
+          : "The post will now appear in the Featured section.",
+      });
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -309,6 +336,7 @@ const AdminBlogManagement = () => {
                   <TableHead>Author</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Featured</TableHead>
                   <TableHead>Submitted</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -324,6 +352,19 @@ const AdminBlogManagement = () => {
                       <Badge variant="outline">{post.category}</Badge>
                     </TableCell>
                     <TableCell>{getStatusBadge(post.status)}</TableCell>
+                    <TableCell>
+                      {post.status === "approved" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleFeatured(post)}
+                          className={post.is_featured ? "text-yellow-500 hover:text-yellow-600" : "text-muted-foreground hover:text-foreground"}
+                          title={post.is_featured ? "Remove from featured" : "Add to featured"}
+                        >
+                          <Star className={`h-4 w-4 ${post.is_featured ? "fill-current" : ""}`} />
+                        </Button>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {format(new Date(post.submitted_at), "MMM d, yyyy")}
                     </TableCell>

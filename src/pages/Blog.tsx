@@ -24,6 +24,7 @@ interface BlogPost {
   approved_at: string;
   category: string;
   featured_image_url: string | null;
+  is_featured: boolean;
 }
 
 const Blog = () => {
@@ -38,8 +39,9 @@ const Blog = () => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("id, slug, title, summary, author_name, author_school, author_province, approved_at, category, featured_image_url")
+        .select("id, slug, title, summary, author_name, author_school, author_province, approved_at, category, featured_image_url, is_featured")
         .eq("status", "approved")
+        .order("is_featured", { ascending: false })
         .order("approved_at", { ascending: false });
 
       if (error) {
@@ -70,14 +72,14 @@ const Blog = () => {
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
   const paginatedPosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
-  // Featured posts (first 3 posts, only shown when no filters are active)
-  const showFeatured = selectedCategory === "all" && searchQuery === "" && posts.length >= 3;
-  const featuredPosts = posts.slice(0, 3);
-  const regularPosts = showFeatured ? filteredPosts.slice(3) : filteredPosts;
-  const regularTotalPages = Math.ceil(regularPosts.length / POSTS_PER_PAGE);
-  const regularPaginatedPosts = showFeatured 
-    ? regularPosts.slice(startIndex, startIndex + POSTS_PER_PAGE)
-    : paginatedPosts;
+  // Featured posts (posts marked as featured, only shown when no filters are active)
+  const featuredPosts = posts.filter(p => p.is_featured);
+  const showFeatured = selectedCategory === "all" && searchQuery === "" && featuredPosts.length > 0;
+  const nonFeaturedFilteredPosts = showFeatured 
+    ? filteredPosts.filter(p => !p.is_featured)
+    : filteredPosts;
+  const regularTotalPages = Math.ceil(nonFeaturedFilteredPosts.length / POSTS_PER_PAGE);
+  const regularPaginatedPosts = nonFeaturedFilteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
   return (
     <Layout>
@@ -218,13 +220,13 @@ const Blog = () => {
                 </div>
               ))}
             </div>
-          ) : regularPosts.length === 0 && showFeatured ? (
+          ) : nonFeaturedFilteredPosts.length === 0 && showFeatured ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">
                 No more stories to show. Check out the featured stories above!
               </p>
             </div>
-          ) : regularPosts.length === 0 ? (
+          ) : nonFeaturedFilteredPosts.length === 0 ? (
             <div className="text-center py-16">
               <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
               <h2 className="text-2xl font-bold mb-4">
@@ -245,7 +247,7 @@ const Blog = () => {
             </div>
           ) : (
             <>
-              {showFeatured && regularPosts.length > 0 && (
+              {showFeatured && nonFeaturedFilteredPosts.length > 0 && (
                 <h2 className="text-2xl font-bold mb-8 max-w-6xl mx-auto">More Stories</h2>
               )}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -305,7 +307,7 @@ const Blog = () => {
 
               {/* Results count */}
               <p className="text-center text-muted-foreground mt-8">
-                Showing {startIndex + 1}-{Math.min(startIndex + POSTS_PER_PAGE, regularPosts.length)} of {regularPosts.length} {regularPosts.length === 1 ? "story" : "stories"}
+                Showing {startIndex + 1}-{Math.min(startIndex + POSTS_PER_PAGE, nonFeaturedFilteredPosts.length)} of {nonFeaturedFilteredPosts.length} {nonFeaturedFilteredPosts.length === 1 ? "story" : "stories"}
                 {selectedCategory !== "all" && ` in ${selectedCategory}`}
               </p>
             </>
