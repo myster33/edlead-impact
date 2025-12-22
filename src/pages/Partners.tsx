@@ -123,6 +123,39 @@ const Partners = () => {
         </div>
       </section>
 
+      {/* Partner Logos */}
+      <section className="py-16 bg-muted/50">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Our Partners & Supporters</h2>
+            <p className="text-muted-foreground">
+              Proudly working with leading organizations committed to youth development
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center max-w-5xl mx-auto">
+            {[
+              { name: "Department of Education", abbr: "DoE" },
+              { name: "UNICEF", abbr: "UNICEF" },
+              { name: "Save the Children", abbr: "STC" },
+              { name: "World Vision", abbr: "WV" },
+              { name: "MTN Foundation", abbr: "MTN" },
+              { name: "Standard Bank", abbr: "SB" },
+            ].map((partner, index) => (
+              <div
+                key={index}
+                className="w-28 h-28 rounded-xl bg-background border border-border flex items-center justify-center p-4 hover:border-primary/30 hover:shadow-md transition-all"
+                title={partner.name}
+              >
+                <span className="text-xl font-bold text-muted-foreground/70">{partner.abbr}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            Interested in becoming a partner? Fill out the inquiry form below.
+          </p>
+        </div>
+      </section>
+
       {/* Benefits */}
       <section className="py-20 bg-muted">
         <div className="container">
