@@ -28,7 +28,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { FormFieldWrapper } from "@/components/form/FormFieldWrapper";
-import { Send, CheckCircle, Circle, Save, Trash2 } from "lucide-react";
+import { Send, CheckCircle, Circle, Save, Trash2, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -685,6 +686,18 @@ const ApplicationForm = () => {
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium">Application Progress</span>
             <div className="flex items-center gap-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm" 
+                asChild
+                className="gap-1"
+              >
+                <Link to="/check-status">
+                  <Search className="h-4 w-4" />
+                  Check Status
+                </Link>
+              </Button>
               {hasDraft && (
                 <div className="flex items-center gap-2">
                   <Button 
