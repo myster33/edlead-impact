@@ -15,6 +15,7 @@ const footerLinks = {
   ],
   support: [
     { name: "Contact Us", path: "/contact" },
+    { name: "Check Application Status", path: "/check-status" },
     { name: "FAQ", path: "/faq" },
   ],
 };
