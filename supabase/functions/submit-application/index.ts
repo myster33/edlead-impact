@@ -529,7 +529,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="content">
             <div class="highlight">
               <strong>Reference Number:</strong> ${referenceNumber}<br>
-              <strong>Submitted:</strong> ${new Date().toLocaleDateString('en-ZA', { dateStyle: 'full', timeStyle: 'short' })}
+              <strong>Submitted:</strong> ${new Date().toLocaleString('en-ZA', { dateStyle: 'full', timeStyle: 'short' })}
             </div>
             
             <table>
