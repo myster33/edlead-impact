@@ -76,15 +76,15 @@ export const Navbar = () => {
                   <NavigationMenuLink asChild>
                     <Link
                       to="/programme"
-                      className="block w-[340px] p-4 bg-background rounded-lg no-underline outline-none transition-colors hover:bg-accent focus:bg-accent"
+                      className="group block w-[340px] p-4 bg-background rounded-lg no-underline outline-none transition-colors hover:bg-accent focus:bg-accent"
                     >
-                      <div className="relative">
+                      <div className="relative overflow-hidden rounded-md mb-3">
                         <img 
                           src={programmeConference} 
                           alt="Student leadership conference" 
-                          className="w-full h-40 object-cover rounded-md"
+                          className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground">
+                        <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground animate-pulse">
                           Applications Open
                         </Badge>
                       </div>
