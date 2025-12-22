@@ -1,46 +1,48 @@
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
-import { Link } from "react-router-dom";
-import { Calendar, User, ArrowRight } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
+import { StorySubmissionForm } from "@/components/blog/StorySubmissionForm";
+import { BlogCard } from "@/components/blog/BlogCard";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BookOpen } from "lucide-react";
 
-const blogPosts = [
-  {
-    id: 1,
-    title: "What Leadership Means to Me as a Student",
-    excerpt: "Leadership isn't about being in charge—it's about taking care of those in your charge. Here's what I've learned as an edLEAD Captain.",
-    author: "Thando M.",
-    date: "December 10, 2024",
-    category: "Personal Growth",
-  },
-  {
-    id: 2,
-    title: "How Our School Safety Project Changed Our Culture",
-    excerpt: "When we started our safety initiative, we didn't expect it to transform our entire school community. This is our story.",
-    author: "Sipho K.",
-    date: "November 28, 2024",
-    category: "Impact Stories",
-  },
-  {
-    id: 3,
-    title: "Lessons I Learned from Leading My First Team",
-    excerpt: "Managing a team of peers isn't easy. Here are the five most valuable lessons I've learned along the way.",
-    author: "Naledi P.",
-    date: "November 15, 2024",
-    category: "Leadership Tips",
-  },
-  {
-    id: 4,
-    title: "Balancing Academics and Leadership",
-    excerpt: "Yes, you can be a student leader AND maintain good grades. Here's how I manage my time and priorities.",
-    author: "Kamogelo D.",
-    date: "October 30, 2024",
-    category: "Academic Excellence",
-  },
-];
+interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  author_name: string;
+  author_school: string;
+  author_province: string;
+  approved_at: string;
+  featured_image_url: string | null;
+}
 
 const Blog = () => {
   const { displayedText } = useTypingAnimation("edLEAD Voices", 50);
-  
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("id, slug, title, summary, author_name, author_school, author_province, approved_at, featured_image_url")
+        .eq("status", "approved")
+        .order("approved_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching blog posts:", error);
+      } else {
+        setPosts(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchPosts();
+  }, []);
+
   return (
     <Layout>
       {/* Hero */}
@@ -50,9 +52,10 @@ const Blog = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               {displayedText}<span className="animate-pulse">|</span>
             </h1>
-            <p className="text-xl text-secondary-foreground/80 leading-relaxed">
+            <p className="text-xl text-secondary-foreground/80 leading-relaxed mb-8">
               Stories, reflections, and lessons from our edLEAD Captains' leadership journeys.
             </p>
+            <StorySubmissionForm />
           </div>
         </div>
       </section>
@@ -60,39 +63,44 @@ const Blog = () => {
       {/* Blog Posts */}
       <section className="py-20">
         <div className="container">
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {blogPosts.map((post) => (
-              <article
-                key={post.id}
-                className="group bg-background rounded-xl border border-border overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <div className="p-6">
-                  <span className="inline-block px-3 py-1 text-xs font-medium bg-accent text-accent-foreground rounded-full mb-4">
-                    {post.category}
-                  </span>
-                  <h2 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
-                    {post.title}
-                  </h2>
-                  <p className="text-muted-foreground mb-4 line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        {post.author}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {post.date}
-                      </span>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="space-y-4">
+                  <Skeleton className="h-48 w-full rounded-lg" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
                 </div>
-              </article>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-16">
+              <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
+              <h2 className="text-2xl font-bold mb-4">No Stories Yet</h2>
+              <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+                Be the first to share your leadership journey! Submit your story and inspire future edLEAD Captains.
+              </p>
+              <StorySubmissionForm />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {posts.map((post) => (
+                <BlogCard
+                  key={post.id}
+                  id={post.id}
+                  slug={post.slug}
+                  title={post.title}
+                  summary={post.summary}
+                  authorName={post.author_name}
+                  authorSchool={post.author_school}
+                  authorProvince={post.author_province}
+                  approvedAt={post.approved_at}
+                  featuredImageUrl={post.featured_image_url || undefined}
+                />
+              ))}
+            </div>
+          )}
 
           {/* CTA */}
           <div className="mt-16 text-center">
@@ -101,12 +109,7 @@ const Blog = () => {
               <p className="text-muted-foreground mb-6">
                 Are you an edLEAD Captain with a story to tell? We'd love to feature your journey on our blog.
               </p>
-              <Link to="/contact">
-                <button className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                  Submit Your Story
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </Link>
+              <StorySubmissionForm />
             </div>
           </div>
         </div>
