@@ -15,11 +15,11 @@ import edleadLogo from "@/assets/edlead-logo.png";
 import programmeConference from "@/assets/programme-conference.jpg";
 import admissionsHero from "@/assets/admissions-hero.jpg";
 import impactHero from "@/assets/impact-hero.jpg";
+import blogHero from "@/assets/blog-hero.jpg";
 
 const navLinks = [
   { name: "Why edLEAD", path: "/" },
   { name: "About", path: "/about" },
-  { name: "Leaders' Blogs", path: "/blog" },
   { name: "Partners", path: "/partners" },
 ];
 
@@ -164,6 +164,37 @@ export const Navbar = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
+              {/* Leaders' Blogs Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={`${
+                  location.pathname === "/blog" ? "text-primary" : ""
+                }`}>
+                  Leaders' Blogs
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      to="/blog"
+                      className="group block w-[340px] p-4 bg-background rounded-lg no-underline outline-none transition-colors hover:bg-accent focus:bg-accent"
+                    >
+                      <div className="relative overflow-hidden rounded-md mb-3">
+                        <img 
+                          src={blogHero} 
+                          alt="Student leaders in action" 
+                          className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="text-base font-semibold text-foreground mb-1">
+                        Stories from Captains
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Read inspiring stories and insights from edLEAD Captains making a difference in their communities.
+                      </p>
+                    </Link>
+                  </NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
               {navLinks.slice(2).map((link) => (
                 <NavigationMenuItem key={link.path}>
                   <Link
@@ -257,6 +288,19 @@ export const Navbar = () => {
                 }`}
               >
                 Our Impact
+              </Link>
+
+              {/* Leaders' Blogs mobile link */}
+              <Link
+                to="/blog"
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 text-sm font-medium rounded-md transition-colors ${
+                  location.pathname === "/blog"
+                    ? "bg-accent text-primary"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                Leaders' Blogs
               </Link>
 
               {navLinks.slice(2).map((link) => (
