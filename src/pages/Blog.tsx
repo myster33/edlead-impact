@@ -72,8 +72,8 @@ const Blog = () => {
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
   const paginatedPosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
-  // Featured posts (posts marked as featured, only shown when no filters are active)
-  const featuredPosts = posts.filter(p => p.is_featured);
+  // Featured posts (posts marked as featured, only shown when no filters are active, max 3)
+  const featuredPosts = posts.filter(p => p.is_featured).slice(0, 3);
   const showFeatured = selectedCategory === "all" && searchQuery === "" && featuredPosts.length > 0;
   const nonFeaturedFilteredPosts = showFeatured 
     ? filteredPosts.filter(p => !p.is_featured)
