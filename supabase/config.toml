@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.notify-blog-submission]
 verify_jwt = false
+
+[functions.notify-author-approval]
+verify_jwt = false
