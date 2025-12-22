@@ -321,6 +321,14 @@ const AdminBlogManagement = () => {
             <p className="text-muted-foreground">Review, edit, and approve leader stories</p>
           </div>
 
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+              <Star className={`h-4 w-4 ${posts.filter(p => p.is_featured).length > 0 ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
+              <span className="text-sm font-medium">
+                {posts.filter(p => p.is_featured).length}/{MAX_FEATURED_POSTS} Featured
+              </span>
+            </div>
+
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by status" />
@@ -332,6 +340,7 @@ const AdminBlogManagement = () => {
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
+          </div>
         </div>
 
         {loading ? (
