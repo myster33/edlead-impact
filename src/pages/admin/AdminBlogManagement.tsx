@@ -244,7 +244,22 @@ const AdminBlogManagement = () => {
     setSaving(false);
   };
 
+  const MAX_FEATURED_POSTS = 3;
+
   const handleToggleFeatured = async (post: BlogPost) => {
+    // If trying to feature a post, check the limit
+    if (!post.is_featured) {
+      const featuredCount = posts.filter(p => p.is_featured).length;
+      if (featuredCount >= MAX_FEATURED_POSTS) {
+        toast({
+          title: "Featured Limit Reached",
+          description: `You can only feature up to ${MAX_FEATURED_POSTS} posts at a time. Remove one before adding another.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("blog_posts")
