@@ -17,7 +17,8 @@ import {
   Facebook,
   Twitter,
   Linkedin,
-  Link as LinkIcon
+  Link as LinkIcon,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -86,6 +87,9 @@ const BlogPost = () => {
         break;
       case "linkedin":
         url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+        break;
+      case "whatsapp":
+        url = `https://wa.me/?text=${encodeURIComponent(shareTitle + " " + shareUrl)}`;
         break;
       case "copy":
         navigator.clipboard.writeText(shareUrl);
@@ -229,6 +233,10 @@ const BlogPost = () => {
                 <Linkedin className="mr-2 h-4 w-4" />
                 LinkedIn
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShare("whatsapp")}>
+                <MessageCircle className="mr-2 h-4 w-4" />
+                WhatsApp
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleShare("copy")}>
                 <LinkIcon className="mr-2 h-4 w-4" />
                 Copy Link
@@ -294,6 +302,10 @@ const BlogPost = () => {
                 <DropdownMenuItem onClick={() => handleShare("linkedin")}>
                   <Linkedin className="mr-2 h-4 w-4" />
                   LinkedIn
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleShare("whatsapp")}>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  WhatsApp
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleShare("copy")}>
                   <LinkIcon className="mr-2 h-4 w-4" />
