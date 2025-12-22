@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -486,6 +488,78 @@ export default function AdminDashboard() {
     });
   };
 
+  const exportToPDF = () => {
+    if (filteredApplications.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No applications to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: "landscape" });
+    
+    // Title
+    doc.setFontSize(18);
+    doc.text("edLEAD Applications Report", 14, 22);
+    
+    // Subtitle with date and filter info
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const dateStr = new Date().toLocaleDateString("en-ZA", { dateStyle: "full" });
+    doc.text(`Generated on ${dateStr}`, 14, 30);
+    doc.text(`Total: ${filteredApplications.length} applications`, 14, 36);
+    
+    // Filter summary
+    const filters = [];
+    if (statusFilter !== "all") filters.push(`Status: ${statusFilter}`);
+    if (provinceFilter !== "all") filters.push(`Province: ${provinceFilter}`);
+    if (startDate) filters.push(`From: ${format(startDate, "dd/MM/yyyy")}`);
+    if (endDate) filters.push(`To: ${format(endDate, "dd/MM/yyyy")}`);
+    if (filters.length > 0) {
+      doc.text(`Filters: ${filters.join(", ")}`, 14, 42);
+    }
+
+    // Table data
+    const tableData = filteredApplications.map(app => [
+      app.reference_number || app.id.slice(0, 8).toUpperCase(),
+      app.full_name,
+      app.student_email,
+      app.school_name,
+      app.grade,
+      app.province,
+      app.status.charAt(0).toUpperCase() + app.status.slice(1),
+      new Date(app.created_at).toLocaleDateString("en-ZA")
+    ]);
+
+    autoTable(doc, {
+      startY: filters.length > 0 ? 48 : 42,
+      head: [["Ref", "Name", "Email", "School", "Grade", "Province", "Status", "Date"]],
+      body: tableData,
+      headStyles: { fillColor: [30, 64, 175] },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      styles: { fontSize: 8, cellPadding: 2 },
+      columnStyles: {
+        0: { cellWidth: 20 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 45 },
+        3: { cellWidth: 40 },
+        4: { cellWidth: 15 },
+        5: { cellWidth: 30 },
+        6: { cellWidth: 20 },
+        7: { cellWidth: 22 }
+      }
+    });
+
+    doc.save(`edlead-applications-${new Date().toISOString().split("T")[0]}.pdf`);
+
+    toast({
+      title: "Export Complete",
+      description: `Exported ${filteredApplications.length} applications to PDF.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
@@ -597,10 +671,14 @@ export default function AdminDashboard() {
                   Showing {filteredApplications.length} of {applications.length} applications
                 </CardDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export CSV
+                  CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={exportToPDF} disabled={filteredApplications.length === 0}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  PDF
                 </Button>
                 <Button variant="outline" size="sm" onClick={fetchApplications} disabled={isLoading}>
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
