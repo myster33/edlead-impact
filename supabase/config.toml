@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.notify-author-approval]
 verify_jwt = false
+
+[functions.notify-author-rejection]
+verify_jwt = false
