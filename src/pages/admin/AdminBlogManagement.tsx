@@ -79,6 +79,8 @@ const AdminBlogManagement = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectionFeedback, setRejectionFeedback] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [saving, setSaving] = useState(false);
 
@@ -167,12 +169,29 @@ const AdminBlogManagement = () => {
     setSaving(false);
   };
 
-  const handleReject = async (post: BlogPost) => {
+  const openRejectDialog = (post: BlogPost) => {
+    setSelectedPost(post);
+    setRejectionFeedback("");
+    setRejectDialogOpen(true);
+  };
+
+  const handleReject = async () => {
+    if (!selectedPost) return;
+    
+    if (!rejectionFeedback.trim()) {
+      toast({
+        title: "Feedback Required",
+        description: "Please provide feedback for the author.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("blog_posts")
       .update({ status: "rejected" })
-      .eq("id", post.id);
+      .eq("id", selectedPost.id);
 
     if (error) {
       toast({
@@ -181,10 +200,23 @@ const AdminBlogManagement = () => {
         variant: "destructive",
       });
     } else {
+      // Send rejection notification to author (fire and forget)
+      supabase.functions.invoke("notify-author-rejection", {
+        body: {
+          author_email: selectedPost.author_email,
+          author_name: selectedPost.author_name,
+          title: selectedPost.title,
+          feedback: rejectionFeedback,
+        },
+      }).catch((err) => {
+        console.error("Failed to send rejection notification:", err);
+      });
+
       toast({
         title: "Post Rejected",
-        description: "The blog post has been rejected.",
+        description: "The blog post has been rejected and the author has been notified.",
       });
+      setRejectDialogOpen(false);
       fetchPosts();
     }
     setSaving(false);
@@ -441,7 +473,7 @@ const AdminBlogManagement = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleReject(post)}
+                              onClick={() => openRejectDialog(post)}
                               className="text-destructive hover:text-destructive"
                               title="Reject"
                             >
@@ -513,7 +545,10 @@ const AdminBlogManagement = () => {
           <DialogFooter>
             {selectedPost?.status === "pending" && (
               <>
-                <Button variant="outline" onClick={() => handleReject(selectedPost)}>
+                <Button variant="outline" onClick={() => {
+                  setViewDialogOpen(false);
+                  openRejectDialog(selectedPost);
+                }}>
                   Reject
                 </Button>
                 <Button onClick={() => handleApprove(selectedPost)}>
@@ -608,6 +643,42 @@ const AdminBlogManagement = () => {
             <Button variant="destructive" onClick={handleDelete} disabled={saving}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rejection Feedback Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Blog Post</DialogTitle>
+            <DialogDescription>
+              Please provide feedback for the author explaining why their story "{selectedPost?.title}" was not approved.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-feedback">Feedback for Author *</Label>
+              <Textarea
+                id="rejection-feedback"
+                placeholder="Explain what changes or improvements are needed..."
+                rows={5}
+                value={rejectionFeedback}
+                onChange={(e) => setRejectionFeedback(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                This feedback will be sent to the author via email.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleReject} disabled={saving || !rejectionFeedback.trim()}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Reject & Notify Author
             </Button>
           </DialogFooter>
         </DialogContent>
