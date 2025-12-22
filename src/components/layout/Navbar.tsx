@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -11,6 +11,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import edleadLogo from "@/assets/edlead-logo.png";
+import programmeConference from "@/assets/programme-conference.jpg";
 
 const navLinks = [
   { name: "Why edLEAD", path: "/" },
@@ -19,13 +20,6 @@ const navLinks = [
   { name: "Our Impact", path: "/impact" },
   { name: "Leaders' Blogs", path: "/blog" },
   { name: "Partners", path: "/partners" },
-];
-
-const programmeSubLinks = [
-  { name: "Programme Overview", path: "/programme", description: "Learn about our leadership programme" },
-  { name: "Curriculum", path: "/programme#curriculum", description: "Explore what you'll learn" },
-  { name: "Schedule", path: "/programme#schedule", description: "View the programme timeline" },
-  { name: "Requirements", path: "/programme#requirements", description: "Eligibility and application criteria" },
 ];
 
 export const Navbar = () => {
@@ -78,23 +72,24 @@ export const Navbar = () => {
                   Programme
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <ul className="grid w-[300px] gap-2 p-4 bg-background">
-                    {programmeSubLinks.map((subLink) => (
-                      <li key={subLink.path}>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to={subLink.path}
-                            className="block select-none rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                          >
-                            <div className="text-sm font-medium leading-none">{subLink.name}</div>
-                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                              {subLink.description}
-                            </p>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    ))}
-                  </ul>
+                  <NavigationMenuLink asChild>
+                    <Link
+                      to="/programme"
+                      className="block w-[340px] p-4 bg-background rounded-lg no-underline outline-none transition-colors hover:bg-accent focus:bg-accent"
+                    >
+                      <img 
+                        src={programmeConference} 
+                        alt="Student leadership conference" 
+                        className="w-full h-40 object-cover rounded-md mb-3"
+                      />
+                      <div className="text-base font-semibold text-foreground mb-1">
+                        Leadership Programme
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        A 3-month journey of mentorship, workshops, and school projects for aspiring student leaders.
+                      </p>
+                    </Link>
+                  </NavigationMenuLink>
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
@@ -154,26 +149,18 @@ export const Navbar = () => {
                 </Link>
               ))}
               
-              {/* Programme mobile submenu */}
-              <div className="px-4 py-2">
-                <div className="text-sm font-medium text-foreground mb-2">Programme</div>
-                <div className="pl-4 space-y-1">
-                  {programmeSubLinks.map((subLink) => (
-                    <Link
-                      key={subLink.path}
-                      to={subLink.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`block px-3 py-2 text-sm rounded-md transition-colors ${
-                        location.pathname === subLink.path
-                          ? "bg-accent text-primary"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      {subLink.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              {/* Programme mobile link */}
+              <Link
+                to="/programme"
+                onClick={() => setIsOpen(false)}
+                className={`block px-4 py-3 text-sm font-medium rounded-md transition-colors ${
+                  location.pathname === "/programme"
+                    ? "bg-accent text-primary"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                Programme
+              </Link>
 
               {navLinks.slice(2).map((link) => (
                 <Link
