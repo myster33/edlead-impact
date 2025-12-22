@@ -185,6 +185,17 @@ export default function AdminDashboard() {
       return;
     }
 
+    // Find the application to get applicant details
+    const application = applications.find(app => app.id === id);
+    if (!application) {
+      toast({
+        title: "Error",
+        description: "Application not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const { error } = await supabase
@@ -203,6 +214,27 @@ export default function AdminDashboard() {
 
       if (selectedApplication?.id === id) {
         setSelectedApplication({ ...selectedApplication, status: newStatus });
+      }
+
+      // Send email notification to applicant
+      const referenceNumber = application.reference_number || application.id.slice(0, 8).toUpperCase();
+      
+      if (newStatus === "approved") {
+        supabase.functions.invoke("notify-applicant-approved", {
+          body: {
+            applicantEmail: application.student_email,
+            applicantName: application.full_name,
+            referenceNumber,
+          },
+        }).catch(err => console.error("Failed to send approval notification:", err));
+      } else if (newStatus === "rejected") {
+        supabase.functions.invoke("notify-applicant-rejected", {
+          body: {
+            applicantEmail: application.student_email,
+            applicantName: application.full_name,
+            referenceNumber,
+          },
+        }).catch(err => console.error("Failed to send rejection notification:", err));
       }
 
       toast({

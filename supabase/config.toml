@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.notify-author-rejection]
 verify_jwt = false
+
+[functions.notify-applicant-approved]
+verify_jwt = false
+
+[functions.notify-applicant-rejected]
+verify_jwt = false
