@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PenLine } from "lucide-react";
+import { Loader2, PenLine, Upload, X, Image as ImageIcon } from "lucide-react";
 
 const provinces = [
   "Eastern Cape",
@@ -52,6 +52,10 @@ type StoryFormData = z.infer<typeof storySchema>;
 export const StorySubmissionForm = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -63,9 +67,88 @@ export const StorySubmissionForm = () => {
     resolver: zodResolver(storySchema),
   });
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file (JPEG, PNG, etc.).",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    setIsUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `featured/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("blog-images")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("blog-images")
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Image upload failed",
+        description: "There was an error uploading your image. Your story will be submitted without the image.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const onSubmit = async (data: StoryFormData) => {
     setIsSubmitting(true);
     try {
+      let featuredImageUrl: string | null = null;
+
+      // Upload image if selected
+      if (selectedImage) {
+        featuredImageUrl = await uploadImage(selectedImage);
+      }
+
       const { error } = await supabase.from("blog_posts").insert({
         title: data.title,
         summary: data.summary,
@@ -74,6 +157,7 @@ export const StorySubmissionForm = () => {
         author_school: data.author_school,
         author_province: data.author_province,
         author_email: data.author_email,
+        featured_image_url: featuredImageUrl,
       });
 
       if (error) throw error;
@@ -84,6 +168,7 @@ export const StorySubmissionForm = () => {
       });
 
       reset();
+      removeImage();
       setIsOpen(false);
     } catch (error) {
       console.error("Error submitting story:", error);
@@ -186,6 +271,51 @@ export const StorySubmissionForm = () => {
             </div>
           </div>
 
+          {/* Featured Image Upload */}
+          <div className="space-y-2">
+            <Label>Featured Image (Optional)</Label>
+            <div className="border-2 border-dashed border-border rounded-lg p-4">
+              {imagePreview ? (
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-md"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={removeImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="flex flex-col items-center justify-center py-8 cursor-pointer hover:bg-muted/50 transition-colors rounded-md"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <ImageIcon className="h-12 w-12 text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Click to upload a featured image
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    JPEG, PNG up to 5MB
+                  </p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="summary">Story Summary *</Label>
             <Textarea
@@ -216,11 +346,11 @@ export const StorySubmissionForm = () => {
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
+            <Button type="submit" disabled={isSubmitting || isUploadingImage}>
+              {isSubmitting || isUploadingImage ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
+                  {isUploadingImage ? "Uploading Image..." : "Submitting..."}
                 </>
               ) : (
                 "Submit Story"
