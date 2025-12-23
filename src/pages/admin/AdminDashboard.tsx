@@ -142,6 +142,10 @@ export default function AdminDashboard() {
     approved_count: number;
     rejected_count: number;
   }[]>([]);
+  
+  // Date range for reviewer activity
+  const [activityStartDate, setActivityStartDate] = useState<Date | undefined>(undefined);
+  const [activityEndDate, setActivityEndDate] = useState<Date | undefined>(undefined);
 
   // Admin region info
   const regionInfo = getAdminRegionInfo(adminUser);
@@ -149,10 +153,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchApplications();
     fetchPendingBlogPosts();
+  }, [adminUser]); // Re-fetch when adminUser changes
+  
+  // Separate effect for reviewer activity with date filters
+  useEffect(() => {
     if (adminUser?.role === "admin") {
       fetchReviewerActivity();
     }
-  }, [adminUser]); // Re-fetch when adminUser changes
+  }, [adminUser, activityStartDate, activityEndDate]);
 
   useEffect(() => {
     filterApplications();
@@ -183,11 +191,23 @@ export default function AdminDashboard() {
 
       if (reviewersError) throw reviewersError;
 
-      // Get audit log entries for application approvals/rejections
-      const { data: auditLogs, error: auditError } = await supabase
+      // Build query for audit log entries
+      let auditQuery = supabase
         .from("admin_audit_log")
-        .select("admin_user_id, action")
+        .select("admin_user_id, action, created_at")
         .in("action", ["application_approved", "application_rejected"]);
+      
+      // Apply date filters
+      if (activityStartDate) {
+        auditQuery = auditQuery.gte("created_at", activityStartDate.toISOString());
+      }
+      if (activityEndDate) {
+        const endOfDay = new Date(activityEndDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        auditQuery = auditQuery.lte("created_at", endOfDay.toISOString());
+      }
+
+      const { data: auditLogs, error: auditError } = await auditQuery;
 
       if (auditError) throw auditError;
 
@@ -219,6 +239,130 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error fetching reviewer activity:", error);
     }
+  };
+
+  // Export reviewer activity to CSV
+  const exportActivityToCSV = () => {
+    if (reviewerActivity.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No reviewer activity to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const headers = ["Reviewer Name", "Email", "Region", "Approved", "Rejected", "Total Processed"];
+    
+    const escapeCSV = (value: string | null | undefined) => {
+      if (value == null) return "";
+      const str = String(value);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    const rows = reviewerActivity.map(r => [
+      escapeCSV(r.full_name || r.email),
+      escapeCSV(r.email),
+      escapeCSV(r.province || "All regions"),
+      r.approved_count,
+      r.rejected_count,
+      r.approved_count + r.rejected_count
+    ].join(","));
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    
+    const dateRange = activityStartDate || activityEndDate 
+      ? `-${activityStartDate ? format(activityStartDate, "yyyy-MM-dd") : "start"}-to-${activityEndDate ? format(activityEndDate, "yyyy-MM-dd") : "now"}`
+      : "";
+    link.download = `reviewer-activity${dateRange}-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Complete",
+      description: `Exported ${reviewerActivity.length} reviewer records to CSV.`,
+    });
+  };
+
+  // Export reviewer activity to PDF
+  const exportActivityToPDF = () => {
+    if (reviewerActivity.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No reviewer activity to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.text("Reviewer Activity Report", 14, 22);
+    
+    // Subtitle with date and filter info
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    const dateStr = new Date().toLocaleDateString("en-ZA", { dateStyle: "full" });
+    doc.text(`Generated on ${dateStr}`, 14, 30);
+    
+    // Date range
+    if (activityStartDate || activityEndDate) {
+      const rangeStr = `Period: ${activityStartDate ? format(activityStartDate, "dd/MM/yyyy") : "Start"} to ${activityEndDate ? format(activityEndDate, "dd/MM/yyyy") : "Present"}`;
+      doc.text(rangeStr, 14, 36);
+    }
+
+    // Summary stats
+    const totalApproved = reviewerActivity.reduce((sum, r) => sum + r.approved_count, 0);
+    const totalRejected = reviewerActivity.reduce((sum, r) => sum + r.rejected_count, 0);
+    doc.text(`Total Approved: ${totalApproved} | Total Rejected: ${totalRejected} | Total Processed: ${totalApproved + totalRejected}`, 14, activityStartDate || activityEndDate ? 42 : 36);
+
+    // Table data
+    const tableData = reviewerActivity.map(r => [
+      r.full_name || r.email,
+      r.email,
+      r.province || "All regions",
+      r.approved_count.toString(),
+      r.rejected_count.toString(),
+      (r.approved_count + r.rejected_count).toString()
+    ]);
+
+    autoTable(doc, {
+      startY: activityStartDate || activityEndDate ? 48 : 42,
+      head: [["Name", "Email", "Region", "Approved", "Rejected", "Total"]],
+      body: tableData,
+      headStyles: { fillColor: [30, 64, 175] },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      styles: { fontSize: 9, cellPadding: 3 },
+      columnStyles: {
+        0: { cellWidth: 35 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 20, halign: "center" },
+        4: { cellWidth: 20, halign: "center" },
+        5: { cellWidth: 20, halign: "center" }
+      }
+    });
+
+    const dateRange = activityStartDate || activityEndDate 
+      ? `-${activityStartDate ? format(activityStartDate, "yyyy-MM-dd") : "start"}-to-${activityEndDate ? format(activityEndDate, "yyyy-MM-dd") : "now"}`
+      : "";
+    doc.save(`reviewer-activity${dateRange}-${new Date().toISOString().split("T")[0]}.pdf`);
+
+    toast({
+      title: "Export Complete",
+      description: `Exported ${reviewerActivity.length} reviewer records to PDF.`,
+    });
   };
 
   useEffect(() => {
@@ -749,59 +893,139 @@ export default function AdminDashboard() {
         </div>
 
         {/* Reviewer Activity Summary - Only visible to admins */}
-        {adminUser?.role === "admin" && reviewerActivity.length > 0 && (
+        {adminUser?.role === "admin" && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Reviewer Activity Summary
-              </CardTitle>
-              <CardDescription>
-                Applications processed by each reviewer in their assigned region
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Reviewer Activity Summary
+                  </CardTitle>
+                  <CardDescription>
+                    Applications processed by each reviewer in their assigned region
+                    {(activityStartDate || activityEndDate) && (
+                      <span className="ml-1">
+                        ({activityStartDate ? format(activityStartDate, "dd/MM/yyyy") : "Start"} - {activityEndDate ? format(activityEndDate, "dd/MM/yyyy") : "Present"})
+                      </span>
+                    )}
+                  </CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={exportActivityToCSV} disabled={reviewerActivity.length === 0}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={exportActivityToPDF} disabled={reviewerActivity.length === 0}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Reviewer</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead className="text-center">Approved</TableHead>
-                    <TableHead className="text-center">Rejected</TableHead>
-                    <TableHead className="text-center">Total Processed</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reviewerActivity.map((reviewer) => (
-                    <TableRow key={reviewer.admin_id}>
-                      <TableCell>
-                        <div>
-                          <span className="font-medium">{reviewer.full_name || reviewer.email}</span>
-                          {reviewer.full_name && (
-                            <p className="text-xs text-muted-foreground">{reviewer.email}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {reviewer.province ? (
-                          <Badge variant="secondary">{reviewer.province}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">All regions</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="text-green-600 font-medium">{reviewer.approved_count}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="text-destructive font-medium">{reviewer.rejected_count}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="font-medium">{reviewer.approved_count + reviewer.rejected_count}</span>
-                      </TableCell>
+              {/* Date Range Filters */}
+              <div className="flex flex-wrap items-center gap-4 mb-4 pb-4 border-b">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Period:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("w-[140px] justify-start text-left font-normal", !activityStartDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {activityStartDate ? format(activityStartDate, "dd/MM/yyyy") : "From"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={activityStartDate}
+                        onSelect={setActivityStartDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground">to</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("w-[140px] justify-start text-left font-normal", !activityEndDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {activityEndDate ? format(activityEndDate, "dd/MM/yyyy") : "To"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={activityEndDate}
+                        onSelect={setActivityEndDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {(activityStartDate || activityEndDate) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setActivityStartDate(undefined);
+                        setActivityEndDate(undefined);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {reviewerActivity.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No reviewer activity found for the selected period.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Reviewer</TableHead>
+                      <TableHead>Region</TableHead>
+                      <TableHead className="text-center">Approved</TableHead>
+                      <TableHead className="text-center">Rejected</TableHead>
+                      <TableHead className="text-center">Total Processed</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {reviewerActivity.map((reviewer) => (
+                      <TableRow key={reviewer.admin_id}>
+                        <TableCell>
+                          <div>
+                            <span className="font-medium">{reviewer.full_name || reviewer.email}</span>
+                            {reviewer.full_name && (
+                              <p className="text-xs text-muted-foreground">{reviewer.email}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {reviewer.province ? (
+                            <Badge variant="secondary">{reviewer.province}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">All regions</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-green-600 font-medium">{reviewer.approved_count}</span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-destructive font-medium">{reviewer.rejected_count}</span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="font-medium">{reviewer.approved_count + reviewer.rejected_count}</span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         )}
