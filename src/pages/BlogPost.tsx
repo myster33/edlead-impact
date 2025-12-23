@@ -18,7 +18,9 @@ import {
   Twitter,
   Linkedin,
   Link as LinkIcon,
-  MessageCircle
+  MessageCircle,
+  Video,
+  ExternalLink
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -40,7 +42,33 @@ interface BlogPostData {
   featured_image_url: string | null;
   slug: string;
   category: string;
+  video_url: string | null;
 }
+
+// Helper function to extract video embed URL
+const getVideoEmbedUrl = (url: string): { embedUrl: string; platform: string } | null => {
+  // YouTube
+  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const youtubeMatch = url.match(youtubeRegex);
+  if (youtubeMatch) {
+    return {
+      embedUrl: `https://www.youtube.com/embed/${youtubeMatch[1]}`,
+      platform: 'YouTube'
+    };
+  }
+
+  // Vimeo
+  const vimeoRegex = /(?:vimeo\.com\/)(\d+)/;
+  const vimeoMatch = url.match(vimeoRegex);
+  if (vimeoMatch) {
+    return {
+      embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
+      platform: 'Vimeo'
+    };
+  }
+
+  return null;
+};
 
 interface RelatedPost {
   id: string;
@@ -294,6 +322,40 @@ const BlogPost = () => {
             )
           ))}
         </div>
+
+        {/* Video Embed */}
+        {post.video_url && (() => {
+          const videoData = getVideoEmbedUrl(post.video_url);
+          return (
+            <div className="mt-10 mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Video className="h-5 w-5 text-primary" />
+                <h3 className="text-xl font-semibold">Watch the Story</h3>
+              </div>
+              {videoData ? (
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-muted">
+                  <iframe
+                    src={videoData.embedUrl}
+                    title={`${post.title} - ${videoData.platform} Video`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              ) : (
+                <a
+                  href={post.video_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Watch video on external site
+                </a>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t">
