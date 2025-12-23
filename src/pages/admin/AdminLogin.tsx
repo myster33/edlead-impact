@@ -18,15 +18,40 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+const signupSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
+const getPasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  let score = 0;
+  if (password.length >= 6) score++;
+  if (password.length >= 8) score++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^a-zA-Z0-9]/.test(password)) score++;
+
+  if (score <= 1) return { score, label: "Weak", color: "bg-destructive" };
+  if (score <= 2) return { score, label: "Fair", color: "bg-orange-500" };
+  if (score <= 3) return { score, label: "Good", color: "bg-yellow-500" };
+  if (score <= 4) return { score, label: "Strong", color: "bg-primary" };
+  return { score, label: "Very Strong", color: "bg-green-500" };
+};
+
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
   const [activeTab, setActiveTab] = useState<string>("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -114,9 +139,28 @@ export default function AdminLogin() {
     }
   };
 
+  const validateSignupForm = () => {
+    try {
+      signupSchema.parse({ email, password, confirmPassword });
+      setErrors({});
+      return true;
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const fieldErrors: { email?: string; password?: string; confirmPassword?: string } = {};
+        err.errors.forEach((e) => {
+          if (e.path[0] === "email") fieldErrors.email = e.message;
+          if (e.path[0] === "password") fieldErrors.password = e.message;
+          if (e.path[0] === "confirmPassword") fieldErrors.confirmPassword = e.message;
+        });
+        setErrors(fieldErrors);
+      }
+      return false;
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateSignupForm()) return;
     
     setIsLoading(true);
     try {
@@ -416,9 +460,46 @@ export default function AdminLogin() {
                       {errors.password && (
                         <p className="text-sm text-destructive">{errors.password}</p>
                       )}
-                      <p className="text-xs text-muted-foreground">
-                        Password must be at least 6 characters
-                      </p>
+                      {password && (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all ${getPasswordStrength(password).color}`}
+                                style={{ width: `${(getPasswordStrength(password).score / 5) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-muted-foreground min-w-[70px]">
+                              {getPasswordStrength(password).label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Use 8+ characters with uppercase, lowercase, numbers & symbols
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="signup-confirm-password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-10"
+                          disabled={isLoading}
+                        />
+                      </div>
+                      {errors.confirmPassword && (
+                        <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                      )}
+                      {confirmPassword && password === confirmPassword && (
+                        <p className="text-sm text-green-600">Passwords match</p>
+                      )}
                     </div>
 
                     <Button type="submit" className="w-full" disabled={isLoading}>
@@ -432,10 +513,6 @@ export default function AdminLogin() {
                       )}
                     </Button>
                   </form>
-                  
-                  <div className="mt-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-                    <p>After signing up, an admin must grant you access using the bootstrap function or admin management page.</p>
-                  </div>
                 </TabsContent>
               </Tabs>
             </>
