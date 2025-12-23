@@ -60,19 +60,43 @@ export default function AdminLogin() {
   const [mfaAdminUserId, setMfaAdminUserId] = useState<string | null>(null);
   const [showMfaVerify, setShowMfaVerify] = useState(false);
   
-  const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAdminAuth();
+  const { signIn, signUp, user, isAdmin, isLoading: authLoading, isMfaVerified, requiresMfa, setMfaVerified } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
   const from = (location.state as { from?: Location })?.from?.pathname || "/admin";
+  const pendingMfa = (location.state as { pendingMfa?: boolean })?.pendingMfa;
+
+  // Check if we need to show MFA on page load (redirected from ProtectedRoute)
+  useEffect(() => {
+    const checkPendingMfa = async () => {
+      if (pendingMfa && user && !showMfaVerify) {
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
+        
+        if (verifiedFactors.length > 0) {
+          const { data: adminData } = await supabase
+            .from("admin_users")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          
+          setMfaFactorId(verifiedFactors[0].id);
+          setMfaAdminUserId(adminData?.id || null);
+          setShowMfaVerify(true);
+        }
+      }
+    };
+    checkPendingMfa();
+  }, [pendingMfa, user, showMfaVerify]);
 
   useEffect(() => {
-    if (!authLoading && user && isAdmin) {
+    if (!authLoading && user && isAdmin && (!requiresMfa || isMfaVerified)) {
       navigate(from, { replace: true });
     }
-  }, [user, isAdmin, authLoading, navigate, from]);
+  }, [user, isAdmin, authLoading, navigate, from, requiresMfa, isMfaVerified]);
 
   const validateForm = () => {
     try {
@@ -169,6 +193,7 @@ export default function AdminLogin() {
     setShowMfaVerify(false);
     setMfaFactorId(null);
     setMfaAdminUserId(null);
+    setMfaVerified(true);
     toast({
       title: "Welcome back!",
       description: "You have successfully logged in with 2FA.",

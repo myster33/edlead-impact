@@ -19,6 +19,9 @@ interface AdminAuthContextType {
   adminUser: AdminUser | null;
   isLoading: boolean;
   isAdmin: boolean;
+  isMfaVerified: boolean;
+  requiresMfa: boolean;
+  setMfaVerified: (verified: boolean) => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -33,6 +36,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMfaVerified, setIsMfaVerified] = useState(false);
+  const [requiresMfa, setRequiresMfa] = useState(false);
   const { toast } = useToast();
 
   const handleSessionTimeout = useCallback(async () => {
@@ -43,14 +48,47 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     });
     await supabase.auth.signOut();
     setAdminUser(null);
+    setIsMfaVerified(false);
+    setRequiresMfa(false);
   }, [toast]);
 
-  // Session timeout - only active when user is logged in
+  // Session timeout - only active when user is logged in and MFA verified
   useSessionTimeout({
     timeoutMinutes: SESSION_TIMEOUT_MINUTES,
     onTimeout: handleSessionTimeout,
-    enabled: !!user,
+    enabled: !!user && (!requiresMfa || isMfaVerified),
   });
+
+  const checkMfaStatus = async () => {
+    try {
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
+      
+      if (verifiedFactors.length > 0) {
+        // Check if MFA challenge has been completed in this session
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        
+        if (aal?.currentLevel === "aal2") {
+          // User has completed MFA verification
+          setIsMfaVerified(true);
+          setRequiresMfa(true);
+        } else {
+          // User has MFA enabled but hasn't verified yet
+          setIsMfaVerified(false);
+          setRequiresMfa(true);
+        }
+      } else {
+        // No MFA factors, user doesn't need MFA
+        setIsMfaVerified(true);
+        setRequiresMfa(false);
+      }
+    } catch (err) {
+      console.error("Error checking MFA status:", err);
+      // Default to not requiring MFA on error
+      setIsMfaVerified(true);
+      setRequiresMfa(false);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -63,9 +101,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           setTimeout(() => {
             fetchAdminUser(session.user.id);
+            checkMfaStatus();
           }, 0);
         } else {
           setAdminUser(null);
+          setIsMfaVerified(false);
+          setRequiresMfa(false);
           setIsLoading(false);
         }
       }
@@ -78,6 +119,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user) {
         fetchAdminUser(session.user.id);
+        checkMfaStatus();
       } else {
         setIsLoading(false);
       }
@@ -108,6 +150,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setMfaVerified = (verified: boolean) => {
+    setIsMfaVerified(verified);
+  };
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -132,6 +178,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setAdminUser(null);
+    setIsMfaVerified(false);
+    setRequiresMfa(false);
   };
 
   const value = {
@@ -140,6 +188,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     adminUser,
     isLoading,
     isAdmin: !!adminUser,
+    isMfaVerified,
+    requiresMfa,
+    setMfaVerified,
     signIn,
     signUp,
     signOut,
