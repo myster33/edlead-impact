@@ -369,6 +369,40 @@ export default function AdminDashboard() {
     });
   };
 
+  // Send performance report via email
+  const [isSendingReport, setIsSendingReport] = useState(false);
+  
+  const sendPerformanceReport = async (period: "weekly" | "monthly") => {
+    setIsSendingReport(true);
+    try {
+      const response = await supabase.functions.invoke("send-performance-report", {
+        body: { period },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || "Failed to send report");
+      }
+
+      toast({
+        title: "Report Sent",
+        description: `${period === "monthly" ? "Monthly" : "Weekly"} performance report has been sent to all admins.`,
+      });
+    } catch (error: any) {
+      console.error("Error sending report:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send performance report.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingReport(false);
+    }
+  };
+
   useEffect(() => {
     filterApplications();
   }, [applications, searchTerm, statusFilter, provinceFilter]);
@@ -916,6 +950,40 @@ export default function AdminDashboard() {
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={isSendingReport}>
+                        {isSendingReport ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                        )}
+                        Send Report
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2" align="end">
+                      <div className="space-y-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => sendPerformanceReport("weekly")}
+                          disabled={isSendingReport}
+                        >
+                          Weekly Report
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start"
+                          onClick={() => sendPerformanceReport("monthly")}
+                          disabled={isSendingReport}
+                        >
+                          Monthly Report
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <Button variant="outline" size="sm" onClick={exportActivityToCSV} disabled={reviewerActivity.length === 0}>
                     <Download className="h-4 w-4 mr-2" />
                     CSV
