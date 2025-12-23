@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionTimeout } from "@/hooks/use-session-timeout";
+import { useToast } from "@/hooks/use-toast";
 
 interface AdminUser {
   id: string;
@@ -24,11 +26,31 @@ interface AdminAuthContextType {
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
+const SESSION_TIMEOUT_MINUTES = 5;
+
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const handleSessionTimeout = useCallback(async () => {
+    toast({
+      title: "Session Expired",
+      description: "You have been logged out due to inactivity.",
+      variant: "destructive",
+    });
+    await supabase.auth.signOut();
+    setAdminUser(null);
+  }, [toast]);
+
+  // Session timeout - only active when user is logged in
+  useSessionTimeout({
+    timeoutMinutes: SESSION_TIMEOUT_MINUTES,
+    onTimeout: handleSessionTimeout,
+    enabled: !!user,
+  });
 
   useEffect(() => {
     // Set up auth state listener FIRST
