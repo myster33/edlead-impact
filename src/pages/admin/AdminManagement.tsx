@@ -55,7 +55,9 @@ import {
   Trash2,
   Loader2,
   RefreshCw,
-  MapPin
+  MapPin,
+  Clock,
+  UserCheck
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
@@ -123,8 +125,11 @@ export default function AdminManagement() {
   const { logAction } = useAuditLog();
   
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<{ id: string; email: string; created_at: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPendingLoading, setIsPendingLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
   
   // Add user dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -141,12 +146,21 @@ export default function AdminManagement() {
   
   // Delete confirmation
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  
+  // Approve pending user dialog
+  const [approvingPendingUser, setApprovingPendingUser] = useState<{ id: string; email: string } | null>(null);
+  const [approveRole, setApproveRole] = useState<AppRole>("viewer");
+  const [approveCountry, setApproveCountry] = useState("");
+  const [approveProvince, setApproveProvince] = useState("");
 
   const isAdmin = adminUser?.role === "admin";
 
   useEffect(() => {
     fetchAdminUsers();
-  }, []);
+    if (isAdmin) {
+      fetchPendingUsers();
+    }
+  }, [isAdmin]);
 
   const fetchAdminUsers = async () => {
     setIsLoading(true);
@@ -183,6 +197,86 @@ export default function AdminManagement() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPendingUsers = async () => {
+    setIsPendingLoading(true);
+    try {
+      const response = await supabase.functions.invoke("list-pending-users");
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+      
+      if (response.data?.success) {
+        setPendingUsers(response.data.pendingUsers || []);
+      }
+    } catch (error) {
+      console.error("Error fetching pending users:", error);
+    } finally {
+      setIsPendingLoading(false);
+    }
+  };
+
+  const approvePendingUser = async () => {
+    if (!approvingPendingUser) return;
+    
+    setApprovingUserId(approvingPendingUser.id);
+    try {
+      const response = await supabase.functions.invoke("add-admin-user", {
+        body: { 
+          email: approvingPendingUser.email, 
+          role: approveRole,
+          country: approveRole !== "admin" ? approveCountry : null,
+          province: approveRole !== "admin" ? approveProvince : null,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (!response.data.success) {
+        toast({
+          title: "Error",
+          description: response.data.error || "Failed to approve user.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Send approval notification email
+      supabase.functions.invoke("notify-admin-approval", {
+        body: {
+          email: approvingPendingUser.email,
+          role: approveRole,
+          country: approveCountry || null,
+          province: approveProvince || null,
+        },
+      }).catch(err => console.error("Failed to send approval notification:", err));
+
+      // Update local state
+      setAdminUsers([response.data.admin, ...adminUsers]);
+      setPendingUsers(pendingUsers.filter(u => u.id !== approvingPendingUser.id));
+      setApprovingPendingUser(null);
+      setApproveRole("viewer");
+      setApproveCountry("");
+      setApproveProvince("");
+
+      toast({
+        title: "User Approved",
+        description: `${approvingPendingUser.email} has been approved as a ${approveRole}. An approval email has been sent.`,
+      });
+    } catch (error: any) {
+      console.error("Error approving user:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to approve user.",
+        variant: "destructive",
+      });
+    } finally {
+      setApprovingUserId(null);
     }
   };
 
@@ -590,6 +684,159 @@ export default function AdminManagement() {
             </CardHeader>
           </Card>
         )}
+
+        {/* Pending Users Section - Admin only */}
+        {isAdmin && pendingUsers.length > 0 && (
+          <Card className="mb-6 border-amber-500/30 bg-amber-500/5">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-amber-500/10">
+                    <Clock className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Pending Approval ({pendingUsers.length})</CardTitle>
+                    <CardDescription>
+                      Users who signed up and are waiting for admin approval
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" onClick={fetchPendingUsers} disabled={isPendingLoading}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isPendingLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-amber-100 text-amber-700">
+                          {user.email.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-sm">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Signed up {new Date(user.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={() => setApprovingPendingUser({ id: user.id, email: user.email })}
+                      disabled={approvingUserId === user.id}
+                    >
+                      {approvingUserId === user.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          Approve
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Approve Pending User Dialog */}
+        <Dialog open={!!approvingPendingUser} onOpenChange={(open) => !open && setApprovingPendingUser(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Approve User</DialogTitle>
+              <DialogDescription>
+                Grant access to {approvingPendingUser?.email}. Select their role and assigned region.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={approveRole} onValueChange={(value: AppRole) => setApproveRole(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="viewer">
+                      <div className="flex items-center gap-2">
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        Viewer
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="reviewer">
+                      <div className="flex items-center gap-2">
+                        <Edit className="h-4 w-4 text-blue-500" />
+                        Reviewer
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="admin">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        Admin
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {approveRole !== "admin" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Country (Optional)</Label>
+                    <Select value={approveCountry} onValueChange={(value) => {
+                      setApproveCountry(value);
+                      setApproveProvince("");
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((country) => (
+                          <SelectItem key={country.value} value={country.value}>
+                            {country.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {approveCountry && provincesByCountry[approveCountry] && (
+                    <div className="space-y-2">
+                      <Label>Province/Region (Optional)</Label>
+                      <Select value={approveProvince} onValueChange={setApproveProvince}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {provincesByCountry[approveCountry].map((province) => (
+                            <SelectItem key={province.value} value={province.value}>
+                              {province.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setApprovingPendingUser(null)}>
+                Cancel
+              </Button>
+              <Button onClick={approvePendingUser} disabled={approvingUserId === approvingPendingUser?.id}>
+                {approvingUserId === approvingPendingUser?.id && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <UserCheck className="h-4 w-4 mr-2" />
+                Approve User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Role Legend */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
