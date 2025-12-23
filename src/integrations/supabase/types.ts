@@ -92,6 +92,7 @@ export type Database = {
           notify_applications: boolean
           notify_blogs: boolean
           notify_critical_alerts: boolean
+          notify_performance_reports: boolean
           phone: string | null
           position: string | null
           profile_picture_url: string | null
@@ -111,6 +112,7 @@ export type Database = {
           notify_applications?: boolean
           notify_blogs?: boolean
           notify_critical_alerts?: boolean
+          notify_performance_reports?: boolean
           phone?: string | null
           position?: string | null
           profile_picture_url?: string | null
@@ -130,6 +132,7 @@ export type Database = {
           notify_applications?: boolean
           notify_blogs?: boolean
           notify_critical_alerts?: boolean
+          notify_performance_reports?: boolean
           phone?: string | null
           position?: string | null
           profile_picture_url?: string | null

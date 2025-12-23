@@ -47,11 +47,12 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Generating ${period} performance report for period: ${periodLabel}`);
 
-    // Get all admin users (to send report to admins)
+    // Get all admin users who have opted in to performance reports
     const { data: adminUsers, error: adminError } = await supabase
       .from("admin_users")
-      .select("id, email, full_name, role, province")
-      .eq("role", "admin");
+      .select("id, email, full_name, role, province, notify_performance_reports")
+      .eq("role", "admin")
+      .eq("notify_performance_reports", true);
 
     if (adminError) {
       console.error("Error fetching admin users:", adminError);
