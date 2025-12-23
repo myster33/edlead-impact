@@ -998,7 +998,6 @@ const AdminBlogManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </div>
     </AdminLayout>
   );
 };
