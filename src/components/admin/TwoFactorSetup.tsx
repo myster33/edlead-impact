@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, ShieldCheck, ShieldOff, Copy, Check } from "lucide-react";
+import { Loader2, Shield, ShieldCheck, ShieldOff, Copy, Check, Key, RefreshCw, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +13,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert";
 
 interface TwoFactorSetupProps {
   onStatusChange?: (enabled: boolean) => void;
+  adminUserId?: string;
 }
 
-export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
+// Generate a random backup code
+const generateBackupCode = (): string => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code.slice(0, 4) + "-" + code.slice(4);
+};
+
+// Hash a backup code
+const hashCode = async (code: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(code.toUpperCase().replace(/-/g, ""));
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+};
+
+export function TwoFactorSetup({ onStatusChange, adminUserId }: TwoFactorSetupProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -33,11 +57,22 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
   const [disableCode, setDisableCode] = useState("");
   const [showDisableDialog, setShowDisableDialog] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+  const [backupCodesCount, setBackupCodesCount] = useState(0);
+  const [isRegeneratingCodes, setIsRegeneratingCodes] = useState(false);
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     checkMfaStatus();
   }, []);
+
+  useEffect(() => {
+    if (adminUserId && mfaEnabled) {
+      fetchBackupCodesCount();
+    }
+  }, [adminUserId, mfaEnabled]);
 
   const checkMfaStatus = async () => {
     try {
@@ -51,6 +86,24 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
       console.error("Error checking MFA status:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchBackupCodesCount = async () => {
+    if (!adminUserId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("admin_backup_codes")
+        .select("id")
+        .eq("admin_user_id", adminUserId)
+        .is("used_at", null);
+
+      if (!error && data) {
+        setBackupCodesCount(data.length);
+      }
+    } catch (error) {
+      console.error("Error fetching backup codes count:", error);
     }
   };
 
@@ -80,26 +133,66 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
     }
   };
 
+  const generateAndSaveBackupCodes = async (): Promise<string[]> => {
+    if (!adminUserId) return [];
+
+    const codes: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      codes.push(generateBackupCode());
+    }
+
+    // Delete existing backup codes
+    await supabase
+      .from("admin_backup_codes")
+      .delete()
+      .eq("admin_user_id", adminUserId);
+
+    // Hash and save new codes
+    const codeRecords = await Promise.all(
+      codes.map(async (code) => ({
+        admin_user_id: adminUserId,
+        code_hash: await hashCode(code),
+      }))
+    );
+
+    const { error } = await supabase
+      .from("admin_backup_codes")
+      .insert(codeRecords);
+
+    if (error) {
+      console.error("Error saving backup codes:", error);
+      throw error;
+    }
+
+    return codes;
+  };
+
   const verifyEnrollment = async () => {
     if (!enrollmentData || verifyCode.length !== 6) return;
 
     setIsVerifying(true);
     try {
-      const { data, error } = await supabase.auth.mfa.challengeAndVerify({
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
         factorId: enrollmentData.id,
         code: verifyCode,
       });
 
       if (error) throw error;
 
+      // Generate backup codes
+      const codes = await generateAndSaveBackupCodes();
+      setBackupCodes(codes);
+      setShowBackupCodes(true);
+      
       setMfaEnabled(true);
       setEnrollmentData(null);
       setVerifyCode("");
       onStatusChange?.(true);
+      setBackupCodesCount(codes.length);
 
       toast({
         title: "2FA Enabled",
-        description: "Two-factor authentication has been successfully enabled.",
+        description: "Save your backup codes - they won't be shown again!",
       });
     } catch (error: any) {
       toast({
@@ -122,7 +215,6 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
 
       if (!verifiedFactor) throw new Error("No verified factor found");
 
-      // First verify the code
       const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId: verifiedFactor.id,
       });
@@ -137,16 +229,24 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
 
       if (verifyError) throw verifyError;
 
-      // Then unenroll
       const { error: unenrollError } = await supabase.auth.mfa.unenroll({
         factorId: verifiedFactor.id,
       });
 
       if (unenrollError) throw unenrollError;
 
+      // Delete backup codes
+      if (adminUserId) {
+        await supabase
+          .from("admin_backup_codes")
+          .delete()
+          .eq("admin_user_id", adminUserId);
+      }
+
       setMfaEnabled(false);
       setShowDisableDialog(false);
       setDisableCode("");
+      setBackupCodesCount(0);
       onStatusChange?.(false);
 
       toast({
@@ -164,12 +264,59 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
     }
   };
 
+  const regenerateBackupCodes = async () => {
+    setIsRegeneratingCodes(true);
+    try {
+      const codes = await generateAndSaveBackupCodes();
+      setBackupCodes(codes);
+      setShowBackupCodes(true);
+      setShowRegenerateDialog(false);
+      setBackupCodesCount(codes.length);
+
+      toast({
+        title: "Backup Codes Regenerated",
+        description: "Your old codes are now invalid. Save the new ones!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to regenerate backup codes.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRegeneratingCodes(false);
+    }
+  };
+
   const copySecret = async () => {
     if (enrollmentData?.secret) {
       await navigator.clipboard.writeText(enrollmentData.secret);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const copyBackupCodes = async () => {
+    const codesText = backupCodes.join("\n");
+    await navigator.clipboard.writeText(codesText);
+    toast({
+      title: "Copied",
+      description: "Backup codes copied to clipboard.",
+    });
+  };
+
+  const downloadBackupCodes = () => {
+    const codesText = `edLEAD Admin 2FA Backup Codes\n${"=".repeat(30)}\n\nGenerated: ${new Date().toLocaleString()}\n\nKeep these codes safe. Each can only be used once.\n\n${backupCodes.map((code, i) => `${i + 1}. ${code}`).join("\n")}\n\nIMPORTANT: Store these codes securely!`;
+    
+    const blob = new Blob([codesText], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "edlead-backup-codes.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const cancelEnrollment = async () => {
@@ -211,6 +358,25 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
                 <ShieldCheck className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium">2FA is enabled</span>
               </div>
+
+              {/* Backup codes info */}
+              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Key className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {backupCodesCount} backup codes remaining
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRegenerateDialog(true)}
+                >
+                  <RefreshCw className="mr-2 h-3 w-3" />
+                  Regenerate
+                </Button>
+              </div>
+
               <Button
                 variant="destructive"
                 onClick={() => setShowDisableDialog(true)}
@@ -307,6 +473,78 @@ export function TwoFactorSetup({ onStatusChange }: TwoFactorSetupProps) {
         </CardContent>
       </Card>
 
+      {/* Backup Codes Dialog */}
+      <Dialog open={showBackupCodes} onOpenChange={setShowBackupCodes}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Backup Codes
+            </DialogTitle>
+            <DialogDescription>
+              Save these codes in a safe place. Each code can only be used once.
+            </DialogDescription>
+          </DialogHeader>
+          <Alert>
+            <AlertDescription>
+              These codes will not be shown again. Make sure to save them now!
+            </AlertDescription>
+          </Alert>
+          <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-lg font-mono text-sm">
+            {backupCodes.map((code, index) => (
+              <div key={index} className="p-2 bg-background rounded text-center">
+                {code}
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={copyBackupCodes} className="flex-1">
+              <Copy className="mr-2 h-4 w-4" />
+              Copy
+            </Button>
+            <Button variant="outline" onClick={downloadBackupCodes} className="flex-1">
+              <Download className="mr-2 h-4 w-4" />
+              Download
+            </Button>
+          </div>
+          <Button onClick={() => setShowBackupCodes(false)}>
+            I've saved my codes
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Regenerate Codes Dialog */}
+      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Regenerate Backup Codes?</DialogTitle>
+            <DialogDescription>
+              This will invalidate all existing backup codes and generate 10 new ones.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2">
+            <Button
+              onClick={regenerateBackupCodes}
+              disabled={isRegeneratingCodes}
+              className="flex-1"
+            >
+              {isRegeneratingCodes ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Regenerate Codes"
+              )}
+            </Button>
+            <Button variant="outline" onClick={() => setShowRegenerateDialog(false)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Disable 2FA Dialog */}
       <Dialog open={showDisableDialog} onOpenChange={setShowDisableDialog}>
         <DialogContent>
           <DialogHeader>

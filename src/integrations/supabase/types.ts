@@ -47,6 +47,38 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_backup_codes: {
+        Row: {
+          admin_user_id: string
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_backup_codes_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_users: {
         Row: {
           country: string | null

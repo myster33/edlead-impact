@@ -4,6 +4,7 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuditLog } from "@/hooks/use-audit-log";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { TwoFactorSetup } from "@/components/admin/TwoFactorSetup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -723,55 +724,27 @@ export default function AdminSettings() {
             </Card>
 
             {/* Two-Factor Authentication */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="h-5 w-5" />
-                  Two-Factor Authentication
-                </CardTitle>
-                <CardDescription>
-                  Add an extra layer of security to your account using an authenticator app.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${mfaEnabled ? "bg-green-100" : "bg-muted"}`}>
-                      {mfaEnabled ? (
-                        <Check className="h-5 w-5 text-green-600" />
-                      ) : (
-                        <X className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">
-                        {mfaEnabled ? "2FA is enabled" : "2FA is not enabled"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {mfaEnabled
-                          ? "Your account is protected with two-factor authentication."
-                          : "Enable 2FA to add an extra layer of security."}
-                      </p>
-                    </div>
-                  </div>
-                  {mfaEnabled ? (
-                    <Button
-                      variant="destructive"
-                      onClick={handleDisableMfa}
-                      disabled={isUnenrolling}
-                    >
-                      {isUnenrolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Disable 2FA
-                    </Button>
-                  ) : (
-                    <Button onClick={handleEnrollMfa} disabled={isEnrolling}>
-                      {isEnrolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Enable 2FA
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <TwoFactorSetup 
+              adminUserId={adminUser?.id}
+              onStatusChange={(enabled) => {
+                setMfaEnabled(enabled);
+                if (enabled) {
+                  logAction({
+                    action: "mfa_enabled",
+                    table_name: "admin_users",
+                    record_id: adminUser?.id,
+                  });
+                  sendNotification("mfa_enabled");
+                } else {
+                  logAction({
+                    action: "mfa_disabled",
+                    table_name: "admin_users",
+                    record_id: adminUser?.id,
+                  });
+                  sendNotification("mfa_disabled");
+                }
+              }}
+            />
 
             {/* Email Notifications */}
             <Card>
