@@ -132,6 +132,16 @@ export default function AdminDashboard() {
     rejected: 0,
   });
   const [pendingBlogPosts, setPendingBlogPosts] = useState(0);
+  
+  // Reviewer activity stats (for admins to see all reviewer activity)
+  const [reviewerActivity, setReviewerActivity] = useState<{
+    admin_id: string;
+    email: string;
+    full_name: string | null;
+    province: string | null;
+    approved_count: number;
+    rejected_count: number;
+  }[]>([]);
 
   // Admin region info
   const regionInfo = getAdminRegionInfo(adminUser);
@@ -139,6 +149,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchApplications();
     fetchPendingBlogPosts();
+    if (adminUser?.role === "admin") {
+      fetchReviewerActivity();
+    }
   }, [adminUser]); // Re-fetch when adminUser changes
 
   useEffect(() => {
@@ -156,6 +169,55 @@ export default function AdminDashboard() {
       setPendingBlogPosts(count || 0);
     } catch (error) {
       console.error("Error fetching pending blog posts:", error);
+    }
+  };
+
+  // Fetch reviewer activity from audit log
+  const fetchReviewerActivity = async () => {
+    try {
+      // Get all admin users who are reviewers
+      const { data: reviewers, error: reviewersError } = await supabase
+        .from("admin_users")
+        .select("id, user_id, email, full_name, province, role")
+        .in("role", ["reviewer", "viewer"]);
+
+      if (reviewersError) throw reviewersError;
+
+      // Get audit log entries for application approvals/rejections
+      const { data: auditLogs, error: auditError } = await supabase
+        .from("admin_audit_log")
+        .select("admin_user_id, action")
+        .in("action", ["application_approved", "application_rejected"]);
+
+      if (auditError) throw auditError;
+
+      // Calculate activity per reviewer
+      const activityMap = new Map<string, { approved: number; rejected: number }>();
+      
+      auditLogs?.forEach(log => {
+        if (!log.admin_user_id) return;
+        const existing = activityMap.get(log.admin_user_id) || { approved: 0, rejected: 0 };
+        if (log.action === "application_approved") {
+          existing.approved++;
+        } else if (log.action === "application_rejected") {
+          existing.rejected++;
+        }
+        activityMap.set(log.admin_user_id, existing);
+      });
+
+      // Combine with reviewer data
+      const activity = (reviewers || []).map(reviewer => ({
+        admin_id: reviewer.id,
+        email: reviewer.email,
+        full_name: reviewer.full_name,
+        province: reviewer.province,
+        approved_count: activityMap.get(reviewer.id)?.approved || 0,
+        rejected_count: activityMap.get(reviewer.id)?.rejected || 0,
+      }));
+
+      setReviewerActivity(activity);
+    } catch (error) {
+      console.error("Error fetching reviewer activity:", error);
     }
   };
 
@@ -685,6 +747,64 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Reviewer Activity Summary - Only visible to admins */}
+        {adminUser?.role === "admin" && reviewerActivity.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Reviewer Activity Summary
+              </CardTitle>
+              <CardDescription>
+                Applications processed by each reviewer in their assigned region
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Reviewer</TableHead>
+                    <TableHead>Region</TableHead>
+                    <TableHead className="text-center">Approved</TableHead>
+                    <TableHead className="text-center">Rejected</TableHead>
+                    <TableHead className="text-center">Total Processed</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reviewerActivity.map((reviewer) => (
+                    <TableRow key={reviewer.admin_id}>
+                      <TableCell>
+                        <div>
+                          <span className="font-medium">{reviewer.full_name || reviewer.email}</span>
+                          {reviewer.full_name && (
+                            <p className="text-xs text-muted-foreground">{reviewer.email}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {reviewer.province ? (
+                          <Badge variant="secondary">{reviewer.province}</Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">All regions</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-green-600 font-medium">{reviewer.approved_count}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="text-destructive font-medium">{reviewer.rejected_count}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="font-medium">{reviewer.approved_count + reviewer.rejected_count}</span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card className="mb-6">
