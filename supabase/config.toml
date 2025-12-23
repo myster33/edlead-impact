@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.notify-applicant-rejected]
 verify_jwt = false
+
+[functions.notify-profile-change]
+verify_jwt = false
