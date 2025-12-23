@@ -28,6 +28,7 @@ import {
   Settings,
   LogOut,
   Shield,
+  History,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 
@@ -66,6 +67,11 @@ const menuItems = [
     title: "Admin Users",
     url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Audit Log",
+    url: "/admin/audit-log",
+    icon: History,
   },
 ];
 

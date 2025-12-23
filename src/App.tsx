@@ -27,6 +27,7 @@ import AdminManagement from "./pages/admin/AdminManagement";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminBlogManagement from "./pages/admin/AdminBlogManagement";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminAuditLog from "./pages/admin/AdminAuditLog";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/audit-log"
+                element={
+                  <ProtectedRoute>
+                    <AdminAuditLog />
                   </ProtectedRoute>
                 }
               />
