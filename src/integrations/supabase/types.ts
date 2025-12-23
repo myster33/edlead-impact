@@ -57,6 +57,7 @@ export type Database = {
           id: string
           phone: string | null
           position: string | null
+          profile_picture_url: string | null
           province: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
@@ -70,6 +71,7 @@ export type Database = {
           id?: string
           phone?: string | null
           position?: string | null
+          profile_picture_url?: string | null
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
@@ -83,6 +85,7 @@ export type Database = {
           id?: string
           phone?: string | null
           position?: string | null
+          profile_picture_url?: string | null
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
