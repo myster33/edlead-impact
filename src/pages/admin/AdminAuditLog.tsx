@@ -36,10 +36,16 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, History, Download, CalendarIcon, FileText } from "lucide-react";
+import { Loader2, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, History, Download, CalendarIcon, FileText, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
+interface AdminUser {
+  id: string;
+  email: string;
+}
 
 interface AuditLogEntry {
   id: string;
@@ -81,12 +87,16 @@ export default function AdminAuditLog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [tableFilter, setTableFilter] = useState<string>("all");
+  const [adminFilter, setAdminFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [adminEmailsMap, setAdminEmailsMap] = useState<Record<string, string>>({});
+  const [isLive, setIsLive] = useState(true);
 
   const isAdmin = adminUser?.role === "admin";
 
@@ -98,9 +108,98 @@ export default function AdminAuditLog() {
 
   useEffect(() => {
     if (isAdmin) {
+      fetchAdminUsers();
       fetchLogs();
     }
-  }, [isAdmin, currentPage, actionFilter, tableFilter, dateFrom, dateTo]);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchLogs();
+    }
+  }, [currentPage, actionFilter, tableFilter, adminFilter, dateFrom, dateTo]);
+
+  // Real-time subscription for new audit log entries
+  useEffect(() => {
+    if (!isAdmin || !isLive) return;
+
+    const channel = supabase
+      .channel('audit-log-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_audit_log'
+        },
+        async (payload) => {
+          console.log('New audit log entry:', payload);
+          const newLog = payload.new as AuditLogEntry;
+          
+          // Get admin email for the new entry
+          let adminEmail = "System";
+          if (newLog.admin_user_id && adminEmailsMap[newLog.admin_user_id]) {
+            adminEmail = adminEmailsMap[newLog.admin_user_id];
+          } else if (newLog.admin_user_id) {
+            const { data: admin } = await supabase
+              .from("admin_users")
+              .select("email")
+              .eq("id", newLog.admin_user_id)
+              .single();
+            if (admin) {
+              adminEmail = admin.email;
+              setAdminEmailsMap(prev => ({ ...prev, [newLog.admin_user_id!]: admin.email }));
+            }
+          }
+
+          const logWithEmail = { ...newLog, admin_email: adminEmail };
+          
+          // Only add to current view if on first page and matches filters
+          if (currentPage === 1) {
+            const matchesFilters = 
+              (actionFilter === "all" || newLog.action === actionFilter) &&
+              (tableFilter === "all" || newLog.table_name === tableFilter) &&
+              (adminFilter === "all" || newLog.admin_user_id === adminFilter);
+            
+            if (matchesFilters) {
+              setLogs(prev => [logWithEmail, ...prev.slice(0, ITEMS_PER_PAGE - 1)]);
+              setTotalCount(prev => prev + 1);
+              toast.success("New audit log entry", {
+                description: actionLabels[newLog.action]?.label || newLog.action,
+              });
+            }
+          } else {
+            setTotalCount(prev => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, isLive, currentPage, actionFilter, tableFilter, adminFilter, adminEmailsMap]);
+
+  const fetchAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("id, email")
+        .order("email");
+      
+      if (error) throw error;
+      setAdminUsers(data || []);
+      
+      // Build email map
+      const emailMap = (data || []).reduce((acc, admin) => {
+        acc[admin.id] = admin.email;
+        return acc;
+      }, {} as Record<string, string>);
+      setAdminEmailsMap(emailMap);
+    } catch (error) {
+      console.error("Error fetching admin users:", error);
+    }
+  };
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -116,6 +215,9 @@ export default function AdminAuditLog() {
       }
       if (tableFilter !== "all") {
         query = query.eq("table_name", tableFilter);
+      }
+      if (adminFilter !== "all") {
+        query = query.eq("admin_user_id", adminFilter);
       }
       if (dateFrom) {
         query = query.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
@@ -292,6 +394,14 @@ export default function AdminAuditLog() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
+            <Button
+              onClick={() => setIsLive(!isLive)}
+              variant={isLive ? "default" : "outline"}
+              className="gap-2"
+            >
+              <Radio className={cn("h-4 w-4", isLive && "animate-pulse")} />
+              {isLive ? "Live" : "Paused"}
+            </Button>
           </div>
         </div>
 
@@ -385,6 +495,19 @@ export default function AdminAuditLog() {
                     <SelectItem value="applications">Applications</SelectItem>
                     <SelectItem value="blog_posts">Blog Posts</SelectItem>
                     <SelectItem value="admin_users">Admin Users</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={adminFilter} onValueChange={setAdminFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by admin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Admins</SelectItem>
+                    {adminUsers.map((admin) => (
+                      <SelectItem key={admin.id} value={admin.id}>
+                        {admin.email}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
