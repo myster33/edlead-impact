@@ -156,18 +156,29 @@ export default function AdminLogin() {
         return;
       }
 
+      // Check if user is approved (exists in admin_users table)
+      const { data: adminData, error: adminError } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("user_id", data.user?.id)
+        .maybeSingle();
+
+      if (!adminData) {
+        // User exists but not approved yet - sign them out
+        await supabase.auth.signOut();
+        toast({
+          title: "Pending Approval",
+          description: "Your account is pending admin approval. You will receive an email once approved.",
+          variant: "default",
+        });
+        return;
+      }
+
       // Check if MFA is required
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
       
       if (verifiedFactors.length > 0) {
-        // Fetch admin user ID for backup codes
-        const { data: adminData } = await supabase
-          .from("admin_users")
-          .select("id")
-          .eq("user_id", data.user?.id)
-          .maybeSingle();
-        
         // User has MFA enabled, need to verify
         setMfaFactorId(verifiedFactors[0].id);
         setMfaAdminUserId(adminData?.id || null);
