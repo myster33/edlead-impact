@@ -28,7 +28,7 @@ interface BlogPost {
 }
 
 const Blog = () => {
-  const { displayedText } = useTypingAnimation("edLEAD Voices", 50);
+  const { displayedText } = useTypingAnimation("edLEAD Stories", 50);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");

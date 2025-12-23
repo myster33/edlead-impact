@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, PenLine, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, PenLine, X, Image as ImageIcon, Video } from "lucide-react";
 
 const provinces = [
   "Eastern Cape",
@@ -55,6 +55,7 @@ const storySchema = z.object({
   author_province: z.string().min(1, "Please select your province"),
   author_email: z.string().email("Please enter a valid email address"),
   category: z.string().min(1, "Please select a category"),
+  video_url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 });
 
 type StoryFormData = z.infer<typeof storySchema>;
@@ -169,6 +170,7 @@ export const StorySubmissionForm = () => {
         author_email: data.author_email,
         category: data.category,
         featured_image_url: featuredImageUrl,
+        video_url: data.video_url || null,
       });
 
       if (error) throw error;
@@ -360,6 +362,26 @@ export const StorySubmissionForm = () => {
                 onChange={handleImageSelect}
               />
             </div>
+          </div>
+
+          {/* Video Link (Optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="video_url" className="flex items-center gap-2">
+              <Video className="h-4 w-4" />
+              Video Link (Optional)
+            </Label>
+            <Input
+              id="video_url"
+              type="url"
+              placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+              {...register("video_url")}
+            />
+            {errors.video_url && (
+              <p className="text-sm text-destructive">{errors.video_url.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Add a link to a YouTube, Vimeo, or other video of your story
+            </p>
           </div>
 
           <div className="space-y-2">

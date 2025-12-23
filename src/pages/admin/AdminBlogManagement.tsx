@@ -68,6 +68,8 @@ interface BlogPost {
   slug: string;
   category: string;
   is_featured: boolean;
+  featured_image_url: string | null;
+  video_url: string | null;
 }
 
 const AdminBlogManagement = () => {
@@ -89,6 +91,11 @@ const AdminBlogManagement = () => {
     summary: "",
     content: "",
     category: "",
+    author_name: "",
+    author_school: "",
+    author_province: "",
+    author_email: "",
+    video_url: "",
   });
 
   useEffect(() => {
@@ -238,6 +245,11 @@ const AdminBlogManagement = () => {
       summary: post.summary,
       content: post.content,
       category: post.category,
+      author_name: post.author_name,
+      author_school: post.author_school,
+      author_province: post.author_province,
+      author_email: post.author_email,
+      video_url: post.video_url || "",
     });
     setEditDialogOpen(true);
   };
@@ -253,6 +265,11 @@ const AdminBlogManagement = () => {
         summary: editForm.summary,
         content: editForm.content,
         category: editForm.category,
+        author_name: editForm.author_name,
+        author_school: editForm.author_school,
+        author_province: editForm.author_province,
+        author_email: editForm.author_email,
+        video_url: editForm.video_url || null,
       })
       .eq("id", selectedPost.id);
 
@@ -532,14 +549,50 @@ const AdminBlogManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label className="text-muted-foreground">Author Email</Label>
-              <p>{selectedPost?.author_email}</p>
+            {/* Featured Image */}
+            {selectedPost?.featured_image_url && (
+              <div>
+                <Label className="text-muted-foreground">Featured Image</Label>
+                <img 
+                  src={selectedPost.featured_image_url} 
+                  alt="Featured" 
+                  className="w-full max-h-48 object-cover rounded-md mt-2"
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-muted-foreground">Author Name</Label>
+                <p>{selectedPost?.author_name}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Author Email</Label>
+                <p>{selectedPost?.author_email}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">School</Label>
+                <p>{selectedPost?.author_school}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Province</Label>
+                <p>{selectedPost?.author_province}</p>
+              </div>
             </div>
-            <div>
-              <Label className="text-muted-foreground">Province</Label>
-              <p>{selectedPost?.author_province}</p>
-            </div>
+            {/* Video Link */}
+            {selectedPost?.video_url && (
+              <div>
+                <Label className="text-muted-foreground">Video Link</Label>
+                <a 
+                  href={selectedPost.video_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline flex items-center gap-1"
+                >
+                  {selectedPost.video_url}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
             <div>
               <Label className="text-muted-foreground">Summary</Label>
               <p className="bg-muted p-3 rounded-md">{selectedPost?.summary}</p>
@@ -579,6 +632,18 @@ const AdminBlogManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Featured Image Preview */}
+            {selectedPost?.featured_image_url && (
+              <div>
+                <Label className="text-muted-foreground">Featured Image</Label>
+                <img 
+                  src={selectedPost.featured_image_url} 
+                  alt="Featured" 
+                  className="w-full max-h-32 object-cover rounded-md mt-2"
+                />
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="edit-title">Title</Label>
               <Input
@@ -605,6 +670,59 @@ const AdminBlogManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Author Details Section */}
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Author Details</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-author-name">Author Name</Label>
+                  <Input
+                    id="edit-author-name"
+                    value={editForm.author_name}
+                    onChange={(e) => setEditForm({ ...editForm, author_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-author-email">Author Email</Label>
+                  <Input
+                    id="edit-author-email"
+                    type="email"
+                    value={editForm.author_email}
+                    onChange={(e) => setEditForm({ ...editForm, author_email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-author-school">School</Label>
+                  <Input
+                    id="edit-author-school"
+                    value={editForm.author_school}
+                    onChange={(e) => setEditForm({ ...editForm, author_school: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-author-province">Province</Label>
+                  <Input
+                    id="edit-author-province"
+                    value={editForm.author_province}
+                    onChange={(e) => setEditForm({ ...editForm, author_province: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Video Link */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-video-url">Video Link (Optional)</Label>
+              <Input
+                id="edit-video-url"
+                type="url"
+                placeholder="https://youtube.com/watch?v=..."
+                value={editForm.video_url}
+                onChange={(e) => setEditForm({ ...editForm, video_url: e.target.value })}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="edit-summary">Summary</Label>
               <Textarea
