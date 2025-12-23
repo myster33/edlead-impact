@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.send-performance-report]
 verify_jwt = false
+
+[functions.notify-admin-approval]
+verify_jwt = false

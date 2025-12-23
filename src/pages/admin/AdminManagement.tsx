@@ -237,18 +237,15 @@ export default function AdminManagement() {
       setAdminUsers([response.data.admin, ...adminUsers]);
       setIsAddDialogOpen(false);
       
-      // Send region assignment notification if region is assigned
-      if (newUserRole !== "admin" && (newUserCountry || newUserProvince)) {
-        supabase.functions.invoke("notify-reviewer-assignment", {
-          body: {
-            reviewer_email: newUserEmail.toLowerCase().trim(),
-            reviewer_name: null,
-            country: newUserCountry || null,
-            province: newUserProvince || null,
-            role: newUserRole,
-          },
-        }).catch(err => console.error("Failed to send assignment notification:", err));
-      }
+      // Send approval notification email
+      supabase.functions.invoke("notify-admin-approval", {
+        body: {
+          email: newUserEmail.toLowerCase().trim(),
+          role: newUserRole,
+          country: newUserCountry || null,
+          province: newUserProvince || null,
+        },
+      }).catch(err => console.error("Failed to send approval notification:", err));
       
       setNewUserEmail("");
       setNewUserRole("viewer");
@@ -257,7 +254,7 @@ export default function AdminManagement() {
 
       toast({
         title: "Admin Added",
-        description: `${newUserEmail} has been added as a ${newUserRole}.`,
+        description: `${newUserEmail} has been added as a ${newUserRole}. An approval email has been sent.`,
       });
     } catch (error: any) {
       console.error("Error adding admin:", error);
