@@ -98,16 +98,16 @@ export function TwoFactorVerify({ factorId, adminUserId, onVerified, onCancel }:
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Shield className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+          <div className="flex justify-center mb-2">
             <img 
               src={edleadLogo} 
               alt="edLEAD Logo" 
               className="h-16 w-auto"
             />
-          </div>
-          <div className="flex justify-center mb-2">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Shield className="h-6 w-6 text-primary" />
-            </div>
           </div>
           <CardTitle className="text-2xl font-bold">Two-Factor Authentication</CardTitle>
           <CardDescription>
