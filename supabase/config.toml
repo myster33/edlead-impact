@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.notify-admin-approval]
 verify_jwt = false
+
+[functions.list-pending-users]
+verify_jwt = false
