@@ -151,10 +151,17 @@ export default function AdminManagement() {
   const fetchAdminUsers = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("admin_users")
         .select("*")
         .order("created_at", { ascending: false });
+
+      // Non-admin users (reviewers/viewers) cannot see admin users
+      if (!isAdmin) {
+        query = query.neq("role", "admin");
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setAdminUsers(data || []);
