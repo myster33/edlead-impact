@@ -28,6 +28,7 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminBlogManagement from "./pages/admin/AdminBlogManagement";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminResetPassword from "./pages/admin/AdminResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/reset-password" element={<AdminResetPassword />} />
               <Route
                 path="/admin"
                 element={
