@@ -565,6 +565,35 @@ export default function AdminManagement() {
           )}
         </div>
 
+        {/* Region Summary Card - Only show for non-admins with assigned region */}
+        {!isAdmin && (adminUser?.country || adminUser?.province) && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-primary/10">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Your Assigned Region</CardTitle>
+                    <CardDescription>
+                      {adminUser.province && adminUser.country 
+                        ? `${adminUser.province}, ${adminUser.country}`
+                        : adminUser.province || adminUser.country}
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-primary">{adminUsers.length}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {adminUsers.length === 1 ? "Team member" : "Team members"} in your region
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
+
         {/* Role Legend */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card>
