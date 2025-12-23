@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { format } from "date-fns";
+import { format, subDays, eachDayOfInterval, startOfDay } from "date-fns";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,13 +34,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, History, Download, CalendarIcon, FileText, Radio } from "lucide-react";
+import { Loader2, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, History, Download, CalendarIcon, FileText, Radio, BarChart3, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from "recharts";
 
 interface AdminUser {
   id: string;
@@ -97,6 +105,8 @@ export default function AdminAuditLog() {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [adminEmailsMap, setAdminEmailsMap] = useState<Record<string, string>>({});
   const [isLive, setIsLive] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
 
   const isAdmin = adminUser?.role === "admin";
 
@@ -264,6 +274,144 @@ export default function AdminAuditLog() {
     }
   };
 
+  const fetchAllLogs = async (): Promise<AuditLogEntry[]> => {
+    try {
+      let query = supabase
+        .from("admin_audit_log")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (actionFilter !== "all") {
+        query = query.eq("action", actionFilter);
+      }
+      if (tableFilter !== "all") {
+        query = query.eq("table_name", tableFilter);
+      }
+      if (adminFilter !== "all") {
+        query = query.eq("admin_user_id", adminFilter);
+      }
+      if (dateFrom) {
+        query = query.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
+      }
+      if (dateTo) {
+        const nextDay = new Date(dateTo);
+        nextDay.setDate(nextDay.getDate() + 1);
+        query = query.lt("created_at", format(nextDay, "yyyy-MM-dd"));
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Get admin emails
+      const adminIds = [...new Set((data || []).map(log => log.admin_user_id).filter(Boolean))];
+      let adminEmails: Record<string, string> = { ...adminEmailsMap };
+      
+      const missingIds = adminIds.filter(id => !adminEmails[id]);
+      if (missingIds.length > 0) {
+        const { data: admins } = await supabase
+          .from("admin_users")
+          .select("id, email")
+          .in("id", missingIds);
+        
+        if (admins) {
+          admins.forEach(admin => {
+            adminEmails[admin.id] = admin.email;
+          });
+        }
+      }
+
+      return (data || []).map(log => ({
+        ...log,
+        admin_email: log.admin_user_id ? adminEmails[log.admin_user_id] : "System",
+      }));
+    } catch (error) {
+      console.error("Error fetching all logs:", error);
+      return [];
+    }
+  };
+
+  const exportAllToCSV = async () => {
+    setIsExporting(true);
+    toast.info("Fetching all audit logs...");
+    
+    try {
+      const allLogsData = await fetchAllLogs();
+      
+      const headers = ["Date & Time", "Admin", "Action", "Table", "Record ID", "Old Values", "New Values"];
+      const csvData = allLogsData.map(log => [
+        format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
+        log.admin_email || "Unknown",
+        actionLabels[log.action]?.label || log.action,
+        log.table_name,
+        log.record_id || "N/A",
+        log.old_values ? JSON.stringify(log.old_values) : "",
+        log.new_values ? JSON.stringify(log.new_values) : "",
+      ]);
+
+      const csvContent = [
+        headers.join(","),
+        ...csvData.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `audit-log-full-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      link.click();
+      
+      toast.success(`Exported ${allLogsData.length} audit log entries`);
+    } catch (error) {
+      toast.error("Failed to export audit logs");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const exportAllToPDF = async () => {
+    setIsExporting(true);
+    toast.info("Generating PDF report...");
+    
+    try {
+      const allLogsData = await fetchAllLogs();
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.text("Complete Audit Log Report", 14, 22);
+      doc.setFontSize(10);
+      doc.text(`Generated: ${format(new Date(), "MMMM dd, yyyy HH:mm")}`, 14, 30);
+      doc.text(`Total Entries: ${allLogsData.length}`, 14, 36);
+      
+      if (dateFrom || dateTo) {
+        const dateRange = `Date Range: ${dateFrom ? format(dateFrom, "MMM dd, yyyy") : "Start"} - ${dateTo ? format(dateTo, "MMM dd, yyyy") : "End"}`;
+        doc.text(dateRange, 14, 42);
+      }
+
+      const tableData = allLogsData.map(log => [
+        format(new Date(log.created_at), "MMM dd, yyyy HH:mm"),
+        log.admin_email || "Unknown",
+        actionLabels[log.action]?.label || log.action,
+        log.table_name,
+        log.record_id?.slice(0, 8) || "N/A",
+      ]);
+
+      autoTable(doc, {
+        head: [["Date & Time", "Admin", "Action", "Table", "Record ID"]],
+        body: tableData,
+        startY: dateFrom || dateTo ? 48 : 42,
+        styles: { fontSize: 7 },
+        headStyles: { fillColor: [41, 128, 185] },
+      });
+
+      doc.save(`audit-log-full-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      toast.success(`Exported ${allLogsData.length} audit log entries to PDF`);
+    } catch (error) {
+      toast.error("Failed to export audit logs to PDF");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const exportToCSV = () => {
     const headers = ["Date & Time", "Admin", "Action", "Table", "Record ID", "Old Values", "New Values"];
     const csvData = filteredLogs.map(log => [
@@ -348,6 +496,56 @@ export default function AdminAuditLog() {
     setDetailsOpen(true);
   };
 
+  // Timeline data calculation
+  const timelineData = useMemo(() => {
+    const last14Days = eachDayOfInterval({
+      start: subDays(new Date(), 13),
+      end: new Date()
+    });
+
+    return last14Days.map(day => {
+      const dayStart = startOfDay(day);
+      const dayLogs = logs.filter(log => {
+        const logDate = startOfDay(new Date(log.created_at));
+        return logDate.getTime() === dayStart.getTime();
+      });
+
+      const applications = dayLogs.filter(l => l.table_name === "applications").length;
+      const blogs = dayLogs.filter(l => l.table_name === "blog_posts").length;
+      const admins = dayLogs.filter(l => l.table_name === "admin_users").length;
+
+      return {
+        date: format(day, "MMM dd"),
+        fullDate: format(day, "MMMM dd, yyyy"),
+        applications,
+        blogs,
+        admins,
+        total: dayLogs.length
+      };
+    });
+  }, [logs]);
+
+  const actionBreakdownData = useMemo(() => {
+    const actionCounts: Record<string, number> = {};
+    logs.forEach(log => {
+      const label = actionLabels[log.action]?.label || log.action;
+      actionCounts[label] = (actionCounts[label] || 0) + 1;
+    });
+
+    return Object.entries(actionCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [logs]);
+
+  const CHART_COLORS = [
+    "hsl(var(--primary))",
+    "hsl(var(--destructive))",
+    "hsl(var(--chart-3))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+  ];
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -381,15 +579,34 @@ export default function AdminAuditLog() {
               Track all admin actions and changes in the system.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={exportToCSV} variant="outline" disabled={loading || filteredLogs.length === 0}>
-              <Download className="h-4 w-4 mr-2" />
-              CSV
-            </Button>
-            <Button onClick={exportToPDF} variant="outline" disabled={loading || filteredLogs.length === 0}>
-              <FileText className="h-4 w-4 mr-2" />
-              PDF
-            </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={loading || isExporting}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportToCSV} disabled={filteredLogs.length === 0}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Current Page (CSV)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportToPDF} disabled={filteredLogs.length === 0}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Current Page (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportAllToCSV}>
+                  <Download className="h-4 w-4 mr-2" />
+                  All Logs (CSV) - {totalCount} entries
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportAllToPDF}>
+                  <Download className="h-4 w-4 mr-2" />
+                  All Logs (PDF) - {totalCount} entries
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={fetchLogs} variant="outline" disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
               Refresh
@@ -568,9 +785,97 @@ export default function AdminAuditLog() {
           </CardContent>
         </Card>
 
-        {/* Audit Log Table */}
-        <Card>
-          <CardContent className="pt-6">
+        {/* View Toggle & Content */}
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "table" | "timeline")}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="table">
+              <History className="h-4 w-4 mr-2" />
+              Table View
+            </TabsTrigger>
+            <TabsTrigger value="timeline">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Timeline View
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="timeline" className="space-y-6">
+            {/* Activity Timeline Chart */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Activity Over Last 14 Days</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={timelineData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis 
+                        dataKey="date" 
+                        className="text-xs fill-muted-foreground"
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis 
+                        className="text-xs fill-muted-foreground"
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px"
+                        }}
+                        labelStyle={{ color: "hsl(var(--foreground))" }}
+                      />
+                      <Legend />
+                      <Bar dataKey="applications" name="Applications" fill="hsl(var(--primary))" stackId="a" />
+                      <Bar dataKey="blogs" name="Blog Posts" fill="hsl(var(--chart-2))" stackId="a" />
+                      <Bar dataKey="admins" name="Admin Users" fill="hsl(var(--chart-3))" stackId="a" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Action Breakdown */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={actionBreakdownData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis type="number" className="text-xs fill-muted-foreground" />
+                      <YAxis 
+                        type="category" 
+                        dataKey="name" 
+                        width={150}
+                        className="text-xs fill-muted-foreground"
+                        tick={{ fontSize: 11 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px"
+                        }}
+                      />
+                      <Bar dataKey="value" name="Count">
+                        {actionBreakdownData.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="table">
+            <Card>
+              <CardContent className="pt-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -660,6 +965,8 @@ export default function AdminAuditLog() {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Details Dialog */}
