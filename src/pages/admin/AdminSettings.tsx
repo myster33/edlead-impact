@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2 } from "lucide-react";
+import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2, Mail } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -90,6 +90,7 @@ export default function AdminSettings() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
+  const [isSendingDigest, setIsSendingDigest] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !adminUser) {
@@ -760,6 +761,56 @@ export default function AdminSettings() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Email Digest */}
+            {adminUser?.role === "admin" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Audit Log Digest
+                  </CardTitle>
+                  <CardDescription>
+                    Send weekly audit log summaries to all admin users.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Weekly Email Digest</p>
+                      <p className="text-sm text-muted-foreground">
+                        Send a summary of the last 7 days of admin activity to all admins.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={async () => {
+                        setIsSendingDigest(true);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("send-audit-digest");
+                          if (error) throw error;
+                          toast({
+                            title: "Digest sent",
+                            description: `Successfully sent digest to ${data.emailsSent} admin(s).`,
+                          });
+                        } catch (error: any) {
+                          toast({
+                            title: "Failed to send digest",
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsSendingDigest(false);
+                        }
+                      }}
+                      disabled={isSendingDigest}
+                    >
+                      {isSendingDigest && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Send Digest Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

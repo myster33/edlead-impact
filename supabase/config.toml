@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.notify-profile-change]
 verify_jwt = false
+
+[functions.send-audit-digest]
+verify_jwt = false
