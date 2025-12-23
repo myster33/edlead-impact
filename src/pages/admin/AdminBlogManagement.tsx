@@ -147,25 +147,34 @@ const AdminBlogManagement = () => {
         description: "Failed to approve the post.",
         variant: "destructive",
       });
-    } else {
-      // Send approval notification to author (fire and forget)
-      supabase.functions.invoke("notify-author-approval", {
-        body: {
-          author_email: post.author_email,
-          author_name: post.author_name,
-          title: post.title,
-          slug: data?.slug || post.slug,
-        },
-      }).catch((err) => {
-        console.error("Failed to send author notification:", err);
-      });
+      setSaving(false);
+      return;
+    }
 
+    // Send approval notification to author
+    const { error: notifyError } = await supabase.functions.invoke("notify-author-approval", {
+      body: {
+        author_email: post.author_email,
+        author_name: post.author_name,
+        title: post.title,
+        slug: data?.slug || post.slug,
+      },
+    });
+
+    if (notifyError) {
+      console.error("Failed to send author notification:", notifyError);
+      toast({
+        title: "Post Approved",
+        description: "The post was approved, but we couldn't send the notification email. The author may need to be contacted manually.",
+      });
+    } else {
       toast({
         title: "Post Approved",
         description: "The blog post has been published and the author has been notified.",
       });
-      fetchPosts();
     }
+
+    fetchPosts();
     setSaving(false);
   };
 
