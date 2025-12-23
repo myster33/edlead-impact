@@ -9,9 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Smartphone, Check, X } from "lucide-react";
+import { Loader2, Shield, Key, User, Smartphone, Check, X, Save } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,13 +24,51 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const countries = [
+  "South Africa", "Nigeria", "Kenya", "Ghana", "Tanzania", "Uganda", 
+  "Zimbabwe", "Botswana", "Namibia", "Zambia", "Mozambique", "Rwanda", 
+  "Ethiopia", "Egypt", "Morocco"
+];
+
+const provincesByCountry: { [key: string]: string[] } = {
+  "South Africa": ["Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal", "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"],
+  "Nigeria": ["Lagos", "Kano", "Rivers", "Kaduna", "Oyo", "Abuja FCT", "Anambra", "Delta", "Enugu", "Imo"],
+  "Kenya": ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret", "Kiambu", "Machakos"],
+  "Ghana": ["Greater Accra", "Ashanti", "Western", "Eastern", "Central", "Northern", "Volta"],
+  "Tanzania": ["Dar es Salaam", "Dodoma", "Arusha", "Mwanza", "Zanzibar", "Mbeya"],
+  "Uganda": ["Central", "Eastern", "Northern", "Western", "Kampala"],
+  "Zimbabwe": ["Harare", "Bulawayo", "Manicaland", "Mashonaland", "Matabeleland"],
+  "Botswana": ["Central", "Ghanzi", "Kgalagadi", "Kgatleng", "Kweneng", "North-East", "North-West", "South-East", "Southern"],
+  "Namibia": ["Khomas", "Erongo", "Oshana", "Omusati", "Ohangwena", "Kavango East"],
+  "Zambia": ["Lusaka", "Copperbelt", "Southern", "Central", "Eastern", "Northern"],
+  "Mozambique": ["Maputo", "Gaza", "Inhambane", "Sofala", "Manica", "Tete", "Zambezia"],
+  "Rwanda": ["Kigali", "Eastern", "Northern", "Southern", "Western"],
+  "Ethiopia": ["Addis Ababa", "Oromia", "Amhara", "Tigray", "SNNPR"],
+  "Egypt": ["Cairo", "Alexandria", "Giza", "Luxor", "Aswan"],
+  "Morocco": ["Casablanca-Settat", "Rabat-Salé-Kénitra", "Marrakech-Safi", "Fès-Meknès", "Tanger-Tétouan-Al Hoceïma"],
+};
 
 export default function AdminSettings() {
   const { user, adminUser, isLoading: authLoading } = useAdminAuth();
   const navigate = useNavigate();
 
+  // Profile state
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [position, setPosition] = useState("");
+  const [country, setCountry] = useState("");
+  const [province, setProvince] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
   // Password change state
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -56,7 +93,65 @@ export default function AdminSettings() {
 
   useEffect(() => {
     fetchMfaFactors();
-  }, []);
+    fetchProfile();
+  }, [adminUser]);
+
+  const fetchProfile = async () => {
+    if (!adminUser?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("full_name, phone, position, country, province")
+        .eq("id", adminUser.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setFullName(data.full_name || "");
+        setPhone(data.phone || "");
+        setPosition(data.position || "");
+        setCountry(data.country || "");
+        setProvince(data.province || "");
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!adminUser?.id) return;
+
+    setIsSavingProfile(true);
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({
+          full_name: fullName.trim() || null,
+          phone: phone.trim() || null,
+          position: position.trim() || null,
+          country: country || null,
+          province: province || null,
+        })
+        .eq("id", adminUser.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const fetchMfaFactors = async () => {
     try {
@@ -103,7 +198,7 @@ export default function AdminSettings() {
         description: "Your password has been changed successfully.",
       });
 
-      setCurrentPassword("");
+      // Password changed successfully
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
@@ -238,11 +333,12 @@ export default function AdminSettings() {
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
+            {/* Account Information (Read-only) */}
             <Card>
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
+                <CardTitle>Account Information</CardTitle>
                 <CardDescription>
-                  Your account details and role information.
+                  Your account details and role.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -275,6 +371,85 @@ export default function AdminSettings() {
                       : "N/A"}
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Editable Profile */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Details</CardTitle>
+                <CardDescription>
+                  Update your personal information.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="position">Position</Label>
+                  <Input
+                    id="position"
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                    placeholder="e.g., Program Coordinator"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Country</Label>
+                    <Select value={country} onValueChange={(val) => {
+                      setCountry(val);
+                      setProvince("");
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((c) => (
+                          <SelectItem key={c} value={c}>{c}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Province / Region</Label>
+                    <Select 
+                      value={province} 
+                      onValueChange={setProvince}
+                      disabled={!country}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={country ? "Select province" : "Select country first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(provincesByCountry[country] || []).map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button onClick={handleSaveProfile} disabled={isSavingProfile}>
+                  {isSavingProfile && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Profile
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
