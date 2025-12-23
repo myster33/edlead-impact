@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, Moon, Sun, ArrowLeft } from "lucide-react";
+import { Loader2, Lock, Mail, Moon, Sun, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +59,8 @@ export default function AdminLogin() {
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
   const [mfaAdminUserId, setMfaAdminUserId] = useState<string | null>(null);
   const [showMfaVerify, setShowMfaVerify] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const { signIn, signUp, user, isAdmin, isLoading: authLoading, isMfaVerified, requiresMfa, setMfaVerified } = useAdminAuth();
   const navigate = useNavigate();
@@ -496,13 +498,21 @@ export default function AdminLogin() {
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="login-password"
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           disabled={isLoading}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                       </div>
                       {errors.password && (
                         <p className="text-sm text-destructive">{errors.password}</p>
@@ -549,13 +559,21 @@ export default function AdminLogin() {
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-password"
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           disabled={isLoading}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                       </div>
                       {errors.password && (
                         <p className="text-sm text-destructive">{errors.password}</p>
@@ -586,13 +604,21 @@ export default function AdminLogin() {
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="signup-confirm-password"
-                          type="password"
+                          type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           disabled={isLoading}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          tabIndex={-1}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
                       </div>
                       {errors.confirmPassword && (
                         <p className="text-sm text-destructive">{errors.confirmPassword}</p>
