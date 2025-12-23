@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuditLog } from "@/hooks/use-audit-log";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,7 @@ export default function AdminManagement() {
   const navigate = useNavigate();
   const { adminUser, signOut } = useAdminAuth();
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
   
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -183,6 +185,7 @@ export default function AdminManagement() {
   const updateAdminRole = async () => {
     if (!editingUser) return;
 
+    const oldRole = editingUser.role;
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -195,6 +198,22 @@ export default function AdminManagement() {
       setAdminUsers(adminUsers.map(u => 
         u.id === editingUser.id ? { ...u, role: editRole } : u
       ));
+
+      // Log role change with critical alert
+      await logAction(
+        {
+          action: "admin_role_changed",
+          table_name: "admin_users",
+          record_id: editingUser.id,
+          old_values: { role: oldRole },
+          new_values: { role: editRole }
+        },
+        {
+          target_email: editingUser.email,
+          details: { oldRole, newRole: editRole }
+        }
+      );
+
       setEditingUser(null);
 
       toast({
@@ -235,6 +254,20 @@ export default function AdminManagement() {
         .eq("id", deletingUser.id);
 
       if (error) throw error;
+
+      // Log deletion with critical alert
+      await logAction(
+        {
+          action: "admin_user_deleted",
+          table_name: "admin_users",
+          record_id: deletingUser.id,
+          old_values: { email: deletingUser.email, role: deletingUser.role }
+        },
+        {
+          target_email: deletingUser.email,
+          details: { role: deletingUser.role }
+        }
+      );
 
       setAdminUsers(adminUsers.filter(u => u.id !== deletingUser.id));
       setDeletingUser(null);
