@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Smartphone, Check, X, Save } from "lucide-react";
+import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,7 @@ const provincesByCountry: { [key: string]: string[] } = {
 export default function AdminSettings() {
   const { user, adminUser, isLoading: authLoading } = useAdminAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Profile state
   const [fullName, setFullName] = useState("");
@@ -66,7 +68,9 @@ export default function AdminSettings() {
   const [position, setPosition] = useState("");
   const [country, setCountry] = useState("");
   const [province, setProvince] = useState("");
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Password change state
   const [newPassword, setNewPassword] = useState("");
@@ -102,7 +106,7 @@ export default function AdminSettings() {
     try {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("full_name, phone, position, country, province")
+        .select("full_name, phone, position, country, province, profile_picture_url")
         .eq("id", adminUser.id)
         .maybeSingle();
       
@@ -114,11 +118,112 @@ export default function AdminSettings() {
         setPosition(data.position || "");
         setCountry(data.country || "");
         setProvince(data.province || "");
+        setProfilePictureUrl(data.profile_picture_url || null);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
     }
   };
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !adminUser?.user_id) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${adminUser.user_id}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("admin-avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("admin-avatars")
+        .getPublicUrl(fileName);
+
+      // Update the admin_users record
+      const { error: updateError } = await supabase
+        .from("admin_users")
+        .update({ profile_picture_url: publicUrl })
+        .eq("id", adminUser.id);
+
+      if (updateError) throw updateError;
+
+      setProfilePictureUrl(publicUrl);
+      toast({
+        title: "Photo Uploaded",
+        description: "Your profile picture has been updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload photo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (!adminUser?.id) return;
+
+    setIsUploadingPhoto(true);
+    try {
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ profile_picture_url: null })
+        .eq("id", adminUser.id);
+
+      if (error) throw error;
+
+      setProfilePictureUrl(null);
+      toast({
+        title: "Photo Removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove photo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const initials = (fullName || adminUser?.email || "AD")
+    .split(/[\s@]/)
+    .slice(0, 2)
+    .map(s => s.charAt(0).toUpperCase())
+    .join("");
 
   const handleSaveProfile = async () => {
     if (!adminUser?.id) return;
@@ -333,6 +438,64 @@ export default function AdminSettings() {
           </TabsList>
 
           <TabsContent value="profile" className="space-y-6">
+            {/* Profile Picture */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Picture</CardTitle>
+                <CardDescription>
+                  Upload a photo for your admin profile.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-6">
+                  <Avatar className="h-24 w-24">
+                    {profilePictureUrl && (
+                      <AvatarImage src={profilePictureUrl} alt="Profile" />
+                    )}
+                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPhoto}
+                    >
+                      {isUploadingPhoto ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Camera className="mr-2 h-4 w-4" />
+                      )}
+                      Upload Photo
+                    </Button>
+                    {profilePictureUrl && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemovePhoto}
+                        disabled={isUploadingPhoto}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Remove
+                      </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Max 2MB. JPG, PNG, or GIF.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Account Information (Read-only) */}
             <Card>
               <CardHeader>

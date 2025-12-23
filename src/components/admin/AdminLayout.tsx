@@ -1,5 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -15,7 +17,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
@@ -31,6 +33,12 @@ import edleadLogo from "@/assets/edlead-logo.png";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+}
+
+interface AdminProfile {
+  full_name: string | null;
+  position: string | null;
+  profile_picture_url: string | null;
 }
 
 const menuItems = [
@@ -64,11 +72,32 @@ const menuItems = [
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const { adminUser, signOut } = useAdminAuth();
+  const [profile, setProfile] = useState<AdminProfile | null>(null);
 
-  const initials = adminUser?.email
-    ?.split("@")[0]
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!adminUser?.id) return;
+      
+      const { data } = await supabase
+        .from("admin_users")
+        .select("full_name, position, profile_picture_url")
+        .eq("id", adminUser.id)
+        .maybeSingle();
+      
+      if (data) {
+        setProfile(data);
+      }
+    };
+
+    fetchProfile();
+  }, [adminUser?.id]);
+
+  const displayName = profile?.full_name || adminUser?.email?.split("@")[0] || "Admin";
+  const initials = (profile?.full_name || adminUser?.email || "AD")
+    .split(/[\s@]/)
     .slice(0, 2)
-    .toUpperCase() || "AD";
+    .map(s => s.charAt(0).toUpperCase())
+    .join("");
 
   const handleSignOut = async () => {
     await signOut();
@@ -126,13 +155,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           <SidebarFooter className="p-4 border-t">
             <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-9 w-9">
+              <Avatar className="h-10 w-10">
+                {profile?.profile_picture_url && (
+                  <AvatarImage src={profile.profile_picture_url} alt={displayName} />
+                )}
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{adminUser?.email}</p>
+                <p className="text-sm font-medium truncate">{displayName}</p>
+                {profile?.position && (
+                  <p className="text-xs text-muted-foreground truncate">{profile.position}</p>
+                )}
                 <div className="flex items-center gap-1">
                   <Shield className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground capitalize">{adminUser?.role}</span>
