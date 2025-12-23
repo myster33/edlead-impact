@@ -78,6 +78,7 @@ export default function AdminSettings() {
   const [notifyBlogs, setNotifyBlogs] = useState(true);
   const [notifyAdminChanges, setNotifyAdminChanges] = useState(true);
   const [notifyCriticalAlerts, setNotifyCriticalAlerts] = useState(true);
+  const [notifyPerformanceReports, setNotifyPerformanceReports] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
@@ -116,7 +117,7 @@ export default function AdminSettings() {
     try {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled, notify_applications, notify_blogs, notify_admin_changes, notify_critical_alerts")
+        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled, notify_applications, notify_blogs, notify_admin_changes, notify_critical_alerts, notify_performance_reports")
         .eq("id", adminUser.id)
         .maybeSingle();
       
@@ -134,6 +135,7 @@ export default function AdminSettings() {
         setNotifyBlogs(data.notify_blogs ?? true);
         setNotifyAdminChanges(data.notify_admin_changes ?? true);
         setNotifyCriticalAlerts(data.notify_critical_alerts ?? true);
+        setNotifyPerformanceReports(data.notify_performance_reports ?? true);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -929,6 +931,40 @@ export default function AdminSettings() {
                             
                             if (error) throw error;
                             setNotifyAdminChanges(checked);
+                          } catch (error: any) {
+                            toast({
+                              title: "Failed to update preference",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Performance Reports */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <Mail className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="notify-performance" className="font-medium text-sm">Performance Reports</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Weekly and monthly automated performance reports with reviewer statistics.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="notify-performance"
+                        checked={notifyPerformanceReports}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const { error } = await supabase
+                              .from("admin_users")
+                              .update({ notify_performance_reports: checked })
+                              .eq("id", adminUser?.id);
+                            
+                            if (error) throw error;
+                            setNotifyPerformanceReports(checked);
                           } catch (error: any) {
                             toast({
                               title: "Failed to update preference",
