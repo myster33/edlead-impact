@@ -57,6 +57,7 @@ export default function AdminLogin() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaAdminUserId, setMfaAdminUserId] = useState<string | null>(null);
   const [showMfaVerify, setShowMfaVerify] = useState(false);
   
   const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAdminAuth();
@@ -136,8 +137,16 @@ export default function AdminLogin() {
       const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
       
       if (verifiedFactors.length > 0) {
+        // Fetch admin user ID for backup codes
+        const { data: adminData } = await supabase
+          .from("admin_users")
+          .select("id")
+          .eq("user_id", data.user?.id)
+          .maybeSingle();
+        
         // User has MFA enabled, need to verify
         setMfaFactorId(verifiedFactors[0].id);
+        setMfaAdminUserId(adminData?.id || null);
         setShowMfaVerify(true);
       } else {
         toast({
@@ -159,6 +168,7 @@ export default function AdminLogin() {
   const handleMfaVerified = () => {
     setShowMfaVerify(false);
     setMfaFactorId(null);
+    setMfaAdminUserId(null);
     toast({
       title: "Welcome back!",
       description: "You have successfully logged in with 2FA.",
@@ -169,6 +179,7 @@ export default function AdminLogin() {
     await supabase.auth.signOut();
     setShowMfaVerify(false);
     setMfaFactorId(null);
+    setMfaAdminUserId(null);
   };
 
   const validateSignupForm = () => {
@@ -278,6 +289,7 @@ export default function AdminLogin() {
     return (
       <TwoFactorVerify
         factorId={mfaFactorId}
+        adminUserId={mfaAdminUserId || undefined}
         onVerified={handleMfaVerified}
         onCancel={handleMfaCancel}
       />
