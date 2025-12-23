@@ -54,8 +54,10 @@ import {
   Edit,
   Trash2,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  MapPin
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -66,7 +68,53 @@ interface AdminUser {
   email: string;
   role: AppRole;
   created_at: string;
+  full_name: string | null;
+  phone: string | null;
+  position: string | null;
+  country: string | null;
+  province: string | null;
+  profile_picture_url: string | null;
 }
+
+const countries = [
+  { value: "South Africa", label: "South Africa" },
+  { value: "Kenya", label: "Kenya" },
+  { value: "Nigeria", label: "Nigeria" },
+  { value: "Ghana", label: "Ghana" },
+  { value: "Tanzania", label: "Tanzania" },
+  { value: "Uganda", label: "Uganda" },
+  { value: "Rwanda", label: "Rwanda" },
+  { value: "Ethiopia", label: "Ethiopia" },
+  { value: "Zimbabwe", label: "Zimbabwe" },
+  { value: "Zambia", label: "Zambia" },
+];
+
+const provincesByCountry: Record<string, { value: string; label: string }[]> = {
+  "South Africa": [
+    { value: "Eastern Cape", label: "Eastern Cape" },
+    { value: "Free State", label: "Free State" },
+    { value: "Gauteng", label: "Gauteng" },
+    { value: "KwaZulu-Natal", label: "KwaZulu-Natal" },
+    { value: "Limpopo", label: "Limpopo" },
+    { value: "Mpumalanga", label: "Mpumalanga" },
+    { value: "Northern Cape", label: "Northern Cape" },
+    { value: "North West", label: "North West" },
+    { value: "Western Cape", label: "Western Cape" },
+  ],
+  "Kenya": [
+    { value: "Nairobi", label: "Nairobi" },
+    { value: "Mombasa", label: "Mombasa" },
+    { value: "Kisumu", label: "Kisumu" },
+    { value: "Central", label: "Central" },
+    { value: "Coast", label: "Coast" },
+  ],
+  "Nigeria": [
+    { value: "Lagos", label: "Lagos" },
+    { value: "Abuja", label: "Abuja" },
+    { value: "Kano", label: "Kano" },
+    { value: "Rivers", label: "Rivers" },
+  ],
+};
 
 export default function AdminManagement() {
   const navigate = useNavigate();
@@ -82,10 +130,14 @@ export default function AdminManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState<AppRole>("viewer");
+  const [newUserCountry, setNewUserCountry] = useState("");
+  const [newUserProvince, setNewUserProvince] = useState("");
   
   // Edit user dialog
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editRole, setEditRole] = useState<AppRole>("viewer");
+  const [editCountry, setEditCountry] = useState("");
+  const [editProvince, setEditProvince] = useState("");
   
   // Delete confirmation
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
@@ -145,7 +197,12 @@ export default function AdminManagement() {
       // Try to insert - will fail if user_id doesn't exist
       // We need to use an edge function for this since we can't access auth.users directly
       const response = await supabase.functions.invoke("add-admin-user", {
-        body: { email: newUserEmail.toLowerCase().trim(), role: newUserRole },
+        body: { 
+          email: newUserEmail.toLowerCase().trim(), 
+          role: newUserRole,
+          country: newUserRole !== "admin" ? newUserCountry : null,
+          province: newUserRole !== "admin" ? newUserProvince : null,
+        },
       });
 
       if (response.error) {
@@ -165,6 +222,8 @@ export default function AdminManagement() {
       setIsAddDialogOpen(false);
       setNewUserEmail("");
       setNewUserRole("viewer");
+      setNewUserCountry("");
+      setNewUserProvince("");
 
       toast({
         title: "Admin Added",
@@ -188,15 +247,28 @@ export default function AdminManagement() {
     const oldRole = editingUser.role;
     setIsSubmitting(true);
     try {
+      const updateData: any = { role: editRole };
+      
+      // Only set country/province for non-admin roles
+      if (editRole !== "admin") {
+        updateData.country = editCountry || null;
+        updateData.province = editProvince || null;
+      }
+
       const { error } = await supabase
         .from("admin_users")
-        .update({ role: editRole })
+        .update(updateData)
         .eq("id", editingUser.id);
 
       if (error) throw error;
 
       setAdminUsers(adminUsers.map(u => 
-        u.id === editingUser.id ? { ...u, role: editRole } : u
+        u.id === editingUser.id ? { 
+          ...u, 
+          role: editRole, 
+          country: editRole !== "admin" ? editCountry : null,
+          province: editRole !== "admin" ? editProvince : null 
+        } : u
       ));
 
       // Log role change with critical alert
@@ -350,9 +422,15 @@ export default function AdminManagement() {
                       onChange={(e) => setNewUserEmail(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
+                <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as AppRole)}>
+                    <Select value={newUserRole} onValueChange={(v) => {
+                      setNewUserRole(v as AppRole);
+                      if (v === "admin") {
+                        setNewUserCountry("");
+                        setNewUserProvince("");
+                      }
+                    }}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -381,6 +459,49 @@ export default function AdminManagement() {
                       {getRoleDescription(newUserRole)}
                     </p>
                   </div>
+                  
+                  {newUserRole !== "admin" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="country">Assigned Country</Label>
+                        <Select value={newUserCountry} onValueChange={(v) => {
+                          setNewUserCountry(v);
+                          setNewUserProvince("");
+                        }}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map(c => (
+                              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Limit this user to applications from this country
+                        </p>
+                      </div>
+                      
+                      {newUserCountry && provincesByCountry[newUserCountry] && (
+                        <div className="space-y-2">
+                          <Label htmlFor="province">Assigned Province/Region</Label>
+                          <Select value={newUserProvince} onValueChange={setNewUserProvince}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select province (optional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {provincesByCountry[newUserCountry]?.map(p => (
+                                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Further limit to a specific province/region
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -460,8 +581,10 @@ export default function AdminManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Email</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead className="hidden md:table-cell">Region</TableHead>
+                    <TableHead className="hidden lg:table-cell">Contact</TableHead>
                     <TableHead className="hidden sm:table-cell">Added</TableHead>
                     {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
@@ -470,14 +593,50 @@ export default function AdminManagement() {
                   {adminUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{user.email}</span>
-                          {user.user_id === adminUser?.user_id && (
-                            <Badge variant="outline" className="text-xs">You</Badge>
-                          )}
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            {user.profile_picture_url && (
+                              <AvatarImage src={user.profile_picture_url} alt={user.full_name || user.email} />
+                            )}
+                            <AvatarFallback className="text-xs">
+                              {(user.full_name || user.email).slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{user.full_name || user.email}</span>
+                              {user.user_id === adminUser?.user_id && (
+                                <Badge variant="outline" className="text-xs">You</Badge>
+                              )}
+                            </div>
+                            {user.full_name && (
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                            )}
+                            {user.position && (
+                              <p className="text-xs text-muted-foreground">{user.position}</p>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {user.role !== "admin" && (user.country || user.province) ? (
+                          <div className="text-sm">
+                            {user.province && <span>{user.province}</span>}
+                            {user.province && user.country && <span>, </span>}
+                            {user.country && <span className="text-muted-foreground">{user.country}</span>}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {user.phone ? (
+                          <span className="text-sm">{user.phone}</span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {new Date(user.created_at).toLocaleDateString("en-ZA")}
                       </TableCell>
@@ -490,6 +649,8 @@ export default function AdminManagement() {
                               onClick={() => {
                                 setEditingUser(user);
                                 setEditRole(user.role);
+                                setEditCountry(user.country || "");
+                                setEditProvince(user.province || "");
                               }}
                               disabled={user.user_id === adminUser?.user_id}
                             >
@@ -519,26 +680,71 @@ export default function AdminManagement() {
       <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Role</DialogTitle>
+            <DialogTitle>Edit Admin User</DialogTitle>
             <DialogDescription>
-              Change the role for {editingUser?.email}
+              Update role and region assignment for {editingUser?.email}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="edit-role">Role</Label>
-            <Select value={editRole} onValueChange={(v) => setEditRole(v as AppRole)}>
-              <SelectTrigger className="mt-2">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="viewer">Viewer</SelectItem>
-                <SelectItem value="reviewer">Reviewer</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-2">
-              {getRoleDescription(editRole)}
-            </p>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Role</Label>
+              <Select value={editRole} onValueChange={(v) => {
+                setEditRole(v as AppRole);
+                if (v === "admin") {
+                  setEditCountry("");
+                  setEditProvince("");
+                }
+              }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                  <SelectItem value="reviewer">Reviewer</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {getRoleDescription(editRole)}
+              </p>
+            </div>
+            
+            {editRole !== "admin" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Assigned Country</Label>
+                  <Select value={editCountry} onValueChange={(v) => {
+                    setEditCountry(v);
+                    setEditProvince("");
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map(c => (
+                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {editCountry && provincesByCountry[editCountry] && (
+                  <div className="space-y-2">
+                    <Label>Assigned Province/Region</Label>
+                    <Select value={editProvince} onValueChange={setEditProvince}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select province (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {provincesByCountry[editCountry]?.map(p => (
+                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>
