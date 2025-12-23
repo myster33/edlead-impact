@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -55,8 +57,24 @@ import {
   ExternalLink,
   Star,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  MapPin,
+  CheckCircle,
+  XCircle,
+  Clock
 } from "lucide-react";
+
+// Check if admin user has region restrictions
+const getAdminRegionInfo = (adminUser: any) => {
+  if (!adminUser || adminUser.role === "admin") {
+    return { hasRestrictions: false, country: null, province: null };
+  }
+  return {
+    hasRestrictions: !!(adminUser.country || adminUser.province),
+    country: adminUser.country || null,
+    province: adminUser.province || null,
+  };
+};
 
 const blogCategories = [
   "Leadership",
@@ -87,7 +105,7 @@ interface BlogPost {
 }
 
 const AdminBlogManagement = () => {
-  const { isAdmin, isLoading: authLoading } = useAdminAuth();
+  const { adminUser, isAdmin, isLoading: authLoading } = useAdminAuth();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +118,16 @@ const AdminBlogManagement = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [saving, setSaving] = useState(false);
   const { logAction } = useAuditLog();
+  
+  // Region info for filtering
+  const regionInfo = getAdminRegionInfo(adminUser);
+  
+  // Activity stats
+  const [activityStats, setActivityStats] = useState({
+    approved: 0,
+    rejected: 0,
+    pending: 0,
+  });
 
   // Image upload state
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -137,6 +165,11 @@ const AdminBlogManagement = () => {
     if (statusFilter !== "all") {
       query = query.eq("status", statusFilter);
     }
+    
+    // Apply region filter for non-admin users
+    if (regionInfo.hasRestrictions && regionInfo.province) {
+      query = query.eq("author_province", regionInfo.province);
+    }
 
     const { data, error } = await query;
 
@@ -149,6 +182,14 @@ const AdminBlogManagement = () => {
       });
     } else {
       setPosts(data || []);
+      
+      // Calculate activity stats for posts in user's region
+      const postsData = data || [];
+      setActivityStats({
+        approved: postsData.filter(p => p.status === "approved").length,
+        rejected: postsData.filter(p => p.status === "rejected").length,
+        pending: postsData.filter(p => p.status === "pending").length,
+      });
     }
     setLoading(false);
   };
@@ -157,7 +198,7 @@ const AdminBlogManagement = () => {
     if (isAdmin) {
       fetchPosts();
     }
-  }, [isAdmin, statusFilter]);
+  }, [isAdmin, statusFilter, adminUser]);
 
   const handleApprove = async (post: BlogPost) => {
     setSaving(true);
@@ -518,11 +559,65 @@ const AdminBlogManagement = () => {
   return (
     <AdminLayout>
       <div className="space-y-8">
+        {/* Region Assignment Banner for Restricted Users */}
+        {regionInfo.hasRestrictions && (
+          <Alert className="border-primary/20 bg-primary/5">
+            <MapPin className="h-4 w-4" />
+            <AlertDescription className="flex items-center gap-2">
+              <span className="font-medium">Your assigned region:</span>
+              {regionInfo.province && (
+                <Badge variant="secondary">{regionInfo.province}</Badge>
+              )}
+              {regionInfo.country && (
+                <Badge variant="outline">{regionInfo.country}</Badge>
+              )}
+              <span className="text-muted-foreground text-sm ml-2">
+                You can only view and manage stories from this region.
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Activity Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Pending Stories</CardDescription>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Clock className="h-5 w-5 text-yellow-500" />
+                {activityStats.pending}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Approved</CardDescription>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                {activityStats.approved}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Rejected</CardDescription>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-destructive" />
+                {activityStats.rejected}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold">Blog Management</h1>
-            <p className="text-muted-foreground">Review, edit, and approve leader stories</p>
+            <p className="text-muted-foreground">
+              Review, edit, and approve leader stories
+              {regionInfo.hasRestrictions && regionInfo.province && (
+                <span className="ml-1">from {regionInfo.province}</span>
+              )}
+            </p>
           </div>
 
           <div className="flex items-center gap-4">
