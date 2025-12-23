@@ -63,9 +63,13 @@ import {
   CalendarIcon,
   X,
   MapPin,
-  AlertCircle
+  AlertCircle,
+  Trophy,
+  Medal,
+  Award
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Application {
   id: string;
@@ -1025,6 +1029,110 @@ export default function AdminDashboard() {
                     ))}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Reviewer Leaderboard - Only visible to admins */}
+        {adminUser?.role === "admin" && reviewerActivity.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                Top Reviewers Leaderboard
+              </CardTitle>
+              <CardDescription>
+                Reviewers ranked by total applications processed
+                {(activityStartDate || activityEndDate) && (
+                  <span className="ml-1">
+                    ({activityStartDate ? format(activityStartDate, "dd/MM/yyyy") : "Start"} - {activityEndDate ? format(activityEndDate, "dd/MM/yyyy") : "Present"})
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[...reviewerActivity]
+                  .sort((a, b) => (b.approved_count + b.rejected_count) - (a.approved_count + a.rejected_count))
+                  .slice(0, 3)
+                  .map((reviewer, index) => {
+                    const total = reviewer.approved_count + reviewer.rejected_count;
+                    const approvalRate = total > 0 ? Math.round((reviewer.approved_count / total) * 100) : 0;
+                    const initials = (reviewer.full_name || reviewer.email)
+                      .split(/[\s@]/)
+                      .slice(0, 2)
+                      .map(s => s.charAt(0).toUpperCase())
+                      .join("");
+                    
+                    const medalIcon = index === 0 
+                      ? <Trophy className="h-6 w-6 text-yellow-500" />
+                      : index === 1 
+                        ? <Medal className="h-6 w-6 text-gray-400" />
+                        : <Award className="h-6 w-6 text-amber-600" />;
+                    
+                    const bgColor = index === 0 
+                      ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-900"
+                      : index === 1 
+                        ? "bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-700"
+                        : "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900";
+                    
+                    return (
+                      <Card key={reviewer.admin_id} className={cn("relative", bgColor)}>
+                        <div className="absolute top-3 right-3">
+                          {medalIcon}
+                        </div>
+                        <CardContent className="pt-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <Avatar className="h-12 w-12">
+                              <AvatarFallback className="bg-primary text-primary-foreground">
+                                {initials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="font-semibold truncate">{reviewer.full_name || reviewer.email.split("@")[0]}</p>
+                              {reviewer.province && (
+                                <p className="text-xs text-muted-foreground">{reviewer.province}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            <div>
+                              <p className="text-2xl font-bold text-primary">{total}</p>
+                              <p className="text-xs text-muted-foreground">Total</p>
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold text-green-600">{reviewer.approved_count}</p>
+                              <p className="text-xs text-muted-foreground">Approved</p>
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold text-destructive">{reviewer.rejected_count}</p>
+                              <p className="text-xs text-muted-foreground">Rejected</p>
+                            </div>
+                          </div>
+                          <div className="mt-4 pt-4 border-t">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Approval Rate</span>
+                              <span className="font-medium">{approvalRate}%</span>
+                            </div>
+                            <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-green-500 rounded-full transition-all"
+                                style={{ width: `${approvalRate}%` }}
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+              </div>
+              
+              {reviewerActivity.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No reviewer activity to display yet.</p>
+                </div>
               )}
             </CardContent>
           </Card>

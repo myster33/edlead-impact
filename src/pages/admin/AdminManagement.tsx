@@ -220,6 +220,20 @@ export default function AdminManagement() {
 
       setAdminUsers([response.data.admin, ...adminUsers]);
       setIsAddDialogOpen(false);
+      
+      // Send region assignment notification if region is assigned
+      if (newUserRole !== "admin" && (newUserCountry || newUserProvince)) {
+        supabase.functions.invoke("notify-reviewer-assignment", {
+          body: {
+            reviewer_email: newUserEmail.toLowerCase().trim(),
+            reviewer_name: null,
+            country: newUserCountry || null,
+            province: newUserProvince || null,
+            role: newUserRole,
+          },
+        }).catch(err => console.error("Failed to send assignment notification:", err));
+      }
+      
       setNewUserEmail("");
       setNewUserRole("viewer");
       setNewUserCountry("");
@@ -286,11 +300,29 @@ export default function AdminManagement() {
         }
       );
 
+      // Send region assignment notification if region changed for non-admin roles
+      const regionChanged = editRole !== "admin" && (
+        editCountry !== editingUser.country || 
+        editProvince !== editingUser.province
+      );
+      
+      if (regionChanged && (editCountry || editProvince)) {
+        supabase.functions.invoke("notify-reviewer-assignment", {
+          body: {
+            reviewer_email: editingUser.email,
+            reviewer_name: editingUser.full_name || null,
+            country: editCountry || null,
+            province: editProvince || null,
+            role: editRole,
+          },
+        }).catch(err => console.error("Failed to send assignment notification:", err));
+      }
+
       setEditingUser(null);
 
       toast({
-        title: "Role Updated",
-        description: `${editingUser.email}'s role has been updated to ${editRole}.`,
+        title: "Updated",
+        description: `${editingUser.email}'s role and region have been updated.`,
       });
     } catch (error) {
       console.error("Error updating role:", error);
