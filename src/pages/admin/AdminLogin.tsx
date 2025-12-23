@@ -247,10 +247,13 @@ export default function AdminLogin() {
         });
       } else {
         toast({
-          title: "Account Created!",
-          description: "Your account has been created. You can now sign in. Note: An admin must grant you access before you can use the dashboard.",
+          title: "Sign Up Successful!",
+          description: "Your account has been created. Once an admin approves your access, you will receive an email notification. Please check your inbox.",
         });
         setActiveTab("login");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
       }
     } catch (err) {
       toast({
