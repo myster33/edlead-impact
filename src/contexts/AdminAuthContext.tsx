@@ -11,6 +11,8 @@ interface AdminUser {
   role: "viewer" | "reviewer" | "admin";
   created_at: string;
   full_name?: string | null;
+  country?: string | null;
+  province?: string | null;
 }
 
 interface AdminAuthContextType {
