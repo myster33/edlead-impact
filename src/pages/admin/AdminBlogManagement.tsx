@@ -92,6 +92,7 @@ const AdminBlogManagement = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [removeExistingImage, setRemoveExistingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editForm, setEditForm] = useState({
@@ -329,6 +330,7 @@ const AdminBlogManagement = () => {
     // Reset image state
     setSelectedImage(null);
     setImagePreview(null);
+    setRemoveExistingImage(false);
     setEditDialogOpen(true);
   };
 
@@ -337,7 +339,12 @@ const AdminBlogManagement = () => {
 
     setSaving(true);
     
-    let newImageUrl = selectedPost.featured_image_url;
+    let newImageUrl: string | null = selectedPost.featured_image_url;
+    
+    // Handle image removal
+    if (removeExistingImage && !selectedImage) {
+      newImageUrl = null;
+    }
     
     // Upload new image if selected
     if (selectedImage) {
@@ -727,7 +734,7 @@ const AdminBlogManagement = () => {
             <div className="space-y-2">
               <Label>Featured Image</Label>
               {/* Current or new image preview */}
-              {(imagePreview || selectedPost?.featured_image_url) && (
+              {!removeExistingImage && (imagePreview || selectedPost?.featured_image_url) && (
                 <div className="relative">
                   <img 
                     src={imagePreview || selectedPost?.featured_image_url || ""} 
@@ -735,19 +742,39 @@ const AdminBlogManagement = () => {
                     className="w-full max-h-40 object-cover rounded-md"
                   />
                   {imagePreview && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2"
-                      onClick={removeNewImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {imagePreview && (
                     <Badge className="absolute top-2 left-2 bg-primary">New Image</Badge>
                   )}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      if (imagePreview) {
+                        removeNewImage();
+                      } else {
+                        setRemoveExistingImage(true);
+                      }
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              {/* Removed image notice */}
+              {removeExistingImage && !imagePreview && (
+                <div className="bg-muted/50 border border-dashed rounded-md p-4 text-center">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Image will be removed</p>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={() => setRemoveExistingImage(false)}
+                    className="text-primary"
+                  >
+                    Undo
+                  </Button>
                 </div>
               )}
               {/* Upload button */}
@@ -760,9 +787,9 @@ const AdminBlogManagement = () => {
                   disabled={isUploadingImage}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {selectedPost?.featured_image_url ? "Replace Image" : "Upload Image"}
+                  {selectedPost?.featured_image_url && !removeExistingImage ? "Replace Image" : "Upload Image"}
                 </Button>
-                {!imagePreview && !selectedPost?.featured_image_url && (
+                {!imagePreview && !selectedPost?.featured_image_url && !removeExistingImage && (
                   <span className="text-sm text-muted-foreground">No image uploaded</span>
                 )}
               </div>
@@ -771,7 +798,10 @@ const AdminBlogManagement = () => {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handleImageSelect}
+                onChange={(e) => {
+                  handleImageSelect(e);
+                  setRemoveExistingImage(false);
+                }}
               />
             </div>
             
@@ -874,7 +904,7 @@ const AdminBlogManagement = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { removeNewImage(); setEditDialogOpen(false); }}>
+            <Button variant="outline" onClick={() => { removeNewImage(); setRemoveExistingImage(false); setEditDialogOpen(false); }}>
               Cancel
             </Button>
             <Button onClick={handleSaveEdit} disabled={saving || isUploadingImage}>
