@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -29,8 +29,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, History } from "lucide-react";
+import { Loader2, Search, RefreshCw, Eye, ChevronLeft, ChevronRight, History, Download, CalendarIcon, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface AuditLogEntry {
   id: string;
@@ -76,6 +85,8 @@ export default function AdminAuditLog() {
   const [totalCount, setTotalCount] = useState(0);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const isAdmin = adminUser?.role === "admin";
 
@@ -89,7 +100,7 @@ export default function AdminAuditLog() {
     if (isAdmin) {
       fetchLogs();
     }
-  }, [isAdmin, currentPage, actionFilter, tableFilter]);
+  }, [isAdmin, currentPage, actionFilter, tableFilter, dateFrom, dateTo]);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -105,6 +116,14 @@ export default function AdminAuditLog() {
       }
       if (tableFilter !== "all") {
         query = query.eq("table_name", tableFilter);
+      }
+      if (dateFrom) {
+        query = query.gte("created_at", format(dateFrom, "yyyy-MM-dd"));
+      }
+      if (dateTo) {
+        const nextDay = new Date(dateTo);
+        nextDay.setDate(nextDay.getDate() + 1);
+        query = query.lt("created_at", format(nextDay, "yyyy-MM-dd"));
       }
 
       const { data, error, count } = await query;
@@ -141,6 +160,67 @@ export default function AdminAuditLog() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    const headers = ["Date & Time", "Admin", "Action", "Table", "Record ID", "Old Values", "New Values"];
+    const csvData = filteredLogs.map(log => [
+      format(new Date(log.created_at), "yyyy-MM-dd HH:mm:ss"),
+      log.admin_email || "Unknown",
+      actionLabels[log.action]?.label || log.action,
+      log.table_name,
+      log.record_id || "N/A",
+      log.old_values ? JSON.stringify(log.old_values) : "",
+      log.new_values ? JSON.stringify(log.new_values) : "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `audit-log-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    link.click();
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text("Audit Log Report", 14, 22);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${format(new Date(), "MMMM dd, yyyy HH:mm")}`, 14, 30);
+    
+    if (dateFrom || dateTo) {
+      const dateRange = `Date Range: ${dateFrom ? format(dateFrom, "MMM dd, yyyy") : "Start"} - ${dateTo ? format(dateTo, "MMM dd, yyyy") : "End"}`;
+      doc.text(dateRange, 14, 36);
+    }
+
+    const tableData = filteredLogs.map(log => [
+      format(new Date(log.created_at), "MMM dd, yyyy HH:mm"),
+      log.admin_email || "Unknown",
+      actionLabels[log.action]?.label || log.action,
+      log.table_name,
+      log.record_id?.slice(0, 8) || "N/A",
+    ]);
+
+    autoTable(doc, {
+      head: [["Date & Time", "Admin", "Action", "Table", "Record ID"]],
+      body: tableData,
+      startY: dateFrom || dateTo ? 42 : 36,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] },
+    });
+
+    doc.save(`audit-log-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  };
+
+  const clearDateFilters = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
   };
 
   const filteredLogs = logs.filter(log => {
@@ -192,17 +272,27 @@ export default function AdminAuditLog() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Audit Log</h2>
             <p className="text-muted-foreground">
               Track all admin actions and changes in the system.
             </p>
           </div>
-          <Button onClick={fetchLogs} variant="outline" disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={exportToCSV} variant="outline" disabled={loading || filteredLogs.length === 0}>
+              <Download className="h-4 w-4 mr-2" />
+              CSV
+            </Button>
+            <Button onClick={exportToPDF} variant="outline" disabled={loading || filteredLogs.length === 0}>
+              <FileText className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+            <Button onClick={fetchLogs} variant="outline" disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -258,44 +348,99 @@ export default function AdminAuditLog() {
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by action, table, admin, or record ID..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by action, table, admin, or record ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={actionFilter} onValueChange={setActionFilter}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Filter by action" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Actions</SelectItem>
+                    <SelectItem value="application_approved">Application Approved</SelectItem>
+                    <SelectItem value="application_rejected">Application Rejected</SelectItem>
+                    <SelectItem value="blog_approved">Blog Approved</SelectItem>
+                    <SelectItem value="blog_rejected">Blog Rejected</SelectItem>
+                    <SelectItem value="blog_featured">Blog Featured</SelectItem>
+                    <SelectItem value="profile_updated">Profile Updated</SelectItem>
+                    <SelectItem value="password_changed">Password Changed</SelectItem>
+                    <SelectItem value="mfa_enabled">2FA Enabled</SelectItem>
+                    <SelectItem value="mfa_disabled">2FA Disabled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={tableFilter} onValueChange={setTableFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filter by table" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Tables</SelectItem>
+                    <SelectItem value="applications">Applications</SelectItem>
+                    <SelectItem value="blog_posts">Blog Posts</SelectItem>
+                    <SelectItem value="admin_users">Admin Users</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by action" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
-                  <SelectItem value="application_approved">Application Approved</SelectItem>
-                  <SelectItem value="application_rejected">Application Rejected</SelectItem>
-                  <SelectItem value="blog_approved">Blog Approved</SelectItem>
-                  <SelectItem value="blog_rejected">Blog Rejected</SelectItem>
-                  <SelectItem value="blog_featured">Blog Featured</SelectItem>
-                  <SelectItem value="profile_updated">Profile Updated</SelectItem>
-                  <SelectItem value="password_changed">Password Changed</SelectItem>
-                  <SelectItem value="mfa_enabled">2FA Enabled</SelectItem>
-                  <SelectItem value="mfa_disabled">2FA Disabled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={tableFilter} onValueChange={setTableFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by table" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tables</SelectItem>
-                  <SelectItem value="applications">Applications</SelectItem>
-                  <SelectItem value="blog_posts">Blog Posts</SelectItem>
-                  <SelectItem value="admin_users">Admin Users</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap items-center gap-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[180px] justify-start text-left font-normal",
+                        !dateFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, "MMM dd, yyyy") : "From date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[180px] justify-start text-left font-normal",
+                        !dateTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, "MMM dd, yyyy") : "To date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {(dateFrom || dateTo) && (
+                  <Button variant="ghost" size="sm" onClick={clearDateFilters}>
+                    Clear dates
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
