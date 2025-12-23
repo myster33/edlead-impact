@@ -29,6 +29,7 @@ import {
   LogOut,
   Shield,
   History,
+  MapPin,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 
@@ -40,6 +41,8 @@ interface AdminProfile {
   full_name: string | null;
   position: string | null;
   profile_picture_url: string | null;
+  country: string | null;
+  province: string | null;
 }
 
 const menuItems = [
@@ -86,7 +89,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       
       const { data } = await supabase
         .from("admin_users")
-        .select("full_name, position, profile_picture_url")
+        .select("full_name, position, profile_picture_url, country, province")
         .eq("id", adminUser.id)
         .maybeSingle();
       
@@ -178,6 +181,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <Shield className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground capitalize">{adminUser?.role}</span>
                 </div>
+                {adminUser?.role !== "admin" && (profile?.country || profile?.province) && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground truncate">
+                      {profile.province && profile.country 
+                        ? `${profile.province}, ${profile.country}`
+                        : profile.province || profile.country}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <Button
