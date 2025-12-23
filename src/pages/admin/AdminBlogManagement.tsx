@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +41,9 @@ import {
   Trash2, 
   Loader2,
   ExternalLink,
-  Star
+  Star,
+  Upload,
+  Image as ImageIcon
 } from "lucide-react";
 
 const blogCategories = [
@@ -85,6 +87,12 @@ const AdminBlogManagement = () => {
   const [rejectionFeedback, setRejectionFeedback] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [saving, setSaving] = useState(false);
+
+  // Image upload state
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editForm, setEditForm] = useState({
     title: "",
@@ -238,6 +246,73 @@ const AdminBlogManagement = () => {
     setSaving(false);
   };
 
+  // Image handling functions
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file (JPEG, PNG, etc.).",
+          variant: "destructive",
+        });
+        return;
+      }
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeNewImage = () => {
+    setSelectedImage(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    setIsUploadingImage(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `featured/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("blog-images")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("blog-images")
+        .getPublicUrl(filePath);
+
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Image upload failed",
+        description: "There was an error uploading the image.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const handleEdit = (post: BlogPost) => {
     setSelectedPost(post);
     setEditForm({
@@ -251,6 +326,9 @@ const AdminBlogManagement = () => {
       author_email: post.author_email,
       video_url: post.video_url || "",
     });
+    // Reset image state
+    setSelectedImage(null);
+    setImagePreview(null);
     setEditDialogOpen(true);
   };
 
@@ -258,6 +336,17 @@ const AdminBlogManagement = () => {
     if (!selectedPost) return;
 
     setSaving(true);
+    
+    let newImageUrl = selectedPost.featured_image_url;
+    
+    // Upload new image if selected
+    if (selectedImage) {
+      const uploadedUrl = await uploadImage(selectedImage);
+      if (uploadedUrl) {
+        newImageUrl = uploadedUrl;
+      }
+    }
+
     const { error } = await supabase
       .from("blog_posts")
       .update({
@@ -270,6 +359,7 @@ const AdminBlogManagement = () => {
         author_province: editForm.author_province,
         author_email: editForm.author_email,
         video_url: editForm.video_url || null,
+        featured_image_url: newImageUrl,
       })
       .eq("id", selectedPost.id);
 
@@ -284,6 +374,7 @@ const AdminBlogManagement = () => {
         title: "Post Updated",
         description: "The blog post has been updated successfully.",
       });
+      removeNewImage();
       setEditDialogOpen(false);
       fetchPosts();
     }
@@ -632,17 +723,57 @@ const AdminBlogManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Featured Image Preview */}
-            {selectedPost?.featured_image_url && (
-              <div>
-                <Label className="text-muted-foreground">Featured Image</Label>
-                <img 
-                  src={selectedPost.featured_image_url} 
-                  alt="Featured" 
-                  className="w-full max-h-32 object-cover rounded-md mt-2"
-                />
+            {/* Featured Image Section */}
+            <div className="space-y-2">
+              <Label>Featured Image</Label>
+              {/* Current or new image preview */}
+              {(imagePreview || selectedPost?.featured_image_url) && (
+                <div className="relative">
+                  <img 
+                    src={imagePreview || selectedPost?.featured_image_url || ""} 
+                    alt="Featured" 
+                    className="w-full max-h-40 object-cover rounded-md"
+                  />
+                  {imagePreview && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={removeNewImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {imagePreview && (
+                    <Badge className="absolute top-2 left-2 bg-primary">New Image</Badge>
+                  )}
+                </div>
+              )}
+              {/* Upload button */}
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingImage}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {selectedPost?.featured_image_url ? "Replace Image" : "Upload Image"}
+                </Button>
+                {!imagePreview && !selectedPost?.featured_image_url && (
+                  <span className="text-sm text-muted-foreground">No image uploaded</span>
+                )}
               </div>
-            )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+            </div>
             
             <div className="space-y-2">
               <Label htmlFor="edit-title">Title</Label>
@@ -743,12 +874,12 @@ const AdminBlogManagement = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => { removeNewImage(); setEditDialogOpen(false); }}>
               Cancel
             </Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Save Changes
+            <Button onClick={handleSaveEdit} disabled={saving || isUploadingImage}>
+              {(saving || isUploadingImage) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isUploadingImage ? "Uploading Image..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
