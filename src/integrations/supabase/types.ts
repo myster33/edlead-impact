@@ -49,26 +49,41 @@ export type Database = {
       }
       admin_users: {
         Row: {
+          country: string | null
           created_at: string | null
           created_by: string | null
           email: string
+          full_name: string | null
           id: string
+          phone: string | null
+          position: string | null
+          province: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          country?: string | null
           created_at?: string | null
           created_by?: string | null
           email: string
+          full_name?: string | null
           id?: string
+          phone?: string | null
+          position?: string | null
+          province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          country?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string
+          full_name?: string | null
           id?: string
+          phone?: string | null
+          position?: string | null
+          province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
