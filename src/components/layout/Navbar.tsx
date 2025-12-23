@@ -172,13 +172,13 @@ export const Navbar = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              {/* Leaders' Blogs Dropdown */}
+              {/* Leaders' Stories Dropdown */}
               <NavigationMenuItem>
                 <NavigationMenuTrigger 
                   onClick={() => handleTriggerClick("/blog")}
                   className={`${location.pathname === "/blog" ? "text-primary" : ""}`}
                 >
-                  Leaders' Blogs
+                  Leaders' Stories
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <NavigationMenuLink asChild>
@@ -299,7 +299,7 @@ export const Navbar = () => {
                 Our Impact
               </Link>
 
-              {/* Leaders' Blogs mobile link */}
+              {/* Leaders' Stories mobile link */}
               <Link
                 to="/blog"
                 onClick={() => setIsOpen(false)}
@@ -309,7 +309,7 @@ export const Navbar = () => {
                     : "text-foreground hover:bg-muted"
                 }`}
               >
-                Leaders' Blogs
+                Leaders' Stories
               </Link>
 
               {navLinks.slice(2).map((link) => (
