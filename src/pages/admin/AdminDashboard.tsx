@@ -61,8 +61,11 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarIcon,
-  X
+  X,
+  MapPin,
+  AlertCircle
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Application {
   id: string;
@@ -73,6 +76,7 @@ interface Application {
   school_address: string;
   grade: string;
   province: string;
+  country?: string;
   status: string;
   created_at: string;
   // Additional fields for detail view
@@ -88,6 +92,18 @@ interface Application {
   why_edlead?: string;
   leadership_meaning?: string;
 }
+
+// Check if admin user has region restrictions
+const getAdminRegionInfo = (adminUser: any) => {
+  if (!adminUser || adminUser.role === "admin") {
+    return { hasRestrictions: false, country: null, province: null };
+  }
+  return {
+    hasRestrictions: !!(adminUser.country || adminUser.province),
+    country: adminUser.country || null,
+    province: adminUser.province || null,
+  };
+};
 
 export default function AdminDashboard() {
   const { adminUser, signOut } = useAdminAuth();
@@ -117,14 +133,18 @@ export default function AdminDashboard() {
   });
   const [pendingBlogPosts, setPendingBlogPosts] = useState(0);
 
+  // Admin region info
+  const regionInfo = getAdminRegionInfo(adminUser);
+
   useEffect(() => {
     fetchApplications();
     fetchPendingBlogPosts();
-  }, []);
+  }, [adminUser]); // Re-fetch when adminUser changes
 
   useEffect(() => {
     filterApplications();
   }, [applications, searchTerm, statusFilter, provinceFilter, startDate, endDate]);
+  
   const fetchPendingBlogPosts = async () => {
     try {
       const { count, error } = await supabase
@@ -146,16 +166,28 @@ export default function AdminDashboard() {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("applications")
         .select("*")
         .order("created_at", { ascending: false });
+
+      // Apply region filters for non-admin users
+      if (regionInfo.hasRestrictions) {
+        // Filter by province if assigned (most specific)
+        if (regionInfo.province) {
+          query = query.eq("province", regionInfo.province);
+        }
+        // Note: country filter would be applied here if applications had a country field
+        // For now, we're mainly filtering by province as applications are SA-based
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
       setApplications(data || []);
       
-      // Calculate stats
+      // Calculate stats (based on filtered data for restricted users)
       const total = data?.length || 0;
       const pending = data?.filter(a => a.status === "pending").length || 0;
       const approved = data?.filter(a => a.status === "approved").length || 0;
@@ -581,6 +613,25 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="space-y-8">
+        {/* Region Assignment Banner for Restricted Users */}
+        {regionInfo.hasRestrictions && (
+          <Alert className="border-primary/20 bg-primary/5">
+            <MapPin className="h-4 w-4" />
+            <AlertDescription className="flex items-center gap-2">
+              <span className="font-medium">Your assigned region:</span>
+              {regionInfo.province && (
+                <Badge variant="secondary">{regionInfo.province}</Badge>
+              )}
+              {regionInfo.country && (
+                <Badge variant="outline">{regionInfo.country}</Badge>
+              )}
+              <span className="text-muted-foreground text-sm ml-2">
+                You can only view and manage applications from this region.
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card>
@@ -687,17 +738,20 @@ export default function AdminDashboard() {
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={provinceFilter} onValueChange={setProvinceFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Province" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Provinces</SelectItem>
-                    {provinces.map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Only show province filter if user doesn't have region restrictions */}
+                {!regionInfo.hasRestrictions && (
+                  <Select value={provinceFilter} onValueChange={setProvinceFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Province" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Provinces</SelectItem>
+                      {provinces.map((p) => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               
               {/* Date Range Filter */}
