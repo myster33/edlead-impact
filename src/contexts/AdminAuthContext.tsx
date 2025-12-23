@@ -185,8 +185,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/admin`;
-    
+    // After email verification (if enabled), send users back to the admin login page.
+    const redirectUrl = `${window.location.origin}/admin/login`;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
