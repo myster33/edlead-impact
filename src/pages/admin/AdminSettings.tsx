@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuditLog } from "@/hooks/use-audit-log";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ export default function AdminSettings() {
   const { user, adminUser, isLoading: authLoading } = useAdminAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { logAction } = useAuditLog();
 
   // Profile state
   const [fullName, setFullName] = useState("");
@@ -219,6 +221,22 @@ export default function AdminSettings() {
     }
   };
 
+  const sendNotification = async (changeType: "profile_updated" | "password_changed" | "mfa_enabled" | "mfa_disabled") => {
+    if (!user?.email) return;
+    
+    try {
+      await supabase.functions.invoke("notify-profile-change", {
+        body: {
+          email: user.email,
+          name: fullName || user.email.split("@")[0],
+          change_type: changeType,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to send notification:", error);
+    }
+  };
+
   const initials = (fullName || adminUser?.email || "AD")
     .split(/[\s@]/)
     .slice(0, 2)
@@ -242,6 +260,15 @@ export default function AdminSettings() {
         .eq("id", adminUser.id);
 
       if (error) throw error;
+
+      // Log and notify
+      await logAction({
+        action: "profile_updated",
+        table_name: "admin_users",
+        record_id: adminUser.id,
+        new_values: { full_name: fullName, phone, position, country, province },
+      });
+      await sendNotification("profile_updated");
 
       toast({
         title: "Profile Updated",
@@ -298,12 +325,19 @@ export default function AdminSettings() {
 
       if (error) throw error;
 
+      // Log and notify
+      await logAction({
+        action: "password_changed",
+        table_name: "admin_users",
+        record_id: adminUser?.id,
+      });
+      await sendNotification("password_changed");
+
       toast({
         title: "Password Updated",
         description: "Your password has been changed successfully.",
       });
 
-      // Password changed successfully
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
@@ -368,6 +402,14 @@ export default function AdminSettings() {
         description: "Two-factor authentication has been enabled for your account.",
       });
 
+      // Log and notify
+      await logAction({
+        action: "mfa_enabled",
+        table_name: "admin_users",
+        record_id: adminUser?.id,
+      });
+      await sendNotification("mfa_enabled");
+
       setShowEnrollDialog(false);
       setVerifyCode("");
       setQrCode(null);
@@ -396,6 +438,14 @@ export default function AdminSettings() {
       });
 
       if (error) throw error;
+
+      // Log and notify
+      await logAction({
+        action: "mfa_disabled",
+        table_name: "admin_users",
+        record_id: adminUser?.id,
+      });
+      await sendNotification("mfa_disabled");
 
       toast({
         title: "2FA Disabled",

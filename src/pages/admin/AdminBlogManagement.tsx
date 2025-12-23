@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useAuditLog } from "@/hooks/use-audit-log";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,7 @@ const AdminBlogManagement = () => {
   const [rejectionFeedback, setRejectionFeedback] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [saving, setSaving] = useState(false);
+  const { logAction } = useAuditLog();
 
   // Image upload state
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -202,6 +204,14 @@ const AdminBlogManagement = () => {
       });
     }
 
+    // Log the approval action
+    await logAction({
+      action: "blog_approved",
+      table_name: "blog_posts",
+      record_id: post.id,
+      new_values: { status: "approved", title: post.title },
+    });
+
     fetchPosts();
     setSaving(false);
   };
@@ -253,6 +263,15 @@ const AdminBlogManagement = () => {
         title: "Post Rejected",
         description: "The blog post has been rejected and the author has been notified.",
       });
+
+      // Log the rejection action
+      await logAction({
+        action: "blog_rejected",
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        new_values: { status: "rejected", title: selectedPost.title, feedback: rejectionFeedback },
+      });
+
       setRejectDialogOpen(false);
       fetchPosts();
     }
@@ -461,6 +480,15 @@ const AdminBlogManagement = () => {
           ? "The post is no longer featured." 
           : "The post will now appear in the Featured section.",
       });
+
+      // Log the featured toggle action
+      await logAction({
+        action: "blog_featured",
+        table_name: "blog_posts",
+        record_id: post.id,
+        new_values: { is_featured: !post.is_featured, title: post.title },
+      });
+
       fetchPosts();
     }
     setSaving(false);
