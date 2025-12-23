@@ -12,6 +12,7 @@ import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
+import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -55,6 +56,8 @@ export default function AdminLogin() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [showMfaVerify, setShowMfaVerify] = useState(false);
   
   const { signIn, signUp, user, isAdmin, isLoading: authLoading } = useAdminAuth();
   const navigate = useNavigate();
@@ -107,7 +110,10 @@ export default function AdminLogin() {
     
     setIsLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
       if (error) {
         let message = "Invalid email or password";
@@ -122,6 +128,17 @@ export default function AdminLogin() {
           description: message,
           variant: "destructive",
         });
+        return;
+      }
+
+      // Check if MFA is required
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
+      const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
+      
+      if (verifiedFactors.length > 0) {
+        // User has MFA enabled, need to verify
+        setMfaFactorId(verifiedFactors[0].id);
+        setShowMfaVerify(true);
       } else {
         toast({
           title: "Welcome back!",
@@ -137,6 +154,21 @@ export default function AdminLogin() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleMfaVerified = () => {
+    setShowMfaVerify(false);
+    setMfaFactorId(null);
+    toast({
+      title: "Welcome back!",
+      description: "You have successfully logged in with 2FA.",
+    });
+  };
+
+  const handleMfaCancel = async () => {
+    await supabase.auth.signOut();
+    setShowMfaVerify(false);
+    setMfaFactorId(null);
   };
 
   const validateSignupForm = () => {
@@ -238,6 +270,17 @@ export default function AdminLogin() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  // Show 2FA verification screen if needed
+  if (showMfaVerify && mfaFactorId) {
+    return (
+      <TwoFactorVerify
+        factorId={mfaFactorId}
+        onVerified={handleMfaVerified}
+        onCancel={handleMfaCancel}
+      />
     );
   }
 
