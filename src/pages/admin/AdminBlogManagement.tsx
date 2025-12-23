@@ -24,6 +24,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -93,6 +103,7 @@ const AdminBlogManagement = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [removeExistingImage, setRemoveExistingImage] = useState(false);
+  const [showRemoveImageConfirm, setShowRemoveImageConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editForm, setEditForm] = useState({
@@ -753,7 +764,7 @@ const AdminBlogManagement = () => {
                       if (imagePreview) {
                         removeNewImage();
                       } else {
-                        setRemoveExistingImage(true);
+                        setShowRemoveImageConfirm(true);
                       }
                     }}
                   >
@@ -971,6 +982,27 @@ const AdminBlogManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Remove Image Confirmation Dialog */}
+      <AlertDialog open={showRemoveImageConfirm} onOpenChange={setShowRemoveImageConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Featured Image?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove the featured image from this post? This action will be applied when you save the changes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => setRemoveExistingImage(true)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove Image
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
