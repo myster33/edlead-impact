@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.verify-backup-code]
 verify_jwt = false
+
+[functions.notify-reviewer-assignment]
+verify_jwt = false
