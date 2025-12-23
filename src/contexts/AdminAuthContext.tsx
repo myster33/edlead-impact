@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +38,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isMfaVerified, setIsMfaVerified] = useState(false);
   const [requiresMfa, setRequiresMfa] = useState(false);
+  const mfaVerifiedInSession = useRef(false);
   const { toast } = useToast();
 
   const handleSessionTimeout = useCallback(async () => {
@@ -50,6 +51,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setAdminUser(null);
     setIsMfaVerified(false);
     setRequiresMfa(false);
+    mfaVerifiedInSession.current = false;
   }, [toast]);
 
   // Session timeout - only active when user is logged in and MFA verified
@@ -59,23 +61,27 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     enabled: !!user && (!requiresMfa || isMfaVerified),
   });
 
-  const checkMfaStatus = async () => {
+  const checkMfaStatus = async (isInitialLoad: boolean = false) => {
     try {
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
       
       if (verifiedFactors.length > 0) {
-        // Check if MFA challenge has been completed in this session
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        setRequiresMfa(true);
         
-        if (aal?.currentLevel === "aal2") {
-          // User has completed MFA verification
-          setIsMfaVerified(true);
-          setRequiresMfa(true);
-        } else {
-          // User has MFA enabled but hasn't verified yet
+        // On initial page load (refresh), check if session already has aal2
+        // But for fresh logins, require explicit MFA verification
+        if (isInitialLoad) {
+          const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+          if (aal?.currentLevel === "aal2") {
+            setIsMfaVerified(true);
+            mfaVerifiedInSession.current = true;
+          } else {
+            setIsMfaVerified(false);
+          }
+        } else if (!mfaVerifiedInSession.current) {
+          // Fresh login - require MFA verification
           setIsMfaVerified(false);
-          setRequiresMfa(true);
         }
       } else {
         // No MFA factors, user doesn't need MFA
@@ -91,22 +97,31 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let isInitialLoad = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: AuthChangeEvent, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         // Defer admin user fetch to avoid deadlock
         if (session?.user) {
+          // Reset MFA status on fresh sign in
+          if (event === "SIGNED_IN") {
+            mfaVerifiedInSession.current = false;
+          }
+          
           setTimeout(() => {
             fetchAdminUser(session.user.id);
-            checkMfaStatus();
+            checkMfaStatus(isInitialLoad && event !== "SIGNED_IN");
+            isInitialLoad = false;
           }, 0);
         } else {
           setAdminUser(null);
           setIsMfaVerified(false);
           setRequiresMfa(false);
+          mfaVerifiedInSession.current = false;
           setIsLoading(false);
         }
       }
@@ -119,7 +134,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user) {
         fetchAdminUser(session.user.id);
-        checkMfaStatus();
+        checkMfaStatus(true); // This is initial load
       } else {
         setIsLoading(false);
       }
@@ -152,9 +167,14 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
   const setMfaVerified = (verified: boolean) => {
     setIsMfaVerified(verified);
+    mfaVerifiedInSession.current = verified;
   };
 
   const signIn = async (email: string, password: string) => {
+    // Reset MFA state before sign in
+    mfaVerifiedInSession.current = false;
+    setIsMfaVerified(false);
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -180,6 +200,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     setAdminUser(null);
     setIsMfaVerified(false);
     setRequiresMfa(false);
+    mfaVerifiedInSession.current = false;
   };
 
   const value = {
