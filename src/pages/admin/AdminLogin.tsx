@@ -246,9 +246,15 @@ export default function AdminLogin() {
       const { error } = await signUp(email, password);
       
       if (error) {
-        let message = "Failed to create account";
-        if (error.message.includes("already registered")) {
+        let message = "Failed to create account. Please try again.";
+        if (error.message.includes("already registered") || error.message.includes("User already registered")) {
           message = "This email is already registered. Please sign in instead.";
+        } else if (error.message.includes("Signups not allowed")) {
+          message = "New registrations are currently disabled. Please contact an administrator.";
+        } else if (error.message.includes("Password")) {
+          message = error.message;
+        } else if (error.message) {
+          message = error.message;
         }
         
         toast({
