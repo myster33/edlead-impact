@@ -22,6 +22,7 @@ interface AdminUser {
   id: string;
   email: string;
   full_name: string | null;
+  email_digest_enabled: boolean;
 }
 
 const actionLabels: Record<string, string> = {
@@ -268,29 +269,34 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Found ${logs?.length || 0} audit log entries`);
 
-    // Fetch all admin users with role 'admin' to send digest
+    // Fetch all admin users with role 'admin' who have digest enabled
     const { data: admins, error: adminsError } = await supabase
       .from("admin_users")
-      .select("id, email, full_name")
-      .eq("role", "admin");
+      .select("id, email, full_name, email_digest_enabled")
+      .eq("role", "admin")
+      .eq("email_digest_enabled", true);
 
     if (adminsError) {
       console.error("Error fetching admin users:", adminsError);
       throw adminsError;
     }
 
-    console.log(`Found ${admins?.length || 0} admin users to notify`);
+    console.log(`Found ${admins?.length || 0} admin users with digest enabled`);
 
     if (!admins || admins.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No admin users to send digest to" }),
+        JSON.stringify({ message: "No admin users with digest enabled" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Build admin email map
+    // Build admin email map (for all admins, not just those with digest enabled)
+    const { data: allAdmins } = await supabase
+      .from("admin_users")
+      .select("id, email");
+    
     const adminEmails: Record<string, string> = {};
-    admins.forEach((admin: AdminUser) => {
+    (allAdmins || []).forEach((admin) => {
       adminEmails[admin.id] = admin.email;
     });
 
@@ -302,8 +308,8 @@ const handler = async (req: Request): Promise<Response> => {
       endDate
     );
 
-    // Send email to each admin
-    const emailPromises = admins.map(async (admin: AdminUser) => {
+    // Send email to each subscribed admin
+    const emailPromises = admins.map(async (admin) => {
       console.log(`Sending digest to ${admin.email}...`);
       
       try {

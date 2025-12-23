@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2, Mail } from "lucide-react";
+import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2, Mail, Bell } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 const countries = [
   "South Africa", "Nigeria", "Kenya", "Ghana", "Tanzania", "Uganda", 
@@ -71,6 +72,7 @@ export default function AdminSettings() {
   const [country, setCountry] = useState("");
   const [province, setProvince] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [emailDigestEnabled, setEmailDigestEnabled] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
@@ -109,7 +111,7 @@ export default function AdminSettings() {
     try {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("full_name, phone, position, country, province, profile_picture_url")
+        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled")
         .eq("id", adminUser.id)
         .maybeSingle();
       
@@ -122,6 +124,7 @@ export default function AdminSettings() {
         setCountry(data.country || "");
         setProvince(data.province || "");
         setProfilePictureUrl(data.profile_picture_url || null);
+        setEmailDigestEnabled(data.email_digest_enabled ?? true);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -762,24 +765,75 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
 
-            {/* Email Digest */}
+            {/* Email Notifications */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Email Notifications
+                </CardTitle>
+                <CardDescription>
+                  Manage your email notification preferences.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="digest-toggle" className="font-medium">Weekly Audit Digest</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive a weekly summary of admin activity every Monday.
+                    </p>
+                  </div>
+                  <Switch
+                    id="digest-toggle"
+                    checked={emailDigestEnabled}
+                    onCheckedChange={async (checked) => {
+                      try {
+                        const { error } = await supabase
+                          .from("admin_users")
+                          .update({ email_digest_enabled: checked })
+                          .eq("id", adminUser?.id);
+                        
+                        if (error) throw error;
+                        
+                        setEmailDigestEnabled(checked);
+                        toast({
+                          title: checked ? "Digest enabled" : "Digest disabled",
+                          description: checked 
+                            ? "You will receive weekly audit log digests." 
+                            : "You will no longer receive weekly audit log digests.",
+                        });
+                      } catch (error: any) {
+                        toast({
+                          title: "Failed to update preference",
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Send Digest (Admin Only) */}
             {adminUser?.role === "admin" && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mail className="h-5 w-5" />
-                    Audit Log Digest
+                    Send Audit Digest
                   </CardTitle>
                   <CardDescription>
-                    Send weekly audit log summaries to all admin users.
+                    Manually trigger the weekly audit log digest to all subscribed admins.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Weekly Email Digest</p>
+                      <p className="font-medium">Send Digest Now</p>
                       <p className="text-sm text-muted-foreground">
-                        Send a summary of the last 7 days of admin activity to all admins.
+                        Send a summary of the last 7 days of admin activity to all subscribed admins.
                       </p>
                     </div>
                     <Button
