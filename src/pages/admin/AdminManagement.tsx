@@ -57,8 +57,12 @@ import {
   RefreshCw,
   MapPin,
   Clock,
-  UserCheck
+  UserCheck,
+  UserX,
+  Mail
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
 
@@ -152,6 +156,12 @@ export default function AdminManagement() {
   const [approveRole, setApproveRole] = useState<AppRole>("viewer");
   const [approveCountry, setApproveCountry] = useState("");
   const [approveProvince, setApproveProvince] = useState("");
+  
+  // Reject pending user dialog
+  const [rejectingPendingUser, setRejectingPendingUser] = useState<{ id: string; email: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [sendRejectEmail, setSendRejectEmail] = useState(true);
+  const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
 
   const isAdmin = adminUser?.role === "admin";
 
@@ -277,6 +287,55 @@ export default function AdminManagement() {
       });
     } finally {
       setApprovingUserId(null);
+    }
+  };
+
+  const rejectPendingUser = async () => {
+    if (!rejectingPendingUser) return;
+    
+    setRejectingUserId(rejectingPendingUser.id);
+    try {
+      const response = await supabase.functions.invoke("reject-pending-user", {
+        body: { 
+          userId: rejectingPendingUser.id,
+          email: rejectingPendingUser.email,
+          reason: rejectReason.trim() || null,
+          sendEmail: sendRejectEmail,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      if (!response.data.success) {
+        toast({
+          title: "Error",
+          description: response.data.error || "Failed to reject user.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      setPendingUsers(pendingUsers.filter(u => u.id !== rejectingPendingUser.id));
+      setRejectingPendingUser(null);
+      setRejectReason("");
+      setSendRejectEmail(true);
+
+      toast({
+        title: "User Rejected",
+        description: `${rejectingPendingUser.email} has been rejected${sendRejectEmail ? " and notified via email" : ""}.`,
+      });
+    } catch (error: any) {
+      console.error("Error rejecting user:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to reject user.",
+        variant: "destructive",
+      });
+    } finally {
+      setRejectingUserId(null);
     }
   };
 
@@ -724,20 +783,38 @@ export default function AdminManagement() {
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setApprovingPendingUser({ id: user.id, email: user.email })}
-                      disabled={approvingUserId === user.id}
-                    >
-                      {approvingUserId === user.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <UserCheck className="h-4 w-4 mr-2" />
-                          Approve
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setRejectingPendingUser({ id: user.id, email: user.email })}
+                        disabled={rejectingUserId === user.id}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        {rejectingUserId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <UserX className="h-4 w-4 mr-1" />
+                            Reject
+                          </>
+                        )}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => setApprovingPendingUser({ id: user.id, email: user.email })}
+                        disabled={approvingUserId === user.id}
+                      >
+                        {approvingUserId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <UserCheck className="h-4 w-4 mr-1" />
+                            Approve
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -833,6 +910,61 @@ export default function AdminManagement() {
                 {approvingUserId === approvingPendingUser?.id && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 <UserCheck className="h-4 w-4 mr-2" />
                 Approve User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reject Pending User Dialog */}
+        <Dialog open={!!rejectingPendingUser} onOpenChange={(open) => !open && setRejectingPendingUser(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <UserX className="h-5 w-5" />
+                Reject User
+              </DialogTitle>
+              <DialogDescription>
+                Reject access request from {rejectingPendingUser?.email}. This will delete their account.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Rejection Reason (Optional)</Label>
+                <Textarea 
+                  placeholder="Provide a reason for the rejection (optional)..."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="sendRejectEmail" 
+                  checked={sendRejectEmail}
+                  onCheckedChange={(checked) => setSendRejectEmail(checked === true)}
+                />
+                <label 
+                  htmlFor="sendRejectEmail" 
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                >
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  Send rejection notification email
+                </label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRejectingPendingUser(null)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={rejectPendingUser} 
+                disabled={rejectingUserId === rejectingPendingUser?.id}
+              >
+                {rejectingUserId === rejectingPendingUser?.id && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <UserX className="h-4 w-4 mr-2" />
+                Reject User
               </Button>
             </DialogFooter>
           </DialogContent>
