@@ -23,8 +23,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Validate API key is configured
+    if (!RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Email service is not configured" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const data: ApprovalNotificationRequest = await req.json();
     console.log("Sending approval notification to:", data.author_email);
+    console.log("Request data:", JSON.stringify(data));
 
     const blogUrl = `https://edlead.lovable.app/blog/${data.slug}`;
 
@@ -82,10 +92,21 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResult = await emailResponse.json();
+    
+    // Check if Resend API returned an error
+    if (!emailResponse.ok) {
+      console.error("Resend API error:", emailResult);
+      console.error("Response status:", emailResponse.status);
+      return new Response(
+        JSON.stringify({ error: emailResult.message || `Resend API returned ${emailResponse.status}` }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     console.log("Email sent successfully:", emailResult);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Approval notification sent" }),
+      JSON.stringify({ success: true, message: "Approval notification sent", id: emailResult.id }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
