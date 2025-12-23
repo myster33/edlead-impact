@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail } from "lucide-react";
 import { z } from "zod";
+import edleadLogo from "@/assets/edlead-logo.png";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -141,6 +142,13 @@ export default function AdminLogin() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
+            <img 
+              src={edleadLogo} 
+              alt="edLEAD Logo" 
+              className="h-16 w-auto"
+            />
+          </div>
+          <div className="flex justify-center mb-2">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Lock className="h-6 w-6 text-primary" />
             </div>
