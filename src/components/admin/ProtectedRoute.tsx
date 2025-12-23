@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { user, adminUser, isLoading, isAdmin } = useAdminAuth();
+  const { user, adminUser, isLoading, isAdmin, isMfaVerified, requiresMfa } = useAdminAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -22,6 +22,11 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   // Not logged in
   if (!user) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  }
+
+  // User has MFA enabled but hasn't verified yet - redirect to login for MFA
+  if (requiresMfa && !isMfaVerified) {
+    return <Navigate to="/admin/login" state={{ from: location, pendingMfa: true }} replace />;
   }
 
   // Logged in but not an admin
