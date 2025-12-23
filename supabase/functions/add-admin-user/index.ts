@@ -55,7 +55,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, role } = await req.json();
+    const { email, role, country, province } = await req.json();
 
     if (!email || !role) {
       return new Response(
@@ -105,15 +105,25 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Add admin user
+    // Add admin user with optional country/province for non-admin roles
+    const insertData: any = {
+      user_id: targetUser.id,
+      email: email.toLowerCase(),
+      role: role,
+      created_by: currentUser.id,
+    };
+    
+    // Only set country/province for reviewer and viewer roles
+    if (role !== "admin" && country) {
+      insertData.country = country;
+    }
+    if (role !== "admin" && province) {
+      insertData.province = province;
+    }
+
     const { data: newAdmin, error: insertError } = await adminClient
       .from("admin_users")
-      .insert({
-        user_id: targetUser.id,
-        email: email.toLowerCase(),
-        role: role,
-        created_by: currentUser.id,
-      })
+      .insert(insertData)
       .select()
       .single();
 
