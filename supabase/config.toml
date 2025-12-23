@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.send-audit-digest]
 verify_jwt = false
+
+[functions.send-critical-alert]
+verify_jwt = false

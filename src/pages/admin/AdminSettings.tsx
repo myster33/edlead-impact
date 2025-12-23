@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2, Mail, Bell } from "lucide-react";
+import { Loader2, Shield, Key, User, Smartphone, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +73,10 @@ export default function AdminSettings() {
   const [province, setProvince] = useState("");
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
   const [emailDigestEnabled, setEmailDigestEnabled] = useState(true);
+  const [notifyApplications, setNotifyApplications] = useState(true);
+  const [notifyBlogs, setNotifyBlogs] = useState(true);
+  const [notifyAdminChanges, setNotifyAdminChanges] = useState(true);
+  const [notifyCriticalAlerts, setNotifyCriticalAlerts] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
@@ -111,7 +115,7 @@ export default function AdminSettings() {
     try {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled")
+        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled, notify_applications, notify_blogs, notify_admin_changes, notify_critical_alerts")
         .eq("id", adminUser.id)
         .maybeSingle();
       
@@ -125,6 +129,10 @@ export default function AdminSettings() {
         setProvince(data.province || "");
         setProfilePictureUrl(data.profile_picture_url || null);
         setEmailDigestEnabled(data.email_digest_enabled ?? true);
+        setNotifyApplications(data.notify_applications ?? true);
+        setNotifyBlogs(data.notify_blogs ?? true);
+        setNotifyAdminChanges(data.notify_admin_changes ?? true);
+        setNotifyCriticalAlerts(data.notify_critical_alerts ?? true);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -777,6 +785,7 @@ export default function AdminSettings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Weekly Digest */}
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="digest-toggle" className="font-medium">Weekly Audit Digest</Label>
@@ -812,6 +821,152 @@ export default function AdminSettings() {
                       }
                     }}
                   />
+                </div>
+
+                {/* Critical Alerts */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="critical-toggle" className="font-medium">Critical Alerts</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Instant notifications for admin deletions, password changes, and 2FA changes.
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="critical-toggle"
+                    checked={notifyCriticalAlerts}
+                    onCheckedChange={async (checked) => {
+                      try {
+                        const { error } = await supabase
+                          .from("admin_users")
+                          .update({ notify_critical_alerts: checked })
+                          .eq("id", adminUser?.id);
+                        
+                        if (error) throw error;
+                        
+                        setNotifyCriticalAlerts(checked);
+                        toast({
+                          title: checked ? "Critical alerts enabled" : "Critical alerts disabled",
+                        });
+                      } catch (error: any) {
+                        toast({
+                          title: "Failed to update preference",
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Category Preferences */}
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-medium mb-4">Notification Categories</h4>
+                  <div className="space-y-4">
+                    {/* Applications */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="notify-applications" className="font-medium text-sm">Applications</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Notifications about application approvals, rejections, and deletions.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="notify-applications"
+                        checked={notifyApplications}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const { error } = await supabase
+                              .from("admin_users")
+                              .update({ notify_applications: checked })
+                              .eq("id", adminUser?.id);
+                            
+                            if (error) throw error;
+                            setNotifyApplications(checked);
+                          } catch (error: any) {
+                            toast({
+                              title: "Failed to update preference",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Blog Posts */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="notify-blogs" className="font-medium text-sm">Blog Posts</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Notifications about blog submissions, approvals, and deletions.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="notify-blogs"
+                        checked={notifyBlogs}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const { error } = await supabase
+                              .from("admin_users")
+                              .update({ notify_blogs: checked })
+                              .eq("id", adminUser?.id);
+                            
+                            if (error) throw error;
+                            setNotifyBlogs(checked);
+                          } catch (error: any) {
+                            toast({
+                              title: "Failed to update preference",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+
+                    {/* Admin Changes */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="notify-admin" className="font-medium text-sm">Admin Changes</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Notifications about admin user additions, updates, and role changes.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="notify-admin"
+                        checked={notifyAdminChanges}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            const { error } = await supabase
+                              .from("admin_users")
+                              .update({ notify_admin_changes: checked })
+                              .eq("id", adminUser?.id);
+                            
+                            if (error) throw error;
+                            setNotifyAdminChanges(checked);
+                          } catch (error: any) {
+                            toast({
+                              title: "Failed to update preference",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

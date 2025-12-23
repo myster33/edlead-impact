@@ -56,6 +56,10 @@ export type Database = {
           email_digest_enabled: boolean
           full_name: string | null
           id: string
+          notify_admin_changes: boolean
+          notify_applications: boolean
+          notify_blogs: boolean
+          notify_critical_alerts: boolean
           phone: string | null
           position: string | null
           profile_picture_url: string | null
@@ -71,6 +75,10 @@ export type Database = {
           email_digest_enabled?: boolean
           full_name?: string | null
           id?: string
+          notify_admin_changes?: boolean
+          notify_applications?: boolean
+          notify_blogs?: boolean
+          notify_critical_alerts?: boolean
           phone?: string | null
           position?: string | null
           profile_picture_url?: string | null
@@ -86,6 +94,10 @@ export type Database = {
           email_digest_enabled?: boolean
           full_name?: string | null
           id?: string
+          notify_admin_changes?: boolean
+          notify_applications?: boolean
+          notify_blogs?: boolean
+          notify_critical_alerts?: boolean
           phone?: string | null
           position?: string | null
           profile_picture_url?: string | null
