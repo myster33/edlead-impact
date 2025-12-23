@@ -1,0 +1,171 @@
+import { useLocation, Link } from "react-router-dom";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  BarChart3,
+  BookOpen,
+  Settings,
+  LogOut,
+  Shield,
+} from "lucide-react";
+import edleadLogo from "@/assets/edlead-logo.png";
+
+interface AdminLayoutProps {
+  children: React.ReactNode;
+}
+
+const menuItems = [
+  {
+    title: "Dashboard",
+    url: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Applications",
+    url: "/admin/dashboard",
+    icon: FileText,
+  },
+  {
+    title: "Stories",
+    url: "/admin/blog",
+    icon: BookOpen,
+  },
+  {
+    title: "Analytics",
+    url: "/admin/analytics",
+    icon: BarChart3,
+  },
+  {
+    title: "Admin Users",
+    url: "/admin/users",
+    icon: Users,
+  },
+];
+
+export function AdminLayout({ children }: AdminLayoutProps) {
+  const location = useLocation();
+  const { adminUser, signOut } = useAdminAuth();
+
+  const initials = adminUser?.email
+    ?.split("@")[0]
+    .slice(0, 2)
+    .toUpperCase() || "AD";
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <Sidebar className="border-r">
+          <SidebarHeader className="p-4 border-b">
+            <Link to="/admin/dashboard" className="flex items-center gap-2">
+              <img src={edleadLogo} alt="edLEAD" className="h-8" />
+              <Badge variant="secondary" className="text-xs">Admin</Badge>
+            </Link>
+          </SidebarHeader>
+
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {menuItems.map((item) => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.url}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup>
+              <SidebarGroupLabel>Account</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={location.pathname === "/admin/settings"}>
+                      <Link to="/admin/settings">
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+
+          <SidebarFooter className="p-4 border-t">
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{adminUser?.email}</p>
+                <div className="flex items-center gap-1">
+                  <Shield className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground capitalize">{adminUser?.role}</span>
+                </div>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </SidebarFooter>
+        </Sidebar>
+
+        <main className="flex-1 overflow-auto">
+          <header className="sticky top-0 z-10 bg-background border-b h-14 flex items-center px-4">
+            <SidebarTrigger />
+            <div className="ml-4">
+              <h1 className="text-lg font-semibold">
+                {menuItems.find(item => location.pathname === item.url)?.title || 
+                 (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
+              </h1>
+            </div>
+          </header>
+          <div className="p-6">
+            {children}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+}
