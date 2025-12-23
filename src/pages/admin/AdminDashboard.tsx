@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useAuditLog } from "@/hooks/use-audit-log";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,7 @@ interface Application {
 
 export default function AdminDashboard() {
   const { adminUser, signOut } = useAdminAuth();
+  const { logAction } = useAuditLog();
   const { toast } = useToast();
   
   const [applications, setApplications] = useState<Application[]>([]);
@@ -378,6 +380,21 @@ export default function AdminDashboard() {
             },
           }).catch(err => console.error("Failed to send rejection notification:", err));
         }
+      }
+
+      // Log the status change for each application
+      for (const app of selectedApps) {
+        const action = newStatus === "approved" ? "application_approved" : "application_rejected";
+        logAction({
+          action: action as any,
+          table_name: "applications",
+          record_id: app.id,
+          new_values: { 
+            status: newStatus, 
+            full_name: app.full_name,
+            reference_number: app.reference_number 
+          },
+        });
       }
 
       // Clear selection
