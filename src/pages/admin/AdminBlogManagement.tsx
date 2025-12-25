@@ -61,7 +61,9 @@ import {
   MapPin,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Archive,
+  ArchiveRestore
 } from "lucide-react";
 
 // Check if admin user has region restrictions
@@ -115,6 +117,8 @@ const AdminBlogManagement = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [rejectionFeedback, setRejectionFeedback] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [saving, setSaving] = useState(false);
@@ -128,6 +132,7 @@ const AdminBlogManagement = () => {
     approved: 0,
     rejected: 0,
     pending: 0,
+    archived: 0,
   });
 
   // Image upload state
@@ -190,6 +195,7 @@ const AdminBlogManagement = () => {
         approved: postsData.filter(p => p.status === "approved").length,
         rejected: postsData.filter(p => p.status === "rejected").length,
         pending: postsData.filter(p => p.status === "pending").length,
+        archived: postsData.filter(p => p.status === "archived").length,
       });
     }
     setLoading(false);
@@ -544,6 +550,84 @@ const AdminBlogManagement = () => {
     setSaving(false);
   };
 
+  const openArchiveDialog = (post: BlogPost) => {
+    setSelectedPost(post);
+    setArchiveDialogOpen(true);
+  };
+
+  const openRestoreDialog = (post: BlogPost) => {
+    setSelectedPost(post);
+    setRestoreDialogOpen(true);
+  };
+
+  const handleArchive = async () => {
+    if (!selectedPost) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ status: "archived" })
+      .eq("id", selectedPost.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to archive the post.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Post Archived",
+        description: "The blog post has been archived and is no longer visible to the public.",
+      });
+
+      await logAction({
+        action: "blog_archived",
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        new_values: { status: "archived", title: selectedPost.title },
+      });
+
+      setArchiveDialogOpen(false);
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
+  const handleRestore = async () => {
+    if (!selectedPost) return;
+    
+    setSaving(true);
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ status: "approved" })
+      .eq("id", selectedPost.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to restore the post.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Post Restored",
+        description: "The blog post has been restored and is now visible to the public.",
+      });
+
+      await logAction({
+        action: "blog_restored",
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        new_values: { status: "approved", title: selectedPost.title },
+      });
+
+      setRestoreDialogOpen(false);
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -552,6 +636,8 @@ const AdminBlogManagement = () => {
         return <Badge className="bg-green-500">Approved</Badge>;
       case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
+      case "archived":
+        return <Badge variant="outline" className="bg-muted">Archived</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -646,6 +732,7 @@ const AdminBlogManagement = () => {
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="archived">Archived ({activityStats.archived})</SelectItem>
             </SelectContent>
           </Select>
           </div>
@@ -744,13 +831,35 @@ const AdminBlogManagement = () => {
                           </>
                         )}
                         {post.status === "approved" && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
+                              title="View Live"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openArchiveDialog(post)}
+                              className="text-muted-foreground hover:text-foreground"
+                              title="Archive"
+                            >
+                              <Archive className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                        {post.status === "archived" && (
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
-                            title="View Live"
+                            onClick={() => openRestoreDialog(post)}
+                            className="text-green-600 hover:text-green-700"
+                            title="Restore"
                           >
-                            <ExternalLink className="h-4 w-4" />
+                            <ArchiveRestore className="h-4 w-4" />
                           </Button>
                         )}
                         <Button
@@ -1136,6 +1245,61 @@ const AdminBlogManagement = () => {
             >
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Yes, Approve & Notify Author
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Archive Confirmation Dialog */}
+      <AlertDialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5 text-muted-foreground" />
+              Archive Story?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to archive <strong>"{selectedPost?.title}"</strong>?
+              <br /><br />
+              The story will be hidden from the public blog but can be restored at any time. The author will not be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleArchive}
+              disabled={saving}
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Yes, Archive Story
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Restore Confirmation Dialog */}
+      <AlertDialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ArchiveRestore className="h-5 w-5 text-green-600" />
+              Restore Story?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to restore <strong>"{selectedPost?.title}"</strong>?
+              <br /><br />
+              The story will be published again and visible on the public blog.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRestore}
+              disabled={saving}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Yes, Restore Story
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
