@@ -59,7 +59,9 @@ import {
   Clock,
   UserCheck,
   UserX,
-  Mail
+  Mail,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -134,6 +136,18 @@ export default function AdminManagement() {
   const [isPendingLoading, setIsPendingLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [approvingUserId, setApprovingUserId] = useState<string | null>(null);
+  
+  // Bulk selection for pending users
+  const [selectedPendingUsers, setSelectedPendingUsers] = useState<Set<string>>(new Set());
+  const [isBulkApproving, setIsBulkApproving] = useState(false);
+  const [isBulkRejecting, setIsBulkRejecting] = useState(false);
+  const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
+  const [bulkRejectDialogOpen, setBulkRejectDialogOpen] = useState(false);
+  const [bulkApproveRole, setBulkApproveRole] = useState<AppRole>("viewer");
+  const [bulkApproveCountry, setBulkApproveCountry] = useState("");
+  const [bulkApproveProvince, setBulkApproveProvince] = useState("");
+  const [bulkRejectReason, setBulkRejectReason] = useState("");
+  const [bulkSendRejectEmail, setBulkSendRejectEmail] = useState(true);
   
   // Add user dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -337,6 +351,127 @@ export default function AdminManagement() {
     } finally {
       setRejectingUserId(null);
     }
+  };
+
+  // Bulk selection handlers
+  const togglePendingUserSelection = (userId: string) => {
+    setSelectedPendingUsers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllPendingUsers = () => {
+    if (selectedPendingUsers.size === pendingUsers.length) {
+      setSelectedPendingUsers(new Set());
+    } else {
+      setSelectedPendingUsers(new Set(pendingUsers.map(u => u.id)));
+    }
+  };
+
+  const bulkApprovePendingUsers = async () => {
+    if (selectedPendingUsers.size === 0) return;
+    
+    setIsBulkApproving(true);
+    const usersToApprove = pendingUsers.filter(u => selectedPendingUsers.has(u.id));
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const user of usersToApprove) {
+      try {
+        const response = await supabase.functions.invoke("add-admin-user", {
+          body: { 
+            email: user.email, 
+            role: bulkApproveRole,
+            country: bulkApproveRole !== "admin" ? bulkApproveCountry : null,
+            province: bulkApproveRole !== "admin" ? bulkApproveProvince : null,
+          },
+        });
+
+        if (response.data?.success) {
+          successCount++;
+          // Send approval notification email
+          supabase.functions.invoke("notify-admin-approval", {
+            body: {
+              email: user.email,
+              role: bulkApproveRole,
+              country: bulkApproveCountry || null,
+              province: bulkApproveProvince || null,
+            },
+          }).catch(err => console.error("Failed to send approval notification:", err));
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        console.error("Error approving user:", user.email, error);
+        failCount++;
+      }
+    }
+
+    // Refresh data
+    await Promise.all([fetchAdminUsers(), fetchPendingUsers()]);
+    setSelectedPendingUsers(new Set());
+    setBulkApproveDialogOpen(false);
+    setBulkApproveRole("viewer");
+    setBulkApproveCountry("");
+    setBulkApproveProvince("");
+    setIsBulkApproving(false);
+
+    toast({
+      title: "Bulk Approval Complete",
+      description: `${successCount} users approved${failCount > 0 ? `, ${failCount} failed` : ""}.`,
+      variant: failCount > 0 ? "destructive" : "default",
+    });
+  };
+
+  const bulkRejectPendingUsers = async () => {
+    if (selectedPendingUsers.size === 0) return;
+    
+    setIsBulkRejecting(true);
+    const usersToReject = pendingUsers.filter(u => selectedPendingUsers.has(u.id));
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const user of usersToReject) {
+      try {
+        const response = await supabase.functions.invoke("reject-pending-user", {
+          body: { 
+            userId: user.id,
+            email: user.email,
+            reason: bulkRejectReason.trim() || null,
+            sendEmail: bulkSendRejectEmail,
+          },
+        });
+
+        if (response.data?.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        console.error("Error rejecting user:", user.email, error);
+        failCount++;
+      }
+    }
+
+    // Refresh data
+    await fetchPendingUsers();
+    setSelectedPendingUsers(new Set());
+    setBulkRejectDialogOpen(false);
+    setBulkRejectReason("");
+    setBulkSendRejectEmail(true);
+    setIsBulkRejecting(false);
+
+    toast({
+      title: "Bulk Rejection Complete",
+      description: `${successCount} users rejected${failCount > 0 ? `, ${failCount} failed` : ""}.`,
+      variant: failCount > 0 ? "destructive" : "default",
+    });
   };
 
   const addAdminUser = async () => {
@@ -760,17 +895,53 @@ export default function AdminManagement() {
                     </CardDescription>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={fetchPendingUsers} disabled={isPendingLoading}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isPendingLoading ? "animate-spin" : ""}`} />
-                  Refresh
-                </Button>
+                <div className="flex items-center gap-2">
+                  {selectedPendingUsers.size > 0 && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => setBulkRejectDialogOpen(true)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <UserX className="h-4 w-4 mr-1" />
+                        Reject ({selectedPendingUsers.size})
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => setBulkApproveDialogOpen(true)}
+                      >
+                        <UserCheck className="h-4 w-4 mr-1" />
+                        Approve ({selectedPendingUsers.size})
+                      </Button>
+                    </>
+                  )}
+                  <Button variant="outline" size="sm" onClick={fetchPendingUsers} disabled={isPendingLoading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isPendingLoading ? "animate-spin" : ""}`} />
+                    Refresh
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
+              {/* Select All */}
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b">
+                <Checkbox
+                  checked={selectedPendingUsers.size === pendingUsers.length && pendingUsers.length > 0}
+                  onCheckedChange={toggleAllPendingUsers}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {selectedPendingUsers.size === pendingUsers.length ? "Deselect all" : "Select all"}
+                </span>
+              </div>
               <div className="space-y-3">
                 {pendingUsers.map((user) => (
                   <div key={user.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
                     <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={selectedPendingUsers.has(user.id)}
+                        onCheckedChange={() => togglePendingUserSelection(user.id)}
+                      />
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-amber-100 text-amber-700">
                           {user.email.charAt(0).toUpperCase()}
@@ -821,6 +992,154 @@ export default function AdminManagement() {
             </CardContent>
           </Card>
         )}
+
+        {/* Bulk Approve Dialog */}
+        <Dialog open={bulkApproveDialogOpen} onOpenChange={setBulkApproveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Bulk Approve Users</DialogTitle>
+              <DialogDescription>
+                Approve {selectedPendingUsers.size} selected user{selectedPendingUsers.size > 1 ? "s" : ""}. All will receive the same role and region.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={bulkApproveRole} onValueChange={(value: AppRole) => setBulkApproveRole(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="viewer">
+                      <div className="flex items-center gap-2">
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        Viewer
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="reviewer">
+                      <div className="flex items-center gap-2">
+                        <Edit className="h-4 w-4 text-blue-500" />
+                        Reviewer
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="admin">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-primary" />
+                        Admin
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {bulkApproveRole !== "admin" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Country (Optional)</Label>
+                    <Select value={bulkApproveCountry} onValueChange={(value) => {
+                      setBulkApproveCountry(value);
+                      setBulkApproveProvince("");
+                    }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((country) => (
+                          <SelectItem key={country.value} value={country.value}>
+                            {country.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {bulkApproveCountry && provincesByCountry[bulkApproveCountry] && (
+                    <div className="space-y-2">
+                      <Label>Province/Region (Optional)</Label>
+                      <Select value={bulkApproveProvince} onValueChange={setBulkApproveProvince}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select province" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {provincesByCountry[bulkApproveCountry].map((province) => (
+                            <SelectItem key={province.value} value={province.value}>
+                              {province.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkApproveDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={bulkApprovePendingUsers} disabled={isBulkApproving}>
+                {isBulkApproving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <UserCheck className="h-4 w-4 mr-2" />
+                Approve {selectedPendingUsers.size} Users
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Reject Dialog */}
+        <Dialog open={bulkRejectDialogOpen} onOpenChange={setBulkRejectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <UserX className="h-5 w-5" />
+                Bulk Reject Users
+              </DialogTitle>
+              <DialogDescription>
+                Reject {selectedPendingUsers.size} selected user{selectedPendingUsers.size > 1 ? "s" : ""}. This will delete their accounts.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Rejection Reason (Optional)</Label>
+                <Textarea 
+                  placeholder="Provide a reason for the rejection (optional)..."
+                  value={bulkRejectReason}
+                  onChange={(e) => setBulkRejectReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="bulkSendRejectEmail" 
+                  checked={bulkSendRejectEmail}
+                  onCheckedChange={(checked) => setBulkSendRejectEmail(checked === true)}
+                />
+                <label 
+                  htmlFor="bulkSendRejectEmail" 
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                >
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  Send rejection notification emails
+                </label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkRejectDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={bulkRejectPendingUsers} 
+                disabled={isBulkRejecting}
+              >
+                {isBulkRejecting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <UserX className="h-4 w-4 mr-2" />
+                Reject {selectedPendingUsers.size} Users
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Approve Pending User Dialog */}
         <Dialog open={!!approvingPendingUser} onOpenChange={(open) => !open && setApprovingPendingUser(null)}>
