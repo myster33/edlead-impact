@@ -114,6 +114,7 @@ const AdminBlogManagement = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectionFeedback, setRejectionFeedback] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [saving, setSaving] = useState(false);
@@ -200,7 +201,14 @@ const AdminBlogManagement = () => {
     }
   }, [isAdmin, statusFilter, adminUser]);
 
-  const handleApprove = async (post: BlogPost) => {
+  const openApproveDialog = (post: BlogPost) => {
+    setSelectedPost(post);
+    setApproveDialogOpen(true);
+  };
+
+  const handleApprove = async () => {
+    if (!selectedPost) return;
+    
     setSaving(true);
     const { data, error } = await supabase
       .from("blog_posts")
@@ -208,7 +216,7 @@ const AdminBlogManagement = () => {
         status: "approved", 
         approved_at: new Date().toISOString() 
       })
-      .eq("id", post.id)
+      .eq("id", selectedPost.id)
       .select("slug")
       .single();
 
@@ -225,10 +233,10 @@ const AdminBlogManagement = () => {
     // Send approval notification to author
     const { error: notifyError } = await supabase.functions.invoke("notify-author-approval", {
       body: {
-        author_email: post.author_email,
-        author_name: post.author_name,
-        title: post.title,
-        slug: data?.slug || post.slug,
+        author_email: selectedPost.author_email,
+        author_name: selectedPost.author_name,
+        title: selectedPost.title,
+        slug: data?.slug || selectedPost.slug,
       },
     });
 
@@ -241,7 +249,7 @@ const AdminBlogManagement = () => {
     } else {
       toast({
         title: "Post Approved",
-        description: "The blog post has been published and the author has been notified.",
+        description: "The blog post has been published and the author has been notified via email.",
       });
     }
 
@@ -249,10 +257,11 @@ const AdminBlogManagement = () => {
     await logAction({
       action: "blog_approved",
       table_name: "blog_posts",
-      record_id: post.id,
-      new_values: { status: "approved", title: post.title },
+      record_id: selectedPost.id,
+      new_values: { status: "approved", title: selectedPost.title },
     });
 
+    setApproveDialogOpen(false);
     fetchPosts();
     setSaving(false);
   };
@@ -717,7 +726,7 @@ const AdminBlogManagement = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleApprove(post)}
+                              onClick={() => openApproveDialog(post)}
                               className="text-green-600 hover:text-green-700"
                               title="Approve"
                             >
@@ -840,7 +849,10 @@ const AdminBlogManagement = () => {
                 }}>
                   Reject
                 </Button>
-                <Button onClick={() => handleApprove(selectedPost)}>
+                <Button onClick={() => {
+                  setViewDialogOpen(false);
+                  openApproveDialog(selectedPost);
+                }}>
                   Approve & Publish
                 </Button>
               </>
@@ -1100,6 +1112,34 @@ const AdminBlogManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Approve Confirmation Dialog */}
+      <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Approve & Publish Story?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve <strong>"{selectedPost?.title}"</strong> by {selectedPost?.author_name}?
+              <br /><br />
+              This will publish the story on the blog and send an email notification to the author at <strong>{selectedPost?.author_email}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleApprove}
+              disabled={saving}
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Yes, Approve & Notify Author
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Remove Image Confirmation Dialog */}
       <AlertDialog open={showRemoveImageConfirm} onOpenChange={setShowRemoveImageConfirm}>
