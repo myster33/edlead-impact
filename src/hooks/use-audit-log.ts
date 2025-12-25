@@ -10,6 +10,8 @@ export type AuditAction =
   | "blog_rejected"
   | "blog_deleted"
   | "blog_featured"
+  | "blog_archived"
+  | "blog_restored"
   | "admin_user_added"
   | "admin_user_updated"
   | "admin_user_deleted"
