@@ -564,15 +564,27 @@ const AdminBlogManagement = () => {
     if (!selectedPost) return;
     
     setSaving(true);
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from("blog_posts")
       .update({ status: "archived" })
-      .eq("id", selectedPost.id);
+      .eq("id", selectedPost.id)
+      .select();
+
+    console.log("Archive result:", { data, error, postId: selectedPost.id });
 
     if (error) {
+      console.error("Archive error:", error);
       toast({
         title: "Error",
-        description: "Failed to archive the post.",
+        description: error.message || "Failed to archive the post.",
+        variant: "destructive",
+      });
+    } else if (!data || data.length === 0) {
+      // No rows updated - likely RLS issue
+      console.error("No rows updated - possible RLS issue");
+      toast({
+        title: "Error",
+        description: "Unable to archive the post. You may not have permission.",
         variant: "destructive",
       });
     } else {
