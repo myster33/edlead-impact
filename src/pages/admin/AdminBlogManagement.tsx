@@ -844,7 +844,7 @@ const AdminBlogManagement = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => openArchiveDialog(post)}
-                              className="text-muted-foreground hover:text-foreground"
+                              className="text-amber-600 hover:text-amber-700"
                               title="Archive"
                             >
                               <Archive className="h-4 w-4" />
