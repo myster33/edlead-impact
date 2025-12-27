@@ -45,38 +45,46 @@ interface AdminProfile {
   province: string | null;
 }
 
-const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Applications",
-    url: "/admin/dashboard",
-    icon: FileText,
-  },
-  {
-    title: "Stories",
-    url: "/admin/blog",
-    icon: BookOpen,
-  },
-  {
-    title: "Analytics",
-    url: "/admin/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Admin Users",
-    url: "/admin/users",
-    icon: Users,
-  },
-  {
-    title: "Audit Log",
-    url: "/admin/audit-log",
-    icon: History,
-  },
-];
+const getMenuItems = (role?: string) => {
+  const items = [
+    {
+      title: "Dashboard",
+      url: "/admin/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Applications",
+      url: "/admin/dashboard",
+      icon: FileText,
+    },
+    {
+      title: "Stories",
+      url: "/admin/blog",
+      icon: BookOpen,
+    },
+    {
+      title: "Analytics",
+      url: "/admin/analytics",
+      icon: BarChart3,
+    },
+    {
+      title: "Admin Users",
+      url: "/admin/users",
+      icon: Users,
+    },
+  ];
+
+  // Only show Audit Log for admins
+  if (role === "admin") {
+    items.push({
+      title: "Audit Log",
+      url: "/admin/audit-log",
+      icon: History,
+    });
+  }
+
+  return items;
+};
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
@@ -128,7 +136,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <SidebarGroupLabel>Navigation</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {menuItems.map((item) => {
+                  {getMenuItems(adminUser?.role).map((item) => {
                     const isActive = location.pathname === item.url;
                     return (
                       <SidebarMenuItem key={item.title}>
@@ -210,7 +218,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <SidebarTrigger />
             <div className="ml-4">
               <h1 className="text-lg font-semibold">
-                {menuItems.find(item => location.pathname === item.url)?.title || 
+                {getMenuItems(adminUser?.role).find(item => location.pathname === item.url)?.title || 
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>

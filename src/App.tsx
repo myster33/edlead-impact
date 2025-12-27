@@ -110,7 +110,7 @@ const App = () => (
               <Route
                 path="/admin/audit-log"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="admin">
                     <AdminAuditLog />
                   </ProtectedRoute>
                 }
