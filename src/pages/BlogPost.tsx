@@ -29,6 +29,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LikeButton } from "@/components/blog/LikeButton";
+import { CommentSection } from "@/components/blog/CommentSection";
 
 interface BlogPostData {
   id: string;
@@ -263,37 +265,40 @@ const BlogPost = () => {
             </div>
           </div>
 
-          {/* Share button */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share Story
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-background">
-              <DropdownMenuItem onClick={() => handleShare("facebook")}>
-                <Facebook className="mr-2 h-4 w-4" />
-                Facebook
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShare("twitter")}>
-                <Twitter className="mr-2 h-4 w-4" />
-                Twitter / X
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShare("linkedin")}>
-                <Linkedin className="mr-2 h-4 w-4" />
-                LinkedIn
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShare("whatsapp")}>
-                <MessageCircle className="mr-2 h-4 w-4" />
-                WhatsApp
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleShare("copy")}>
-                <LinkIcon className="mr-2 h-4 w-4" />
-                Copy Link
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Share and Like buttons */}
+          <div className="flex items-center gap-3">
+            <LikeButton blogPostId={post.id} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share Story
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-background">
+                <DropdownMenuItem onClick={() => handleShare("facebook")}>
+                  <Facebook className="mr-2 h-4 w-4" />
+                  Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleShare("twitter")}>
+                  <Twitter className="mr-2 h-4 w-4" />
+                  Twitter / X
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleShare("linkedin")}>
+                  <Linkedin className="mr-2 h-4 w-4" />
+                  LinkedIn
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleShare("whatsapp")}>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleShare("copy")}>
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  Copy Link
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
 
         {/* Featured image */}
@@ -356,6 +361,11 @@ const BlogPost = () => {
             </div>
           );
         })()}
+
+        {/* Comments Section */}
+        <div className="mt-12 pt-8 border-t">
+          <CommentSection blogPostId={post.id} />
+        </div>
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t">

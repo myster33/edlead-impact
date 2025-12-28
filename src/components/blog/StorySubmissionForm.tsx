@@ -55,6 +55,7 @@ const storySchema = z.object({
   author_province: z.string().min(1, "Please select your province"),
   author_email: z.string().email("Please enter a valid email address"),
   category: z.string().min(1, "Please select a category"),
+  reference_number: z.string().min(1, "Please enter your Captain Reference Number").max(50, "Reference number must be less than 50 characters"),
   video_url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 });
 
@@ -169,6 +170,7 @@ export const StorySubmissionForm = () => {
         author_province: data.author_province,
         author_email: data.author_email,
         category: data.category,
+        reference_number: data.reference_number,
         featured_image_url: featuredImageUrl,
         video_url: data.video_url || null,
       });
@@ -257,6 +259,22 @@ export const StorySubmissionForm = () => {
             {errors.category && (
               <p className="text-sm text-destructive">{errors.category.message}</p>
             )}
+          </div>
+
+          {/* Captain Reference Number */}
+          <div className="space-y-2">
+            <Label htmlFor="reference_number">Captain Application Reference Number *</Label>
+            <Input
+              id="reference_number"
+              placeholder="e.g., CAP-2024-001"
+              {...register("reference_number")}
+            />
+            {errors.reference_number && (
+              <p className="text-sm text-destructive">{errors.reference_number.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Enter the reference number from your edLEAD Captain application
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
