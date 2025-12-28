@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LikeButton } from "./LikeButton";
 
 interface BlogCardProps {
   id: string;
@@ -27,6 +28,7 @@ interface BlogCardProps {
 }
 
 export const BlogCard = ({
+  id,
   slug,
   title,
   summary,
@@ -109,35 +111,38 @@ export const BlogCard = ({
               <p className="text-xs text-muted-foreground">{authorSchool}</p>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-background">
-              <DropdownMenuItem onClick={(e) => handleShare("facebook", e)}>
-                <Facebook className="mr-2 h-4 w-4" />
-                Facebook
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => handleShare("twitter", e)}>
-                <Twitter className="mr-2 h-4 w-4" />
-                Twitter / X
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => handleShare("linkedin", e)}>
-                <Linkedin className="mr-2 h-4 w-4" />
-                LinkedIn
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => handleShare("whatsapp", e)}>
-                <MessageCircle className="mr-2 h-4 w-4" />
-                WhatsApp
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => handleShare("copy", e)}>
-                <LinkIcon className="mr-2 h-4 w-4" />
-                Copy Link
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-1">
+            <LikeButton blogPostId={id} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.preventDefault()}>
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background">
+                <DropdownMenuItem onClick={(e) => handleShare("facebook", e)}>
+                  <Facebook className="mr-2 h-4 w-4" />
+                  Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => handleShare("twitter", e)}>
+                  <Twitter className="mr-2 h-4 w-4" />
+                  Twitter / X
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => handleShare("linkedin", e)}>
+                  <Linkedin className="mr-2 h-4 w-4" />
+                  LinkedIn
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => handleShare("whatsapp", e)}>
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  WhatsApp
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => handleShare("copy", e)}>
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  Copy Link
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <Link to={`/blog/${slug}`}>
           <h3 className="text-xl font-semibold leading-tight hover:text-primary transition-colors line-clamp-2">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { StorySubmissionForm, categories } from "@/components/blog/StorySubmissionForm";
+import { CheckMyStoriesModal } from "@/components/blog/CheckMyStoriesModal";
 import { BlogCard } from "@/components/blog/BlogCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,7 +94,10 @@ const Blog = () => {
             <p className="text-xl text-secondary-foreground/80 leading-relaxed mb-8">
               Stories, reflections, and lessons from our edLEAD Captains' leadership journeys.
             </p>
-            <StorySubmissionForm />
+            <div className="flex flex-wrap gap-4">
+              <StorySubmissionForm />
+              <CheckMyStoriesModal />
+            </div>
           </div>
         </div>
       </section>
