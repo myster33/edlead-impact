@@ -192,6 +192,18 @@ export const StorySubmissionForm = () => {
         console.error("Failed to send admin notification:", err);
       });
 
+      // Send confirmation email to the author (fire and forget)
+      supabase.functions.invoke("notify-author-submission", {
+        body: {
+          title: data.title,
+          author_name: data.author_name,
+          author_email: data.author_email,
+          reference_number: data.reference_number,
+        },
+      }).catch((err) => {
+        console.error("Failed to send author confirmation:", err);
+      });
+
       toast({
         title: "Story Submitted!",
         description: "Thank you for sharing your story. Our team will review it and get back to you soon.",
