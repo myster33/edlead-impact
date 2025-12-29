@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.reject-pending-user]
 verify_jwt = false
+
+[functions.notify-author-submission]
+verify_jwt = false
