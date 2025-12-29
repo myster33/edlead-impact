@@ -4,11 +4,9 @@ import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { useAuditLog } from "@/hooks/use-audit-log";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,82 +18,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { 
-  LogOut, 
-  Search, 
   Users, 
   FileText, 
   Clock, 
   CheckCircle,
-  Shield,
   XCircle,
-  Eye,
   Loader2,
-  RefreshCw,
   Download,
   BarChart3,
   BookOpen,
-  CheckSquare,
-  ChevronLeft,
-  ChevronRight,
   CalendarIcon,
   X,
   MapPin,
-  AlertCircle,
   Trophy,
   Medal,
-  Award
+  Award,
+  ArrowRight
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface Application {
-  id: string;
-  reference_number?: string;
-  full_name: string;
-  student_email: string;
-  school_name: string;
-  school_address: string;
-  grade: string;
-  province: string;
-  country?: string;
-  status: string;
-  created_at: string;
-  // Additional fields for detail view
-  date_of_birth?: string;
-  gender?: string;
-  student_phone?: string;
-  parent_name?: string;
-  parent_email?: string;
-  parent_phone?: string;
-  nominating_teacher?: string;
-  teacher_position?: string;
-  project_idea?: string;
-  why_edlead?: string;
-  leadership_meaning?: string;
-}
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
@@ -110,24 +59,11 @@ const getAdminRegionInfo = (adminUser: any) => {
 };
 
 export default function AdminDashboard() {
-  const { adminUser, signOut } = useAdminAuth();
-  const { logAction } = useAuditLog();
+  const { adminUser } = useAdminAuth();
   const { toast } = useToast();
   
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [provinceFilter, setProvinceFilter] = useState<string>("all");
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-
+  
   // Stats
   const [stats, setStats] = useState({
     total: 0,
@@ -154,10 +90,13 @@ export default function AdminDashboard() {
   // Admin region info
   const regionInfo = getAdminRegionInfo(adminUser);
 
+  // Send report state
+  const [isSendingReport, setIsSendingReport] = useState(false);
+
   useEffect(() => {
-    fetchApplications();
+    fetchStats();
     fetchPendingBlogPosts();
-  }, [adminUser]); // Re-fetch when adminUser changes
+  }, [adminUser]);
   
   // Separate effect for reviewer activity with date filters
   useEffect(() => {
@@ -166,9 +105,34 @@ export default function AdminDashboard() {
     }
   }, [adminUser, activityStartDate, activityEndDate]);
 
-  useEffect(() => {
-    filterApplications();
-  }, [applications, searchTerm, statusFilter, provinceFilter, startDate, endDate]);
+  const fetchStats = async () => {
+    setIsLoading(true);
+    try {
+      let query = supabase
+        .from("applications")
+        .select("status");
+
+      // Apply region filters for non-admin users
+      if (regionInfo.hasRestrictions && regionInfo.province) {
+        query = query.eq("province", regionInfo.province);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const total = data?.length || 0;
+      const pending = data?.filter(a => a.status === "pending").length || 0;
+      const approved = data?.filter(a => a.status === "approved").length || 0;
+      const rejected = data?.filter(a => a.status === "rejected").length || 0;
+      
+      setStats({ total, pending, approved, rejected });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const fetchPendingBlogPosts = async () => {
     try {
@@ -370,8 +334,6 @@ export default function AdminDashboard() {
   };
 
   // Send performance report via email
-  const [isSendingReport, setIsSendingReport] = useState(false);
-  
   const sendPerformanceReport = async (period: "weekly" | "monthly") => {
     setIsSendingReport(true);
     try {
@@ -403,457 +365,6 @@ export default function AdminDashboard() {
     }
   };
 
-  useEffect(() => {
-    filterApplications();
-  }, [applications, searchTerm, statusFilter, provinceFilter]);
-
-  const fetchApplications = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from("applications")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      // Apply region filters for non-admin users
-      if (regionInfo.hasRestrictions) {
-        // Filter by province if assigned (most specific)
-        if (regionInfo.province) {
-          query = query.eq("province", regionInfo.province);
-        }
-        // Note: country filter would be applied here if applications had a country field
-        // For now, we're mainly filtering by province as applications are SA-based
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      setApplications(data || []);
-      
-      // Calculate stats (based on filtered data for restricted users)
-      const total = data?.length || 0;
-      const pending = data?.filter(a => a.status === "pending").length || 0;
-      const approved = data?.filter(a => a.status === "approved").length || 0;
-      const rejected = data?.filter(a => a.status === "rejected").length || 0;
-      
-      setStats({ total, pending, approved, rejected });
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load applications. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filterApplications = () => {
-    let filtered = [...applications];
-
-    // Search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (app) =>
-          app.full_name.toLowerCase().includes(term) ||
-          app.student_email.toLowerCase().includes(term) ||
-          app.school_name.toLowerCase().includes(term) ||
-          (app.reference_number && app.reference_number.toLowerCase().includes(term))
-      );
-    }
-
-    // Status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((app) => app.status === statusFilter);
-    }
-
-    // Province filter
-    if (provinceFilter !== "all") {
-      filtered = filtered.filter((app) => app.province === provinceFilter);
-    }
-
-    // Date range filter
-    if (startDate) {
-      filtered = filtered.filter((app) => new Date(app.created_at) >= startDate);
-    }
-    if (endDate) {
-      const endOfDay = new Date(endDate);
-      endOfDay.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((app) => new Date(app.created_at) <= endOfDay);
-    }
-
-    setFilteredApplications(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
-  };
-
-  // Pagination
-  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
-  const paginatedApplications = filteredApplications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const updateApplicationStatus = async (id: string, newStatus: string) => {
-    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
-      toast({
-        title: "Permission Denied",
-        description: "You don't have permission to update application status.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Find the application to get applicant details
-    const application = applications.find(app => app.id === id);
-    if (!application) {
-      toast({
-        title: "Error",
-        description: "Application not found.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      const { error } = await supabase
-        .from("applications")
-        .update({ status: newStatus })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      // Update local state
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === id ? { ...app, status: newStatus } : app
-        )
-      );
-
-      if (selectedApplication?.id === id) {
-        setSelectedApplication({ ...selectedApplication, status: newStatus });
-      }
-
-      // Send email notification to applicant
-      const referenceNumber = application.reference_number || application.id.slice(0, 8).toUpperCase();
-      
-      if (newStatus === "approved") {
-        supabase.functions.invoke("notify-applicant-approved", {
-          body: {
-            applicantEmail: application.student_email,
-            applicantName: application.full_name,
-            referenceNumber,
-          },
-        }).catch(err => console.error("Failed to send approval notification:", err));
-      } else if (newStatus === "rejected") {
-        supabase.functions.invoke("notify-applicant-rejected", {
-          body: {
-            applicantEmail: application.student_email,
-            applicantName: application.full_name,
-            referenceNumber,
-          },
-        }).catch(err => console.error("Failed to send rejection notification:", err));
-      }
-
-      toast({
-        title: "Status Updated",
-        description: `Application status changed to ${newStatus}.`,
-      });
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update status. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  // Bulk selection handlers
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredApplications.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredApplications.map(app => app.id)));
-    }
-  };
-
-  const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const bulkUpdateStatus = async (newStatus: string) => {
-    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
-      toast({
-        title: "Permission Denied",
-        description: "You don't have permission to update application status.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (selectedIds.size === 0) {
-      toast({
-        title: "No Selection",
-        description: "Please select applications to update.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      const idsArray = Array.from(selectedIds);
-      
-      const { error } = await supabase
-        .from("applications")
-        .update({ status: newStatus })
-        .in("id", idsArray);
-
-      if (error) throw error;
-
-      // Update local state
-      setApplications((prev) =>
-        prev.map((app) =>
-          selectedIds.has(app.id) ? { ...app, status: newStatus } : app
-        )
-      );
-
-      // Send email notifications for each application
-      const selectedApps = applications.filter(app => selectedIds.has(app.id));
-      for (const app of selectedApps) {
-        const referenceNumber = app.reference_number || app.id.slice(0, 8).toUpperCase();
-        
-        if (newStatus === "approved") {
-          supabase.functions.invoke("notify-applicant-approved", {
-            body: {
-              applicantEmail: app.student_email,
-              applicantName: app.full_name,
-              referenceNumber,
-            },
-          }).catch(err => console.error("Failed to send approval notification:", err));
-        } else if (newStatus === "rejected") {
-          supabase.functions.invoke("notify-applicant-rejected", {
-            body: {
-              applicantEmail: app.student_email,
-              applicantName: app.full_name,
-              referenceNumber,
-            },
-          }).catch(err => console.error("Failed to send rejection notification:", err));
-        }
-      }
-
-      // Log the status change for each application
-      for (const app of selectedApps) {
-        const action = newStatus === "approved" ? "application_approved" : "application_rejected";
-        logAction({
-          action: action as any,
-          table_name: "applications",
-          record_id: app.id,
-          new_values: { 
-            status: newStatus, 
-            full_name: app.full_name,
-            reference_number: app.reference_number 
-          },
-        });
-      }
-
-      // Clear selection
-      setSelectedIds(new Set());
-
-      toast({
-        title: "Bulk Update Complete",
-        description: `${idsArray.length} applications ${newStatus}.`,
-      });
-    } catch (error) {
-      console.error("Error updating applications:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update applications. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "approved":
-        return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Approved</Badge>;
-      case "rejected":
-        return <Badge variant="destructive">Rejected</Badge>;
-      default:
-        return <Badge variant="secondary">Pending</Badge>;
-    }
-  };
-
-  const provinces = [
-    "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
-    "Limpopo", "Mpumalanga", "North West", "Northern Cape", "Western Cape"
-  ];
-
-  const exportToCSV = () => {
-    if (filteredApplications.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No applications to export.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const headers = [
-      "Reference",
-      "Full Name",
-      "Email",
-      "Phone",
-      "Date of Birth",
-      "Gender",
-      "Grade",
-      "School Name",
-      "School Address",
-      "Province",
-      "Parent Name",
-      "Parent Email",
-      "Parent Phone",
-      "Nominating Teacher",
-      "Status",
-      "Submitted Date"
-    ];
-
-    const escapeCSV = (value: string | null | undefined) => {
-      if (value == null) return "";
-      const str = String(value);
-      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-
-    const rows = filteredApplications.map(app => [
-      escapeCSV(app.reference_number || app.id.slice(0, 8).toUpperCase()),
-      escapeCSV(app.full_name),
-      escapeCSV(app.student_email),
-      escapeCSV(app.student_phone),
-      escapeCSV(app.date_of_birth),
-      escapeCSV(app.gender),
-      escapeCSV(app.grade),
-      escapeCSV(app.school_name),
-      escapeCSV(app.school_address),
-      escapeCSV(app.province),
-      escapeCSV(app.parent_name),
-      escapeCSV(app.parent_email),
-      escapeCSV(app.parent_phone),
-      escapeCSV(app.nominating_teacher),
-      escapeCSV(app.status),
-      escapeCSV(new Date(app.created_at).toLocaleDateString("en-ZA"))
-    ].join(","));
-
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `edlead-applications-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Export Complete",
-      description: `Exported ${filteredApplications.length} applications to CSV.`,
-    });
-  };
-
-  const exportToPDF = () => {
-    if (filteredApplications.length === 0) {
-      toast({
-        title: "No Data",
-        description: "No applications to export.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const doc = new jsPDF({ orientation: "landscape" });
-    
-    // Title
-    doc.setFontSize(18);
-    doc.text("edLEAD Applications Report", 14, 22);
-    
-    // Subtitle with date and filter info
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    const dateStr = new Date().toLocaleDateString("en-ZA", { dateStyle: "full" });
-    doc.text(`Generated on ${dateStr}`, 14, 30);
-    doc.text(`Total: ${filteredApplications.length} applications`, 14, 36);
-    
-    // Filter summary
-    const filters = [];
-    if (statusFilter !== "all") filters.push(`Status: ${statusFilter}`);
-    if (provinceFilter !== "all") filters.push(`Province: ${provinceFilter}`);
-    if (startDate) filters.push(`From: ${format(startDate, "dd/MM/yyyy")}`);
-    if (endDate) filters.push(`To: ${format(endDate, "dd/MM/yyyy")}`);
-    if (filters.length > 0) {
-      doc.text(`Filters: ${filters.join(", ")}`, 14, 42);
-    }
-
-    // Table data
-    const tableData = filteredApplications.map(app => [
-      app.reference_number || app.id.slice(0, 8).toUpperCase(),
-      app.full_name,
-      app.student_email,
-      app.school_name,
-      app.grade,
-      app.province,
-      app.status.charAt(0).toUpperCase() + app.status.slice(1),
-      new Date(app.created_at).toLocaleDateString("en-ZA")
-    ]);
-
-    autoTable(doc, {
-      startY: filters.length > 0 ? 48 : 42,
-      head: [["Ref", "Name", "Email", "School", "Grade", "Province", "Status", "Date"]],
-      body: tableData,
-      headStyles: { fillColor: [30, 64, 175] },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
-      styles: { fontSize: 8, cellPadding: 2 },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 45 },
-        3: { cellWidth: 40 },
-        4: { cellWidth: 15 },
-        5: { cellWidth: 30 },
-        6: { cellWidth: 20 },
-        7: { cellWidth: 22 }
-      }
-    });
-
-    doc.save(`edlead-applications-${new Date().toISOString().split("T")[0]}.pdf`);
-
-    toast({
-      title: "Export Complete",
-      description: `Exported ${filteredApplications.length} applications to PDF.`,
-    });
-  };
-
   return (
     <AdminLayout>
       <div className="space-y-8">
@@ -877,13 +388,19 @@ export default function AdminDashboard() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Applications</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
-                <Users className="h-6 w-6 text-primary" />
-                {stats.total}
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                ) : (
+                  <>
+                    <Users className="h-6 w-6 text-primary" />
+                    {stats.total}
+                  </>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -891,8 +408,14 @@ export default function AdminDashboard() {
             <CardHeader className="pb-2">
               <CardDescription>Pending Review</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
-                <Clock className="h-6 w-6 text-yellow-500" />
-                {stats.pending}
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-yellow-500" />
+                ) : (
+                  <>
+                    <Clock className="h-6 w-6 text-yellow-500" />
+                    {stats.pending}
+                  </>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -900,8 +423,14 @@ export default function AdminDashboard() {
             <CardHeader className="pb-2">
               <CardDescription>Approved</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
-                <CheckCircle className="h-6 w-6 text-green-500" />
-                {stats.approved}
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+                ) : (
+                  <>
+                    <CheckCircle className="h-6 w-6 text-green-500" />
+                    {stats.approved}
+                  </>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -909,8 +438,14 @@ export default function AdminDashboard() {
             <CardHeader className="pb-2">
               <CardDescription>Rejected</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
-                <XCircle className="h-6 w-6 text-destructive" />
-                {stats.rejected}
+                {isLoading ? (
+                  <Loader2 className="h-6 w-6 animate-spin text-destructive" />
+                ) : (
+                  <>
+                    <XCircle className="h-6 w-6 text-destructive" />
+                    {stats.rejected}
+                  </>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -930,9 +465,85 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Navigate to common tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link to="/admin/applications">
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-8 w-8 text-primary" />
+                        <div>
+                          <p className="font-medium">Review Applications</p>
+                          <p className="text-sm text-muted-foreground">{stats.pending} pending</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/admin/blog">
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <BookOpen className="h-8 w-8 text-orange-500" />
+                        <div>
+                          <p className="font-medium">Manage Stories</p>
+                          <p className="text-sm text-muted-foreground">{pendingBlogPosts} pending</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/admin/analytics">
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="h-8 w-8 text-blue-500" />
+                        <div>
+                          <p className="font-medium">View Analytics</p>
+                          <p className="text-sm text-muted-foreground">Insights & trends</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link to="/admin/users">
+                <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Users className="h-8 w-8 text-green-500" />
+                        <div>
+                          <p className="font-medium">Admin Users</p>
+                          <p className="text-sm text-muted-foreground">Manage team</p>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Reviewer Activity Summary - Only visible to admins */}
         {adminUser?.role === "admin" && (
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
@@ -1104,7 +715,7 @@ export default function AdminDashboard() {
 
         {/* Reviewer Leaderboard - Only visible to admins */}
         {adminUser?.role === "admin" && reviewerActivity.length > 0 && (
-          <Card className="mb-6">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-yellow-500" />
@@ -1205,503 +816,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Applications
-                </CardTitle>
-                <CardDescription>
-                  Showing {filteredApplications.length} of {applications.length} applications
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
-                  <Download className="h-4 w-4 mr-2" />
-                  CSV
-                </Button>
-                <Button variant="outline" size="sm" onClick={exportToPDF} disabled={filteredApplications.length === 0}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  PDF
-                </Button>
-                <Button variant="outline" size="sm" onClick={fetchApplications} disabled={isLoading}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
-                  Refresh
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by name, email, or school..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* Only show province filter if user doesn't have region restrictions */}
-                {!regionInfo.hasRestrictions && (
-                  <Select value={provinceFilter} onValueChange={setProvinceFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                      <SelectValue placeholder="Province" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Provinces</SelectItem>
-                      {provinces.map((p) => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              
-              {/* Date Range Filter */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <span className="text-sm text-muted-foreground">Date Range:</span>
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[140px] justify-start text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "dd/MM/yyyy") : "From"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <span className="text-muted-foreground">to</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[140px] justify-start text-left font-normal",
-                          !endDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "dd/MM/yyyy") : "To"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={setEndDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {(startDate || endDate) && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { setStartDate(undefined); setEndDate(undefined); }}
-                      className="h-8 px-2"
-                    >
-                      <X className="h-4 w-4" />
-                      Clear dates
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Bulk Actions */}
-        {selectedIds.size > 0 && (
-          <Card className="mb-4 border-primary/50 bg-primary/5">
-            <CardContent className="py-3">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{selectedIds.size} selected</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => bulkUpdateStatus("approved")}
-                    disabled={isUpdating}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                    Approve Selected
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => bulkUpdateStatus("rejected")}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
-                    Reject Selected
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSelectedIds(new Set())}
-                    disabled={isUpdating}
-                  >
-                    Clear Selection
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Applications Table */}
-        <Card>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : filteredApplications.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No applications found</p>
-              </div>
-            ) : (
-              <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={selectedIds.size === paginatedApplications.length && paginatedApplications.length > 0}
-                          onCheckedChange={() => {
-                            if (selectedIds.size === paginatedApplications.length) {
-                              // Deselect all on current page
-                              const newSelected = new Set(selectedIds);
-                              paginatedApplications.forEach(app => newSelected.delete(app.id));
-                              setSelectedIds(newSelected);
-                            } else {
-                              // Select all on current page
-                              const newSelected = new Set(selectedIds);
-                              paginatedApplications.forEach(app => newSelected.add(app.id));
-                              setSelectedIds(newSelected);
-                            }
-                          }}
-                        />
-                      </TableHead>
-                      <TableHead>Ref</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead className="hidden md:table-cell">School</TableHead>
-                      <TableHead className="hidden sm:table-cell">Grade</TableHead>
-                      <TableHead className="hidden lg:table-cell">Province</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden sm:table-cell">Date</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedApplications.map((app) => (
-                      <TableRow key={app.id} className={selectedIds.has(app.id) ? "bg-primary/5" : ""}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedIds.has(app.id)}
-                            onCheckedChange={() => toggleSelect(app.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded">
-                            {app.reference_number || app.id.slice(0, 8).toUpperCase()}
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{app.full_name}</p>
-                            <p className="text-sm text-muted-foreground">{app.student_email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">{app.school_name}</TableCell>
-                        <TableCell className="hidden sm:table-cell">{app.grade}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{app.province}</TableCell>
-                        <TableCell>{getStatusBadge(app.status)}</TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          {new Date(app.created_at).toLocaleDateString("en-ZA")}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedApplication(app)}
-                          >
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">View</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredApplications.length)} of {filteredApplications.length}
-                    </span>
-                    <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
-                      <SelectTrigger className="w-[70px] h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="25">25</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <span>per page</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            size="sm"
-                            className="w-8 h-8 p-0"
-                            onClick={() => setCurrentPage(pageNum)}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-            )}
-          </CardContent>
-        </Card>
-      
-
-      {/* Application Detail Dialog */}
-      <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              Application Details
-              <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
-                {selectedApplication?.reference_number || selectedApplication?.id.slice(0, 8).toUpperCase()}
-              </code>
-            </DialogTitle>
-            <DialogDescription>
-              Submitted on {selectedApplication && new Date(selectedApplication.created_at).toLocaleDateString("en-ZA", { dateStyle: "full" })}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedApplication && (
-            <div className="space-y-6">
-              {/* Status & Actions */}
-              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">Status:</span>
-                  {getStatusBadge(selectedApplication.status)}
-                </div>
-                {(adminUser?.role === "reviewer" || adminUser?.role === "admin") && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-green-600 border-green-600 hover:bg-green-50"
-                      onClick={() => updateApplicationStatus(selectedApplication.id, "approved")}
-                      disabled={isUpdating || selectedApplication.status === "approved"}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-1" />
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-destructive border-destructive hover:bg-destructive/10"
-                      onClick={() => updateApplicationStatus(selectedApplication.id, "rejected")}
-                      disabled={isUpdating || selectedApplication.status === "rejected"}
-                    >
-                      <XCircle className="h-4 w-4 mr-1" />
-                      Reject
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* Learner Info */}
-              <div>
-                <h4 className="font-semibold mb-3">Learner Information</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Full Name:</span>
-                    <p className="font-medium">{selectedApplication.full_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Email:</span>
-                    <p className="font-medium">{selectedApplication.student_email}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Grade:</span>
-                    <p className="font-medium">{selectedApplication.grade}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Date of Birth:</span>
-                    <p className="font-medium">{selectedApplication.date_of_birth}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Phone:</span>
-                    <p className="font-medium">{selectedApplication.student_phone}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Gender:</span>
-                    <p className="font-medium">{selectedApplication.gender || "Not specified"}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* School Info */}
-              <div>
-                <h4 className="font-semibold mb-3">School Information</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">School Name:</span>
-                    <p className="font-medium">{selectedApplication.school_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Province:</span>
-                    <p className="font-medium">{selectedApplication.province}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Nominating Teacher:</span>
-                    <p className="font-medium">{selectedApplication.nominating_teacher}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Parent Info */}
-              <div>
-                <h4 className="font-semibold mb-3">Parent/Guardian Information</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Name:</span>
-                    <p className="font-medium">{selectedApplication.parent_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Email:</span>
-                    <p className="font-medium">{selectedApplication.parent_email}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Phone:</span>
-                    <p className="font-medium">{selectedApplication.parent_phone}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Motivation */}
-              {selectedApplication.why_edlead && (
-                <div>
-                  <h4 className="font-semibold mb-3">Why edLEAD?</h4>
-                  <p className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap">
-                    {selectedApplication.why_edlead}
-                  </p>
-                </div>
-              )}
-
-              {/* Project Idea */}
-              {selectedApplication.project_idea && (
-                <div>
-                  <h4 className="font-semibold mb-3">Project Idea</h4>
-                  <p className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap">
-                    {selectedApplication.project_idea}
-                  </p>
-                </div>
-              )}
-
-              {/* Leadership Meaning */}
-              {selectedApplication.leadership_meaning && (
-                <div>
-                  <h4 className="font-semibold mb-3">What Leadership Means</h4>
-                  <p className="text-sm bg-muted p-4 rounded-lg whitespace-pre-wrap">
-                    {selectedApplication.leadership_meaning}
-                  </p>
-                </div>
-              )}
-
-              <div className="text-xs text-muted-foreground pt-4 border-t">
-                Application ID: {selectedApplication.id}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
       </div>
     </AdminLayout>
   );

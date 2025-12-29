@@ -54,7 +54,7 @@ const getMenuItems = (role?: string) => {
     },
     {
       title: "Applications",
-      url: "/admin/dashboard",
+      url: "/admin/applications",
       icon: FileText,
     },
     {

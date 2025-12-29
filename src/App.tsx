@@ -23,6 +23,7 @@ import CheckStatus from "./pages/CheckStatus";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminApplications from "./pages/admin/AdminApplications";
 import AdminManagement from "./pages/admin/AdminManagement";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminBlogManagement from "./pages/admin/AdminBlogManagement";
@@ -72,6 +73,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/applications"
+                element={
+                  <ProtectedRoute>
+                    <AdminApplications />
                   </ProtectedRoute>
                 }
               />
