@@ -69,12 +69,14 @@ import {
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
   if (!adminUser || adminUser.role === "admin") {
-    return { hasRestrictions: false, country: null, province: null };
+    return { hasRestrictions: false, country: null, province: null, role: adminUser?.role || null, canEdit: true };
   }
   return {
     hasRestrictions: !!(adminUser.country || adminUser.province),
     country: adminUser.country || null,
     province: adminUser.province || null,
+    role: adminUser.role,
+    canEdit: adminUser.role === "reviewer", // Only reviewers can edit/approve, viewers can only view
   };
 };
 
@@ -173,8 +175,11 @@ const AdminBlogManagement = () => {
     }
     
     // Apply region filter for non-admin users
-    if (regionInfo.hasRestrictions && regionInfo.province) {
-      query = query.eq("author_province", regionInfo.province);
+    if (regionInfo.hasRestrictions) {
+      if (regionInfo.province) {
+        query = query.eq("author_province", regionInfo.province);
+      }
+      // Note: blog_posts doesn't have a country field, so we filter by province only
     }
 
     const { data, error } = await query;
@@ -679,7 +684,9 @@ const AdminBlogManagement = () => {
                 <Badge variant="outline">{regionInfo.country}</Badge>
               )}
               <span className="text-muted-foreground text-sm ml-2">
-                You can only view and manage stories from this region.
+                {regionInfo.canEdit 
+                  ? "You can view, edit, and approve stories from this region."
+                  : "You can only view stories from this region (read-only access)."}
               </span>
             </AlertDescription>
           </Alert>
@@ -812,15 +819,19 @@ const AdminBlogManagement = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(post)}
-                          title="Edit"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {post.status === "pending" && (
+                        {/* Edit - only for reviewers and admins */}
+                        {regionInfo.canEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(post)}
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {/* Approve/Reject - only for pending posts and reviewers/admins */}
+                        {post.status === "pending" && regionInfo.canEdit && (
                           <>
                             <Button
                               variant="ghost"
@@ -852,18 +863,22 @@ const AdminBlogManagement = () => {
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openArchiveDialog(post)}
-                              className="text-amber-600 hover:text-amber-700"
-                              title="Archive"
-                            >
-                              <Archive className="h-4 w-4" />
-                            </Button>
+                            {/* Archive - only for reviewers/admins */}
+                            {regionInfo.canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openArchiveDialog(post)}
+                                className="text-amber-600 hover:text-amber-700"
+                                title="Archive"
+                              >
+                                <Archive className="h-4 w-4" />
+                              </Button>
+                            )}
                           </>
                         )}
-                        {post.status === "archived" && (
+                        {/* Restore - only for archived posts and reviewers/admins */}
+                        {post.status === "archived" && regionInfo.canEdit && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -874,18 +889,21 @@ const AdminBlogManagement = () => {
                             <ArchiveRestore className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedPost(post);
-                            setDeleteDialogOpen(true);
-                          }}
-                          className="text-destructive hover:text-destructive"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {/* Delete - only for admins */}
+                        {adminUser?.role === "admin" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setSelectedPost(post);
+                              setDeleteDialogOpen(true);
+                            }}
+                            className="text-destructive hover:text-destructive"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
