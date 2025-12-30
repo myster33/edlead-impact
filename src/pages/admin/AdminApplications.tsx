@@ -86,12 +86,13 @@ interface Application {
 
 const getAdminRegionInfo = (adminUser: any) => {
   if (!adminUser || adminUser.role === "admin") {
-    return { hasRestrictions: false, country: null, province: null };
+    return { hasRestrictions: false, country: null, province: null, role: adminUser?.role || null };
   }
   return {
     hasRestrictions: !!(adminUser.country || adminUser.province),
     country: adminUser.country || null,
     province: adminUser.province || null,
+    role: adminUser.role,
   };
 };
 
@@ -137,8 +138,14 @@ export default function AdminApplications() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (regionInfo.hasRestrictions && regionInfo.province) {
-        query = query.eq("province", regionInfo.province);
+      // Apply region restrictions for reviewers/viewers
+      if (regionInfo.hasRestrictions) {
+        if (regionInfo.country) {
+          query = query.eq("country", regionInfo.country);
+        }
+        if (regionInfo.province) {
+          query = query.eq("province", regionInfo.province);
+        }
       }
 
       const { data, error } = await query;
