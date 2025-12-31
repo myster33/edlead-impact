@@ -314,7 +314,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       try {
         const result = await resend.emails.send({
-          from: "EdLead Admin <onboarding@resend.dev>",
+          from: "edLEAD Admin <noreply@edlead.co.za>",
           to: [admin.email],
           subject: `Weekly Audit Log Digest - ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
           html: htmlContent,

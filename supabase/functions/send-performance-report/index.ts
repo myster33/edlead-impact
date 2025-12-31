@@ -233,7 +233,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending ${period} report to admins:`, adminEmails);
 
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "edLEAD <onboarding@resend.dev>",
+      from: "edLEAD <noreply@edlead.co.za>",
       to: adminEmails,
       subject: `edLEAD ${period === "monthly" ? "Monthly" : "Weekly"} Performance Report - ${periodLabel}`,
       html: emailHtml,
