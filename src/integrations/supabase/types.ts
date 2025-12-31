@@ -357,6 +357,7 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          author_country: string | null
           author_email: string
           author_name: string
           author_province: string
@@ -379,6 +380,7 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          author_country?: string | null
           author_email: string
           author_name: string
           author_province: string
@@ -401,6 +403,7 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          author_country?: string | null
           author_email?: string
           author_name?: string
           author_province?: string
