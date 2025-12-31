@@ -96,6 +96,7 @@ interface BlogPost {
   content: string;
   author_name: string;
   author_school: string;
+  author_country: string;
   author_province: string;
   author_email: string;
   status: string;
@@ -152,6 +153,7 @@ const AdminBlogManagement = () => {
     category: "",
     author_name: "",
     author_school: "",
+    author_country: "",
     author_province: "",
     author_email: "",
     video_url: "",
@@ -176,10 +178,12 @@ const AdminBlogManagement = () => {
     
     // Apply region filter for non-admin users
     if (regionInfo.hasRestrictions) {
+      if (regionInfo.country) {
+        query = query.eq("author_country", regionInfo.country);
+      }
       if (regionInfo.province) {
         query = query.eq("author_province", regionInfo.province);
       }
-      // Note: blog_posts doesn't have a country field, so we filter by province only
     }
 
     const { data, error } = await query;
@@ -415,6 +419,7 @@ const AdminBlogManagement = () => {
       category: post.category,
       author_name: post.author_name,
       author_school: post.author_school,
+      author_country: post.author_country || "South Africa",
       author_province: post.author_province,
       author_email: post.author_email,
       video_url: post.video_url || "",
@@ -455,6 +460,7 @@ const AdminBlogManagement = () => {
         category: editForm.category,
         author_name: editForm.author_name,
         author_school: editForm.author_school,
+        author_country: editForm.author_country,
         author_province: editForm.author_province,
         author_email: editForm.author_email,
         video_url: editForm.video_url || null,
@@ -1139,6 +1145,14 @@ const AdminBlogManagement = () => {
                     id="edit-author-school"
                     value={editForm.author_school}
                     onChange={(e) => setEditForm({ ...editForm, author_school: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-author-country">Country</Label>
+                  <Input
+                    id="edit-author-country"
+                    value={editForm.author_country}
+                    onChange={(e) => setEditForm({ ...editForm, author_country: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">

@@ -25,6 +25,17 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, PenLine, X, Image as ImageIcon, Video } from "lucide-react";
 
+const countries = [
+  "South Africa",
+  "Botswana",
+  "Namibia",
+  "Zimbabwe",
+  "Zambia",
+  "Mozambique",
+  "Lesotho",
+  "Eswatini",
+];
+
 const provinces = [
   "Eastern Cape",
   "Free State",
@@ -52,6 +63,7 @@ const storySchema = z.object({
   content: z.string().min(200, "Your story must be at least 200 characters").max(10000, "Your story must be less than 10000 characters"),
   author_name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
   author_school: z.string().min(2, "School name must be at least 2 characters").max(200, "School name must be less than 200 characters"),
+  author_country: z.string().min(1, "Please select your country"),
   author_province: z.string().min(1, "Please select your province"),
   author_email: z.string().email("Please enter a valid email address"),
   category: z.string().min(1, "Please select a category"),
@@ -167,6 +179,7 @@ export const StorySubmissionForm = () => {
         content: data.content,
         author_name: data.author_name,
         author_school: data.author_school,
+        author_country: data.author_country,
         author_province: data.author_province,
         author_email: data.author_email,
         category: data.category,
@@ -330,6 +343,25 @@ export const StorySubmissionForm = () => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="author_country">Country *</Label>
+              <Select onValueChange={(value) => setValue("author_country", value)} defaultValue="South Africa">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.author_country && (
+                <p className="text-sm text-destructive">{errors.author_country.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="author_province">Province *</Label>
               <Select onValueChange={(value) => setValue("author_province", value)}>
                 <SelectTrigger>
@@ -347,6 +379,18 @@ export const StorySubmissionForm = () => {
                 <p className="text-sm text-destructive">{errors.author_province.message}</p>
               )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="author_school">School Name *</Label>
+            <Input
+              id="author_school"
+              placeholder="Enter your school name"
+              {...register("author_school")}
+            />
+            {errors.author_school && (
+              <p className="text-sm text-destructive">{errors.author_school.message}</p>
+            )}
           </div>
 
           {/* Featured Image Upload */}
