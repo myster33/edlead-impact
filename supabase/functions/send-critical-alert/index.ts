@@ -206,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       try {
         const result = await resend.emails.send({
-          from: "EdLead Admin <onboarding@resend.dev>",
+          from: "edLEAD Admin <noreply@edlead.co.za>",
           to: [admin.email],
           subject: `${subjectPrefix} ${config.title} - EdLead Admin`,
           html: htmlContent,

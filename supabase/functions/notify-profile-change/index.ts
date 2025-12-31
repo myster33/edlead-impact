@@ -142,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${change_type} notification to ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "edLEAD Admin <onboarding@resend.dev>",
+      from: "edLEAD Admin <noreply@edlead.co.za>",
       to: [email],
       subject,
       html,

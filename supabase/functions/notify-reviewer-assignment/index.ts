@@ -109,7 +109,7 @@ serve(async (req: Request): Promise<Response> => {
     `;
 
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "edLEAD <onboarding@resend.dev>",
+      from: "edLEAD <noreply@edlead.co.za>",
       to: [reviewer_email],
       subject: `Region Assignment: ${regionText}`,
       html: emailHtml,

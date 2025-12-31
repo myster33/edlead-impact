@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "edLEAD <onboarding@resend.dev>",
+        from: "edLEAD <noreply@edlead.co.za>",
         to: [email],
         subject: "✅ Your edLEAD Admin Access Has Been Approved",
         html: `
