@@ -313,12 +313,19 @@ export const StorySubmissionForm = () => {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit(onSubmit, () => {
+          toast({
+            title: "Please fix the errors",
+            description: "Some required fields are missing or invalid.",
+            variant: "destructive",
+          });
+        })} className="space-y-6 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Story Title *</Label>
+            <Label htmlFor="title" className={errors.title ? "text-destructive" : ""}>Story Title *</Label>
             <Input
               id="title"
               placeholder="Give your story a compelling title"
+              className={errors.title ? "border-destructive focus-visible:ring-destructive" : ""}
               {...register("title")}
             />
             {errors.title && (
@@ -328,9 +335,9 @@ export const StorySubmissionForm = () => {
 
           {/* Category Selection */}
           <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
+            <Label htmlFor="category" className={errors.category ? "text-destructive" : ""}>Category *</Label>
             <Select onValueChange={(value) => setValue("category", value)}>
-              <SelectTrigger>
+              <SelectTrigger className={errors.category ? "border-destructive focus:ring-destructive" : ""}>
                 <SelectValue placeholder="Select a category for your story" />
               </SelectTrigger>
               <SelectContent>
@@ -348,10 +355,11 @@ export const StorySubmissionForm = () => {
 
           {/* Captain Reference Number */}
           <div className="space-y-2">
-            <Label htmlFor="reference_number">Captain Application Reference Number *</Label>
+            <Label htmlFor="reference_number" className={errors.reference_number ? "text-destructive" : ""}>Captain Application Reference Number *</Label>
             <Input
               id="reference_number"
               placeholder="e.g., CAP-2024-001"
+              className={errors.reference_number ? "border-destructive focus-visible:ring-destructive" : ""}
               {...register("reference_number")}
             />
             {errors.reference_number && (
@@ -364,10 +372,11 @@ export const StorySubmissionForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="author_name">Your Full Name *</Label>
+              <Label htmlFor="author_name" className={errors.author_name ? "text-destructive" : ""}>Your Full Name *</Label>
               <Input
                 id="author_name"
                 placeholder="Enter your full name"
+                className={errors.author_name ? "border-destructive focus-visible:ring-destructive" : ""}
                 {...register("author_name")}
               />
               {errors.author_name && (
@@ -376,11 +385,12 @@ export const StorySubmissionForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="author_email">Email Address *</Label>
+              <Label htmlFor="author_email" className={errors.author_email ? "text-destructive" : ""}>Email Address *</Label>
               <Input
                 id="author_email"
                 type="email"
                 placeholder="your.email@example.com"
+                className={errors.author_email ? "border-destructive focus-visible:ring-destructive" : ""}
                 {...register("author_email")}
               />
               {errors.author_email && (
@@ -391,10 +401,11 @@ export const StorySubmissionForm = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="author_school">School Name *</Label>
+              <Label htmlFor="author_school" className={errors.author_school ? "text-destructive" : ""}>School Name *</Label>
               <Input
                 id="author_school"
                 placeholder="Enter your school name"
+                className={errors.author_school ? "border-destructive focus-visible:ring-destructive" : ""}
                 {...register("author_school")}
               />
               {errors.author_school && (
@@ -403,7 +414,7 @@ export const StorySubmissionForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="author_country">Country *</Label>
+              <Label htmlFor="author_country" className={errors.author_country ? "text-destructive" : ""}>Country *</Label>
               <Select 
                 onValueChange={(value) => {
                   setValue("author_country", value);
@@ -412,7 +423,7 @@ export const StorySubmissionForm = () => {
                 }} 
                 defaultValue="South Africa"
               >
-                <SelectTrigger>
+                <SelectTrigger className={errors.author_country ? "border-destructive focus:ring-destructive" : ""}>
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
                 <SelectContent>
@@ -429,9 +440,9 @@ export const StorySubmissionForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="author_province">Province / Region *</Label>
+              <Label htmlFor="author_province" className={errors.author_province ? "text-destructive" : ""}>Province / Region *</Label>
               <Select onValueChange={(value) => setValue("author_province", value)}>
-                <SelectTrigger>
+                <SelectTrigger className={errors.author_province ? "border-destructive focus:ring-destructive" : ""}>
                   <SelectValue placeholder="Select your province / region" />
                 </SelectTrigger>
                 <SelectContent>
@@ -495,7 +506,7 @@ export const StorySubmissionForm = () => {
 
           {/* Video Link (Optional) */}
           <div className="space-y-2">
-            <Label htmlFor="video_url" className="flex items-center gap-2">
+            <Label htmlFor="video_url" className={`flex items-center gap-2 ${errors.video_url ? "text-destructive" : ""}`}>
               <Video className="h-4 w-4" />
               Video Link (Optional)
             </Label>
@@ -503,6 +514,7 @@ export const StorySubmissionForm = () => {
               id="video_url"
               type="url"
               placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+              className={errors.video_url ? "border-destructive focus-visible:ring-destructive" : ""}
               {...register("video_url")}
             />
             {errors.video_url && (
@@ -514,11 +526,12 @@ export const StorySubmissionForm = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="summary">Story Summary *</Label>
+            <Label htmlFor="summary" className={errors.summary ? "text-destructive" : ""}>Story Summary *</Label>
             <Textarea
               id="summary"
               placeholder="Write a brief summary of your story (50-300 characters)"
               rows={3}
+              className={errors.summary ? "border-destructive focus-visible:ring-destructive" : ""}
               {...register("summary")}
             />
             {errors.summary && (
@@ -527,11 +540,12 @@ export const StorySubmissionForm = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">Your Full Story *</Label>
+            <Label htmlFor="content" className={errors.content ? "text-destructive" : ""}>Your Full Story *</Label>
             <Textarea
               id="content"
               placeholder="Share your leadership journey, the challenges you faced, and the impact you've made..."
               rows={10}
+              className={errors.content ? "border-destructive focus-visible:ring-destructive" : ""}
               {...register("content")}
             />
             {errors.content && (
