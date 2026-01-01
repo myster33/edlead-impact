@@ -25,18 +25,64 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, PenLine, X, Image as ImageIcon, Video } from "lucide-react";
 
-const countries = [
+const africanCountries = [
   "South Africa",
+  "Algeria",
+  "Angola",
+  "Benin",
   "Botswana",
-  "Namibia",
-  "Zimbabwe",
-  "Zambia",
-  "Mozambique",
-  "Lesotho",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cameroon",
+  "Central African Republic",
+  "Chad",
+  "Comoros",
+  "Democratic Republic of the Congo",
+  "Republic of the Congo",
+  "Côte d'Ivoire",
+  "Djibouti",
+  "Egypt",
+  "Equatorial Guinea",
+  "Eritrea",
   "Eswatini",
+  "Ethiopia",
+  "Gabon",
+  "Gambia",
+  "Ghana",
+  "Guinea",
+  "Guinea-Bissau",
+  "Kenya",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Madagascar",
+  "Malawi",
+  "Mali",
+  "Mauritania",
+  "Mauritius",
+  "Morocco",
+  "Mozambique",
+  "Namibia",
+  "Niger",
+  "Nigeria",
+  "Rwanda",
+  "São Tomé and Príncipe",
+  "Senegal",
+  "Seychelles",
+  "Sierra Leone",
+  "Somalia",
+  "South Sudan",
+  "Sudan",
+  "Tanzania",
+  "Togo",
+  "Tunisia",
+  "Uganda",
+  "Zambia",
+  "Zimbabwe",
 ];
 
-const provinces = [
+const southAfricanProvinces = [
   "Eastern Cape",
   "Free State",
   "Gauteng",
@@ -46,6 +92,14 @@ const provinces = [
   "Northern Cape",
   "North West",
   "Western Cape",
+];
+
+const genericRegions = [
+  "Eastern",
+  "Western",
+  "Southern",
+  "Central",
+  "Northern",
 ];
 
 export const categories = [
@@ -81,6 +135,8 @@ export const StorySubmissionForm = () => {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [selectedCountry, setSelectedCountry] = useState<string>("South Africa");
+
   const {
     register,
     handleSubmit,
@@ -90,6 +146,10 @@ export const StorySubmissionForm = () => {
   } = useForm<StoryFormData>({
     resolver: zodResolver(storySchema),
   });
+
+  const getRegionsForCountry = (country: string) => {
+    return country === "South Africa" ? southAfricanProvinces : genericRegions;
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -344,12 +404,19 @@ export const StorySubmissionForm = () => {
 
             <div className="space-y-2">
               <Label htmlFor="author_country">Country *</Label>
-              <Select onValueChange={(value) => setValue("author_country", value)} defaultValue="South Africa">
+              <Select 
+                onValueChange={(value) => {
+                  setValue("author_country", value);
+                  setSelectedCountry(value);
+                  setValue("author_province", ""); // Reset province when country changes
+                }} 
+                defaultValue="South Africa"
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
                 <SelectContent>
-                  {countries.map((country) => (
+                  {africanCountries.map((country) => (
                     <SelectItem key={country} value={country}>
                       {country}
                     </SelectItem>
@@ -362,15 +429,15 @@ export const StorySubmissionForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="author_province">Province *</Label>
+              <Label htmlFor="author_province">Province / Region *</Label>
               <Select onValueChange={(value) => setValue("author_province", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your province" />
+                  <SelectValue placeholder="Select your province / region" />
                 </SelectTrigger>
                 <SelectContent>
-                  {provinces.map((province) => (
-                    <SelectItem key={province} value={province}>
-                      {province}
+                  {getRegionsForCountry(selectedCountry).map((region) => (
+                    <SelectItem key={region} value={region}>
+                      {region}
                     </SelectItem>
                   ))}
                 </SelectContent>
