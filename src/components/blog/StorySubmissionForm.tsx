@@ -381,18 +381,6 @@ export const StorySubmissionForm = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="author_school">School Name *</Label>
-            <Input
-              id="author_school"
-              placeholder="Enter your school name"
-              {...register("author_school")}
-            />
-            {errors.author_school && (
-              <p className="text-sm text-destructive">{errors.author_school.message}</p>
-            )}
-          </div>
-
           {/* Featured Image Upload */}
           <div className="space-y-2">
             <Label>Featured Image (Optional)</Label>
