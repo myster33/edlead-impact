@@ -872,7 +872,7 @@ const ApplicationForm = () => {
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("full_name")}>
-                    <Label htmlFor="full_name">Full Name (as per school records) *</Label>
+                    <Label htmlFor="full_name" className={cn(hasError("full_name") && "text-destructive")}>Full Name (as per school records) *</Label>
                     <Input 
                       id="full_name" 
                       placeholder="Enter your full name"
@@ -883,7 +883,7 @@ const ApplicationForm = () => {
                     />
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("date_of_birth")}>
-                    <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                    <Label htmlFor="date_of_birth" className={cn(hasError("date_of_birth") && "text-destructive")}>Date of Birth *</Label>
                     <Input 
                       id="date_of_birth" 
                       type="date" 
@@ -913,7 +913,7 @@ const ApplicationForm = () => {
                     </Select>
                   </div>
                   <FormFieldWrapper error={getFieldError("grade")}>
-                    <Label>Grade (7–12) *</Label>
+                    <Label className={cn(hasError("grade") && "text-destructive")}>Grade (7–12) *</Label>
                     <Select value={formData.grade} onValueChange={(v) => updateField("grade", v)}>
                       <SelectTrigger id="grade" className={cn(hasError("grade") && "border-destructive")}>
                         <SelectValue placeholder="Select grade" />
@@ -930,7 +930,7 @@ const ApplicationForm = () => {
                 </div>
 
                 <FormFieldWrapper error={getFieldError("school_name")}>
-                  <Label htmlFor="school_name">School Name *</Label>
+                  <Label htmlFor="school_name" className={cn(hasError("school_name") && "text-destructive")}>School Name *</Label>
                   <Input 
                     id="school_name" 
                     placeholder="Enter your school name"
@@ -942,7 +942,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("school_address")}>
-                  <Label htmlFor="school_address">School Address *</Label>
+                  <Label htmlFor="school_address" className={cn(hasError("school_address") && "text-destructive")}>School Address *</Label>
                   <Textarea 
                     id="school_address" 
                     placeholder="Enter school address"
@@ -954,7 +954,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("country")}>
-                  <Label>Country *</Label>
+                  <Label className={cn(hasError("country") && "text-destructive")}>Country *</Label>
                   <Select value={formData.country} onValueChange={(v) => {
                     updateField("country", v);
                     if (v !== "South Africa") {
@@ -976,7 +976,7 @@ const ApplicationForm = () => {
 
                 {formData.country && formData.country !== "Other" && countryRegions[formData.country] && (
                   <FormFieldWrapper error={getFieldError("province")}>
-                    <Label>Province/Region *</Label>
+                    <Label className={cn(hasError("province") && "text-destructive")}>Province/Region *</Label>
                     <Select value={formData.province} onValueChange={(v) => updateField("province", v)}>
                       <SelectTrigger id="province" className={cn(hasError("province") && "border-destructive")}>
                         <SelectValue placeholder="Select province/region" />
@@ -994,7 +994,7 @@ const ApplicationForm = () => {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("student_email")}>
-                    <Label htmlFor="student_email">Student Email Address *</Label>
+                    <Label htmlFor="student_email" className={cn(hasError("student_email") && "text-destructive")}>Student Email Address *</Label>
                     <Input 
                       id="student_email" 
                       type="email" 
@@ -1009,7 +1009,7 @@ const ApplicationForm = () => {
                     />
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("student_phone")}>
-                    <Label htmlFor="student_phone">Student Mobile Number *</Label>
+                    <Label htmlFor="student_phone" className={cn(hasError("student_phone") && "text-destructive")}>Student Mobile Number *</Label>
                     <div className="flex">
                       <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
                         {countryCodes[formData.country] || "+"}
@@ -1039,7 +1039,7 @@ const ApplicationForm = () => {
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("parent_name")}>
-                    <Label htmlFor="parent_name">Parent/Guardian Full Name *</Label>
+                    <Label htmlFor="parent_name" className={cn(hasError("parent_name") && "text-destructive")}>Parent/Guardian Full Name *</Label>
                     <Input 
                       id="parent_name" 
                       placeholder="Enter parent/guardian name"
@@ -1050,7 +1050,7 @@ const ApplicationForm = () => {
                     />
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("parent_relationship")}>
-                    <Label htmlFor="parent_relationship">Relationship to Learner *</Label>
+                    <Label htmlFor="parent_relationship" className={cn(hasError("parent_relationship") && "text-destructive")}>Relationship to Learner *</Label>
                     <Input 
                       id="parent_relationship" 
                       placeholder="e.g. Mother, Father, Guardian"
@@ -1064,7 +1064,7 @@ const ApplicationForm = () => {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("parent_email")}>
-                    <Label htmlFor="parent_email">Parent/Guardian Email Address *</Label>
+                    <Label htmlFor="parent_email" className={cn(hasError("parent_email") && "text-destructive")}>Parent/Guardian Email Address *</Label>
                     <Input 
                       id="parent_email" 
                       type="email" 
@@ -1079,7 +1079,7 @@ const ApplicationForm = () => {
                     />
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("parent_phone")}>
-                    <Label htmlFor="parent_phone">Parent/Guardian Mobile Number *</Label>
+                    <Label htmlFor="parent_phone" className={cn(hasError("parent_phone") && "text-destructive")}>Parent/Guardian Mobile Number *</Label>
                     <div className="flex">
                       <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
                         {countryCodes[formData.country] || "+"}
@@ -1098,7 +1098,7 @@ const ApplicationForm = () => {
                 </div>
 
                 <FormFieldWrapper error={getFieldError("parent_consent")}>
-                  <Label>Do you give consent for your child to participate in the edLEAD programme if selected? *</Label>
+                  <Label className={cn(hasError("parent_consent") && "text-destructive")}>Do you give consent for your child to participate in the edLEAD programme if selected? *</Label>
                   <RadioGroup 
                     id="parent_consent"
                     value={formData.parent_consent} 
@@ -1127,7 +1127,7 @@ const ApplicationForm = () => {
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("nominating_teacher")}>
-                    <Label htmlFor="nominating_teacher">Name of Nominating Teacher / School Representative *</Label>
+                    <Label htmlFor="nominating_teacher" className={cn(hasError("nominating_teacher") && "text-destructive")}>Name of Nominating Teacher / School Representative *</Label>
                     <Input 
                       id="nominating_teacher" 
                       placeholder="Enter teacher name"
@@ -1138,7 +1138,7 @@ const ApplicationForm = () => {
                     />
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("teacher_position")}>
-                    <Label htmlFor="teacher_position">Position *</Label>
+                    <Label htmlFor="teacher_position" className={cn(hasError("teacher_position") && "text-destructive")}>Position *</Label>
                     <Input 
                       id="teacher_position" 
                       placeholder="e.g. Teacher, HOD, Principal"
@@ -1152,7 +1152,7 @@ const ApplicationForm = () => {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <FormFieldWrapper error={getFieldError("school_email")}>
-                    <Label htmlFor="school_email">School Email Address *</Label>
+                    <Label htmlFor="school_email" className={cn(hasError("school_email") && "text-destructive")}>School Email Address *</Label>
                     <Input 
                       id="school_email" 
                       type="email" 
@@ -1167,7 +1167,7 @@ const ApplicationForm = () => {
                     />
                   </FormFieldWrapper>
                   <FormFieldWrapper error={getFieldError("school_contact")}>
-                    <Label htmlFor="school_contact">Contact Number *</Label>
+                    <Label htmlFor="school_contact" className={cn(hasError("school_contact") && "text-destructive")}>Contact Number *</Label>
                     <div className="flex">
                       <span className="inline-flex items-center px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
                         {countryCodes[formData.country] || "+"}
@@ -1186,7 +1186,7 @@ const ApplicationForm = () => {
                 </div>
 
                 <FormFieldWrapper error={getFieldError("formally_nominated")}>
-                  <Label>Has this learner been formally nominated by the school? *</Label>
+                  <Label className={cn(hasError("formally_nominated") && "text-destructive")}>Has this learner been formally nominated by the school? *</Label>
                   <RadioGroup 
                     id="formally_nominated"
                     value={formData.formally_nominated} 
@@ -1217,7 +1217,7 @@ const ApplicationForm = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormFieldWrapper error={getFieldError("is_learner_leader")}>
-                  <Label>Are you currently a learner leader? (e.g. Prefect, RCL, Class Monitor, Club Leader) *</Label>
+                  <Label className={cn(hasError("is_learner_leader") && "text-destructive")}>Are you currently a learner leader? (e.g. Prefect, RCL, Class Monitor, Club Leader) *</Label>
                   <RadioGroup 
                     id="is_learner_leader"
                     value={formData.is_learner_leader} 
@@ -1246,7 +1246,7 @@ const ApplicationForm = () => {
                 </div>
 
                 <FormFieldWrapper error={getFieldError("school_activities")}>
-                  <Label htmlFor="school_activities">Have you participated in any school or community activities? *</Label>
+                  <Label htmlFor="school_activities" className={cn(hasError("school_activities") && "text-destructive")}>Have you participated in any school or community activities? *</Label>
                   <Textarea 
                     id="school_activities" 
                     placeholder="Sports, clubs, volunteering, peer support, etc."
@@ -1269,7 +1269,7 @@ const ApplicationForm = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormFieldWrapper error={getFieldError("why_edlead")}>
-                  <Label htmlFor="why_edlead">Why do you want to become an edLEAD Captain? * (200–300 words)</Label>
+                  <Label htmlFor="why_edlead" className={cn(hasError("why_edlead") && "text-destructive")}>Why do you want to become an edLEAD Captain? * (200–300 words)</Label>
                   <Textarea 
                     id="why_edlead" 
                     placeholder="Share your motivation for joining edLEAD..."
@@ -1282,7 +1282,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("leadership_meaning")}>
-                  <Label htmlFor="leadership_meaning">What does leadership mean to you as a learner? * (150–200 words)</Label>
+                  <Label htmlFor="leadership_meaning" className={cn(hasError("leadership_meaning") && "text-destructive")}>What does leadership mean to you as a learner? * (150–200 words)</Label>
                   <Textarea 
                     id="leadership_meaning" 
                     placeholder="Describe what leadership means to you..."
@@ -1295,7 +1295,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("school_challenge")}>
-                  <Label htmlFor="school_challenge">Describe a challenge in your school that you would like to help improve. *</Label>
+                  <Label htmlFor="school_challenge" className={cn(hasError("school_challenge") && "text-destructive")}>Describe a challenge in your school that you would like to help improve. *</Label>
                   <Textarea 
                     id="school_challenge" 
                     placeholder="Identify a challenge and how you would address it..."
@@ -1318,7 +1318,7 @@ const ApplicationForm = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormFieldWrapper error={getFieldError("project_idea")}>
-                  <Label htmlFor="project_idea">If selected, what project would you like to lead at your school? *</Label>
+                  <Label htmlFor="project_idea" className={cn(hasError("project_idea") && "text-destructive")}>If selected, what project would you like to lead at your school? *</Label>
                   <Textarea 
                     id="project_idea" 
                     placeholder="Example: improving discipline, school safety, cleanliness, peer support, peacebuilding, study culture..."
@@ -1331,7 +1331,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("project_problem")}>
-                  <Label htmlFor="project_problem">What problem does this project address? *</Label>
+                  <Label htmlFor="project_problem" className={cn(hasError("project_problem") && "text-destructive")}>What problem does this project address? *</Label>
                   <Textarea 
                     id="project_problem" 
                     placeholder="Describe the problem your project aims to solve..."
@@ -1344,7 +1344,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("project_benefit")}>
-                  <Label htmlFor="project_benefit">How would this project benefit your school community? *</Label>
+                  <Label htmlFor="project_benefit" className={cn(hasError("project_benefit") && "text-destructive")}>How would this project benefit your school community? *</Label>
                   <Textarea 
                     id="project_benefit" 
                     placeholder="Explain the positive impact of your project..."
@@ -1357,7 +1357,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("project_team")}>
-                  <Label htmlFor="project_team">Who would you work with to make this project successful? *</Label>
+                  <Label htmlFor="project_team" className={cn(hasError("project_team") && "text-destructive")}>Who would you work with to make this project successful? *</Label>
                   <Textarea 
                     id="project_team" 
                     placeholder="Learners, teachers, clubs, etc."
@@ -1380,7 +1380,7 @@ const ApplicationForm = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <FormFieldWrapper error={getFieldError("manage_schoolwork")}>
-                  <Label htmlFor="manage_schoolwork">How do you manage your schoolwork and responsibilities? *</Label>
+                  <Label htmlFor="manage_schoolwork" className={cn(hasError("manage_schoolwork") && "text-destructive")}>How do you manage your schoolwork and responsibilities? *</Label>
                   <Textarea 
                     id="manage_schoolwork" 
                     placeholder="Describe how you balance academics with other activities..."
@@ -1393,7 +1393,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("academic_importance")}>
-                  <Label htmlFor="academic_importance">Why is academic excellence important to you as a leader? *</Label>
+                  <Label htmlFor="academic_importance" className={cn(hasError("academic_importance") && "text-destructive")}>Why is academic excellence important to you as a leader? *</Label>
                   <Textarea 
                     id="academic_importance" 
                     placeholder="Explain the connection between academics and leadership..."
@@ -1426,7 +1426,7 @@ const ApplicationForm = () => {
                 </div>
 
                 <FormFieldWrapper error={getFieldError("willing_to_commit")}>
-                  <Label>Are you willing and able to commit to this for three months? *</Label>
+                  <Label className={cn(hasError("willing_to_commit") && "text-destructive")}>Are you willing and able to commit to this for three months? *</Label>
                   <RadioGroup 
                     id="willing_to_commit"
                     value={formData.willing_to_commit} 
@@ -1444,7 +1444,7 @@ const ApplicationForm = () => {
                 </FormFieldWrapper>
 
                 <FormFieldWrapper error={getFieldError("has_device_access")}>
-                  <Label>Do you have access to a smartphone, tablet, or computer for online sessions? *</Label>
+                  <Label className={cn(hasError("has_device_access") && "text-destructive")}>Do you have access to a smartphone, tablet, or computer for online sessions? *</Label>
                   <RadioGroup 
                     id="has_device_access"
                     value={formData.has_device_access} 
