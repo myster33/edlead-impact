@@ -64,7 +64,7 @@ export const HeroSection = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link to="/admissions">
-              <Button size="lg" className="w-full sm:w-auto text-base gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/30">
+              <Button size="lg" className="group w-full sm:w-auto text-base gap-2 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-primary/30">
                 Apply Now
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
