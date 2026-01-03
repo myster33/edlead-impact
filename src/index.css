@@ -93,3 +93,13 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans;
   }
 }
+
+@layer utilities {
+  .text-shadow-hero {
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), 0 4px 40px rgba(0, 0, 0, 0.2);
+  }
+  
+  .text-glow-primary {
+    text-shadow: 0 0 20px hsl(27 95% 50% / 0.4), 0 0 40px hsl(27 95% 50% / 0.2);
+  }
+}
