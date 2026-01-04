@@ -59,9 +59,9 @@ export const ProgrammeSnapshot = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-secondary-foreground/5 backdrop-blur rounded-lg p-6 border border-secondary-foreground/10 hover:bg-secondary-foreground/10 transition-colors"
+                className="bg-secondary-foreground/5 backdrop-blur rounded-lg p-6 border border-secondary-foreground/10 hover:bg-secondary-foreground/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-primary/30"
               >
-                <feature.icon className="h-8 w-8 text-primary mb-4" />
+                <feature.icon className="h-8 w-8 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
                 <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
                 <p className="text-secondary-foreground/70 text-sm">
                   {feature.description}
