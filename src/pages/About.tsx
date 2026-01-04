@@ -1,5 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
-import { Target, Eye, Rocket } from "lucide-react";
+import { Target, Eye, Rocket, ShieldCheck, Award, Heart, TrendingUp } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
 const About = () => {
@@ -81,14 +81,14 @@ const About = () => {
           <h2 className="text-3xl font-bold text-foreground text-center mb-12">Our Values</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { name: "Integrity", description: "Leading with honesty, transparency, and strong moral principles in every action." },
-              { name: "Excellence", description: "Striving for the highest standards in academics, leadership, and personal development." },
-              { name: "Service", description: "Dedicating ourselves to uplifting our schools and communities through meaningful contributions." },
-              { name: "Growth", description: "Embracing continuous learning and development to become better leaders every day." }
+              { name: "Integrity", description: "Leading with honesty, transparency, and strong moral principles in every action.", icon: ShieldCheck },
+              { name: "Excellence", description: "Striving for the highest standards in academics, leadership, and personal development.", icon: Award },
+              { name: "Service", description: "Dedicating ourselves to uplifting our schools and communities through meaningful contributions.", icon: Heart },
+              { name: "Growth", description: "Embracing continuous learning and development to become better leaders every day.", icon: TrendingUp }
             ].map((value, index) => (
               <div key={index} className="bg-background rounded-xl p-6 text-center border border-border">
                 <div className="w-16 h-16 rounded-full bg-accent mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">{value.name[0]}</span>
+                  <value.icon className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">{value.name}</h3>
                 <p className="text-muted-foreground text-sm">{value.description}</p>
