@@ -86,8 +86,8 @@ const About = () => {
               { name: "Service", description: "Dedicating ourselves to uplifting our schools and communities through meaningful contributions.", icon: Heart },
               { name: "Growth", description: "Embracing continuous learning and development to become better leaders every day.", icon: TrendingUp }
             ].map((value, index) => (
-              <div key={index} className="bg-background rounded-xl p-6 text-center border border-border">
-                <div className="w-16 h-16 rounded-full bg-accent mx-auto mb-4 flex items-center justify-center">
+              <div key={index} className="bg-background rounded-xl p-6 text-center border border-border transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-primary/30">
+                <div className="w-16 h-16 rounded-full bg-accent mx-auto mb-4 flex items-center justify-center transition-colors duration-300 group-hover:bg-primary/10">
                   <value.icon className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">{value.name}</h3>
