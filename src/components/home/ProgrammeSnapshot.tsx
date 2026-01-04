@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Calendar, Monitor, Users, Award, FileText, Briefcase, ArrowRight } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const features = [
   {
@@ -36,11 +37,31 @@ const features = [
 ];
 
 export const ProgrammeSnapshot = () => {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
   return (
-    <section className="py-20 bg-secondary text-secondary-foreground">
+    <section ref={sectionRef} className="py-20 bg-secondary text-secondary-foreground">
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
+          <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               Programme Snapshot
             </h2>
@@ -59,7 +80,12 @@ export const ProgrammeSnapshot = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-secondary-foreground/5 backdrop-blur rounded-lg p-6 border border-secondary-foreground/10 hover:bg-secondary-foreground/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-primary/30"
+                className={`bg-secondary-foreground/5 backdrop-blur rounded-lg p-6 border border-secondary-foreground/10 hover:bg-secondary-foreground/10 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:border-primary/30 ${
+                  isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
+                style={{
+                  transitionDelay: isVisible ? `${index * 100}ms` : '0ms',
+                }}
               >
                 <feature.icon className="h-8 w-8 text-primary mb-4 transition-transform duration-300 group-hover:scale-110" />
                 <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
