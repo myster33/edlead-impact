@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Calendar, Monitor, Users, Award, FileText, ArrowRight } from "lucide-react";
+import { Calendar, Monitor, Users, Award, FileText, Briefcase, ArrowRight } from "lucide-react";
 
 const features = [
   {
@@ -27,6 +27,11 @@ const features = [
     icon: Award,
     title: "Recognition & Awards",
     description: "Celebrating outstanding leadership",
+  },
+  {
+    icon: Briefcase,
+    title: "Career Essentials",
+    description: "Support and industry linkage",
   },
 ];
 
