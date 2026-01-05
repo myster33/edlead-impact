@@ -280,7 +280,22 @@ export default function AdminManagement() {
         },
       }).catch(err => console.error("Failed to send approval notification:", err));
 
+      // Log admin user creation
+      await logAction({
+        action: "admin_user_added",
+        table_name: "admin_users",
+        record_id: response.data.admin?.id,
+        new_values: { 
+          email: approvingPendingUser.email, 
+          role: approveRole,
+          country: approveCountry || null,
+          province: approveProvince || null,
+        },
+      });
+
       // Update local state
+      const approvedEmail = approvingPendingUser.email;
+      const approvedRole = approveRole;
       setAdminUsers([response.data.admin, ...adminUsers]);
       setPendingUsers(pendingUsers.filter(u => u.id !== approvingPendingUser.id));
       setApprovingPendingUser(null);
@@ -290,7 +305,7 @@ export default function AdminManagement() {
 
       toast({
         title: "User Approved",
-        description: `${approvingPendingUser.email} has been approved as a ${approveRole}. An approval email has been sent.`,
+        description: `${approvedEmail} has been approved as a ${approvedRole}. An approval email has been sent.`,
       });
     } catch (error: any) {
       console.error("Error approving user:", error);
@@ -395,6 +410,20 @@ export default function AdminManagement() {
 
         if (response.data?.success) {
           successCount++;
+          
+          // Log admin user creation
+          logAction({
+            action: "admin_user_added",
+            table_name: "admin_users",
+            record_id: response.data.admin?.id,
+            new_values: { 
+              email: user.email, 
+              role: bulkApproveRole,
+              country: bulkApproveCountry || null,
+              province: bulkApproveProvince || null,
+            },
+          });
+          
           // Send approval notification email
           supabase.functions.invoke("notify-admin-approval", {
             body: {
@@ -525,6 +554,19 @@ export default function AdminManagement() {
       setAdminUsers([response.data.admin, ...adminUsers]);
       setIsAddDialogOpen(false);
       
+      // Log admin user creation
+      await logAction({
+        action: "admin_user_added",
+        table_name: "admin_users",
+        record_id: response.data.admin?.id,
+        new_values: { 
+          email: newUserEmail.toLowerCase().trim(), 
+          role: newUserRole,
+          country: newUserCountry || null,
+          province: newUserProvince || null,
+        },
+      });
+      
       // Send approval notification email
       supabase.functions.invoke("notify-admin-approval", {
         body: {
@@ -535,6 +577,8 @@ export default function AdminManagement() {
         },
       }).catch(err => console.error("Failed to send approval notification:", err));
       
+      const addedEmail = newUserEmail;
+      const addedRole = newUserRole;
       setNewUserEmail("");
       setNewUserRole("viewer");
       setNewUserCountry("");
@@ -542,7 +586,7 @@ export default function AdminManagement() {
 
       toast({
         title: "Admin Added",
-        description: `${newUserEmail} has been added as a ${newUserRole}. An approval email has been sent.`,
+        description: `${addedEmail} has been added as a ${addedRole}. An approval email has been sent.`,
       });
     } catch (error: any) {
       console.error("Error adding admin:", error);
