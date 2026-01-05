@@ -502,6 +502,14 @@ const AdminBlogManagement = () => {
         variant: "destructive",
       });
     } else {
+      // Log the deletion
+      await logAction({
+        action: "blog_deleted",
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        old_values: { title: selectedPost.title, author_name: selectedPost.author_name },
+      });
+
       toast({
         title: "Post Deleted",
         description: "The blog post has been deleted.",
