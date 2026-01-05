@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, parseISO, startOfDay, endOfDay } from "date-fns";
 import { 
   ArrowLeft, 
   Check, 
@@ -63,7 +63,11 @@ import {
   XCircle,
   Clock,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  Filter,
+  Search,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 
 // Check if admin user has region restrictions
@@ -127,6 +131,15 @@ const AdminBlogManagement = () => {
   const [saving, setSaving] = useState(false);
   const { logAction } = useAuditLog();
   
+  // Additional filters
+  const [referenceFilter, setReferenceFilter] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [provinceFilter, setProvinceFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  
   // Region info for filtering
   const regionInfo = getAdminRegionInfo(adminUser);
   
@@ -176,6 +189,33 @@ const AdminBlogManagement = () => {
       query = query.eq("status", statusFilter);
     }
     
+    // Apply additional filters
+    if (referenceFilter.trim()) {
+      query = query.ilike("reference_number", `%${referenceFilter.trim()}%`);
+    }
+    
+    if (nameFilter.trim()) {
+      query = query.ilike("author_name", `%${nameFilter.trim()}%`);
+    }
+    
+    if (categoryFilter !== "all") {
+      query = query.eq("category", categoryFilter);
+    }
+    
+    if (countryFilter !== "all" && !regionInfo.hasRestrictions) {
+      query = query.eq("author_country", countryFilter);
+    }
+    
+    if (provinceFilter !== "all" && !regionInfo.hasRestrictions) {
+      query = query.eq("author_province", provinceFilter);
+    }
+    
+    if (dateFilter) {
+      const filterDate = parseISO(dateFilter);
+      query = query.gte("submitted_at", startOfDay(filterDate).toISOString())
+                   .lte("submitted_at", endOfDay(filterDate).toISOString());
+    }
+    
     // Apply region filter for non-admin users
     if (regionInfo.hasRestrictions) {
       if (regionInfo.country) {
@@ -214,7 +254,23 @@ const AdminBlogManagement = () => {
     if (isAdmin) {
       fetchPosts();
     }
-  }, [isAdmin, statusFilter, adminUser]);
+  }, [isAdmin, statusFilter, referenceFilter, nameFilter, dateFilter, categoryFilter, countryFilter, provinceFilter, adminUser]);
+
+  // Get unique countries and provinces for filter dropdowns
+  const uniqueCountries = [...new Set(posts.map(p => p.author_country).filter(Boolean))];
+  const uniqueProvinces = [...new Set(posts.map(p => p.author_province).filter(Boolean))];
+
+  const clearAllFilters = () => {
+    setReferenceFilter("");
+    setNameFilter("");
+    setDateFilter("");
+    setCategoryFilter("all");
+    setCountryFilter("all");
+    setProvinceFilter("all");
+    setStatusFilter("all");
+  };
+
+  const hasActiveFilters = referenceFilter || nameFilter || dateFilter || categoryFilter !== "all" || countryFilter !== "all" || provinceFilter !== "all" || statusFilter !== "all";
 
   const openApproveDialog = (post: BlogPost) => {
     setSelectedPost(post);
@@ -737,7 +793,7 @@ const AdminBlogManagement = () => {
           </Card>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
           <div>
             <h1 className="text-3xl font-bold">Blog Management</h1>
             <p className="text-muted-foreground">
@@ -756,20 +812,199 @@ const AdminBlogManagement = () => {
               </span>
             </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Posts</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="archived">Archived ({activityStats.archived})</SelectItem>
-            </SelectContent>
-          </Select>
+            <Button 
+              variant={showFilters ? "secondary" : "outline"} 
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  !
+                </Badge>
+              )}
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
           </div>
         </div>
+
+        {/* Collapsible Filters Section */}
+        {showFilters && (
+          <Card className="mb-6">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  Filter Stories
+                </CardTitle>
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                    Clear All
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {/* Reference Number */}
+                <div className="space-y-2">
+                  <Label htmlFor="referenceFilter" className="text-sm font-medium">Reference No.</Label>
+                  <Input
+                    id="referenceFilter"
+                    placeholder="Search by reference..."
+                    value={referenceFilter}
+                    onChange={(e) => setReferenceFilter(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* Author Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="nameFilter" className="text-sm font-medium">Author Name</Label>
+                  <Input
+                    id="nameFilter"
+                    placeholder="Search by name..."
+                    value={nameFilter}
+                    onChange={(e) => setNameFilter(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* Date */}
+                <div className="space-y-2">
+                  <Label htmlFor="dateFilter" className="text-sm font-medium">Submitted Date</Label>
+                  <div className="relative">
+                    <Input
+                      id="dateFilter"
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value)}
+                      className="h-9"
+                    />
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Category</Label>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {blogCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Country - only for non-restricted users */}
+                {!regionInfo.hasRestrictions && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Country</Label>
+                    <Select value={countryFilter} onValueChange={setCountryFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="All Countries" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Countries</SelectItem>
+                        <SelectItem value="South Africa">South Africa</SelectItem>
+                        <SelectItem value="Zambia">Zambia</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Province/Region - only for non-restricted users */}
+                {!regionInfo.hasRestrictions && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Province/Region</Label>
+                    <Select value={provinceFilter} onValueChange={setProvinceFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="All Provinces" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Provinces</SelectItem>
+                        {uniqueProvinces.map((prov) => (
+                          <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Status */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Posts</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="archived">Archived ({activityStats.archived})</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Active Filters Display */}
+              {hasActiveFilters && (
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+                  <span className="text-sm text-muted-foreground">Active filters:</span>
+                  {referenceFilter && (
+                    <Badge variant="secondary" className="gap-1">
+                      Ref: {referenceFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setReferenceFilter("")} />
+                    </Badge>
+                  )}
+                  {nameFilter && (
+                    <Badge variant="secondary" className="gap-1">
+                      Name: {nameFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setNameFilter("")} />
+                    </Badge>
+                  )}
+                  {dateFilter && (
+                    <Badge variant="secondary" className="gap-1">
+                      Date: {dateFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setDateFilter("")} />
+                    </Badge>
+                  )}
+                  {categoryFilter !== "all" && (
+                    <Badge variant="secondary" className="gap-1">
+                      Category: {categoryFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setCategoryFilter("all")} />
+                    </Badge>
+                  )}
+                  {countryFilter !== "all" && (
+                    <Badge variant="secondary" className="gap-1">
+                      Country: {countryFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setCountryFilter("all")} />
+                    </Badge>
+                  )}
+                  {provinceFilter !== "all" && (
+                    <Badge variant="secondary" className="gap-1">
+                      Province: {provinceFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setProvinceFilter("all")} />
+                    </Badge>
+                  )}
+                  {statusFilter !== "all" && (
+                    <Badge variant="secondary" className="gap-1">
+                      Status: {statusFilter}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter("all")} />
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
