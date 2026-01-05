@@ -263,6 +263,21 @@ export default function AdminApplications() {
         }).catch(err => console.error("Failed to send rejection notification:", err));
       }
 
+      // Log the action
+      const action = newStatus === "approved" ? "application_approved" : 
+                     newStatus === "rejected" ? "application_rejected" : "application_approved";
+      logAction({
+        action: action as any,
+        table_name: "applications",
+        record_id: id,
+        old_values: { status: application.status },
+        new_values: { 
+          status: newStatus, 
+          full_name: application.full_name,
+          reference_number: application.reference_number 
+        },
+      });
+
       toast({
         title: "Status Updated",
         description: `Application status changed to ${newStatus}.`,
