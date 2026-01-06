@@ -905,14 +905,69 @@ const AdminBlogManagement = () => {
                 {!regionInfo.hasRestrictions && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Country</Label>
-                    <Select value={countryFilter} onValueChange={setCountryFilter}>
+                    <Select value={countryFilter} onValueChange={(value) => {
+                      setCountryFilter(value);
+                      setProvinceFilter("all"); // Reset province when country changes
+                    }}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="All Countries" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Countries</SelectItem>
+                        <SelectItem value="Algeria">Algeria</SelectItem>
+                        <SelectItem value="Angola">Angola</SelectItem>
+                        <SelectItem value="Benin">Benin</SelectItem>
+                        <SelectItem value="Botswana">Botswana</SelectItem>
+                        <SelectItem value="Burkina Faso">Burkina Faso</SelectItem>
+                        <SelectItem value="Burundi">Burundi</SelectItem>
+                        <SelectItem value="Cabo Verde">Cabo Verde</SelectItem>
+                        <SelectItem value="Cameroon">Cameroon</SelectItem>
+                        <SelectItem value="Central African Republic">Central African Republic</SelectItem>
+                        <SelectItem value="Chad">Chad</SelectItem>
+                        <SelectItem value="Comoros">Comoros</SelectItem>
+                        <SelectItem value="Democratic Republic of the Congo">Democratic Republic of the Congo</SelectItem>
+                        <SelectItem value="Republic of the Congo">Republic of the Congo</SelectItem>
+                        <SelectItem value="Côte d'Ivoire">Côte d'Ivoire</SelectItem>
+                        <SelectItem value="Djibouti">Djibouti</SelectItem>
+                        <SelectItem value="Egypt">Egypt</SelectItem>
+                        <SelectItem value="Equatorial Guinea">Equatorial Guinea</SelectItem>
+                        <SelectItem value="Eritrea">Eritrea</SelectItem>
+                        <SelectItem value="Eswatini">Eswatini</SelectItem>
+                        <SelectItem value="Ethiopia">Ethiopia</SelectItem>
+                        <SelectItem value="Gabon">Gabon</SelectItem>
+                        <SelectItem value="Gambia">Gambia</SelectItem>
+                        <SelectItem value="Ghana">Ghana</SelectItem>
+                        <SelectItem value="Guinea">Guinea</SelectItem>
+                        <SelectItem value="Guinea-Bissau">Guinea-Bissau</SelectItem>
+                        <SelectItem value="Kenya">Kenya</SelectItem>
+                        <SelectItem value="Lesotho">Lesotho</SelectItem>
+                        <SelectItem value="Liberia">Liberia</SelectItem>
+                        <SelectItem value="Libya">Libya</SelectItem>
+                        <SelectItem value="Madagascar">Madagascar</SelectItem>
+                        <SelectItem value="Malawi">Malawi</SelectItem>
+                        <SelectItem value="Mali">Mali</SelectItem>
+                        <SelectItem value="Mauritania">Mauritania</SelectItem>
+                        <SelectItem value="Mauritius">Mauritius</SelectItem>
+                        <SelectItem value="Morocco">Morocco</SelectItem>
+                        <SelectItem value="Mozambique">Mozambique</SelectItem>
+                        <SelectItem value="Namibia">Namibia</SelectItem>
+                        <SelectItem value="Niger">Niger</SelectItem>
+                        <SelectItem value="Nigeria">Nigeria</SelectItem>
+                        <SelectItem value="Rwanda">Rwanda</SelectItem>
+                        <SelectItem value="São Tomé and Príncipe">São Tomé and Príncipe</SelectItem>
+                        <SelectItem value="Senegal">Senegal</SelectItem>
+                        <SelectItem value="Seychelles">Seychelles</SelectItem>
+                        <SelectItem value="Sierra Leone">Sierra Leone</SelectItem>
+                        <SelectItem value="Somalia">Somalia</SelectItem>
                         <SelectItem value="South Africa">South Africa</SelectItem>
+                        <SelectItem value="South Sudan">South Sudan</SelectItem>
+                        <SelectItem value="Sudan">Sudan</SelectItem>
+                        <SelectItem value="Tanzania">Tanzania</SelectItem>
+                        <SelectItem value="Togo">Togo</SelectItem>
+                        <SelectItem value="Tunisia">Tunisia</SelectItem>
+                        <SelectItem value="Uganda">Uganda</SelectItem>
                         <SelectItem value="Zambia">Zambia</SelectItem>
+                        <SelectItem value="Zimbabwe">Zimbabwe</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -924,13 +979,35 @@ const AdminBlogManagement = () => {
                     <Label className="text-sm font-medium">Province/Region</Label>
                     <Select value={provinceFilter} onValueChange={setProvinceFilter}>
                       <SelectTrigger className="h-9">
-                        <SelectValue placeholder="All Provinces" />
+                        <SelectValue placeholder="All Provinces/Regions" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Provinces</SelectItem>
-                        {uniqueProvinces.map((prov) => (
-                          <SelectItem key={prov} value={prov}>{prov}</SelectItem>
-                        ))}
+                        <SelectItem value="all">All Provinces/Regions</SelectItem>
+                        {countryFilter === "South Africa" ? (
+                          <>
+                            <SelectItem value="Eastern Cape">Eastern Cape</SelectItem>
+                            <SelectItem value="Free State">Free State</SelectItem>
+                            <SelectItem value="Gauteng">Gauteng</SelectItem>
+                            <SelectItem value="KwaZulu-Natal">KwaZulu-Natal</SelectItem>
+                            <SelectItem value="Limpopo">Limpopo</SelectItem>
+                            <SelectItem value="Mpumalanga">Mpumalanga</SelectItem>
+                            <SelectItem value="North West">North West</SelectItem>
+                            <SelectItem value="Northern Cape">Northern Cape</SelectItem>
+                            <SelectItem value="Western Cape">Western Cape</SelectItem>
+                          </>
+                        ) : countryFilter !== "all" ? (
+                          <>
+                            <SelectItem value="Eastern">Eastern</SelectItem>
+                            <SelectItem value="Western">Western</SelectItem>
+                            <SelectItem value="Northern">Northern</SelectItem>
+                            <SelectItem value="Southern">Southern</SelectItem>
+                            <SelectItem value="Central">Central</SelectItem>
+                          </>
+                        ) : (
+                          uniqueProvinces.map((prov) => (
+                            <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
