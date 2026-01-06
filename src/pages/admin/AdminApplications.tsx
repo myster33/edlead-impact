@@ -245,27 +245,25 @@ export default function AdminApplications() {
 
       const referenceNumber = application.reference_number || application.id.slice(0, 8).toUpperCase();
       
-      if (newStatus === "approved") {
-        supabase.functions.invoke("notify-applicant-approved", {
-          body: {
-            applicantEmail: application.student_email,
-            applicantName: application.full_name,
-            referenceNumber,
-          },
-        }).catch(err => console.error("Failed to send approval notification:", err));
-      } else if (newStatus === "rejected") {
-        supabase.functions.invoke("notify-applicant-rejected", {
-          body: {
-            applicantEmail: application.student_email,
-            applicantName: application.full_name,
-            referenceNumber,
-          },
-        }).catch(err => console.error("Failed to send rejection notification:", err));
-      }
+      // Send status change notification email
+      supabase.functions.invoke("notify-applicant-status-change", {
+        body: {
+          applicantEmail: application.student_email,
+          applicantName: application.full_name,
+          referenceNumber,
+          newStatus,
+          oldStatus: application.status,
+        },
+      }).catch(err => console.error("Failed to send status change notification:", err));
 
       // Log the action
-      const action = newStatus === "approved" ? "application_approved" : 
-                     newStatus === "rejected" ? "application_rejected" : "application_approved";
+      const actionMap: Record<string, string> = {
+        approved: "application_approved",
+        rejected: "application_rejected",
+        pending: "application_pending",
+        cancelled: "application_cancelled",
+      };
+      const action = actionMap[newStatus] || "application_status_changed";
       logAction({
         action: action as any,
         table_name: "applications",
@@ -344,23 +342,15 @@ export default function AdminApplications() {
       for (const app of selectedApps) {
         const referenceNumber = app.reference_number || app.id.slice(0, 8).toUpperCase();
         
-        if (newStatus === "approved") {
-          supabase.functions.invoke("notify-applicant-approved", {
-            body: {
-              applicantEmail: app.student_email,
-              applicantName: app.full_name,
-              referenceNumber,
-            },
-          }).catch(err => console.error("Failed to send approval notification:", err));
-        } else if (newStatus === "rejected") {
-          supabase.functions.invoke("notify-applicant-rejected", {
-            body: {
-              applicantEmail: app.student_email,
-              applicantName: app.full_name,
-              referenceNumber,
-            },
-          }).catch(err => console.error("Failed to send rejection notification:", err));
-        }
+        supabase.functions.invoke("notify-applicant-status-change", {
+          body: {
+            applicantEmail: app.student_email,
+            applicantName: app.full_name,
+            referenceNumber,
+            newStatus,
+            oldStatus: app.status,
+          },
+        }).catch(err => console.error("Failed to send status change notification:", err));
       }
 
       for (const app of selectedApps) {
@@ -401,6 +391,8 @@ export default function AdminApplications() {
         return <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">Approved</Badge>;
       case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
+      case "cancelled":
+        return <Badge variant="outline" className="bg-muted">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">Pending</Badge>;
     }
@@ -607,6 +599,7 @@ export default function AdminApplications() {
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="approved">Approved</SelectItem>
                     <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
                 {!regionInfo.hasRestrictions && (
@@ -815,27 +808,53 @@ export default function AdminApplications() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              {app.status === "pending" && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                    onClick={() => updateApplicationStatus(app.id, "approved")}
-                                    disabled={isUpdating}
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => updateApplicationStatus(app.id, "rejected")}
-                                    disabled={isUpdating}
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                </>
+                              {app.status !== "approved" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => updateApplicationStatus(app.id, "approved")}
+                                  disabled={isUpdating}
+                                  title="Approve"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {app.status !== "rejected" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => updateApplicationStatus(app.id, "rejected")}
+                                  disabled={isUpdating}
+                                  title="Reject"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {app.status !== "pending" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                                  onClick={() => updateApplicationStatus(app.id, "pending")}
+                                  disabled={isUpdating}
+                                  title="Set Pending"
+                                >
+                                  <RefreshCw className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {app.status !== "cancelled" && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground hover:text-muted-foreground hover:bg-muted"
+                                  onClick={() => updateApplicationStatus(app.id, "cancelled")}
+                                  disabled={isUpdating}
+                                  title="Cancel"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
                               )}
                             </div>
                           </TableCell>
@@ -959,32 +978,53 @@ export default function AdminApplications() {
                     <span className="text-sm text-muted-foreground mr-2">Status:</span>
                     {getStatusBadge(selectedApplication.status)}
                   </div>
-                  {selectedApplication.status === "pending" && (
-                    <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                    {selectedApplication.status !== "approved" && (
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700"
-                        onClick={() => {
-                          updateApplicationStatus(selectedApplication.id, "approved");
-                        }}
+                        onClick={() => updateApplicationStatus(selectedApplication.id, "approved")}
                         disabled={isUpdating}
                       >
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
                         Approve
                       </Button>
+                    )}
+                    {selectedApplication.status !== "rejected" && (
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => {
-                          updateApplicationStatus(selectedApplication.id, "rejected");
-                        }}
+                        onClick={() => updateApplicationStatus(selectedApplication.id, "rejected")}
                         disabled={isUpdating}
                       >
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
                         Reject
                       </Button>
-                    </div>
-                  )}
+                    )}
+                    {selectedApplication.status !== "pending" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                        onClick={() => updateApplicationStatus(selectedApplication.id, "pending")}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                        Set Pending
+                      </Button>
+                    )}
+                    {selectedApplication.status !== "cancelled" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateApplicationStatus(selectedApplication.id, "cancelled")}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
