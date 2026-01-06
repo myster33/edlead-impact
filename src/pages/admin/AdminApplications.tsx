@@ -33,6 +33,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -114,6 +124,12 @@ export default function AdminApplications() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    id: string;
+    newStatus: string;
+    currentStatus: string;
+    applicantName: string;
+  } | null>(null);
 
   const regionInfo = getAdminRegionInfo(adminUser);
 
@@ -203,6 +219,39 @@ export default function AdminApplications() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    const application = applications.find(app => app.id === id);
+    if (!application) {
+      toast({
+        title: "Error",
+        description: "Application not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // If changing FROM approved to another status, show confirmation dialog
+    if (application.status === "approved" && newStatus !== "approved") {
+      setPendingStatusChange({
+        id,
+        newStatus,
+        currentStatus: application.status,
+        applicantName: application.full_name,
+      });
+      return;
+    }
+
+    // Otherwise, proceed directly
+    updateApplicationStatus(id, newStatus);
+  };
+
+  const confirmStatusChange = () => {
+    if (pendingStatusChange) {
+      updateApplicationStatus(pendingStatusChange.id, pendingStatusChange.newStatus);
+      setPendingStatusChange(null);
+    }
+  };
 
   const updateApplicationStatus = async (id: string, newStatus: string) => {
     if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
@@ -813,7 +862,7 @@ export default function AdminApplications() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={() => updateApplicationStatus(app.id, "approved")}
+                                  onClick={() => handleStatusChange(app.id, "approved")}
                                   disabled={isUpdating}
                                   title="Approve"
                                 >
@@ -825,7 +874,7 @@ export default function AdminApplications() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => updateApplicationStatus(app.id, "rejected")}
+                                  onClick={() => handleStatusChange(app.id, "rejected")}
                                   disabled={isUpdating}
                                   title="Reject"
                                 >
@@ -837,7 +886,7 @@ export default function AdminApplications() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                                  onClick={() => updateApplicationStatus(app.id, "pending")}
+                                  onClick={() => handleStatusChange(app.id, "pending")}
                                   disabled={isUpdating}
                                   title="Set Pending"
                                 >
@@ -849,7 +898,7 @@ export default function AdminApplications() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-muted-foreground hover:text-muted-foreground hover:bg-muted"
-                                  onClick={() => updateApplicationStatus(app.id, "cancelled")}
+                                  onClick={() => handleStatusChange(app.id, "cancelled")}
                                   disabled={isUpdating}
                                   title="Cancel"
                                 >
@@ -983,7 +1032,7 @@ export default function AdminApplications() {
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700"
-                        onClick={() => updateApplicationStatus(selectedApplication.id, "approved")}
+                        onClick={() => handleStatusChange(selectedApplication.id, "approved")}
                         disabled={isUpdating}
                       >
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
@@ -994,7 +1043,7 @@ export default function AdminApplications() {
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => updateApplicationStatus(selectedApplication.id, "rejected")}
+                        onClick={() => handleStatusChange(selectedApplication.id, "rejected")}
                         disabled={isUpdating}
                       >
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
@@ -1006,7 +1055,7 @@ export default function AdminApplications() {
                         size="sm"
                         variant="outline"
                         className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
-                        onClick={() => updateApplicationStatus(selectedApplication.id, "pending")}
+                        onClick={() => handleStatusChange(selectedApplication.id, "pending")}
                         disabled={isUpdating}
                       >
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
@@ -1017,7 +1066,7 @@ export default function AdminApplications() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => updateApplicationStatus(selectedApplication.id, "cancelled")}
+                        onClick={() => handleStatusChange(selectedApplication.id, "cancelled")}
                         disabled={isUpdating}
                       >
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
@@ -1030,6 +1079,26 @@ export default function AdminApplications() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Confirmation Dialog for changing approved status */}
+        <AlertDialog open={!!pendingStatusChange} onOpenChange={() => setPendingStatusChange(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+              <AlertDialogDescription>
+                You are about to change the status of <strong>{pendingStatusChange?.applicantName}</strong>'s 
+                application from <strong>approved</strong> to <strong>{pendingStatusChange?.newStatus}</strong>. 
+                This action will notify the applicant via email. Are you sure you want to proceed?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmStatusChange}>
+                Confirm Change
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );
