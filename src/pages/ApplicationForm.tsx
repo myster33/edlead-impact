@@ -25,10 +25,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { FormFieldWrapper } from "@/components/form/FormFieldWrapper";
-import { Send, CheckCircle, Circle, Save, Trash2, Search, Loader2 } from "lucide-react";
+import { Send, CheckCircle, Circle, Save, Trash2, Search, Loader2, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -265,6 +274,7 @@ const ApplicationForm = () => {
     declaration1: false,
     declaration2: false,
     parentConsentFinal: false,
+    popiaConsent: false,
   });
 
   const { validateFields, markTouched, getFieldError, hasError, clearError, validateSingleField } = useFormValidation();
@@ -394,6 +404,7 @@ const ApplicationForm = () => {
       declaration1: false,
       declaration2: false,
       parentConsentFinal: false,
+      popiaConsent: false,
     });
     setIsSubmitted(false);
     setApplicationRef("");
@@ -507,7 +518,7 @@ const ApplicationForm = () => {
       {
         name: "Declarations",
         id: "section-9",
-        complete: !!(declarations.declaration1 && declarations.declaration2 && declarations.parentConsentFinal),
+        complete: !!(declarations.declaration1 && declarations.declaration2 && declarations.parentConsentFinal && declarations.popiaConsent),
       },
     ];
   }, [formData, declarations]);
@@ -560,6 +571,7 @@ const ApplicationForm = () => {
       declaration1: declarations.declaration1,
       declaration2: declarations.declaration2,
       parentConsentFinal: declarations.parentConsentFinal,
+      popiaConsent: declarations.popiaConsent,
     };
 
     const allRequiredFields = [
@@ -567,6 +579,7 @@ const ApplicationForm = () => {
       { field: "declaration1", label: "Declaration 1", type: "checkbox" as const },
       { field: "declaration2", label: "Declaration 2", type: "checkbox" as const },
       { field: "parentConsentFinal", label: "Parent Consent", type: "checkbox" as const },
+      { field: "popiaConsent", label: "POPIA Consent", type: "checkbox" as const },
     ];
 
     const { isValid, firstErrorField } = validateFields(allFieldsData, allRequiredFields);
@@ -1495,6 +1508,194 @@ const ApplicationForm = () => {
                   <Label htmlFor="declaration2" className="font-normal leading-relaxed">
                     I understand that selection into edLEAD is competitive and based on leadership potential, commitment, and school nomination. *
                   </Label>
+                </div>
+
+                {/* POPIA Consent */}
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="font-semibold text-foreground mb-4">POPIA Consent & Data Protection</h3>
+                  <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      In compliance with the Protection of Personal Information Act (POPIA), we require your consent 
+                      to collect, store, and use your personal information for programme purposes.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      This includes your name, contact details, photos, stories, and other submitted information 
+                      which may be used for programme administration, communication, and promotional materials.
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <Checkbox 
+                      id="popiaConsent" 
+                      checked={declarations.popiaConsent}
+                      onCheckedChange={(checked) => 
+                        setDeclarations((prev) => ({ ...prev, popiaConsent: checked as boolean }))
+                      }
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="popiaConsent" className="font-normal leading-relaxed">
+                        I have read and accept the{" "}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <button type="button" className="text-primary hover:underline font-medium inline-flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+                              Terms & Conditions
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-3xl max-h-[80vh]">
+                            <DialogHeader>
+                              <DialogTitle>edLEAD Terms & Conditions</DialogTitle>
+                              <DialogDescription>
+                                Please read the following terms carefully before accepting.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <ScrollArea className="h-[60vh] pr-4">
+                              <div className="space-y-6 text-sm">
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">1. Introduction & POPIA Compliance</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    edLEAD for Student Leaders is committed to protecting your personal information in accordance 
+                                    with the Protection of Personal Information Act (POPIA) of South Africa. By submitting this 
+                                    application, you consent to the collection, processing, and storage of your personal data 
+                                    as described herein.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">2. Information We Collect</h4>
+                                  <p className="text-muted-foreground leading-relaxed mb-2">
+                                    Through this application, we collect:
+                                  </p>
+                                  <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
+                                    <li>Personal details (name, date of birth, gender, contact information)</li>
+                                    <li>Educational information (school, grade, academic activities)</li>
+                                    <li>Parent/guardian contact details</li>
+                                    <li>Photos and videos (if submitted)</li>
+                                    <li>Leadership stories and project ideas</li>
+                                    <li>Email addresses for communication purposes</li>
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">3. Purpose of Data Collection</h4>
+                                  <p className="text-muted-foreground leading-relaxed mb-2">
+                                    Your information will be used for:
+                                  </p>
+                                  <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
+                                    <li>Processing and evaluating your application</li>
+                                    <li>Programme administration and communication</li>
+                                    <li>Mentorship matching and coordination</li>
+                                    <li>Creating promotional and educational materials featuring participant stories</li>
+                                    <li>Impact reporting and programme improvement</li>
+                                    <li>Connecting with partner organisations for programme delivery</li>
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">4. Use of Photos, Stories & Media</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    By accepting these terms, you grant edLEAD permission to use submitted photos, videos, 
+                                    and stories for promotional purposes including but not limited to: website content, 
+                                    social media posts, newsletters, press releases, and marketing materials. All media 
+                                    usage will be in the context of celebrating youth leadership and programme impact.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">5. Email Communications</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    Your email address will be used to send programme updates, event invitations, 
+                                    newsletters, and important notifications. You may opt out of non-essential 
+                                    communications at any time by contacting us at info@edlead.co.za.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">6. Data Protection & Security</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    We implement appropriate technical and organisational measures to protect your 
+                                    personal information against unauthorised access, alteration, or disclosure. 
+                                    Your data is stored securely and access is limited to authorised personnel only.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">7. Your Rights Under POPIA</h4>
+                                  <p className="text-muted-foreground leading-relaxed mb-2">
+                                    You have the right to:
+                                  </p>
+                                  <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
+                                    <li>Access your personal information held by us</li>
+                                    <li>Request correction of inaccurate information</li>
+                                    <li>Request deletion of your data (subject to legal requirements)</li>
+                                    <li>Object to processing of your information</li>
+                                    <li>Withdraw consent at any time</li>
+                                    <li>Lodge a complaint with the Information Regulator</li>
+                                  </ul>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">8. Data Retention</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    Your personal information will be retained for the duration of your participation 
+                                    in the edLEAD programme and for a reasonable period thereafter for alumni engagement 
+                                    and programme impact tracking, unless you request deletion.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">9. Third-Party Sharing</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    We may share your information with trusted partner organisations solely for 
+                                    programme delivery purposes. We do not sell or trade your personal information. 
+                                    Any third parties are bound by confidentiality agreements and POPIA requirements.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">10. Minor's Data Protection</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    For applicants under 18 years of age, parent/guardian consent is required. 
+                                    Parents/guardians may exercise rights on behalf of their children and may 
+                                    request access to, correction of, or deletion of their child's data at any time.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">11. Programme Conduct</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    Participants are expected to uphold edLEAD's core values of Integrity, Excellence, 
+                                    Service, and Growth. Behaviour that contradicts these values may result in removal 
+                                    from the programme.
+                                  </p>
+                                </div>
+
+                                <div>
+                                  <h4 className="font-semibold text-foreground mb-2">12. Contact Information</h4>
+                                  <p className="text-muted-foreground leading-relaxed">
+                                    For questions about these terms or to exercise your data rights, contact:
+                                  </p>
+                                  <div className="bg-muted p-3 rounded-lg mt-2">
+                                    <p className="font-medium text-foreground">edLEAD for Student Leaders</p>
+                                    <p className="text-muted-foreground">Email: info@edlead.co.za</p>
+                                  </div>
+                                </div>
+
+                                <div className="border-t pt-4">
+                                  <p className="text-xs text-muted-foreground">
+                                    Last Updated: January 2025
+                                  </p>
+                                </div>
+                              </div>
+                            </ScrollArea>
+                          </DialogContent>
+                        </Dialog>
+                        {" "}and consent to edLEAD collecting, storing, and using my personal information 
+                        (including photos, stories, and email address) for programme and promotional purposes 
+                        in accordance with POPIA. *
+                      </Label>
+                    </div>
+                  </div>
                 </div>
 
               </CardContent>

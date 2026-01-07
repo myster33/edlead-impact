@@ -14,7 +14,8 @@ const Terms = () => {
             <span className="animate-pulse">|</span>
           </h1>
           <p className="text-xl text-secondary-foreground/80 max-w-2xl">
-            Guidelines for participating in the edLEAD programme and using our services.
+            Guidelines for participating in the edLEAD programme and using our services, 
+            including POPIA compliance information.
           </p>
         </div>
       </section>
@@ -87,8 +88,109 @@ const Terms = () => {
               </p>
             </div>
 
+            {/* POPIA Section */}
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 space-y-4">
+              <h2 className="text-2xl font-bold text-foreground">5. POPIA Compliance & Data Protection</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                In accordance with the Protection of Personal Information Act (POPIA) of South Africa, 
+                edLEAD is committed to protecting your personal information and ensuring transparent 
+                data practices.
+              </p>
+              
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.1 Information We Collect</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Through applications, event registrations, and programme participation, we collect:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                  <li>Personal details (name, date of birth, gender, contact information)</li>
+                  <li>Educational information (school name, grade, academic activities)</li>
+                  <li>Parent/guardian contact details and consent</li>
+                  <li>Photos, videos, and leadership stories</li>
+                  <li>Email addresses for communication purposes</li>
+                  <li>Project ideas and leadership experiences</li>
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.2 Purpose of Data Processing</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your personal information is used for:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                  <li>Processing and evaluating programme applications</li>
+                  <li>Programme administration, coordination, and communication</li>
+                  <li>Mentorship matching and support</li>
+                  <li>Creating promotional and educational materials</li>
+                  <li>Impact measurement and programme improvement</li>
+                  <li>Alumni engagement and networking</li>
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.3 Consent for Photos, Stories & Media</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  By participating in edLEAD and accepting these terms, you grant permission for 
+                  photos, videos, and stories to be used for promotional purposes including:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                  <li>Website content and social media posts</li>
+                  <li>Newsletters, reports, and press releases</li>
+                  <li>Marketing materials and presentations</li>
+                  <li>Partner communications and funding proposals</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-2">
+                  All media usage will celebrate youth leadership and programme impact. You may 
+                  opt out of non-essential media use by contacting us in writing.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.4 Email Communications</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Your email address will be used for programme updates, event invitations, 
+                  newsletters, and important notifications. You may opt out of non-essential 
+                  communications at any time by contacting info@edlead.co.za.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.5 Your Rights Under POPIA</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  You have the right to:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground ml-4">
+                  <li>Access personal information we hold about you</li>
+                  <li>Request correction of inaccurate information</li>
+                  <li>Request deletion of your data (subject to legal requirements)</li>
+                  <li>Object to processing of your information</li>
+                  <li>Withdraw consent at any time</li>
+                  <li>Lodge a complaint with the Information Regulator of South Africa</li>
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.6 Data Retention</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Personal information is retained for the duration of programme participation 
+                  and a reasonable period thereafter for alumni engagement and impact tracking, 
+                  unless you request earlier deletion.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-foreground">5.7 Minor's Data Protection</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  For participants under 18 years, parent/guardian consent is mandatory. 
+                  Parents/guardians may exercise data rights on behalf of their children 
+                  and may request access, correction, or deletion of their child's data 
+                  at any time.
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-foreground">5. Intellectual Property</h2>
+              <h2 className="text-2xl font-bold text-foreground">6. Intellectual Property</h2>
               <p className="text-muted-foreground leading-relaxed">
                 All content on the edLEAD website and programme materials, including but not limited 
                 to text, graphics, logos, images, and educational resources, is the property of 
@@ -101,7 +203,7 @@ const Terms = () => {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-foreground">6. Website Use</h2>
+              <h2 className="text-2xl font-bold text-foreground">7. Website Use</h2>
               <p className="text-muted-foreground leading-relaxed">
                 When using the edLEAD website, you agree not to:
               </p>
@@ -112,16 +214,6 @@ const Terms = () => {
                 <li>Interfere with the proper functioning of the website</li>
                 <li>Collect or harvest personal information of other users</li>
               </ul>
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-foreground">7. Media and Photography</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                By participating in edLEAD events and activities, you grant permission for photographs 
-                and videos to be taken and used for promotional, educational, and reporting purposes, 
-                unless you explicitly opt out in writing. For participants under 18, this permission 
-                is granted by the parent or guardian.
-              </p>
             </div>
 
             <div className="space-y-4">
@@ -169,11 +261,15 @@ const Terms = () => {
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-foreground">12. Contact Information</h2>
               <p className="text-muted-foreground leading-relaxed">
-                For questions about these Terms of Use, please contact:
+                For questions about these Terms of Use, to exercise your POPIA rights, or to 
+                lodge any concerns, please contact:
               </p>
               <div className="bg-muted p-6 rounded-lg mt-4">
                 <p className="text-foreground font-semibold">edLEAD for Student Leaders</p>
                 <p className="text-muted-foreground">Email: info@edlead.co.za</p>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Information Officer for POPIA enquiries
+                </p>
               </div>
             </div>
           </div>
