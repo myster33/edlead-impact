@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
@@ -5,7 +6,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -209,38 +209,36 @@ interface PopiaConsentCheckboxProps {
 }
 
 export const PopiaConsentCheckbox = ({ checked, onCheckedChange, variant = "application" }: PopiaConsentCheckboxProps) => {
+  const [showTerms, setShowTerms] = useState(false);
+  
   return (
-    <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/30">
-      <div className="bg-muted/50 p-4 rounded-lg mb-4">
-        <p className="text-sm text-muted-foreground mb-3">
-          In compliance with the Protection of Personal Information Act (POPIA), we require your consent 
-          to collect, store, and use your personal information for programme purposes.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          This includes your name, contact details, photos, stories, and other submitted information 
-          which may be used for programme administration, communication, and promotional materials.
-        </p>
-      </div>
-      
-      <div className="flex items-start gap-3">
-        <Checkbox
-          id="popiaConsent"
-          checked={checked}
-          onCheckedChange={(value) => onCheckedChange(value === true)}
-          className="mt-1"
-        />
-        <div className="space-y-1">
-          <Label htmlFor="popiaConsent" className="text-sm font-medium cursor-pointer">
-            I accept the Terms & Conditions *
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            By checking this box, I consent to edLEAD collecting, storing, and processing my personal information 
-            including my name, email, {variant === "application" ? "photos, stories, and project ideas" : "story content, and any photos/videos I submit"}, 
-            in accordance with the Protection of Personal Information Act (POPIA).
-          </p>
+    <>
+      <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/30">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="popiaConsent"
+            checked={checked}
+            onCheckedChange={(value) => onCheckedChange(value === true)}
+            className="mt-1"
+          />
+          <div className="space-y-1">
+            <Label htmlFor="popiaConsent" className="text-sm font-medium cursor-pointer leading-relaxed">
+              I have read and accept the{" "}
+              <button 
+                type="button" 
+                onClick={() => setShowTerms(true)}
+                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+              >
+                <FileText className="h-3 w-3" />
+                Terms & Conditions
+              </button>
+              {" "}and consent to edLEAD collecting, storing, and using my information (for example photos, videos, and stories) for programme purposes in accordance with the Protection of Personal Information Act (POPIA). *
+            </Label>
+          </div>
         </div>
       </div>
-    </div>
+      <PopiaTermsDialog open={showTerms} onOpenChange={setShowTerms} variant={variant} />
+    </>
   );
 };
 
@@ -269,9 +267,7 @@ export const PopiaConsentInline = ({ checked, onCheckedChange, onViewTerms }: Po
             <FileText className="h-3 w-3" />
             Terms & Conditions
           </button>
-          {" "}and consent to edLEAD collecting, storing, and using my personal information 
-          (including photos, stories, and email address) for programme and promotional purposes 
-          in accordance with POPIA. *
+          {" "}and consent to edLEAD collecting, storing, and using my information (for example photos, videos, and stories) for programme purposes in accordance with the Protection of Personal Information Act (POPIA). *
         </Label>
       </div>
     </div>
