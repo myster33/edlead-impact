@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SITE_URL = "https://edlead.co.za";
+const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -41,6 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .header img { max-width: 280px; height: auto; margin-bottom: 15px; }
               .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
               .highlight { background: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0; }
               .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
@@ -49,6 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
+                <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" />
                 <h1>🎉 Congratulations, ${applicantName}!</h1>
               </div>
               <div class="content">

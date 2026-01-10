@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SITE_URL = "https://edlead.co.za";
+const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,40 +41,44 @@ const handler = async (req: Request): Promise<Response> => {
         subject: `Update on Your Story Submission: "${data.title}"`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Hello ${data.author_name},</h1>
+            <div style="background: #1e3a5f; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+              <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+            </div>
             
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              Thank you for submitting your story <strong>"${data.title}"</strong> to the edLEAD blog. We truly appreciate you taking the time to share your leadership journey with us.
-            </p>
-            
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              After careful review, we've decided that the submission needs some adjustments before it can be published. Please see the feedback from our team below:
-            </p>
-            
-            <div style="background-color: #f5f5f5; border-left: 4px solid #2563eb; border-radius: 4px; padding: 16px 20px; margin: 20px 0;">
-              <p style="color: #1a1a1a; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
-                "${data.feedback}"
+            <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+              <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Hello ${data.author_name},</h1>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Thank you for submitting your story <strong>"${data.title}"</strong> to the edLEAD blog. We truly appreciate you taking the time to share your leadership journey with us.
+              </p>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                After careful review, we've decided that the submission needs some adjustments before it can be published. Please see the feedback from our team below:
+              </p>
+              
+              <div style="background-color: #f5f5f5; border-left: 4px solid #2563eb; border-radius: 4px; padding: 16px 20px; margin: 20px 0;">
+                <p style="color: #1a1a1a; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
+                  "${data.feedback}"
+                </p>
+              </div>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                We encourage you to revise your story based on this feedback and resubmit it. Your voice and experiences are valuable, and we'd love to feature your story once it's ready.
+              </p>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                If you have any questions or need clarification on the feedback, please don't hesitate to reach out to us.
+              </p>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+                Keep leading,<br>
+                <strong>The edLEAD Team</strong>
               </p>
             </div>
             
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              We encourage you to revise your story based on this feedback and resubmit it. Your voice and experiences are valuable, and we'd love to feature your story once it's ready.
-            </p>
-            
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              If you have any questions or need clarification on the feedback, please don't hesitate to reach out to us.
-            </p>
-            
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6; margin-top: 30px;">
-              Keep leading,<br>
-              <strong>The edLEAD Team</strong>
-            </p>
-            
-            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-            
-            <p style="color: #999; font-size: 12px; text-align: center;">
-              This email was sent because you submitted a story to the edLEAD blog.
-            </p>
+            <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+              <p>This email was sent because you submitted a story to the edLEAD blog.</p>
+            </div>
           </div>
         `,
       }),

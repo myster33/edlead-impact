@@ -3,20 +3,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = "edLEAD <info@edlead.co.za>";
+const SITE_URL = "https://edlead.co.za";
+const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Validation helpers
+// validation helpers - isValidEmail, isValidPhone, isValidDate, isValidUrl, sanitizeString, sanitizeName, validGrades
 const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
   return emailRegex.test(email);
 };
 
 const isValidPhone = (phone: string): boolean => {
-  const phoneRegex = /^[0-9\s\-\+\(\)]+$/;
+  const phoneRegex = /^[0-9\\s\\-\\+\\(\\\)]+$/;
   return phoneRegex.test(phone) && phone.length >= 7 && phone.length <= 25;
 };
 
@@ -390,6 +392,7 @@ const handler = async (req: Request): Promise<Response> => {
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
+          .header img { max-width: 280px; height: auto; }
           .content { padding: 30px; background: #f9f9f9; }
           .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
           h1 { margin: 0; }
@@ -399,11 +402,11 @@ const handler = async (req: Request): Promise<Response> => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>edLEAD for Student Leaders</h1>
+            <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" />
           </div>
           <div class="content">
             <h2>Dear ${applicationData.full_name},</h2>
-            <p>Thank you for applying to the edLEAD for Student Leaders programme!</p>
+            <p>Thank you for applying to the edLEAD Leadership Programme!</p>
             
             <div class="highlight">
               <strong>Application Reference:</strong> ${referenceNumber}<br>
@@ -425,7 +428,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div class="footer">
             <p>This is an automated message. Please do not reply directly to this email.</p>
-            <p>© ${new Date().getFullYear()} edLEAD for Student Leaders. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} edLEAD. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -453,6 +456,7 @@ const handler = async (req: Request): Promise<Response> => {
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
+          .header img { max-width: 280px; height: auto; }
           .content { padding: 30px; background: #f9f9f9; }
           .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
           h1 { margin: 0; }
@@ -462,11 +466,11 @@ const handler = async (req: Request): Promise<Response> => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>edLEAD for Student Leaders</h1>
+            <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" />
           </div>
           <div class="content">
             <h2>Dear ${applicationData.parent_name},</h2>
-            <p>We are writing to confirm that we have received an application for the edLEAD for Student Leaders programme from your child, <strong>${applicationData.full_name}</strong>.</p>
+            <p>We are writing to confirm that we have received an application for the edLEAD Leadership Programme from your child, <strong>${applicationData.full_name}</strong>.</p>
             
             <div class="highlight">
               <strong>Application Reference:</strong> ${referenceNumber}<br>
@@ -484,7 +488,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div class="footer">
             <p>This is an automated message. Please do not reply directly to this email.</p>
-            <p>© ${new Date().getFullYear()} edLEAD for Student Leaders. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} edLEAD. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -512,6 +516,7 @@ const handler = async (req: Request): Promise<Response> => {
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
+          .header img { max-width: 280px; height: auto; }
           .content { padding: 30px; background: #f9f9f9; }
           .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
           h1 { margin: 0; }
@@ -524,7 +529,8 @@ const handler = async (req: Request): Promise<Response> => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>New Application Received</h1>
+            <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" />
+            <h1 style="margin-top: 15px;">New Application Received</h1>
           </div>
           <div class="content">
             <div class="highlight">
@@ -548,7 +554,7 @@ const handler = async (req: Request): Promise<Response> => {
             </p>
           </div>
           <div class="footer">
-            <p>© ${new Date().getFullYear()} edLEAD for Student Leaders. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} edLEAD. All rights reserved.</p>
           </div>
         </div>
       </body>
