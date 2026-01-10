@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SITE_URL = "https://edlead.co.za";
+const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,41 +53,45 @@ const handler = async (req: Request): Promise<Response> => {
         subject: `🎉 Your Story Has Been Published: "${data.title}"`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Congratulations, ${data.author_name}! 🎉</h1>
-            
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              Great news! Your story <strong>"${data.title}"</strong> has been reviewed and approved by our team.
-            </p>
-            
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              Your leadership journey is now live on the edLEAD blog, inspiring other young leaders across South Africa!
-            </p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${blogUrl}" 
-                 style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                View Your Published Story
-              </a>
+            <div style="background: #1e3a5f; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+              <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
             </div>
             
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              Feel free to share your story with friends, family, and on social media. Your voice matters, and your experience can make a real difference!
-            </p>
+            <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+              <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">Congratulations, ${data.author_name}! 🎉</h1>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Great news! Your story <strong>"${data.title}"</strong> has been reviewed and approved by our team.
+              </p>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Your leadership journey is now live on the edLEAD blog, inspiring other young leaders across South Africa!
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${blogUrl}" 
+                   style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                  View Your Published Story
+                </a>
+              </div>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Feel free to share your story with friends, family, and on social media. Your voice matters, and your experience can make a real difference!
+              </p>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
+                Thank you for being part of the edLEAD community and for sharing your inspiring journey with us.
+              </p>
+              
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6; margin-top: 30px;">
+                Keep leading,<br>
+                <strong>The edLEAD Team</strong>
+              </p>
+            </div>
             
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">
-              Thank you for being part of the edLEAD community and for sharing your inspiring journey with us.
-            </p>
-            
-            <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6; margin-top: 30px;">
-              Keep leading,<br>
-              <strong>The edLEAD Team</strong>
-            </p>
-            
-            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-            
-            <p style="color: #999; font-size: 12px; text-align: center;">
-              This email was sent because you submitted a story to the edLEAD blog.
-            </p>
+            <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+              <p>This email was sent because you submitted a story to the edLEAD blog.</p>
+            </div>
           </div>
         `,
       }),

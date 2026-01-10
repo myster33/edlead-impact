@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SITE_URL = "https://edlead.co.za";
+const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "edLEAD <onboarding@resend.dev>",
+        from: "edLEAD <noreply@edlead.co.za>",
         to: [submission.author_email],
         subject: `Story Received: "${submission.title}"`,
         html: `
@@ -49,6 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
+              .header img { max-width: 280px; height: auto; }
               .content { padding: 30px; background: #f9f9f9; }
               .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
               h1 { margin: 0; font-size: 24px; }
@@ -58,7 +61,8 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>edLEAD Captain Stories</h1>
+                <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" />
+                <h1 style="margin-top: 15px;">Captain Stories</h1>
               </div>
               <div class="content">
                 <h2>Dear ${submission.author_name},</h2>
@@ -87,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div class="footer">
                 <p>This is an automated message. Please do not reply directly to this email.</p>
-                <p>© ${new Date().getFullYear()} edLEAD for Student Leaders. All rights reserved.</p>
+                <p>© ${new Date().getFullYear()} edLEAD. All rights reserved.</p>
               </div>
             </div>
           </body>
