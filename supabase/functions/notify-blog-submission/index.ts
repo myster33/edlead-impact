@@ -65,18 +65,40 @@ const handler = async (req: Request): Promise<Response> => {
         to: adminEmails,
         subject: `New Blog Post Submitted: "${submission.title}"`,
         html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="color-scheme" content="light dark">
+            <meta name="supported-color-schemes" content="light dark">
+            <style>
+              :root { color-scheme: light dark; }
+              @media (prefers-color-scheme: dark) {
+                body { background-color: #1a1a2e !important; }
+                .email-content { background-color: #1f2937 !important; }
+                .email-content p { color: #e5e7eb !important; }
+                .details-box { background-color: #374151 !important; }
+                .details-box h2 { color: #f3f4f6 !important; }
+                .details-box td { color: #e5e7eb !important; }
+                .details-box strong { color: #9ca3af !important; }
+                .footer-text { color: #9ca3af !important; }
+              }
+            </style>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: #1e3a5f; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
               <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
               <h1 style="color: white; margin: 15px 0 0; font-size: 24px;">📝 New Blog Post Submitted</h1>
             </div>
             
-            <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+            <div class="email-content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
               <p style="color: #4a4a4a; font-size: 16px; line-height: 1.5;">
                 A new story has been submitted for review on the edLEAD blog.
               </p>
               
-              <div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+              <div class="details-box" style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
                 <h2 style="color: #1a1a1a; font-size: 18px; margin-top: 0;">${submission.title}</h2>
                 
                 <table style="width: 100%; border-collapse: collapse;">
@@ -96,10 +118,12 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #4a4a4a; font-size: 14px;">Please log in to the admin panel to review and approve this submission.</p>
             </div>
             
-            <p style="color: #999; font-size: 12px; text-align: center; margin-top: 20px;">
+            <p class="footer-text" style="color: #999; font-size: 12px; text-align: center; margin-top: 20px;">
               This is an automated notification from the edLEAD platform.
             </p>
           </div>
+          </body>
+          </html>
         `,
       }),
     });

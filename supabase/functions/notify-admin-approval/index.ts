@@ -41,7 +41,12 @@ const handler = async (req: Request): Promise<Response> => {
           <!DOCTYPE html>
           <html>
           <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="color-scheme" content="light dark">
+            <meta name="supported-color-schemes" content="light dark">
             <style>
+              :root { color-scheme: light dark; }
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
               .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
@@ -50,6 +55,15 @@ const handler = async (req: Request): Promise<Response> => {
               .highlight { background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; }
               .button { display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
               .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
+              @media (prefers-color-scheme: dark) {
+                body { background-color: #1a1a2e !important; }
+                .content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+                .content p { color: #e5e7eb !important; }
+                .highlight { background-color: #1e3a8a !important; }
+                .highlight p { color: #bfdbfe !important; }
+                .footer { color: #9ca3af !important; }
+                .footer p { color: #9ca3af !important; }
+              }
             </style>
           </head>
           <body>

@@ -388,7 +388,12 @@ const handler = async (req: Request): Promise<Response> => {
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
+        <meta name="supported-color-schemes" content="light dark">
         <style>
+          :root { color-scheme: light dark; }
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
@@ -397,6 +402,15 @@ const handler = async (req: Request): Promise<Response> => {
           .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
           h1 { margin: 0; }
           .highlight { background: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          @media (prefers-color-scheme: dark) {
+            body { background-color: #1a1a2e !important; }
+            .content { background-color: #1f2937 !important; }
+            .content h2, .content p, .content li { color: #e5e7eb !important; }
+            .highlight { background-color: #1e3a5f !important; }
+            .highlight strong { color: #93c5fd !important; }
+            .footer { color: #9ca3af !important; }
+            .footer p { color: #9ca3af !important; }
+          }
         </style>
       </head>
       <body>
@@ -452,7 +466,12 @@ const handler = async (req: Request): Promise<Response> => {
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
+        <meta name="supported-color-schemes" content="light dark">
         <style>
+          :root { color-scheme: light dark; }
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
@@ -461,6 +480,15 @@ const handler = async (req: Request): Promise<Response> => {
           .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
           h1 { margin: 0; }
           .highlight { background: #e8f4f8; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          @media (prefers-color-scheme: dark) {
+            body { background-color: #1a1a2e !important; }
+            .content { background-color: #1f2937 !important; }
+            .content h2, .content p { color: #e5e7eb !important; }
+            .highlight { background-color: #1e3a5f !important; }
+            .highlight strong { color: #93c5fd !important; }
+            .footer { color: #9ca3af !important; }
+            .footer p { color: #9ca3af !important; }
+          }
         </style>
       </head>
       <body>
@@ -512,7 +540,12 @@ const handler = async (req: Request): Promise<Response> => {
       <!DOCTYPE html>
       <html>
       <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
+        <meta name="supported-color-schemes" content="light dark">
         <style>
+          :root { color-scheme: light dark; }
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
           .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
@@ -524,6 +557,16 @@ const handler = async (req: Request): Promise<Response> => {
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
           td { padding: 8px; border-bottom: 1px solid #ddd; }
           td:first-child { font-weight: bold; width: 40%; }
+          @media (prefers-color-scheme: dark) {
+            body { background-color: #1a1a2e !important; }
+            .content { background-color: #1f2937 !important; }
+            .content p { color: #e5e7eb !important; }
+            .highlight { background-color: #1e3a5f !important; }
+            .highlight strong { color: #93c5fd !important; }
+            table td { color: #e5e7eb !important; border-color: #4b5563 !important; }
+            .footer { color: #9ca3af !important; }
+            .footer p { color: #9ca3af !important; }
+          }
         </style>
       </head>
       <body>
