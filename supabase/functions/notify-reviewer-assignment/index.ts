@@ -65,23 +65,38 @@ serve(async (req: Request): Promise<Response> => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="light dark">
+          <meta name="supported-color-schemes" content="light dark">
+          <style>
+            :root { color-scheme: light dark; }
+            @media (prefers-color-scheme: dark) {
+              body { background-color: #1a1a2e !important; }
+              .email-content { background-color: #1f2937 !important; border-color: #374151 !important; }
+              .email-content p { color: #e5e7eb !important; }
+              .region-box { background-color: #374151 !important; border-color: #60a5fa !important; }
+              .region-box p { color: #60a5fa !important; }
+              .pending-box { background-color: #78350f !important; }
+              .pending-box p { color: #fef3c7 !important; }
+              .footer-text p { color: #9ca3af !important; }
+            }
+          </style>
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
           <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
             <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
             <h2 style="margin: 0; font-size: 20px;">Region Assignment</h2>
           </div>
           
-          <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
+          <div class="email-content" style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
             <p style="font-size: 16px; margin-bottom: 20px;">Hello ${displayName},</p>
             
             <p style="margin-bottom: 20px;">You have been assigned as a <strong>${roleText}</strong> for the following region:</p>
             
-            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
+            <div class="region-box" style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
               <p style="margin: 0; font-size: 18px; font-weight: 600; color: #1e40af;">${regionText}</p>
             </div>
             
-            <div style="background: #fef3c7; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div class="pending-box" style="background: #fef3c7; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px;">
               <p style="margin: 0; color: #92400e;">
                 <strong>📋 Pending Applications:</strong> ${pendingCount || 0} application${(pendingCount || 0) !== 1 ? "s" : ""} awaiting review
               </p>
@@ -100,7 +115,7 @@ serve(async (req: Request): Promise<Response> => {
             </div>
           </div>
           
-          <div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
+          <div class="footer-text" style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
             <p style="margin: 0;">This is an automated message from edLEAD Admin Portal.</p>
             <p style="margin: 5px 0 0;">Please do not reply to this email.</p>
           </div>
