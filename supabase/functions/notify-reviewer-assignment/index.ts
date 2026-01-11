@@ -68,8 +68,8 @@ serve(async (req: Request): Promise<Response> => {
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-            <h1 style="margin: 0; font-size: 24px;">Region Assignment</h1>
-            <p style="margin: 10px 0 0; opacity: 0.9;">edLEAD Admin Portal</p>
+            <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+            <h2 style="margin: 0; font-size: 20px;">Region Assignment</h2>
           </div>
           
           <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
