@@ -23,8 +23,9 @@ const getEmailContent = (name: string, changeType: string) => {
         subject: "Your edLEAD Admin Password Has Been Changed",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">Password Changed</h1>
+            <div style="background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+              <h2 style="color: white; margin: 0; font-size: 20px;">Password Changed</h2>
             </div>
             <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
               <p style="font-size: 16px; color: #334155; margin-bottom: 20px;">Hello ${displayName},</p>
@@ -48,8 +49,9 @@ const getEmailContent = (name: string, changeType: string) => {
         subject: "Your edLEAD Admin Profile Has Been Updated",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">Profile Updated</h1>
+            <div style="background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+              <h2 style="color: white; margin: 0; font-size: 20px;">Profile Updated</h2>
             </div>
             <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
               <p style="font-size: 16px; color: #334155; margin-bottom: 20px;">Hello ${displayName},</p>
@@ -68,8 +70,9 @@ const getEmailContent = (name: string, changeType: string) => {
         subject: "Two-Factor Authentication Enabled on Your edLEAD Account",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #065f46 0%, #059669 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">🔐 2FA Enabled</h1>
+            <div style="background: linear-gradient(135deg, #065f46 0%, #059669 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+              <h2 style="color: white; margin: 0; font-size: 20px;">🔐 2FA Enabled</h2>
             </div>
             <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
               <p style="font-size: 16px; color: #334155; margin-bottom: 20px;">Hello ${displayName},</p>
@@ -93,8 +96,9 @@ const getEmailContent = (name: string, changeType: string) => {
         subject: "Two-Factor Authentication Disabled on Your edLEAD Account",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">⚠️ 2FA Disabled</h1>
+            <div style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+              <h2 style="color: white; margin: 0; font-size: 20px;">⚠️ 2FA Disabled</h2>
             </div>
             <div style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
               <p style="font-size: 16px; color: #334155; margin-bottom: 20px;">Hello ${displayName},</p>

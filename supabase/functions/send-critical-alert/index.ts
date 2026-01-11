@@ -71,10 +71,11 @@ const generateAlertHtml = (
         
         <!-- Header -->
         <div style="background: ${severityColor}; padding: 20px; text-align: center;">
+          <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 180px; height: auto; margin-bottom: 15px;" />
           <div style="background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 12px; border-radius: 4px; margin-bottom: 10px;">
             <span style="color: white; font-size: 12px; font-weight: bold; letter-spacing: 1px;">⚠️ ${severityLabel}</span>
           </div>
-          <h1 style="color: white; margin: 0; font-size: 22px;">${config.title}</h1>
+          <h2 style="color: white; margin: 0; font-size: 20px;">${config.title}</h2>
         </div>
 
         <!-- Alert Details -->
@@ -143,7 +144,7 @@ const generateAlertHtml = (
         <!-- Footer -->
         <div style="padding: 15px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-            This is an automated security alert from EdLead Admin System.
+            This is an automated security alert from edLEAD Admin System.
           </p>
         </div>
 

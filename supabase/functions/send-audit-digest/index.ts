@@ -131,7 +131,8 @@ const generateDigestHtml = (
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #2563eb, #1e40af); padding: 30px; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 24px;">Weekly Audit Log Digest</h1>
+          <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+          <h2 style="color: white; margin: 0; font-size: 20px;">Weekly Audit Log Digest</h2>
           <p style="color: rgba(255,255,255,0.8); margin: 10px 0 0 0; font-size: 14px;">
             ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
@@ -221,7 +222,7 @@ const generateDigestHtml = (
         <!-- Footer -->
         <div style="padding: 20px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="margin: 0; font-size: 12px; color: #64748b;">
-            This is an automated weekly digest from EdLead Admin System.
+            This is an automated weekly digest from edLEAD Admin System.
           </p>
           <p style="margin: 10px 0 0 0; font-size: 12px; color: #94a3b8;">
             To view full audit logs, log in to the admin dashboard.
