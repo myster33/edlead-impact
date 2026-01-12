@@ -30,6 +30,7 @@ import AdminBlogManagement from "./pages/admin/AdminBlogManagement";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminResetPassword from "./pages/admin/AdminResetPassword";
+import AdminEmailTemplates from "./pages/admin/AdminEmailTemplates";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminAuditLog />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/email-templates"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminEmailTemplates />
                   </ProtectedRoute>
                 }
               />
