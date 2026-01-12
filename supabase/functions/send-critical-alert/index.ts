@@ -65,9 +65,29 @@ const generateAlertHtml = (
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
+      <style>
+        @media (prefers-color-scheme: dark) {
+          body { background-color: #1a1a2e !important; }
+          .email-container { background-color: #1f2937 !important; }
+          .email-content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+          .alert-box { background-color: #374151 !important; }
+          .alert-text { color: #e5e7eb !important; }
+          .section-label { color: #9ca3af !important; }
+          .table-cell { border-bottom-color: #374151 !important; }
+          .table-label { color: #9ca3af !important; }
+          .table-value { color: #e5e7eb !important; }
+          .info-box { background-color: #374151 !important; }
+          .info-text { color: #9ca3af !important; }
+          .info-subtext { color: #6b7280 !important; }
+          .footer-section { background-color: #111827 !important; border-top-color: #374151 !important; }
+          .footer-text { color: #6b7280 !important; }
+        }
+      </style>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
-      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         
         <!-- Header -->
         <div style="background: ${severityColor}; padding: 20px; text-align: center;">
@@ -79,37 +99,37 @@ const generateAlertHtml = (
         </div>
 
         <!-- Alert Details -->
-        <div style="padding: 30px;">
-          <div style="background: ${severityBg}; border-left: 4px solid ${severityColor}; padding: 15px; margin-bottom: 20px; border-radius: 0 4px 4px 0;">
-            <p style="margin: 0; color: #1e293b; font-size: 14px;">${config.description}</p>
+        <div class="email-content" style="padding: 30px; background: white;">
+          <div class="alert-box" style="background: ${severityBg}; border-left: 4px solid ${severityColor}; padding: 15px; margin-bottom: 20px; border-radius: 0 4px 4px 0;">
+            <p class="alert-text" style="margin: 0; color: #1e293b; font-size: 14px;">${config.description}</p>
           </div>
 
-          <h2 style="font-size: 14px; color: #64748b; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">Action Details</h2>
+          <h2 class="section-label" style="font-size: 14px; color: #64748b; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">Action Details</h2>
           
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px; width: 140px;">Performed By</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; font-weight: 500;">
+              <td class="table-cell table-label" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px; width: 140px;">Performed By</td>
+              <td class="table-cell table-value" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; font-weight: 500;">
                 ${request.performed_by_name || request.performed_by_email}
                 ${request.performed_by_name ? `<br><span style="font-weight: normal; color: #64748b; font-size: 12px;">${request.performed_by_email}</span>` : ''}
               </td>
             </tr>
             ${request.target_email ? `
             <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px;">Affected Account</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; font-weight: 500;">
+              <td class="table-cell table-label" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px;">Affected Account</td>
+              <td class="table-cell table-value" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; font-weight: 500;">
                 ${request.target_name || request.target_email}
                 ${request.target_name ? `<br><span style="font-weight: normal; color: #64748b; font-size: 12px;">${request.target_email}</span>` : ''}
               </td>
             </tr>
             ` : ''}
             <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px;">Action Type</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px;">${request.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
+              <td class="table-cell table-label" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px;">Action Type</td>
+              <td class="table-cell table-value" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px;">${request.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
             </tr>
             <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px;">Time</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px;">${new Date().toLocaleString('en-US', { 
+              <td class="table-cell table-label" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 13px;">Time</td>
+              <td class="table-cell table-value" style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-size: 14px;">${new Date().toLocaleString('en-US', { 
                 weekday: 'short',
                 year: 'numeric',
                 month: 'short',
@@ -121,8 +141,8 @@ const generateAlertHtml = (
             </tr>
             ${request.details && Object.keys(request.details).length > 0 ? `
             <tr>
-              <td style="padding: 10px 0; color: #64748b; font-size: 13px; vertical-align: top;">Additional Info</td>
-              <td style="padding: 10px 0; color: #1e293b; font-size: 13px;">
+              <td class="table-cell table-label" style="padding: 10px 0; color: #64748b; font-size: 13px; vertical-align: top;">Additional Info</td>
+              <td class="table-cell table-value" style="padding: 10px 0; color: #1e293b; font-size: 13px;">
                 ${Object.entries(request.details).map(([key, value]) => 
                   `<div style="margin-bottom: 4px;"><strong>${key}:</strong> ${value}</div>`
                 ).join('')}
@@ -131,19 +151,19 @@ const generateAlertHtml = (
             ` : ''}
           </table>
 
-          <div style="margin-top: 25px; padding: 15px; background: #f8fafc; border-radius: 6px; text-align: center;">
-            <p style="margin: 0 0 10px 0; color: #64748b; font-size: 13px;">
+          <div class="info-box" style="margin-top: 25px; padding: 15px; background: #f8fafc; border-radius: 6px; text-align: center;">
+            <p class="info-text" style="margin: 0 0 10px 0; color: #64748b; font-size: 13px;">
               If you did not perform this action, please investigate immediately.
             </p>
-            <p style="margin: 0; font-size: 12px; color: #94a3b8;">
+            <p class="info-subtext" style="margin: 0; font-size: 12px; color: #94a3b8;">
               Log in to the admin dashboard to review the full audit log.
             </p>
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="padding: 15px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
-          <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+        <div class="footer-section" style="padding: 15px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
+          <p class="footer-text" style="margin: 0; font-size: 11px; color: #94a3b8;">
             This is an automated security alert from edLEAD Admin System.
           </p>
         </div>

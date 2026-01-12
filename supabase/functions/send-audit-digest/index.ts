@@ -125,9 +125,28 @@ const generateDigestHtml = (
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
+      <style>
+        @media (prefers-color-scheme: dark) {
+          body { background-color: #1a1a2e !important; }
+          .email-container { background-color: #1f2937 !important; }
+          .email-content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+          .section-header { color: #f3f4f6 !important; border-bottom-color: #374151 !important; }
+          .stat-box { background-color: #374151 !important; }
+          .stat-value { color: #60a5fa !important; }
+          .stat-label { color: #9ca3af !important; }
+          .table-header { background-color: #374151 !important; }
+          .table-header th { color: #9ca3af !important; }
+          .table-cell { border-bottom-color: #374151 !important; color: #e5e7eb !important; }
+          .footer-section { background-color: #111827 !important; border-top-color: #374151 !important; }
+          .footer-text { color: #9ca3af !important; }
+          .footer-subtext { color: #6b7280 !important; }
+        }
+      </style>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
-      <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #2563eb, #1e40af); padding: 30px; text-align: center;">
@@ -139,31 +158,31 @@ const generateDigestHtml = (
         </div>
 
         <!-- Summary Stats -->
-        <div style="padding: 20px; background: #f8fafc;">
+        <div class="stat-box" style="padding: 20px; background: #f8fafc;">
           <div style="display: flex; justify-content: space-around; text-align: center;">
             <div style="flex: 1; padding: 10px;">
-              <div style="font-size: 32px; font-weight: bold; color: #2563eb;">${logs.length}</div>
-              <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Total Actions</div>
+              <div class="stat-value" style="font-size: 32px; font-weight: bold; color: #2563eb;">${logs.length}</div>
+              <div class="stat-label" style="font-size: 12px; color: #64748b; text-transform: uppercase;">Total Actions</div>
             </div>
             <div style="flex: 1; padding: 10px;">
-              <div style="font-size: 32px; font-weight: bold; color: #16a34a;">${Object.keys(adminCounts).length}</div>
-              <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Active Admins</div>
+              <div class="stat-value" style="font-size: 32px; font-weight: bold; color: #16a34a;">${Object.keys(adminCounts).length}</div>
+              <div class="stat-label" style="font-size: 12px; color: #64748b; text-transform: uppercase;">Active Admins</div>
             </div>
             <div style="flex: 1; padding: 10px;">
-              <div style="font-size: 32px; font-weight: bold; color: #ea580c;">${Object.keys(actionCounts).length}</div>
-              <div style="font-size: 12px; color: #64748b; text-transform: uppercase;">Action Types</div>
+              <div class="stat-value" style="font-size: 32px; font-weight: bold; color: #ea580c;">${Object.keys(actionCounts).length}</div>
+              <div class="stat-label" style="font-size: 12px; color: #64748b; text-transform: uppercase;">Action Types</div>
             </div>
           </div>
         </div>
 
         <!-- Content -->
-        <div style="padding: 20px;">
+        <div class="email-content" style="padding: 20px; background: white;">
           
           <!-- Activity by Table -->
-          <h2 style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Activity by Table</h2>
+          <h2 class="section-header" style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Activity by Table</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
             <thead>
-              <tr style="background: #f1f5f9;">
+              <tr class="table-header" style="background: #f1f5f9;">
                 <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #64748b;">Table</th>
                 <th style="padding: 12px; text-align: center; font-size: 12px; text-transform: uppercase; color: #64748b;">Actions</th>
               </tr>
@@ -174,10 +193,10 @@ const generateDigestHtml = (
           </table>
 
           <!-- Top Actions -->
-          <h2 style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Top Actions</h2>
+          <h2 class="section-header" style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Top Actions</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
             <thead>
-              <tr style="background: #f1f5f9;">
+              <tr class="table-header" style="background: #f1f5f9;">
                 <th style="padding: 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #64748b;">Action</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; text-transform: uppercase; color: #64748b;">Count</th>
               </tr>
@@ -188,10 +207,10 @@ const generateDigestHtml = (
           </table>
 
           <!-- Admin Activity -->
-          <h2 style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Admin Activity</h2>
+          <h2 class="section-header" style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Admin Activity</h2>
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
             <thead>
-              <tr style="background: #f1f5f9;">
+              <tr class="table-header" style="background: #f1f5f9;">
                 <th style="padding: 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #64748b;">Admin</th>
                 <th style="padding: 8px; text-align: center; font-size: 12px; text-transform: uppercase; color: #64748b;">Actions</th>
               </tr>
@@ -202,10 +221,10 @@ const generateDigestHtml = (
           </table>
 
           <!-- Recent Activity -->
-          <h2 style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Recent Activity</h2>
+          <h2 class="section-header" style="font-size: 16px; color: #1e293b; margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">Recent Activity</h2>
           <table style="width: 100%; border-collapse: collapse;">
             <thead>
-              <tr style="background: #f1f5f9;">
+              <tr class="table-header" style="background: #f1f5f9;">
                 <th style="padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b;">Date</th>
                 <th style="padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b;">Admin</th>
                 <th style="padding: 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b;">Action</th>
@@ -220,11 +239,11 @@ const generateDigestHtml = (
         </div>
 
         <!-- Footer -->
-        <div style="padding: 20px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
-          <p style="margin: 0; font-size: 12px; color: #64748b;">
+        <div class="footer-section" style="padding: 20px; background: #f8fafc; text-align: center; border-top: 1px solid #e2e8f0;">
+          <p class="footer-text" style="margin: 0; font-size: 12px; color: #64748b;">
             This is an automated weekly digest from edLEAD Admin System.
           </p>
-          <p style="margin: 10px 0 0 0; font-size: 12px; color: #94a3b8;">
+          <p class="footer-subtext" style="margin: 10px 0 0 0; font-size: 12px; color: #94a3b8;">
             To view full audit logs, log in to the admin dashboard.
           </p>
         </div>
