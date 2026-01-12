@@ -164,6 +164,31 @@ serve(async (req: Request): Promise<Response> => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="light dark">
+          <meta name="supported-color-schemes" content="light dark">
+          <style>
+            @media (prefers-color-scheme: dark) {
+              body { background-color: #1a1a2e !important; }
+              .email-content { background-color: #1f2937 !important; color: #e5e7eb !important; border-color: #374151 !important; }
+              .stat-box { background-color: #374151 !important; }
+              .stat-value { color: #60a5fa !important; }
+              .stat-label { color: #9ca3af !important; }
+              .pending-box { background-color: #78350f !important; }
+              .pending-value { color: #fcd34d !important; }
+              .pending-label { color: #fcd34d !important; }
+              .top-performer { background: linear-gradient(135deg, #78350f 0%, #92400e 100%) !important; }
+              .top-performer-label { color: #fcd34d !important; }
+              .top-performer-name { color: #fef3c7 !important; }
+              .top-performer-stat { color: #fcd34d !important; }
+              .section-title { color: #f3f4f6 !important; }
+              .table-header { background-color: #374151 !important; }
+              .table-header th { color: #9ca3af !important; }
+              .table-row { border-bottom-color: #374151 !important; }
+              .table-cell { color: #e5e7eb !important; }
+              .cta-button { background-color: #3b82f6 !important; }
+              .footer-section { color: #9ca3af !important; }
+            }
+          </style>
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; background: #f8fafc;">
           <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -172,34 +197,34 @@ serve(async (req: Request): Promise<Response> => {
             <p style="margin: 5px 0 0; opacity: 0.8; font-size: 14px;">${periodLabel}</p>
           </div>
           
-          <div style="background: white; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
+          <div class="email-content" style="background: white; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
             <!-- Summary Stats -->
             <div style="display: flex; justify-content: space-around; margin-bottom: 30px; text-align: center;">
-              <div style="flex: 1; padding: 15px; background: #f1f5f9; border-radius: 8px; margin: 0 5px;">
-                <p style="margin: 0; font-size: 28px; font-weight: 700; color: #1e40af;">${totalApplications || 0}</p>
-                <p style="margin: 5px 0 0; font-size: 12px; color: #64748b;">New Applications</p>
+              <div class="stat-box" style="flex: 1; padding: 15px; background: #f1f5f9; border-radius: 8px; margin: 0 5px;">
+                <p class="stat-value" style="margin: 0; font-size: 28px; font-weight: 700; color: #1e40af;">${totalApplications || 0}</p>
+                <p class="stat-label" style="margin: 5px 0 0; font-size: 12px; color: #64748b;">New Applications</p>
               </div>
-              <div style="flex: 1; padding: 15px; background: #f1f5f9; border-radius: 8px; margin: 0 5px;">
-                <p style="margin: 0; font-size: 28px; font-weight: 700; color: #16a34a;">${totalApproved}</p>
-                <p style="margin: 5px 0 0; font-size: 12px; color: #64748b;">Approved</p>
+              <div class="stat-box" style="flex: 1; padding: 15px; background: #f1f5f9; border-radius: 8px; margin: 0 5px;">
+                <p class="stat-value" style="margin: 0; font-size: 28px; font-weight: 700; color: #16a34a;">${totalApproved}</p>
+                <p class="stat-label" style="margin: 5px 0 0; font-size: 12px; color: #64748b;">Approved</p>
               </div>
-              <div style="flex: 1; padding: 15px; background: #f1f5f9; border-radius: 8px; margin: 0 5px;">
-                <p style="margin: 0; font-size: 28px; font-weight: 700; color: #dc2626;">${totalRejected}</p>
-                <p style="margin: 5px 0 0; font-size: 12px; color: #64748b;">Rejected</p>
+              <div class="stat-box" style="flex: 1; padding: 15px; background: #f1f5f9; border-radius: 8px; margin: 0 5px;">
+                <p class="stat-value" style="margin: 0; font-size: 28px; font-weight: 700; color: #dc2626;">${totalRejected}</p>
+                <p class="stat-label" style="margin: 5px 0 0; font-size: 12px; color: #64748b;">Rejected</p>
               </div>
-              <div style="flex: 1; padding: 15px; background: #fef3c7; border-radius: 8px; margin: 0 5px;">
-                <p style="margin: 0; font-size: 28px; font-weight: 700; color: #92400e;">${pendingApplications || 0}</p>
-                <p style="margin: 5px 0 0; font-size: 12px; color: #92400e;">Pending</p>
+              <div class="pending-box" style="flex: 1; padding: 15px; background: #fef3c7; border-radius: 8px; margin: 0 5px;">
+                <p class="pending-value" style="margin: 0; font-size: 28px; font-weight: 700; color: #92400e;">${pendingApplications || 0}</p>
+                <p class="pending-label" style="margin: 5px 0 0; font-size: 12px; color: #92400e;">Pending</p>
               </div>
             </div>
 
             ${topPerformerHtml}
 
             <!-- Reviewer Table -->
-            <h2 style="font-size: 18px; margin: 0 0 15px; color: #1e293b;">Reviewer Performance</h2>
+            <h2 class="section-title" style="font-size: 18px; margin: 0 0 15px; color: #1e293b;">Reviewer Performance</h2>
             <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
               <thead>
-                <tr style="background: #f1f5f9;">
+                <tr class="table-header" style="background: #f1f5f9;">
                   <th style="padding: 12px; text-align: left;">Reviewer</th>
                   <th style="padding: 12px; text-align: center;">Region</th>
                   <th style="padding: 12px; text-align: center;">Approved</th>
@@ -214,13 +239,13 @@ serve(async (req: Request): Promise<Response> => {
             </table>
 
             <div style="margin-top: 30px; text-align: center;">
-              <a href="https://edlead.lovable.app/admin/dashboard" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+              <a class="cta-button" href="https://edlead.lovable.app/admin/dashboard" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
                 View Full Dashboard
               </a>
             </div>
           </div>
           
-          <div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
+          <div class="footer-section" style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
             <p style="margin: 0;">This is an automated ${period} report from edLEAD Admin Portal.</p>
             <p style="margin: 5px 0 0;">Generated on ${new Date().toLocaleString("en-ZA")}</p>
           </div>
