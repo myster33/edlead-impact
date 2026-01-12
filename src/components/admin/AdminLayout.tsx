@@ -30,6 +30,7 @@ import {
   Shield,
   History,
   MapPin,
+  Mail,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 
@@ -74,13 +75,20 @@ const getMenuItems = (role?: string) => {
     },
   ];
 
-  // Only show Audit Log for admins
+  // Only show Audit Log and Email Templates for admins
   if (role === "admin") {
-    items.push({
-      title: "Audit Log",
-      url: "/admin/audit-log",
-      icon: History,
-    });
+    items.push(
+      {
+        title: "Email Templates",
+        url: "/admin/email-templates",
+        icon: Mail,
+      },
+      {
+        title: "Audit Log",
+        url: "/admin/audit-log",
+        icon: History,
+      }
+    );
   }
 
   return items;
