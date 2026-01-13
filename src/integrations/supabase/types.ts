@@ -425,6 +425,86 @@ export type Database = {
         }
         Relationships: []
       }
+      email_template_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by: string | null
+          html_content: string
+          id: string
+          subject: string
+          template_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          html_content: string
+          id?: string
+          subject: string
+          template_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          html_content?: string
+          id?: string
+          subject?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_template_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          category: string
+          created_at: string
+          html_content: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          template_key: string
+          updated_at: string
+          updated_by: string | null
+          variables: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          html_content: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          template_key: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          html_content?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

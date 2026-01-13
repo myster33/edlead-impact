@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,29 +8,43 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Sun, Moon, Monitor, Save, RotateCcw, Eye, Code, Mail, Send } from "lucide-react";
+import { Sun, Moon, Monitor, Save, RotateCcw, Eye, Code, Mail, Send, History, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
 
 interface EmailTemplate {
   id: string;
+  template_key: string;
   name: string;
-  description: string;
   category: string;
   subject: string;
-  html: string;
+  html_content: string;
   variables: string[];
+  is_active: boolean;
+  updated_at: string;
 }
 
-const defaultTemplates: EmailTemplate[] = [
+interface TemplateHistory {
+  id: string;
+  subject: string;
+  html_content: string;
+  changed_at: string;
+  change_reason: string | null;
+}
+
+const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
   {
-    id: "applicant-approved",
+    template_key: "applicant-approved",
     name: "Application Approved",
-    description: "Sent when an application is approved",
     category: "Applications",
     subject: "🎉 Congratulations! Your edLEAD Application Has Been Approved",
     variables: ["applicant_name", "reference_number"],
-    html: `<!DOCTYPE html>
+    is_active: true,
+    html_content: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -73,13 +87,13 @@ const defaultTemplates: EmailTemplate[] = [
 </html>`,
   },
   {
-    id: "applicant-rejected",
+    template_key: "applicant-rejected",
     name: "Application Rejected",
-    description: "Sent when an application is rejected",
     category: "Applications",
     subject: "Update on Your edLEAD Application",
     variables: ["applicant_name", "reference_number"],
-    html: `<!DOCTYPE html>
+    is_active: true,
+    html_content: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -118,13 +132,13 @@ const defaultTemplates: EmailTemplate[] = [
 </html>`,
   },
   {
-    id: "story-approved",
+    template_key: "story-approved",
     name: "Story Approved",
-    description: "Sent when a blog story is approved",
     category: "Blog",
     subject: "🎉 Your Story Has Been Published on edLEAD!",
     variables: ["author_name", "story_title", "story_url"],
-    html: `<!DOCTYPE html>
+    is_active: true,
+    html_content: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -167,13 +181,13 @@ const defaultTemplates: EmailTemplate[] = [
 </html>`,
   },
   {
-    id: "contact-confirmation",
+    template_key: "contact-confirmation",
     name: "Contact Confirmation",
-    description: "Sent when someone submits the contact form",
     category: "General",
     subject: "Thank You for Contacting edLEAD",
     variables: ["name", "message"],
-    html: `<!DOCTYPE html>
+    is_active: true,
+    html_content: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -215,13 +229,13 @@ const defaultTemplates: EmailTemplate[] = [
 </html>`,
   },
   {
-    id: "admin-notification",
+    template_key: "admin-notification",
     name: "Admin Notification",
-    description: "Sent to admins for various alerts",
     category: "Admin",
     subject: "Admin Notification - edLEAD",
     variables: ["admin_name", "notification_type", "details"],
-    html: `<!DOCTYPE html>
+    is_active: true,
+    html_content: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -267,27 +281,144 @@ const defaultTemplates: EmailTemplate[] = [
 type PreviewMode = "light" | "dark" | "auto";
 
 export default function AdminEmailTemplates() {
-  const [templates] = useState<EmailTemplate[]>(defaultTemplates);
-  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate>(defaultTemplates[0]);
-  const [editedHtml, setEditedHtml] = useState(defaultTemplates[0].html);
-  const [editedSubject, setEditedSubject] = useState(defaultTemplates[0].subject);
+  const queryClient = useQueryClient();
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string>("applicant-approved");
+  const [editedHtml, setEditedHtml] = useState("");
+  const [editedSubject, setEditedSubject] = useState("");
   const [previewMode, setPreviewMode] = useState<PreviewMode>("auto");
   const [activeTab, setActiveTab] = useState("preview");
   const [testVariables, setTestVariables] = useState<Record<string, string>>({});
+  const [historyOpen, setHistoryOpen] = useState(false);
 
-  const handleTemplateChange = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
-    if (template) {
-      setSelectedTemplate(template);
-      setEditedHtml(template.html);
-      setEditedSubject(template.subject);
-      // Reset test variables with defaults
+  // Fetch templates from database
+  const { data: templates, isLoading: templatesLoading, refetch } = useQuery({
+    queryKey: ["email-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("email_templates")
+        .select("*")
+        .order("category", { ascending: true });
+      
+      if (error) throw error;
+      
+      // Parse variables from jsonb
+      return (data || []).map(t => ({
+        ...t,
+        variables: Array.isArray(t.variables) ? t.variables as string[] : []
+      })) as EmailTemplate[];
+    },
+  });
+
+  // Fetch template history
+  const { data: history, isLoading: historyLoading } = useQuery({
+    queryKey: ["email-template-history", selectedTemplateKey],
+    queryFn: async () => {
+      const template = templates?.find(t => t.template_key === selectedTemplateKey);
+      if (!template) return [];
+      
+      const { data, error } = await supabase
+        .from("email_template_history")
+        .select("*")
+        .eq("template_id", template.id)
+        .order("changed_at", { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data as TemplateHistory[];
+    },
+    enabled: !!templates && templates.length > 0,
+  });
+
+  // Initialize templates if database is empty
+  const initializeTemplatesMutation = useMutation({
+    mutationFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) throw new Error("Not authenticated");
+      
+      const templatesWithUser = defaultTemplates.map(t => ({
+        ...t,
+        updated_by: session.session.user.id,
+      }));
+      
+      const { error } = await supabase
+        .from("email_templates")
+        .upsert(templatesWithUser, { onConflict: "template_key" });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      toast.success("Templates initialized successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to initialize templates", { description: error.message });
+    },
+  });
+
+  // Save template mutation
+  const saveTemplateMutation = useMutation({
+    mutationFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) throw new Error("Not authenticated");
+      
+      const template = templates?.find(t => t.template_key === selectedTemplateKey);
+      if (!template) throw new Error("Template not found");
+      
+      // Save to history first
+      const { error: historyError } = await supabase
+        .from("email_template_history")
+        .insert({
+          template_id: template.id,
+          subject: template.subject,
+          html_content: template.html_content,
+          changed_by: session.session.user.id,
+        });
+      
+      if (historyError) console.error("Failed to save history:", historyError);
+      
+      // Update template
+      const { error } = await supabase
+        .from("email_templates")
+        .update({
+          subject: editedSubject,
+          html_content: editedHtml,
+          updated_by: session.session.user.id,
+        })
+        .eq("id", template.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      queryClient.invalidateQueries({ queryKey: ["email-template-history"] });
+      toast.success("Template saved successfully!", {
+        description: "Changes will be reflected in future emails."
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to save template", { description: error.message });
+    },
+  });
+
+  // Get selected template
+  const selectedTemplate = templates?.find(t => t.template_key === selectedTemplateKey) 
+    || (defaultTemplates.find(t => t.template_key === selectedTemplateKey) as EmailTemplate | undefined);
+
+  // Update edited values when template changes
+  useEffect(() => {
+    if (selectedTemplate) {
+      setEditedHtml(selectedTemplate.html_content);
+      setEditedSubject(selectedTemplate.subject);
       const defaults: Record<string, string> = {};
-      template.variables.forEach(v => {
+      selectedTemplate.variables.forEach(v => {
         defaults[v] = `[${v}]`;
       });
       setTestVariables(defaults);
     }
+  }, [selectedTemplate]);
+
+  const handleTemplateChange = (templateKey: string) => {
+    setSelectedTemplateKey(templateKey);
   };
 
   const replaceVariables = (html: string) => {
@@ -308,25 +439,49 @@ export default function AdminEmailTemplates() {
   };
 
   const handleSave = () => {
-    // In a real implementation, this would save to the database
-    toast.success("Template saved successfully!", {
-      description: "Changes will be reflected in future emails."
-    });
+    saveTemplateMutation.mutate();
   };
 
   const handleReset = () => {
-    setEditedHtml(selectedTemplate.html);
-    setEditedSubject(selectedTemplate.subject);
-    toast.info("Template reset to default");
+    const defaultTemplate = defaultTemplates.find(t => t.template_key === selectedTemplateKey);
+    if (defaultTemplate) {
+      setEditedHtml(defaultTemplate.html_content);
+      setEditedSubject(defaultTemplate.subject);
+      toast.info("Template reset to default");
+    }
   };
 
-  const handleSendTest = () => {
-    toast.success("Test email sent!", {
-      description: "Check your inbox for the preview."
+  const handleRestoreFromHistory = (historyItem: TemplateHistory) => {
+    setEditedHtml(historyItem.html_content);
+    setEditedSubject(historyItem.subject);
+    setHistoryOpen(false);
+    toast.info("Template restored from history. Click Save to apply changes.");
+  };
+
+  const handleSendTest = async () => {
+    toast.info("Test email feature coming soon", {
+      description: "This will send a test email to your admin email address."
     });
   };
 
-  const categories = [...new Set(templates.map(t => t.category))];
+  const displayTemplates = templates && templates.length > 0 ? templates : defaultTemplates.map((t, i) => ({
+    ...t,
+    id: `default-${i}`,
+    updated_at: new Date().toISOString(),
+  }));
+
+  const categories = [...new Set(displayTemplates.map(t => t.category))];
+  const hasChanges = selectedTemplate && (editedHtml !== selectedTemplate.html_content || editedSubject !== selectedTemplate.subject);
+
+  if (templatesLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -337,11 +492,26 @@ export default function AdminEmailTemplates() {
             <p className="text-muted-foreground">Preview and customize email templates with light/dark mode support</p>
           </div>
           <div className="flex gap-2">
+            {(!templates || templates.length === 0) && (
+              <Button 
+                variant="outline" 
+                onClick={() => initializeTemplatesMutation.mutate()}
+                disabled={initializeTemplatesMutation.isPending}
+              >
+                {initializeTemplatesMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Initialize Templates
+              </Button>
+            )}
             <Button variant="outline" onClick={handleReset}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
+              Reset to Default
             </Button>
-            <Button onClick={handleSave}>
+            <Button 
+              onClick={handleSave} 
+              disabled={!hasChanges || saveTemplateMutation.isPending}
+            >
+              {saveTemplateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -359,7 +529,7 @@ export default function AdminEmailTemplates() {
               <CardDescription>Select a template to preview or edit</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Select value={selectedTemplate.id} onValueChange={handleTemplateChange}>
+              <Select value={selectedTemplateKey} onValueChange={handleTemplateChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select template" />
                 </SelectTrigger>
@@ -367,8 +537,8 @@ export default function AdminEmailTemplates() {
                   {categories.map(category => (
                     <div key={category}>
                       <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">{category}</div>
-                      {templates.filter(t => t.category === category).map(template => (
-                        <SelectItem key={template.id} value={template.id}>
+                      {displayTemplates.filter(t => t.category === category).map(template => (
+                        <SelectItem key={template.template_key} value={template.template_key}>
                           {template.name}
                         </SelectItem>
                       ))}
@@ -377,37 +547,44 @@ export default function AdminEmailTemplates() {
                 </SelectContent>
               </Select>
 
-              <div className="p-3 bg-muted rounded-lg space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{selectedTemplate.name}</span>
-                  <Badge variant="secondary">{selectedTemplate.category}</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{selectedTemplate.description}</p>
-              </div>
+              {selectedTemplate && (
+                <>
+                  <div className="p-3 bg-muted rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{selectedTemplate.name}</span>
+                      <Badge variant="secondary">{selectedTemplate.category}</Badge>
+                    </div>
+                    {selectedTemplate.updated_at && (
+                      <p className="text-xs text-muted-foreground">
+                        Last updated: {format(new Date(selectedTemplate.updated_at), "PPp")}
+                      </p>
+                    )}
+                  </div>
 
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Subject Line</Label>
-                <Input
-                  value={editedSubject}
-                  onChange={(e) => setEditedSubject(e.target.value)}
-                  placeholder="Email subject"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Test Variables</Label>
-                {selectedTemplate.variables.map(variable => (
-                  <div key={variable} className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">{variable}</Label>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Subject Line</Label>
                     <Input
-                      size={1}
-                      value={testVariables[variable] || ""}
-                      onChange={(e) => setTestVariables(prev => ({ ...prev, [variable]: e.target.value }))}
-                      placeholder={`Enter ${variable}`}
+                      value={editedSubject}
+                      onChange={(e) => setEditedSubject(e.target.value)}
+                      placeholder="Email subject"
                     />
                   </div>
-                ))}
-              </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Test Variables</Label>
+                    {selectedTemplate.variables.map(variable => (
+                      <div key={variable} className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">{variable}</Label>
+                        <Input
+                          value={testVariables[variable] || ""}
+                          onChange={(e) => setTestVariables(prev => ({ ...prev, [variable]: e.target.value }))}
+                          placeholder={`Enter ${variable}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Preview Mode</Label>
@@ -442,10 +619,60 @@ export default function AdminEmailTemplates() {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full" onClick={handleSendTest}>
-                <Send className="h-4 w-4 mr-2" />
-                Send Test Email
-              </Button>
+              <div className="flex gap-2">
+                <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex-1">
+                      <History className="h-4 w-4 mr-2" />
+                      History
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Template History</DialogTitle>
+                      <DialogDescription>
+                        View and restore previous versions of this template
+                      </DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="max-h-[400px]">
+                      {historyLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        </div>
+                      ) : history && history.length > 0 ? (
+                        <div className="space-y-3">
+                          {history.map((item) => (
+                            <div key={item.id} className="p-3 border rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium">{item.subject}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(item.changed_at), "PPp")}
+                                </span>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRestoreFromHistory(item)}
+                              >
+                                Restore this version
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-center text-muted-foreground py-8">
+                          No history available for this template
+                        </p>
+                      )}
+                    </ScrollArea>
+                  </DialogContent>
+                </Dialog>
+
+                <Button variant="outline" className="flex-1" onClick={handleSendTest}>
+                  <Send className="h-4 w-4 mr-2" />
+                  Test
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -464,12 +691,19 @@ export default function AdminEmailTemplates() {
                       HTML Code
                     </TabsTrigger>
                   </TabsList>
-                  {previewMode !== "auto" && (
-                    <Badge variant="outline" className="ml-auto">
-                      {previewMode === "dark" ? <Moon className="h-3 w-3 mr-1" /> : <Sun className="h-3 w-3 mr-1" />}
-                      {previewMode} mode
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {hasChanges && (
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                        Unsaved changes
+                      </Badge>
+                    )}
+                    {previewMode !== "auto" && (
+                      <Badge variant="outline">
+                        {previewMode === "dark" ? <Moon className="h-3 w-3 mr-1" /> : <Sun className="h-3 w-3 mr-1" />}
+                        {previewMode} mode
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </Tabs>
             </CardHeader>
@@ -481,8 +715,8 @@ export default function AdminEmailTemplates() {
                 >
                   <div className="p-2 bg-muted border-b flex items-center gap-2">
                     <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                      <div className="w-3 h-3 rounded-full bg-destructive" />
+                      <div className="w-3 h-3 rounded-full bg-amber-500" />
                       <div className="w-3 h-3 rounded-full bg-green-500" />
                     </div>
                     <span className="text-xs text-muted-foreground ml-2">Email Preview</span>
