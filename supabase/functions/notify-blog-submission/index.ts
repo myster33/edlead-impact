@@ -1,9 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const SITE_URL = "https://edlead.co.za";
-const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +16,100 @@ interface BlogSubmissionRequest {
   author_email: string;
   category: string;
   summary: string;
+}
+
+// Default template as fallback
+const defaultTemplate = {
+  subject: `📝 New Blog Post Submitted: "{{title}}"`,
+  html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style>
+    :root { color-scheme: light dark; }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .email-content { background-color: #1f2937 !important; }
+      .email-content p { color: #e5e7eb !important; }
+      .details-box { background-color: #374151 !important; }
+      .details-box h2 { color: #f3f4f6 !important; }
+      .details-box td { color: #e5e7eb !important; }
+      .details-box strong { color: #9ca3af !important; }
+      .footer-text { color: #9ca3af !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: #1e3a5f; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+    <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+    <h1 style="color: white; margin: 15px 0 0; font-size: 24px;">📝 New Blog Post Submitted</h1>
+  </div>
+  
+  <div class="email-content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.5;">
+      A new story has been submitted for review on the edLEAD blog.
+    </p>
+    
+    <div class="details-box" style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h2 style="color: #1a1a1a; font-size: 18px; margin-top: 0;">{{title}}</h2>
+      
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 8px 0; color: #666; width: 120px;"><strong>Author:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">{{author_name}}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;"><strong>School:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">{{author_school}}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;"><strong>Province:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">{{author_province}}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;"><strong>Category:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">{{category}}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;"><strong>Email:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">{{author_email}}</td></tr>
+      </table>
+      
+      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+        <strong style="color: #666;">Summary:</strong>
+        <p style="color: #1a1a1a; margin: 8px 0 0 0; font-style: italic;">"{{summary}}"</p>
+      </div>
+    </div>
+    
+    <p style="color: #4a4a4a; font-size: 14px;">Please log in to the admin panel to review and approve this submission.</p>
+  </div>
+  
+  <p class="footer-text" style="color: #999; font-size: 12px; text-align: center; margin-top: 20px;">
+    This is an automated notification from the edLEAD platform.
+  </p>
+</div>
+</body>
+</html>`,
+};
+
+async function getEmailTemplate(supabase: any, templateKey: string) {
+  try {
+    const { data: template, error } = await supabase
+      .from("email_templates")
+      .select("subject, html_content")
+      .eq("template_key", templateKey)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error || !template) {
+      console.log(`Using default template for ${templateKey}`);
+      return defaultTemplate;
+    }
+
+    console.log(`Loaded template from database: ${templateKey}`);
+    return template;
+  } catch (err) {
+    console.error("Error fetching template:", err);
+    return defaultTemplate;
+  }
+}
+
+function replaceVariables(content: string, variables: Record<string, string>): string {
+  let result = content;
+  for (const [key, value] of Object.entries(variables)) {
+    result = result.replace(new RegExp(`{{${key}}}`, "g"), value);
+  }
+  return result;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -54,6 +146,23 @@ const handler = async (req: Request): Promise<Response> => {
 
     const adminEmails = adminUsers.map(admin => admin.email);
 
+    // Get template from database
+    const template = await getEmailTemplate(supabase, "blog-admin-notification");
+
+    // Replace variables
+    const variables = {
+      title: submission.title,
+      author_name: submission.author_name,
+      author_school: submission.author_school,
+      author_province: submission.author_province,
+      author_email: submission.author_email,
+      category: submission.category,
+      summary: submission.summary,
+    };
+
+    const subject = replaceVariables(template.subject, variables);
+    const htmlContent = replaceVariables(template.html_content, variables);
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -63,68 +172,8 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "edLEAD <noreply@edlead.co.za>",
         to: adminEmails,
-        subject: `New Blog Post Submitted: "${submission.title}"`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta name="color-scheme" content="light dark">
-            <meta name="supported-color-schemes" content="light dark">
-            <style>
-              :root { color-scheme: light dark; }
-              @media (prefers-color-scheme: dark) {
-                body { background-color: #1a1a2e !important; }
-                .email-content { background-color: #1f2937 !important; }
-                .email-content p { color: #e5e7eb !important; }
-                .details-box { background-color: #374151 !important; }
-                .details-box h2 { color: #f3f4f6 !important; }
-                .details-box td { color: #e5e7eb !important; }
-                .details-box strong { color: #9ca3af !important; }
-                .footer-text { color: #9ca3af !important; }
-              }
-            </style>
-          </head>
-          <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: #1e3a5f; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-              <img src="${LOGO_URL}" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
-              <h1 style="color: white; margin: 15px 0 0; font-size: 24px;">📝 New Blog Post Submitted</h1>
-            </div>
-            
-            <div class="email-content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
-              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.5;">
-                A new story has been submitted for review on the edLEAD blog.
-              </p>
-              
-              <div class="details-box" style="background-color: #f5f5f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                <h2 style="color: #1a1a1a; font-size: 18px; margin-top: 0;">${submission.title}</h2>
-                
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr><td style="padding: 8px 0; color: #666; width: 120px;"><strong>Author:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">${submission.author_name}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #666;"><strong>School:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">${submission.author_school}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #666;"><strong>Province:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">${submission.author_province}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #666;"><strong>Category:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">${submission.category}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #666;"><strong>Email:</strong></td><td style="padding: 8px 0; color: #1a1a1a;">${submission.author_email}</td></tr>
-                </table>
-                
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-                  <strong style="color: #666;">Summary:</strong>
-                  <p style="color: #1a1a1a; margin: 8px 0 0 0; font-style: italic;">"${submission.summary}"</p>
-                </div>
-              </div>
-              
-              <p style="color: #4a4a4a; font-size: 14px;">Please log in to the admin panel to review and approve this submission.</p>
-            </div>
-            
-            <p class="footer-text" style="color: #999; font-size: 12px; text-align: center; margin-top: 20px;">
-              This is an automated notification from the edLEAD platform.
-            </p>
-          </div>
-          </body>
-          </html>
-        `,
+        subject,
+        html: htmlContent,
       }),
     });
 
