@@ -75,20 +75,22 @@ const getMenuItems = (role?: string) => {
     },
   ];
 
-  // Only show Audit Log and Email Templates for admins
+  // Show Email Templates for reviewers and admins
+  if (role === "admin" || role === "reviewer") {
+    items.push({
+      title: "Email Templates",
+      url: "/admin/email-templates",
+      icon: Mail,
+    });
+  }
+
+  // Only show Audit Log for admins
   if (role === "admin") {
-    items.push(
-      {
-        title: "Email Templates",
-        url: "/admin/email-templates",
-        icon: Mail,
-      },
-      {
-        title: "Audit Log",
-        url: "/admin/audit-log",
-        icon: History,
-      }
-    );
+    items.push({
+      title: "Audit Log",
+      url: "/admin/audit-log",
+      icon: History,
+    });
   }
 
   return items;
