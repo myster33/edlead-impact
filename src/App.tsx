@@ -128,7 +128,7 @@ const App = () => (
               <Route
                 path="/admin/email-templates"
                 element={
-                  <ProtectedRoute requiredRole="admin">
+                  <ProtectedRoute requiredRole="reviewer">
                     <AdminEmailTemplates />
                   </ProtectedRoute>
                 }
