@@ -678,8 +678,8 @@ export default function AdminEmailTemplates() {
 
           {/* Preview/Editor */}
           <Card className="lg:col-span-2">
-            <CardHeader className="pb-3">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <TabsList>
                     <TabsTrigger value="preview" className="flex items-center gap-2">
@@ -705,44 +705,45 @@ export default function AdminEmailTemplates() {
                     )}
                   </div>
                 </div>
-              </Tabs>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="preview" className="mt-0">
-                <div 
-                  className="border rounded-lg overflow-hidden"
-                  style={getPreviewStyles()}
-                >
-                  <div className="p-2 bg-muted border-b flex items-center gap-2">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-destructive" />
-                      <div className="w-3 h-3 rounded-full bg-amber-500" />
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
+              </CardHeader>
+
+              <CardContent>
+                <TabsContent value="preview" className="mt-0">
+                  <div className="border rounded-lg overflow-hidden" style={getPreviewStyles()}>
+                    <div className="p-2 bg-muted border-b flex items-center gap-2">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-destructive" />
+                        <div className="w-3 h-3 rounded-full bg-amber-500" />
+                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-2">Email Preview</span>
                     </div>
-                    <span className="text-xs text-muted-foreground ml-2">Email Preview</span>
-                  </div>
-                  <div className="p-4" style={getPreviewStyles()}>
-                    <div className="mb-4 p-3 bg-muted/50 rounded-lg border">
-                      <p className="text-sm"><strong>Subject:</strong> {editedSubject}</p>
+                    <div className="p-4" style={getPreviewStyles()}>
+                      <div className="mb-4 p-3 bg-muted/50 rounded-lg border">
+                        <p className="text-sm">
+                          <strong>Subject:</strong> {editedSubject}
+                        </p>
+                      </div>
+                      <iframe
+                        srcDoc={replaceVariables(editedHtml)}
+                        className="w-full h-[500px] border-0 rounded-lg"
+                        title="Email Preview"
+                        style={getPreviewStyles()}
+                      />
                     </div>
-                    <iframe
-                      srcDoc={replaceVariables(editedHtml)}
-                      className="w-full h-[500px] border-0 rounded-lg"
-                      title="Email Preview"
-                      style={getPreviewStyles()}
-                    />
                   </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="code" className="mt-0">
-                <Textarea
-                  value={editedHtml}
-                  onChange={(e) => setEditedHtml(e.target.value)}
-                  className="font-mono text-sm min-h-[600px]"
-                  placeholder="Enter HTML code..."
-                />
-              </TabsContent>
-            </CardContent>
+                </TabsContent>
+
+                <TabsContent value="code" className="mt-0">
+                  <Textarea
+                    value={editedHtml}
+                    onChange={(e) => setEditedHtml(e.target.value)}
+                    className="font-mono text-sm min-h-[600px]"
+                    placeholder="Enter HTML code..."
+                  />
+                </TabsContent>
+              </CardContent>
+            </Tabs>
           </Card>
         </div>
       </div>
