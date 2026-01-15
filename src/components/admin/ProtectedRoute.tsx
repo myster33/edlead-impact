@@ -1,17 +1,36 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "viewer" | "reviewer" | "admin";
+  moduleKey?: string;
 }
 
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, moduleKey }: ProtectedRouteProps) {
   const { user, adminUser, isLoading, isAdmin, isMfaVerified, requiresMfa } = useAdminAuth();
   const location = useLocation();
 
-  if (isLoading) {
+  // Fetch module permission if moduleKey is provided
+  const { data: modulePermission, isLoading: permissionLoading } = useQuery({
+    queryKey: ["module-permission", moduleKey],
+    queryFn: async () => {
+      if (!moduleKey) return null;
+      const { data, error } = await supabase
+        .from("module_permissions")
+        .select("allowed_roles")
+        .eq("module_key", moduleKey)
+        .single();
+
+      if (error) return null;
+      return data;
+    },
+    enabled: !!moduleKey && !!user && isAdmin,
+  });
+
+  if (isLoading || (moduleKey && permissionLoading && user && isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -46,19 +65,32 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     );
   }
 
-  // Check required role
-  if (requiredRole && adminUser) {
-    const roleHierarchy = { viewer: 1, reviewer: 2, admin: 3 };
-    const userRoleLevel = roleHierarchy[adminUser.role];
-    const requiredRoleLevel = roleHierarchy[requiredRole];
+  // Check module permission if moduleKey is provided
+  if (moduleKey && adminUser) {
+    const userRole = adminUser.role;
+    const allowedRoles = modulePermission?.allowed_roles as string[] | undefined;
 
-    if (userRoleLevel < requiredRoleLevel) {
+    // If no permission found, default to admin-only
+    if (!allowedRoles) {
+      if (userRole !== "admin") {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="text-center space-y-4 p-8">
+              <h1 className="text-2xl font-bold text-destructive">Insufficient Permissions</h1>
+              <p className="text-muted-foreground">
+                You don't have permission to access this module.
+              </p>
+            </div>
+          </div>
+        );
+      }
+    } else if (!allowedRoles.includes(userRole)) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="text-center space-y-4 p-8">
             <h1 className="text-2xl font-bold text-destructive">Insufficient Permissions</h1>
             <p className="text-muted-foreground">
-              You need {requiredRole} permissions to access this feature.
+              You don't have permission to access this module.
             </p>
           </div>
         </div>

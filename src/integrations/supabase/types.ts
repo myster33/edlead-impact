@@ -505,6 +505,33 @@ export type Database = {
         }
         Relationships: []
       }
+      module_permissions: {
+        Row: {
+          allowed_roles: Database["public"]["Enums"]["app_role"][]
+          created_at: string
+          id: string
+          module_key: string
+          module_name: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          created_at?: string
+          id?: string
+          module_key: string
+          module_name: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          created_at?: string
+          id?: string
+          module_key?: string
+          module_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
