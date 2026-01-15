@@ -42,10 +42,14 @@ import {
   Trophy,
   Medal,
   Award,
-  ArrowRight
+  ArrowRight,
+  Shield,
+  Key,
+  Globe
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useModulePermissions } from "@/hooks/use-module-permissions";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
@@ -62,6 +66,13 @@ const getAdminRegionInfo = (adminUser: any) => {
 export default function AdminDashboard() {
   const { adminUser } = useAdminAuth();
   const { toast } = useToast();
+  const { data: modulePermissions } = useModulePermissions();
+
+  // Get modules this user has access to
+  const accessibleModules = modulePermissions?.filter((module) => {
+    if (adminUser?.role === "admin") return true;
+    return module.allowed_roles.includes(adminUser?.role as "viewer" | "reviewer" | "admin");
+  }) || [];
   
   const [isLoading, setIsLoading] = useState(true);
   
@@ -369,24 +380,82 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="space-y-8">
-        {/* Region Assignment Banner for Restricted Users */}
-        {regionInfo.hasRestrictions && (
-          <Alert className="border-primary/20 bg-primary/5">
-            <MapPin className="h-4 w-4" />
-            <AlertDescription className="flex items-center gap-2">
-              <span className="font-medium">Your assigned region:</span>
-              {regionInfo.province && (
-                <Badge variant="secondary">{regionInfo.province}</Badge>
+        {/* Welcome Card with Role & Access Info */}
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-full bg-primary/10">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">
+                    Welcome back, {adminUser?.full_name || adminUser?.email?.split("@")[0]}!
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 mt-1">
+                    <Badge variant="default" className="capitalize">
+                      {adminUser?.role}
+                    </Badge>
+                    {regionInfo.hasRestrictions && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>
+                            {regionInfo.province && regionInfo.country 
+                              ? `${regionInfo.province}, ${regionInfo.country}`
+                              : regionInfo.province || regionInfo.country}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {!regionInfo.hasRestrictions && adminUser?.role === "admin" && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <div className="flex items-center gap-1">
+                          <Globe className="h-3 w-3" />
+                          <span>All Regions</span>
+                        </div>
+                      </>
+                    )}
+                  </CardDescription>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Region Info for Restricted Users */}
+              {regionInfo.hasRestrictions && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/50 px-3 py-2 rounded-md">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <span>You can only view and manage applications from your assigned region.</span>
+                </div>
               )}
-              {regionInfo.country && (
-                <Badge variant="outline">{regionInfo.country}</Badge>
-              )}
-              <span className="text-muted-foreground text-sm ml-2">
-                You can only view and manage applications from this region.
-              </span>
-            </AlertDescription>
-          </Alert>
-        )}
+              
+              {/* Module Access Info */}
+              <div className="flex items-start gap-2 text-sm text-muted-foreground bg-background/50 px-3 py-2 rounded-md flex-1">
+                <Key className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <span className="font-medium text-foreground">Module Access: </span>
+                  {adminUser?.role === "admin" ? (
+                    <span>Full access to all modules</span>
+                  ) : accessibleModules.length > 0 ? (
+                    <span className="flex flex-wrap gap-1 mt-1">
+                      {accessibleModules.map((module) => (
+                        <Badge key={module.id} variant="outline" className="text-xs">
+                          {module.module_name}
+                        </Badge>
+                      ))}
+                    </span>
+                  ) : (
+                    <span>No modules assigned. Contact an administrator.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

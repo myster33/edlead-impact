@@ -1,7 +1,8 @@
 import { useLocation, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useModulePermissions, ModulePermission } from "@/hooks/use-module-permissions";
 import {
   Sidebar,
   SidebarContent,
@@ -47,65 +48,86 @@ interface AdminProfile {
   province: string | null;
 }
 
-const getMenuItems = (role?: string) => {
-  const items = [
-    {
-      title: "Dashboard",
-      url: "/admin/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      title: "Applications",
-      url: "/admin/applications",
-      icon: FileText,
-    },
-    {
-      title: "Stories",
-      url: "/admin/blog",
-      icon: BookOpen,
-    },
-    {
-      title: "Analytics",
-      url: "/admin/analytics",
-      icon: BarChart3,
-    },
-    {
-      title: "Admin Users",
-      url: "/admin/users",
-      icon: Users,
-    },
-  ];
+// Module key to menu item mapping
+const allMenuItems = [
+  {
+    title: "Dashboard",
+    url: "/admin/dashboard",
+    icon: LayoutDashboard,
+    moduleKey: "dashboard",
+  },
+  {
+    title: "Applications",
+    url: "/admin/applications",
+    icon: FileText,
+    moduleKey: "applications",
+  },
+  {
+    title: "Stories",
+    url: "/admin/blog",
+    icon: BookOpen,
+    moduleKey: "blog",
+  },
+  {
+    title: "Analytics",
+    url: "/admin/analytics",
+    icon: BarChart3,
+    moduleKey: "analytics",
+  },
+  {
+    title: "Admin Users",
+    url: "/admin/users",
+    icon: Users,
+    moduleKey: "admin-users",
+  },
+  {
+    title: "Email Templates",
+    url: "/admin/email-templates",
+    icon: Mail,
+    moduleKey: "email-templates",
+  },
+  {
+    title: "Audit Log",
+    url: "/admin/audit-log",
+    icon: History,
+    moduleKey: "audit-log",
+  },
+  {
+    title: "Permissions",
+    url: "/admin/permissions",
+    icon: Lock,
+    moduleKey: "permissions",
+  },
+];
 
-  // Show Email Templates for reviewers and admins
-  if (role === "admin" || role === "reviewer") {
-    items.push({
-      title: "Email Templates",
-      url: "/admin/email-templates",
-      icon: Mail,
-    });
-  }
-
-  // Only show Audit Log and Permissions for admins
+// Filter menu items based on module permissions
+const getFilteredMenuItems = (
+  role: string | undefined,
+  permissions: ModulePermission[] | undefined
+) => {
+  if (!role) return [];
+  
+  // Admins always have access to everything
   if (role === "admin") {
-    items.push({
-      title: "Audit Log",
-      url: "/admin/audit-log",
-      icon: History,
-    });
-    items.push({
-      title: "Permissions",
-      url: "/admin/permissions",
-      icon: Lock,
-    });
+    return allMenuItems;
   }
-
-  return items;
+  
+  // For non-admins, filter based on module permissions
+  return allMenuItems.filter((item) => {
+    const permission = permissions?.find((p) => p.module_key === item.moduleKey);
+    if (!permission) {
+      // If no permission record exists, deny access for non-admins
+      return false;
+    }
+    return permission.allowed_roles.includes(role as "viewer" | "reviewer" | "admin");
+  });
 };
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const { adminUser, signOut } = useAdminAuth();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
+  const { data: modulePermissions } = useModulePermissions();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -124,6 +146,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
     fetchProfile();
   }, [adminUser?.id]);
+
+  // Get filtered menu items based on role and permissions
+  const menuItems = useMemo(
+    () => getFilteredMenuItems(adminUser?.role, modulePermissions),
+    [adminUser?.role, modulePermissions]
+  );
 
   const displayName = profile?.full_name || adminUser?.email?.split("@")[0] || "Admin";
   const initials = (profile?.full_name || adminUser?.email || "AD")
@@ -152,7 +180,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               <SidebarGroupLabel>Navigation</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {getMenuItems(adminUser?.role).map((item) => {
+                  {menuItems.map((item) => {
                     const isActive = location.pathname === item.url;
                     return (
                       <SidebarMenuItem key={item.title}>
@@ -234,7 +262,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <SidebarTrigger />
             <div className="ml-4">
               <h1 className="text-lg font-semibold">
-                {getMenuItems(adminUser?.role).find(item => location.pathname === item.url)?.title || 
+                {menuItems.find(item => location.pathname === item.url)?.title || 
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>
