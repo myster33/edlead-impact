@@ -31,6 +31,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminResetPassword from "./pages/admin/AdminResetPassword";
 import AdminEmailTemplates from "./pages/admin/AdminEmailTemplates";
+import AdminPermissions from "./pages/admin/AdminPermissions";
 
 const queryClient = new QueryClient();
 
@@ -64,7 +65,7 @@ const App = () => (
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="dashboard">
                     <AdminDashboard />
                   </ProtectedRoute>
                 }
@@ -72,7 +73,7 @@ const App = () => (
               <Route
                 path="/admin/dashboard"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="dashboard">
                     <AdminDashboard />
                   </ProtectedRoute>
                 }
@@ -80,7 +81,7 @@ const App = () => (
               <Route
                 path="/admin/applications"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="applications">
                     <AdminApplications />
                   </ProtectedRoute>
                 }
@@ -88,7 +89,7 @@ const App = () => (
               <Route
                 path="/admin/users"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="users">
                     <AdminManagement />
                   </ProtectedRoute>
                 }
@@ -96,7 +97,7 @@ const App = () => (
               <Route
                 path="/admin/analytics"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="analytics">
                     <AdminAnalytics />
                   </ProtectedRoute>
                 }
@@ -104,7 +105,7 @@ const App = () => (
               <Route
                 path="/admin/blog"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="blog">
                     <AdminBlogManagement />
                   </ProtectedRoute>
                 }
@@ -112,7 +113,7 @@ const App = () => (
               <Route
                 path="/admin/settings"
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute moduleKey="settings">
                     <AdminSettings />
                   </ProtectedRoute>
                 }
@@ -120,7 +121,7 @@ const App = () => (
               <Route
                 path="/admin/audit-log"
                 element={
-                  <ProtectedRoute requiredRole="admin">
+                  <ProtectedRoute moduleKey="audit-log">
                     <AdminAuditLog />
                   </ProtectedRoute>
                 }
@@ -128,8 +129,16 @@ const App = () => (
               <Route
                 path="/admin/email-templates"
                 element={
-                  <ProtectedRoute requiredRole="reviewer">
+                  <ProtectedRoute moduleKey="email-templates">
                     <AdminEmailTemplates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/permissions"
+                element={
+                  <ProtectedRoute moduleKey="permissions">
+                    <AdminPermissions />
                   </ProtectedRoute>
                 }
               />
