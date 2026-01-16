@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Calendar, Monitor, Users, Award, FileText, Briefcase, ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import programmeConferenceImage from "@/assets/programme-snapshot-conference.jpg";
 
 const features = [
   {
@@ -60,8 +61,20 @@ export const ProgrammeSnapshot = () => {
   return (
     <section ref={sectionRef} className="py-20 bg-secondary text-secondary-foreground">
       <div className="container">
+        {/* Conference Image */}
+        <div className={`mb-12 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="relative rounded-2xl overflow-hidden shadow-xl">
+            <img 
+              src={programmeConferenceImage} 
+              alt="Student giving a speech at a leadership conference" 
+              className="w-full h-64 md:h-80 lg:h-96 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-secondary/60 to-transparent" />
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '100ms' }}>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               Programme Snapshot
             </h2>
