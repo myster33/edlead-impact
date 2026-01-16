@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, School } from "lucide-react";
+import { ArrowRight, Users, PenLine } from "lucide-react";
 
 export const CTASection = () => {
   return (
@@ -26,20 +26,20 @@ export const CTASection = () => {
             </Link>
           </div>
 
-          {/* For Schools/Partners */}
+          {/* Share Your Story */}
           <div className="bg-primary rounded-2xl p-8 md:p-10 shadow-sm">
             <div className="w-14 h-14 rounded-xl bg-primary-foreground/20 flex items-center justify-center mb-6">
-              <School className="h-7 w-7 text-primary-foreground" />
+              <PenLine className="h-7 w-7 text-primary-foreground" />
             </div>
             <h3 className="text-2xl font-bold text-primary-foreground mb-4">
-              For Schools & Partners
+              Share Your Story
             </h3>
             <p className="text-primary-foreground/90 mb-6 leading-relaxed">
-              Partner with edLEAD to transform your school culture through student leadership development. Let's create positive change together.
+              Have an inspiring leadership journey to share? Submit your story to edLEAD Stories and inspire the next generation of student leaders.
             </p>
-            <Link to="/partners">
+            <Link to="/blog">
               <Button variant="secondary" className="gap-2 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
-                Partner With Us
+                Submit Your Story
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
