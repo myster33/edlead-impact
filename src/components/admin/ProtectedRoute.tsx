@@ -13,7 +13,7 @@ export function ProtectedRoute({ children, moduleKey }: ProtectedRouteProps) {
   const { user, adminUser, isLoading, isAdmin, isMfaVerified, requiresMfa } = useAdminAuth();
   const location = useLocation();
 
-  // Fetch module permission if moduleKey is provided
+  // Fetch module permission if moduleKey is provided - enabled for all admin users (viewer, reviewer, admin)
   const { data: modulePermission, isLoading: permissionLoading } = useQuery({
     queryKey: ["module-permission", moduleKey],
     queryFn: async () => {
@@ -27,7 +27,7 @@ export function ProtectedRoute({ children, moduleKey }: ProtectedRouteProps) {
       if (error) return null;
       return data;
     },
-    enabled: !!moduleKey && !!user && isAdmin,
+    enabled: !!moduleKey && !!user && isAdmin, // isAdmin checks if user exists in admin_users table (any role)
   });
 
   if (isLoading || (moduleKey && permissionLoading && user && isAdmin)) {
