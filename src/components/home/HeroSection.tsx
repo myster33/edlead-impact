@@ -69,9 +69,9 @@ export const HeroSection = () => {
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link to="/partners">
+            <Link to="/blog">
               <Button size="lg" variant="outline" className="w-full sm:w-auto text-base bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20 transition-all duration-300 hover:scale-105 hover:border-primary-foreground/50">
-                Partner with edLEAD
+                Submit Your Story
               </Button>
             </Link>
           </div>
