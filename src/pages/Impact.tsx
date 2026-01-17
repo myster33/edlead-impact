@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Target, Shield, TrendingUp, Users } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
-
+import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
 const goals = [
   {
     icon: Users,
@@ -92,13 +92,17 @@ const Impact = () => {
           <h2 className="text-3xl font-bold text-foreground mb-12">Cohort 1 Target Growth Impact</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
             {[
-              { number: "20+", label: "Schools Reached" },
-              { number: "100+", label: "Students Applications" },
-              { number: "50+", label: "Leaders' Stories" },
-              { number: "9", label: "Provinces Targeted" },
+              { number: 20, suffix: "+", label: "Schools Reached" },
+              { number: 100, suffix: "+", label: "Students Applications" },
+              { number: 50, suffix: "+", label: "Leaders' Stories" },
+              { number: 9, suffix: "", label: "Provinces Targeted" },
             ].map((stat, index) => (
               <div key={index}>
-                <div className="text-4xl md:text-5xl font-bold text-primary mb-2">{stat.number}</div>
+                <AnimatedCounter 
+                  end={stat.number} 
+                  suffix={stat.suffix}
+                  className="text-4xl md:text-5xl font-bold text-primary mb-2"
+                />
                 <p className="text-muted-foreground">{stat.label}</p>
               </div>
             ))}
