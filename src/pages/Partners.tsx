@@ -10,6 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { School, Users, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { toast } from "sonner";
@@ -128,7 +135,7 @@ const Partners = () => {
         </div>
       </section>
 
-      {/* Partner Logos */}
+      {/* Partner Logos Carousel */}
       <section className="py-16 bg-muted/50">
         <div className="container">
           <div className="text-center mb-12">
@@ -137,27 +144,40 @@ const Partners = () => {
               Proudly working with leading organizations committed to youth development
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 items-center justify-items-center max-w-3xl mx-auto">
-            {[
-              { name: "ALX", logo: alxLogo, url: "https://www.alxafrica.com/south-africa/" },
-              { name: "EduSchools", logo: eduschoolsLogo, url: "https://eduschools.co.za" },
-              { name: "AWS", logo: awsLogo, url: "https://aws.amazon.com/" },
-            ].map((partner, index) => (
-              <a
-                key={index}
-                href={partner.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-32 h-24 rounded-xl bg-background border border-border flex items-center justify-center p-4 hover:border-primary/30 hover:shadow-md transition-all"
-                title={partner.name}
-              >
-                <img 
-                  src={partner.logo} 
-                  alt={partner.name} 
-                  className="max-w-full max-h-full object-contain"
-                />
-              </a>
-            ))}
+          <div className="max-w-4xl mx-auto px-12">
+            <Carousel
+              opts={{
+                align: "center",
+                loop: true,
+              }}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {[
+                  { name: "ALX", logo: alxLogo, url: "https://www.alxafrica.com/south-africa/" },
+                  { name: "EduSchools", logo: eduschoolsLogo, url: "https://eduschools.co.za" },
+                  { name: "AWS", logo: awsLogo, url: "https://aws.amazon.com/" },
+                ].map((partner, index) => (
+                  <CarouselItem key={index} className="pl-4 basis-full sm:basis-1/2 md:basis-1/3">
+                    <a
+                      href={partner.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full h-28 rounded-xl bg-background border border-border flex items-center justify-center p-6 hover:border-primary/30 hover:shadow-md transition-all"
+                      title={partner.name}
+                    >
+                      <img 
+                        src={partner.logo} 
+                        alt={partner.name} 
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </a>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
           <p className="text-center text-sm text-muted-foreground mt-8">
             Interested in becoming a partner? Fill out the inquiry form below.
