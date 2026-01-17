@@ -92,10 +92,10 @@ const Impact = () => {
           <h2 className="text-3xl font-bold text-foreground mb-12">Growing Our Impact</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
             {[
-              { number: "100+", label: "Schools Reached" },
-              { number: "500+", label: "Captains Trained" },
-              { number: "50+", label: "Projects Completed" },
-              { number: "9", label: "Provinces" },
+              { number: "20+", label: "Schools Reached" },
+              { number: "100+", label: "Students Applications" },
+              { number: "50+", label: "Leaders' Stories" },
+              { number: "9", label: "Provinces Targeted" },
             ].map((stat, index) => (
               <div key={index}>
                 <div className="text-4xl md:text-5xl font-bold text-primary mb-2">{stat.number}</div>
