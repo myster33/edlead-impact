@@ -89,7 +89,7 @@ const Impact = () => {
       {/* Stats */}
       <section className="py-20 bg-muted">
         <div className="container text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-12">Growing Our Impact</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-12">Cohort 1 Target Growth Impact</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
             {[
               { number: "20+", label: "Schools Reached" },
