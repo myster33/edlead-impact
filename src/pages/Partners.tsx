@@ -16,10 +16,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 // Partner logos
-import goodwallLogo from "@/assets/partners/goodwall.png";
-import yomaLogo from "@/assets/partners/yoma.png";
 import alxLogo from "@/assets/partners/alx.jpg";
-
 import eduschoolsLogo from "@/assets/partners/eduschools.jpg";
 import awsLogo from "@/assets/partners/aws.png";
 
@@ -140,10 +137,8 @@ const Partners = () => {
               Proudly working with leading organizations committed to youth development
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center justify-items-center max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 items-center justify-items-center max-w-3xl mx-auto">
             {[
-              { name: "Goodwall", logo: goodwallLogo, url: "https://www.goodwall.io/" },
-              { name: "Yoma", logo: yomaLogo, url: "https://yoma.world/" },
               { name: "ALX", logo: alxLogo, url: "https://www.alxafrica.com/south-africa/" },
               { name: "EduSchools", logo: eduschoolsLogo, url: "https://eduschools.co.za" },
               { name: "AWS", logo: awsLogo, url: "https://aws.amazon.com/" },
