@@ -17,6 +17,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import { School, Users, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { toast } from "sonner";
@@ -150,6 +151,13 @@ const Partners = () => {
                 align: "center",
                 loop: true,
               }}
+              plugins={[
+                Autoplay({
+                  delay: 3000,
+                  stopOnInteraction: true,
+                  stopOnMouseEnter: true,
+                }),
+              ]}
               className="w-full"
             >
               <CarouselContent className="-ml-4">
