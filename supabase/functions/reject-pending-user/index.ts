@@ -110,7 +110,8 @@ serve(async (req: Request): Promise<Response> => {
                 <style>
                   body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                   .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                  .header { background: linear-gradient(135deg, #6b7280, #4b5563); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                  .header { background: #4A4A4A; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                  .header img { max-width: 200px; height: auto; margin-bottom: 15px; }
                   .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
                   .reason-box { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b; }
                   .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
@@ -119,6 +120,7 @@ serve(async (req: Request): Promise<Response> => {
               <body>
                 <div class="container">
                   <div class="header">
+                    <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" />
                     <h1>Admin Access Request Update</h1>
                   </div>
                   <div class="content">

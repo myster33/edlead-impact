@@ -44,8 +44,8 @@ const defaultTemplate = {
 </head>
 <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="background: #1e3a5f; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
-    <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+  <div style="background: #4A4A4A; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+    <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
     <h1 style="color: white; margin: 15px 0 0; font-size: 24px;">📝 New Blog Post Submitted</h1>
   </div>
   

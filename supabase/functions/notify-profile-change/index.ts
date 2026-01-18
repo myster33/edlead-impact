@@ -42,8 +42,8 @@ const getEmailContent = (name: string, changeType: string) => {
           </head>
           <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+          <div style="background: #4A4A4A; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
               <h2 style="color: white; margin: 0; font-size: 20px;">Password Changed</h2>
             </div>
             <div class="email-content" style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
@@ -87,8 +87,8 @@ const getEmailContent = (name: string, changeType: string) => {
           </head>
           <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #1a365d 0%, #2d5a87 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+            <div style="background: #4A4A4A; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
               <h2 style="color: white; margin: 0; font-size: 20px;">Profile Updated</h2>
             </div>
             <div class="email-content" style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
@@ -129,8 +129,8 @@ const getEmailContent = (name: string, changeType: string) => {
           </head>
           <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #065f46 0%, #059669 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+            <div style="background: #4A4A4A; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
               <h2 style="color: white; margin: 0; font-size: 20px;">🔐 2FA Enabled</h2>
             </div>
             <div class="email-content" style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
@@ -176,8 +176,8 @@ const getEmailContent = (name: string, changeType: string) => {
           </head>
           <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+            <div style="background: #4A4A4A; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+              <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
               <h2 style="color: white; margin: 0; font-size: 20px;">⚠️ 2FA Disabled</h2>
             </div>
             <div class="email-content" style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">

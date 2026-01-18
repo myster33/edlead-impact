@@ -191,8 +191,8 @@ serve(async (req: Request): Promise<Response> => {
           </style>
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; background: #f8fafc;">
-          <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-            <img src="https://edlead.lovable.app/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+          <div style="background: #4A4A4A; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
             <h2 style="margin: 0; font-size: 20px;">${period === "monthly" ? "Monthly" : "Weekly"} Performance Report</h2>
             <p style="margin: 5px 0 0; opacity: 0.8; font-size: 14px;">${periodLabel}</p>
           </div>

@@ -42,8 +42,8 @@ const defaultTemplate = {
     </style>
   </head>
   <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-    <div style="background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+    <div style="background: #4A4A4A; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
       <h2 style="margin: 0; font-size: 20px;">Region Assignment</h2>
     </div>
     
