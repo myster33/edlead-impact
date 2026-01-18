@@ -39,8 +39,8 @@ const defaultTemplates: Record<string, { subject: string; html_content: string }
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #f59e0b; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+    <div style="background: #4A4A4A; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
       <h1>Application Under Review</h1>
     </div>
     <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
@@ -88,8 +88,8 @@ const defaultTemplates: Record<string, { subject: string; html_content: string }
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #6b7280; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+    <div style="background: #4A4A4A; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
       <h1>Application Cancelled</h1>
     </div>
     <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
@@ -132,8 +132,8 @@ const defaultTemplates: Record<string, { subject: string; html_content: string }
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #10b981; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+    <div style="background: #4A4A4A; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
       <h1>🎉 Congratulations!</h1>
     </div>
     <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
@@ -181,8 +181,8 @@ const defaultTemplates: Record<string, { subject: string; html_content: string }
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #ef4444; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+    <div style="background: #4A4A4A; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
       <h1>Application Update</h1>
     </div>
     <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">

@@ -29,8 +29,8 @@ const defaultTemplate = {
     :root { color-scheme: light dark; }
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #1e3a5f; color: white; padding: 30px; text-align: center; }
-    .header img { max-width: 280px; height: auto; }
+        .header { background: #4A4A4A; color: white; padding: 30px; text-align: center; }
+        .header img { max-width: 280px; height: auto; }
     .content { padding: 30px; background: #f9f9f9; }
     .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
     h1 { margin: 0; font-size: 24px; }
@@ -49,8 +49,7 @@ const defaultTemplate = {
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD - Transforming Student Leaders" />
-      <h1 style="margin-top: 15px;">Captain Stories</h1>
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" />
     </div>
     <div class="content">
       <h2>Dear {{author_name}},</h2>
