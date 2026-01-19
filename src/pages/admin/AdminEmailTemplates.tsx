@@ -64,10 +64,11 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <div class="email-header" style="background: #4A4A4A; padding: 0; text-align: center;">
-          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="width: 100%; height: auto; display: block;">
-        </div>
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Application Approved!</h2>
+      </div>
       <div style="padding: 30px;">
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{applicant_name}}</strong>,</p>
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Congratulations! 🎉 We are thrilled to inform you that your application to the edLEAD Programme has been <strong style="color: #10b981;">approved</strong>!</p>
@@ -111,10 +112,11 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <div class="email-header" style="background: #4A4A4A; padding: 0; text-align: center;">
-          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="width: 100%; height: auto; display: block;">
-        </div>
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Application Update</h2>
+      </div>
       <div style="padding: 30px;">
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{applicant_name}}</strong>,</p>
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Thank you for your interest in the edLEAD Programme. After careful consideration, we regret to inform you that your application was not successful at this time.</p>
@@ -156,10 +158,11 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <div class="email-header" style="background: #4A4A4A; padding: 0; text-align: center;">
-          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="width: 100%; height: auto; display: block;">
-        </div>
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Story Published!</h2>
+      </div>
       <div style="padding: 30px;">
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{author_name}}</strong>,</p>
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Great news! 🎉 Your story "<strong>{{story_title}}</strong>" has been approved and is now live on the edLEAD blog!</p>
@@ -204,10 +207,11 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <div class="email-header" style="background: #4A4A4A; padding: 0; text-align: center;">
-          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="width: 100%; height: auto; display: block;">
-        </div>
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Message Received</h2>
+      </div>
       <div style="padding: 30px;">
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{name}}</strong>,</p>
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Thank you for reaching out to us. We have received your message and will get back to you as soon as possible.</p>
@@ -251,10 +255,11 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-      <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <div class="email-header" style="background: #4A4A4A; padding: 0; text-align: center;">
-          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="width: 100%; height: auto; display: block;">
-        </div>
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">{{notification_type}}</h2>
+      </div>
       <div style="padding: 30px;">
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Hello <strong>{{admin_name}}</strong>,</p>
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">This is an automated notification from the edLEAD Admin System.</p>
