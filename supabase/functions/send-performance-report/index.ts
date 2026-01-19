@@ -191,10 +191,10 @@ serve(async (req: Request): Promise<Response> => {
           </style>
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; background: #f8fafc;">
-          <div style="background: #4A4A4A; color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+          <div style="padding: 30px; text-align: center;">
             <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
-            <h2 style="margin: 0; font-size: 20px;">${period === "monthly" ? "Monthly" : "Weekly"} Performance Report</h2>
-            <p style="margin: 5px 0 0; opacity: 0.8; font-size: 14px;">${periodLabel}</p>
+            <h2 style="margin: 0; font-size: 20px; color: #1e3a5f;">${period === "monthly" ? "Monthly" : "Weekly"} Performance Report</h2>
+            <p style="margin: 5px 0 0; color: #64748b; font-size: 14px;">${periodLabel}</p>
           </div>
           
           <div class="email-content" style="background: white; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">

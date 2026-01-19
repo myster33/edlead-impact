@@ -29,7 +29,7 @@ const defaultTemplate = {
     :root { color-scheme: light dark; }
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #4A4A4A; color: white; padding: 30px; text-align: center; }
+        .header { padding: 30px; text-align: center; }
         .header img { max-width: 280px; height: auto; }
     .content { padding: 30px; background: #f9f9f9; }
     .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }

@@ -48,9 +48,9 @@ const defaultTemplate = {
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD - Transforming Student Leaders" />
-      <h1>✅ Access Approved!</h1>
+    <div class="header" style="background: transparent; padding: 30px; text-align: center;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+      <h1 style="color: #1e3a5f; margin-top: 15px;">✅ Access Approved!</h1>
     </div>
     <div class="content">
       <p>Great news! Your request to access the <strong>edLEAD Admin Dashboard</strong> has been approved.</p>
