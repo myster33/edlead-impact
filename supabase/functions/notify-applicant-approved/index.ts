@@ -37,11 +37,10 @@ const defaultTemplate = {
 </head>
 <body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-      <div class="email-header" style="background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%); padding: 30px; text-align: center;">
-        <img src="https://edlead.co.za/images/edlead-logo-full.png" alt="edLEAD" style="height: 50px; margin-bottom: 15px;">
-        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Application Approved!</h2>
-      </div>
+      <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div class="email-header" style="background: #4A4A4A; padding: 0; text-align: center;">
+          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="width: 100%; height: auto; display: block;">
+        </div>
       <div style="padding: 30px;">
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{applicant_name}}</strong>,</p>
         <p style="font-size: 16px; line-height: 1.6; color: inherit;">Congratulations! 🎉 We are thrilled to inform you that your application to the edLEAD Programme has been <strong style="color: #10b981;">approved</strong>!</p>
