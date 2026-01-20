@@ -90,7 +90,7 @@ const generateAlertHtml = (
       <div class="email-container" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         
         <!-- Header -->
-        <div style="padding: 20px; text-align: center;">
+        <div style="background-color: #4A4A4A; padding: 20px; text-align: center;">
           <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 180px; height: auto; margin-bottom: 15px;" />
           <div style="background: ${severityColor}; display: inline-block; padding: 4px 12px; border-radius: 4px; margin-bottom: 10px;">
             <span style="color: white; font-size: 12px; font-weight: bold; letter-spacing: 1px;">⚠️ ${severityLabel}</span>

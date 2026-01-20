@@ -48,8 +48,8 @@ const defaultTemplate = {
 </head>
 <body>
   <div class="container">
-    <div class="header" style="background: transparent; padding: 30px; text-align: center;">
-      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+      <div class="header" style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
       <h1 style="color: #1e3a5f; margin-top: 15px;">✅ Access Approved!</h1>
     </div>
     <div class="content">

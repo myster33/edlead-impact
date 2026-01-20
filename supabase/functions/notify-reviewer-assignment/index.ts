@@ -42,9 +42,9 @@ const defaultTemplate = {
     </style>
   </head>
   <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
-    <div style="padding: 30px; text-align: center;">
+    <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
       <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
-      <h2 style="margin: 0; font-size: 20px; color: #1e3a5f;">Region Assignment</h2>
+      <h2 style="margin: 0; font-size: 20px; color: #ffffff;">Region Assignment</h2>
     </div>
     
     <div class="email-content" style="background: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; border-top: none;">
