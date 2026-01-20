@@ -415,7 +415,7 @@ const handler = async (req: Request): Promise<Response> => {
       </head>
       <body>
         <div class="container">
-          <div class="header">
+          <div class="header" style="background-color: #4A4A4A;">
             <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" />
           </div>
           <div class="content">

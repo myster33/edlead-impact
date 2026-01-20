@@ -37,7 +37,7 @@ const defaultTemplate = {
 </head>
 <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-  <div style="padding: 30px; text-align: center;">
+  <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
     <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
   </div>
   

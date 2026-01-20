@@ -153,9 +153,9 @@ const handler = async (req: Request): Promise<Response> => {
       </head>
       <body>
         <div class="container">
-          <div class="header">
+          <div class="header" style="background-color: #4A4A4A;">
             <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" />
-            <h1 style="margin-top: 15px; color: #1e3a5f;">New Contact Form Submission</h1>
+            <h1 style="margin-top: 15px; color: #ffffff;">New Contact Form Submission</h1>
           </div>
           <div class="content">
             <div class="highlight">
@@ -220,7 +220,7 @@ const handler = async (req: Request): Promise<Response> => {
       </head>
       <body>
         <div class="container">
-          <div class="header">
+          <div class="header" style="background-color: #4A4A4A;">
             <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" />
           </div>
           <div class="content">
