@@ -150,7 +150,7 @@ const generateDigestHtml = (
         
         <!-- Header -->
         <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
-          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+          <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;" />
           <h2 style="color: #ffffff; margin: 0; font-size: 20px;">Weekly Audit Log Digest</h2>
           <p style="color: #64748b; margin: 10px 0 0 0; font-size: 14px;">
             ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

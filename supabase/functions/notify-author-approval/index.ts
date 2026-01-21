@@ -38,7 +38,7 @@ const defaultTemplate = {
 <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
-    <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+    <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 196px; height: auto;" />
   </div>
   
   <div class="email-content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">

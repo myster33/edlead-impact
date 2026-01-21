@@ -30,7 +30,7 @@ const defaultTemplate = {
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-    .header img { max-width: 280px; height: auto; margin-bottom: 15px; }
+    .header img { max-width: 196px; height: auto; margin-bottom: 15px; }
     .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
     .highlight { background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; }
     .button { display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
@@ -49,7 +49,7 @@ const defaultTemplate = {
 <body>
   <div class="container">
       <div class="header" style="background-color: #4A4A4A; padding: 30px; text-align: center;">
-        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 280px; height: auto;" />
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD - Transforming Student Leaders" style="max-width: 196px; height: auto;" />
       <h1 style="color: #1e3a5f; margin-top: 15px;">✅ Access Approved!</h1>
     </div>
     <div class="content">

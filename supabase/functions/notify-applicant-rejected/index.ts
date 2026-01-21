@@ -38,7 +38,7 @@ const defaultTemplate = {
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
       <div class="email-header" style="background-color: #4A4A4A; padding: 30px; text-align: center;">
-        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
         <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Application Update</h2>
       </div>
       <div style="padding: 30px;">
