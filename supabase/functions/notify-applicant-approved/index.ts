@@ -39,7 +39,7 @@ const defaultTemplate = {
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
       <div class="email-header" style="background-color: #4A4A4A; padding: 30px; text-align: center;">
-        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 280px; height: auto; margin-bottom: 15px;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
         <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Application Approved!</h2>
       </div>
       <div style="padding: 30px;">
@@ -52,7 +52,7 @@ const defaultTemplate = {
         <p class="text-gray" style="font-size: 14px; color: #6b7280; margin-top: 30px;">Best regards,<br><strong>The edLEAD Team</strong></p>
       </div>
       <div class="border-gray" style="border-top: 1px solid #e5e7eb; padding: 20px; text-align: center;">
-        <p class="text-gray" style="font-size: 12px; color: #9ca3af; margin: 0;">© 2025 edLEAD Programme. All rights reserved.</p>
+        <p class="text-gray" style="font-size: 12px; color: #9ca3af; margin: 0;">© 2026 edLEAD Programme. All rights reserved.</p>
       </div>
     </div>
   </div>
