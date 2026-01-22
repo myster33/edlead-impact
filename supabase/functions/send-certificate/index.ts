@@ -315,7 +315,7 @@ async function generateCertificatePDF(
   
   // Add QR code to the bottom right corner
   try {
-    const qrBytes = await generateQRCode("https://www.edlead.co.za");
+    const qrBytes = await generateQRCode("https://edlead.co");
     if (qrBytes) {
       const qrImage = await pdfDoc.embedPng(qrBytes);
       const qrSize = 55;
@@ -329,14 +329,6 @@ async function generateCertificatePDF(
         height: qrSize,
       });
       
-      // Add small text below QR code
-      page.drawText("www.edlead.co.za", {
-        x: qrX - 5,
-        y: qrY - 10,
-        size: 7,
-        font: helvetica,
-        color: lightGray,
-      });
       console.log("QR code embedded successfully");
     }
   } catch (e) {
