@@ -14,3 +14,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://edlead.co.za/sitemap.xml
+Sitemap: https://edlead.co/sitemap-co.xml
