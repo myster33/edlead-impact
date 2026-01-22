@@ -628,7 +628,7 @@ export default function AdminApplications() {
 
     const headers = [
       "Reference", "Full Name", "Email", "Phone", "Date of Birth", "Gender",
-      "Grade", "School Name", "School Address", "Province", "Parent Name",
+      "Grade", "School Name", "School Address", "Province", "Cohort", "Parent Name",
       "Parent Email", "Parent Phone", "Nominating Teacher", "Status", "Submitted Date"
     ];
 
@@ -652,6 +652,7 @@ export default function AdminApplications() {
       escapeCSV(app.school_name),
       escapeCSV(app.school_address),
       escapeCSV(app.province),
+      escapeCSV(getCohortName(app.cohort_id)),
       escapeCSV(app.parent_name),
       escapeCSV(app.parent_email),
       escapeCSV(app.parent_phone),
@@ -701,6 +702,10 @@ export default function AdminApplications() {
     const filters = [];
     if (statusFilter !== "all") filters.push(`Status: ${statusFilter}`);
     if (provinceFilter !== "all") filters.push(`Province: ${provinceFilter}`);
+    if (cohortFilter !== "all") {
+      const cohortName = cohortFilter === "unassigned" ? "Unassigned" : getCohortName(cohortFilter);
+      filters.push(`Cohort: ${cohortName}`);
+    }
     if (startDate) filters.push(`From: ${format(startDate, "dd/MM/yyyy")}`);
     if (endDate) filters.push(`To: ${format(endDate, "dd/MM/yyyy")}`);
     if (filters.length > 0) {
@@ -714,26 +719,28 @@ export default function AdminApplications() {
       app.school_name,
       app.grade,
       app.province,
+      getCohortName(app.cohort_id),
       app.status.charAt(0).toUpperCase() + app.status.slice(1),
       new Date(app.created_at).toLocaleDateString("en-ZA")
     ]);
 
     autoTable(doc, {
       startY: filters.length > 0 ? 48 : 42,
-      head: [["Ref", "Name", "Email", "School", "Grade", "Province", "Status", "Date"]],
+      head: [["Ref", "Name", "Email", "School", "Grade", "Province", "Cohort", "Status", "Date"]],
       body: tableData,
       headStyles: { fillColor: [30, 64, 175] },
       alternateRowStyles: { fillColor: [245, 247, 250] },
-      styles: { fontSize: 8, cellPadding: 2 },
+      styles: { fontSize: 7, cellPadding: 2 },
       columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 35 },
-        2: { cellWidth: 45 },
-        3: { cellWidth: 40 },
-        4: { cellWidth: 15 },
-        5: { cellWidth: 30 },
-        6: { cellWidth: 20 },
-        7: { cellWidth: 22 }
+        0: { cellWidth: 18 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 40 },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 12 },
+        5: { cellWidth: 25 },
+        6: { cellWidth: 25 },
+        7: { cellWidth: 18 },
+        8: { cellWidth: 20 }
       }
     });
 
