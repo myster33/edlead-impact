@@ -92,6 +92,15 @@ interface Application {
   project_idea?: string;
   why_edlead?: string;
   leadership_meaning?: string;
+  cohort_id?: string;
+}
+
+interface Cohort {
+  id: string;
+  name: string;
+  year: number;
+  cohort_number: number;
+  is_active: boolean;
 }
 
 const getAdminRegionInfo = (adminUser: any) => {
@@ -117,6 +126,8 @@ export default function AdminApplications() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [provinceFilter, setProvinceFilter] = useState<string>("all");
+  const [cohortFilter, setCohortFilter] = useState<string>("all");
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -140,11 +151,27 @@ export default function AdminApplications() {
 
   useEffect(() => {
     fetchApplications();
+    fetchCohorts();
   }, [adminUser]);
 
   useEffect(() => {
     filterApplications();
-  }, [applications, searchTerm, statusFilter, provinceFilter, startDate, endDate]);
+  }, [applications, searchTerm, statusFilter, provinceFilter, cohortFilter, startDate, endDate]);
+
+  const fetchCohorts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("cohorts")
+        .select("id, name, year, cohort_number, is_active")
+        .order("year", { ascending: false })
+        .order("cohort_number", { ascending: false });
+      
+      if (error) throw error;
+      setCohorts(data || []);
+    } catch (error) {
+      console.error("Error fetching cohorts:", error);
+    }
+  };
 
   const fetchApplications = async () => {
     setIsLoading(true);
@@ -199,6 +226,14 @@ export default function AdminApplications() {
 
     if (provinceFilter !== "all") {
       filtered = filtered.filter((app) => app.province === provinceFilter);
+    }
+
+    if (cohortFilter !== "all") {
+      if (cohortFilter === "unassigned") {
+        filtered = filtered.filter((app) => !app.cohort_id);
+      } else {
+        filtered = filtered.filter((app) => app.cohort_id === cohortFilter);
+      }
     }
 
     if (startDate) {
@@ -664,6 +699,20 @@ export default function AdminApplications() {
                     </SelectContent>
                   </Select>
                 )}
+                <Select value={cohortFilter} onValueChange={setCohortFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Cohort" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Cohorts</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {cohorts.map((cohort) => (
+                      <SelectItem key={cohort.id} value={cohort.id}>
+                        {cohort.name} {cohort.is_active && "(Active)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               {/* Date Range Filter */}
