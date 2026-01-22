@@ -1,0 +1,21 @@
+{
+  "name": "edLEAD",
+  "short_name": "edLEAD",
+  "description": "A national youth leadership programme equipping high school learners with leadership, academic, and social skills to transform their schools and communities.",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#F97316",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}
