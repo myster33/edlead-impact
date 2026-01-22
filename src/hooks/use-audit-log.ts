@@ -19,7 +19,9 @@ export type AuditAction =
   | "profile_updated"
   | "password_changed"
   | "mfa_enabled"
-  | "mfa_disabled";
+  | "mfa_disabled"
+  | "parent_emails_enabled"
+  | "parent_emails_disabled";
 
 // Actions that trigger instant critical alerts
 const criticalActions: AuditAction[] = [

@@ -440,6 +440,16 @@ const handler = async (req: Request): Promise<Response> => {
     const designSettings = template.design_settings as any;
     const backgroundImageUrl = designSettings?.backgroundImageUrl;
 
+    // Check if parent emails are enabled globally
+    const { data: settingsData } = await supabase
+      .from("system_settings")
+      .select("setting_value")
+      .eq("setting_key", "parent_emails_enabled")
+      .maybeSingle();
+    
+    const parentEmailsEnabled = settingsData?.setting_value === true || settingsData?.setting_value === "true";
+    console.log(`Parent emails enabled: ${parentEmailsEnabled}`);
+
     // Format the cohort end date for display
     const cohortEndDate = formatDate(cohort.end_date);
 
@@ -557,8 +567,8 @@ const handler = async (req: Request): Promise<Response> => {
 
         let parentSent = false;
         
-        // Send parent email if parent email is provided and different from learner
-        if (app.parent_email && app.parent_email.trim() !== "" && app.parent_email !== app.student_email) {
+        // Send parent email if parent emails are enabled, and parent email is provided and different from learner
+        if (parentEmailsEnabled && app.parent_email && app.parent_email.trim() !== "" && app.parent_email !== app.student_email) {
           const parentName = app.parent_name && app.parent_name.trim() !== "" ? app.parent_name : "Parent/Guardian";
           
           const parentEmailHtml = `
@@ -657,6 +667,8 @@ const handler = async (req: Request): Promise<Response> => {
           } else {
             console.error(`Failed to send certificate to parent: ${app.parent_email}`, parentResult.error);
           }
+        } else if (!parentEmailsEnabled && app.parent_email) {
+          console.log("Parent emails are disabled globally, skipping parent notification");
         }
 
         if (learnerResult.success) {
