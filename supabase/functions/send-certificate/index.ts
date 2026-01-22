@@ -9,6 +9,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper to encode large Uint8Array to base64 without stack overflow
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000; // 32KB chunks
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+    binary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  return btoa(binary);
+}
+
 interface CertificateRequest {
   recipientIds: string[];
   templateId: string;
@@ -269,9 +280,9 @@ async function generateCertificatePDF(
     color: lightGray,
   });
   
-  // Serialize the PDF and convert to base64
+  // Serialize the PDF and convert to base64 using chunked encoding
   const pdfBytes = await pdfDoc.save();
-  return btoa(String.fromCharCode(...pdfBytes));
+  return uint8ArrayToBase64(pdfBytes);
 }
 
 const handler = async (req: Request): Promise<Response> => {
