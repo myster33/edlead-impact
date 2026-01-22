@@ -66,6 +66,7 @@ import {
   CalendarIcon,
   X,
   MapPin,
+  Users,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -479,6 +480,73 @@ export default function AdminApplications() {
         return <Badge variant="outline" className="bg-muted">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">Pending</Badge>;
+    }
+  };
+
+  const getCohortName = (cohortId: string | undefined) => {
+    if (!cohortId) return "Unassigned";
+    const cohort = cohorts.find(c => c.id === cohortId);
+    return cohort ? cohort.name : "Unknown";
+  };
+
+  const updateApplicationCohort = async (applicationId: string, cohortId: string | null) => {
+    if (!adminUser || adminUser.role !== "admin") {
+      toast({
+        title: "Permission Denied",
+        description: "Only admins can change cohort assignments.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ cohort_id: cohortId })
+        .eq("id", applicationId);
+
+      if (error) throw error;
+
+      const application = applications.find(app => app.id === applicationId);
+      const oldCohortName = getCohortName(application?.cohort_id);
+      const newCohortName = cohortId ? getCohortName(cohortId) : "Unassigned";
+
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === applicationId ? { ...app, cohort_id: cohortId || undefined } : app
+        )
+      );
+
+      if (selectedApplication?.id === applicationId) {
+        setSelectedApplication({ ...selectedApplication, cohort_id: cohortId || undefined });
+      }
+
+      logAction({
+        action: "cohort_assigned" as any,
+        table_name: "applications",
+        record_id: applicationId,
+        old_values: { cohort: oldCohortName },
+        new_values: { 
+          cohort: newCohortName,
+          full_name: application?.full_name,
+          reference_number: application?.reference_number 
+        },
+      });
+
+      toast({
+        title: "Cohort Updated",
+        description: `Application assigned to ${newCohortName}.`,
+      });
+    } catch (error) {
+      console.error("Error updating cohort:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update cohort. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -1071,6 +1139,37 @@ export default function AdminApplications() {
                     <p className="text-sm text-muted-foreground">{selectedApplication.leadership_meaning}</p>
                   </div>
                 )}
+                {/* Cohort Assignment */}
+                <div className="col-span-full pt-4 border-t">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Cohort:</span>
+                    </div>
+                    {adminUser?.role === "admin" ? (
+                      <Select 
+                        value={selectedApplication.cohort_id || "unassigned"} 
+                        onValueChange={(value) => updateApplicationCohort(selectedApplication.id, value === "unassigned" ? null : value)}
+                        disabled={isUpdating}
+                      >
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select cohort" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
+                          {cohorts.map((cohort) => (
+                            <SelectItem key={cohort.id} value={cohort.id}>
+                              {cohort.name} {cohort.is_active && "(Active)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="outline">{getCohortName(selectedApplication.cohort_id)}</Badge>
+                    )}
+                  </div>
+                </div>
+
                 <div className="col-span-full flex justify-between items-center pt-4 border-t">
                   <div>
                     <span className="text-sm text-muted-foreground mr-2">Status:</span>
