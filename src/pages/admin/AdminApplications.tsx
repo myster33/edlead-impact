@@ -550,6 +550,72 @@ export default function AdminApplications() {
     }
   };
 
+  const bulkAssignCohort = async (cohortId: string | null) => {
+    if (!adminUser || adminUser.role !== "admin") {
+      toast({
+        title: "Permission Denied",
+        description: "Only admins can change cohort assignments.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedIds.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select applications to assign.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      
+      const { error } = await supabase
+        .from("applications")
+        .update({ cohort_id: cohortId })
+        .in("id", idsArray);
+
+      if (error) throw error;
+
+      setApplications((prev) =>
+        prev.map((app) =>
+          selectedIds.has(app.id) ? { ...app, cohort_id: cohortId || undefined } : app
+        )
+      );
+
+      const cohortName = cohortId ? getCohortName(cohortId) : "Unassigned";
+
+      logAction({
+        action: "bulk_cohort_assigned" as any,
+        table_name: "applications",
+        record_id: idsArray[0],
+        new_values: { 
+          cohort: cohortName,
+          count: idsArray.length 
+        },
+      });
+
+      setSelectedIds(new Set());
+
+      toast({
+        title: "Cohort Assignment Complete",
+        description: `${idsArray.length} applications assigned to ${cohortName}.`,
+      });
+    } catch (error) {
+      console.error("Error assigning cohort:", error);
+      toast({
+        title: "Error",
+        description: "Failed to assign cohort. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const exportToCSV = () => {
     if (filteredApplications.length === 0) {
       toast({
@@ -860,7 +926,7 @@ export default function AdminApplications() {
                   <CheckSquare className="h-5 w-5 text-primary" />
                   <span className="font-medium">{selectedIds.size} selected</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     size="sm"
                     variant="default"
@@ -880,6 +946,22 @@ export default function AdminApplications() {
                     {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
                     Reject Selected
                   </Button>
+                  {adminUser?.role === "admin" && (
+                    <Select onValueChange={(value) => bulkAssignCohort(value === "unassigned" ? null : value)} disabled={isUpdating}>
+                      <SelectTrigger className="w-[180px] h-8">
+                        <Users className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Assign Cohort" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Unassign Cohort</SelectItem>
+                        {cohorts.map((cohort) => (
+                          <SelectItem key={cohort.id} value={cohort.id}>
+                            {cohort.name} {cohort.is_active && "(Active)"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -933,6 +1015,7 @@ export default function AdminApplications() {
                         <TableHead className="hidden md:table-cell">School</TableHead>
                         <TableHead className="hidden sm:table-cell">Grade</TableHead>
                         <TableHead className="hidden lg:table-cell">Province</TableHead>
+                        <TableHead className="hidden xl:table-cell">Cohort</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="hidden sm:table-cell">Date</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -961,6 +1044,11 @@ export default function AdminApplications() {
                           <TableCell className="hidden md:table-cell">{app.school_name}</TableCell>
                           <TableCell className="hidden sm:table-cell">{app.grade}</TableCell>
                           <TableCell className="hidden lg:table-cell">{app.province}</TableCell>
+                          <TableCell className="hidden xl:table-cell">
+                            <Badge variant="outline" className="text-xs">
+                              {getCohortName(app.cohort_id)}
+                            </Badge>
+                          </TableCell>
                           <TableCell>{getStatusBadge(app.status)}</TableCell>
                           <TableCell className="hidden sm:table-cell">
                             {new Date(app.created_at).toLocaleDateString("en-ZA")}
