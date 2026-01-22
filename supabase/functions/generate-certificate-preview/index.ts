@@ -259,14 +259,27 @@ async function generateCertificatePDF(
     color: lightGray,
   });
   
-  // Add QR code to the top right corner of the content area
+  // Add reference number at top right corner
+  if (referenceNumber) {
+    const refText = `Ref: ${referenceNumber}`;
+    const refWidth = helvetica.widthOfTextAtSize(refText, 8);
+    page.drawText(refText, {
+      x: width - refWidth - 25,
+      y: height - 25,
+      size: 8,
+      font: helvetica,
+      color: lightGray,
+    });
+  }
+  
+  // Add QR code to the bottom right corner
   try {
     const qrBytes = await generateQRCode("https://www.edlead.co.za");
     if (qrBytes) {
       const qrImage = await pdfDoc.embedPng(qrBytes);
       const qrSize = 55;
       const qrX = width - qrSize - 25;
-      const qrY = height - qrSize - 25;
+      const qrY = 25;
       
       page.drawImage(qrImage, {
         x: qrX,
@@ -287,19 +300,6 @@ async function generateCertificatePDF(
     }
   } catch (e) {
     console.log("Could not embed QR code:", e);
-  }
-  
-  // Add reference number below QR code (top right area)
-  if (referenceNumber) {
-    const refText = `Ref: ${referenceNumber}`;
-    const refWidth = helvetica.widthOfTextAtSize(refText, 8);
-    page.drawText(refText, {
-      x: width - refWidth - 25,
-      y: height - 95,
-      size: 8,
-      font: helvetica,
-      color: lightGray,
-    });
   }
   
   // Serialize the PDF
