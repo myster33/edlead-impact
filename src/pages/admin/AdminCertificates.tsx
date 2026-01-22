@@ -163,6 +163,7 @@ export default function AdminCertificates() {
   const [applicationSearchTerm, setApplicationSearchTerm] = useState("");
   const [showApplicationPreview, setShowApplicationPreview] = useState<Application | null>(null);
   const [bulkCohortAssign, setBulkCohortAssign] = useState<string>("");
+  const [showUnassignedOnly, setShowUnassignedOnly] = useState(false);
   const [designSettings, setDesignSettings] = useState<DesignSettings>({
     primaryColor: "#ED7621",
     secondaryColor: "#4A4A4A",
@@ -681,8 +682,12 @@ export default function AdminCertificates() {
     (app) => !existingRecipients?.some((r) => r.application_id === app.id)
   );
 
-  // Filter all approved applications based on search term
+  // Filter all approved applications based on search term and unassigned filter
   const filteredAllApprovedApplications = allApprovedApplications?.filter((app) => {
+    // Filter by unassigned only
+    if (showUnassignedOnly && app.cohort_id) return false;
+    
+    // Filter by search term
     if (!applicationSearchTerm) return true;
     const term = applicationSearchTerm.toLowerCase();
     return (
@@ -1144,14 +1149,26 @@ export default function AdminCertificates() {
                         <Users className="h-4 w-4" />
                         All Approved Applications
                       </h3>
-                      <div className="relative w-64">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search applications..."
-                          value={applicationSearchTerm}
-                          onChange={(e) => setApplicationSearchTerm(e.target.value)}
-                          className="pl-9"
-                        />
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="unassigned-filter"
+                            checked={showUnassignedOnly}
+                            onCheckedChange={setShowUnassignedOnly}
+                          />
+                          <Label htmlFor="unassigned-filter" className="text-sm cursor-pointer">
+                            Unassigned only
+                          </Label>
+                        </div>
+                        <div className="relative w-64">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="Search applications..."
+                            value={applicationSearchTerm}
+                            onChange={(e) => setApplicationSearchTerm(e.target.value)}
+                            className="pl-9"
+                          />
+                        </div>
                       </div>
                     </div>
                     
