@@ -60,6 +60,9 @@ import {
   Trash2,
   CheckCircle2,
   Clock,
+  RefreshCw,
+  Download,
+  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -119,6 +122,10 @@ export default function AdminCertificates() {
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
   const [editingTemplate, setEditingTemplate] = useState<CertificateTemplate | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [showResendConfirm, setShowResendConfirm] = useState(false);
+  const [selectedForResend, setSelectedForResend] = useState<string[]>([]);
 
   // Cohort form state
   const [cohortForm, setCohortForm] = useState({
@@ -345,6 +352,101 @@ export default function AdminCertificates() {
       toast.error(error.message || "Failed to send certificates");
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // Resend certificates to failed/sent recipients
+  const resendCertificates = async () => {
+    if (!selectedCohort || !selectedTemplate || selectedForResend.length === 0) {
+      toast.error("Please select recipients to resend");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // Reset email_sent status for selected recipients
+      const { error: resetError } = await supabase
+        .from("certificate_recipients")
+        .update({ email_sent: false, email_sent_at: null })
+        .in("id", selectedForResend);
+
+      if (resetError) throw resetError;
+
+      const { data, error } = await supabase.functions.invoke("send-certificate", {
+        body: {
+          recipientIds: selectedForResend,
+          templateId: selectedTemplate,
+          cohortId: selectedCohort,
+          completionDate: format(new Date(completionDate), "MMMM d, yyyy"),
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(data.message || "Certificates resent successfully!");
+      queryClient.invalidateQueries({ queryKey: ["certificate-recipients", selectedCohort] });
+      setSelectedForResend([]);
+      setShowResendConfirm(false);
+    } catch (error: any) {
+      console.error("Error resending certificates:", error);
+      toast.error(error.message || "Failed to resend certificates");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // Generate PDF preview
+  const generatePdfPreview = async () => {
+    setIsGeneratingPreview(true);
+    setPreviewPdfUrl(null);
+    
+    try {
+      const cohort = cohorts?.find((c) => c.id === selectedCohort);
+      
+      const { data, error } = await supabase.functions.invoke("generate-certificate-preview", {
+        body: {
+          fullName: "John Doe",
+          schoolName: "Sample High School",
+          province: "Gauteng",
+          country: "South Africa",
+          cohortName: cohort?.name || "Cohort 2026-1",
+          completionDate: format(new Date(completionDate), "MMMM d, yyyy"),
+        },
+      });
+
+      if (error) throw error;
+
+      // Convert base64 to blob URL
+      const pdfBlob = base64ToBlob(data.pdf, "application/pdf");
+      const url = URL.createObjectURL(pdfBlob);
+      setPreviewPdfUrl(url);
+      setShowPreviewDialog(true);
+    } catch (error: any) {
+      console.error("Error generating preview:", error);
+      toast.error(error.message || "Failed to generate preview");
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
+
+  // Helper to convert base64 to Blob
+  const base64ToBlob = (base64: string, mimeType: string): Blob => {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+  };
+
+  // Download preview PDF
+  const downloadPreviewPdf = () => {
+    if (previewPdfUrl) {
+      const link = document.createElement("a");
+      link.href = previewPdfUrl;
+      link.download = "edLEAD_Certificate_Preview.pdf";
+      link.click();
     }
   };
 
@@ -784,10 +886,15 @@ export default function AdminCertificates() {
                 {selectedTemplate && (
                   <Button
                     variant="outline"
-                    onClick={() => setShowPreviewDialog(true)}
+                    onClick={generatePdfPreview}
+                    disabled={isGeneratingPreview}
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview Certificate
+                    {isGeneratingPreview ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Eye className="h-4 w-4 mr-2" />
+                    )}
+                    Preview Certificate PDF
                   </Button>
                 )}
 
@@ -887,6 +994,7 @@ export default function AdminCertificates() {
                           <TableHeader>
                             <TableRow>
                               <TableHead className="w-12"></TableHead>
+                              <TableHead className="w-12">Resend</TableHead>
                               <TableHead>Name</TableHead>
                               <TableHead>Email</TableHead>
                               <TableHead>Status</TableHead>
@@ -909,6 +1017,21 @@ export default function AdminCertificates() {
                                       }
                                     }}
                                     disabled={recipient.email_sent}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Checkbox
+                                    checked={selectedForResend.includes(recipient.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedForResend([...selectedForResend, recipient.id]);
+                                      } else {
+                                        setSelectedForResend(
+                                          selectedForResend.filter((id) => id !== recipient.id)
+                                        );
+                                      }
+                                    }}
+                                    disabled={!recipient.email_sent}
                                   />
                                 </TableCell>
                                 <TableCell className="font-medium">
@@ -937,21 +1060,55 @@ export default function AdminCertificates() {
                             ))}
                           </TableBody>
                         </Table>
-                        <div className="flex justify-end mt-4">
-                          <Button
-                            onClick={() => setShowSendConfirm(true)}
-                            disabled={
-                              selectedRecipients.length === 0 ||
-                              !selectedRecipients.some((id) =>
+                        <div className="flex justify-between items-center mt-4">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="select-all-sent"
+                              checked={
+                                existingRecipients.filter((r) => r.email_sent).length > 0 &&
+                                existingRecipients
+                                  .filter((r) => r.email_sent)
+                                  .every((r) => selectedForResend.includes(r.id))
+                              }
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedForResend(
+                                    existingRecipients.filter((r) => r.email_sent).map((r) => r.id)
+                                  );
+                                } else {
+                                  setSelectedForResend([]);
+                                }
+                              }}
+                            />
+                            <Label htmlFor="select-all-sent" className="text-sm">
+                              Select all sent for resend
+                            </Label>
+                          </div>
+                          <div className="flex gap-2">
+                            {selectedForResend.length > 0 && (
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowResendConfirm(true)}
+                              >
+                                <RefreshCw className="h-4 w-4 mr-2" />
+                                Resend ({selectedForResend.length})
+                              </Button>
+                            )}
+                            <Button
+                              onClick={() => setShowSendConfirm(true)}
+                              disabled={
+                                selectedRecipients.length === 0 ||
+                                !selectedRecipients.some((id) =>
+                                  existingRecipients.some((r) => r.id === id && !r.email_sent)
+                                )
+                              }
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              Send Certificates ({selectedRecipients.filter((id) =>
                                 existingRecipients.some((r) => r.id === id && !r.email_sent)
-                              )
-                            }
-                          >
-                            <Send className="h-4 w-4 mr-2" />
-                            Send Certificates ({selectedRecipients.filter((id) =>
-                              existingRecipients.some((r) => r.id === id && !r.email_sent)
-                            ).length})
-                          </Button>
+                              ).length})
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -962,16 +1119,42 @@ export default function AdminCertificates() {
           </TabsContent>
         </Tabs>
 
-        {/* Preview Dialog */}
-        <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+        {/* Preview Dialog - PDF Preview */}
+        <Dialog open={showPreviewDialog} onOpenChange={(open) => {
+          setShowPreviewDialog(open);
+          if (!open && previewPdfUrl) {
+            URL.revokeObjectURL(previewPdfUrl);
+            setPreviewPdfUrl(null);
+          }
+        }}>
+          <DialogContent className="max-w-5xl max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Certificate Preview</DialogTitle>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Certificate PDF Preview</span>
+                {previewPdfUrl && (
+                  <Button variant="outline" size="sm" onClick={downloadPreviewPdf}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                )}
+              </DialogTitle>
             </DialogHeader>
-            <div
-              className="border rounded-lg overflow-hidden"
-              dangerouslySetInnerHTML={{ __html: getPreviewHtml() }}
-            />
+            {previewPdfUrl ? (
+              <div className="border rounded-lg overflow-hidden h-[70vh]">
+                <iframe
+                  src={previewPdfUrl}
+                  className="w-full h-full"
+                  title="Certificate Preview"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+                <div className="text-center">
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No preview available. Click "Preview Certificate PDF" to generate.</p>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
 
@@ -1000,6 +1183,36 @@ export default function AdminCertificates() {
                   <>
                     <Mail className="h-4 w-4 mr-2" />
                     Send Certificates
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Resend Confirmation Dialog */}
+        <AlertDialog open={showResendConfirm} onOpenChange={setShowResendConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Resend Certificates?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You are about to resend certificates to {selectedForResend.length} recipients 
+                who have already received their certificates. This is useful if emails bounced 
+                or failed to deliver. Each will receive a new email with their certificate PDF attached.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isSending}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={resendCertificates} disabled={isSending}>
+                {isSending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Resending...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Resend Certificates
                   </>
                 )}
               </AlertDialogAction>
