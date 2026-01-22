@@ -439,39 +439,60 @@ export type Database = {
       certificate_recipients: {
         Row: {
           application_id: string
+          certificate_downloaded: boolean | null
+          certificate_downloaded_at: string | null
           certificate_url: string | null
           cohort_id: string
           created_at: string
+          download_count: number | null
+          email_opened: boolean | null
+          email_opened_at: string | null
           email_sent: boolean
           email_sent_at: string | null
           id: string
           issued_at: string | null
           issued_by: string | null
+          open_count: number | null
           template_id: string
+          tracking_id: string | null
         }
         Insert: {
           application_id: string
+          certificate_downloaded?: boolean | null
+          certificate_downloaded_at?: string | null
           certificate_url?: string | null
           cohort_id: string
           created_at?: string
+          download_count?: number | null
+          email_opened?: boolean | null
+          email_opened_at?: string | null
           email_sent?: boolean
           email_sent_at?: string | null
           id?: string
           issued_at?: string | null
           issued_by?: string | null
+          open_count?: number | null
           template_id: string
+          tracking_id?: string | null
         }
         Update: {
           application_id?: string
+          certificate_downloaded?: boolean | null
+          certificate_downloaded_at?: string | null
           certificate_url?: string | null
           cohort_id?: string
           created_at?: string
+          download_count?: number | null
+          email_opened?: boolean | null
+          email_opened_at?: string | null
           email_sent?: boolean
           email_sent_at?: string | null
           id?: string
           issued_at?: string | null
           issued_by?: string | null
+          open_count?: number | null
           template_id?: string
+          tracking_id?: string | null
         }
         Relationships: [
           {
@@ -502,6 +523,7 @@ export type Database = {
           available_fields: Json
           created_at: string
           created_by: string | null
+          design_settings: Json | null
           html_template: string
           id: string
           is_default: boolean
@@ -512,6 +534,7 @@ export type Database = {
           available_fields?: Json
           created_at?: string
           created_by?: string | null
+          design_settings?: Json | null
           html_template: string
           id?: string
           is_default?: boolean
@@ -522,6 +545,7 @@ export type Database = {
           available_fields?: Json
           created_at?: string
           created_by?: string | null
+          design_settings?: Json | null
           html_template?: string
           id?: string
           is_default?: boolean
