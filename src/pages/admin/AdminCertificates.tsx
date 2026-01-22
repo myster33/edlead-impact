@@ -162,6 +162,7 @@ export default function AdminCertificates() {
   const [browseAllApplications, setBrowseAllApplications] = useState(false);
   const [applicationSearchTerm, setApplicationSearchTerm] = useState("");
   const [showApplicationPreview, setShowApplicationPreview] = useState<Application | null>(null);
+  const [bulkCohortAssign, setBulkCohortAssign] = useState<string>("");
   const [designSettings, setDesignSettings] = useState<DesignSettings>({
     primaryColor: "#ED7621",
     secondaryColor: "#4A4A4A",
@@ -431,6 +432,46 @@ export default function AdminCertificates() {
       setIsUploadingBackground(false);
     }
   };
+  // Assign cohort to a single application
+  const assignCohortMutation = useMutation({
+    mutationFn: async ({ applicationId, cohortId }: { applicationId: string; cohortId: string }) => {
+      const { error } = await supabase
+        .from("applications")
+        .update({ cohort_id: cohortId })
+        .eq("id", applicationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-approved-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["cohort-applications"] });
+      toast.success("Cohort assigned successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to assign cohort");
+    },
+  });
+
+  // Bulk assign cohort to multiple applications
+  const bulkAssignCohortMutation = useMutation({
+    mutationFn: async ({ applicationIds, cohortId }: { applicationIds: string[]; cohortId: string }) => {
+      const { error } = await supabase
+        .from("applications")
+        .update({ cohort_id: cohortId })
+        .in("id", applicationIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["all-approved-applications"] });
+      queryClient.invalidateQueries({ queryKey: ["cohort-applications"] });
+      toast.success("Cohort assigned to selected applications");
+      setSelectedRecipients([]);
+      setBulkCohortAssign("");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to assign cohort");
+    },
+  });
+
   const addRecipientsMutation = useMutation({
     mutationFn: async (applicationIds: string[]) => {
       const recipients = applicationIds.map((appId) => ({
@@ -1147,9 +1188,44 @@ export default function AdminCertificates() {
                             <Label htmlFor="select-all-browse">Select All ({filteredAllApprovedApplications.length})</Label>
                           </div>
                           {selectedRecipients.length > 0 && (
-                            <Badge variant="secondary">
-                              {selectedRecipients.length} selected
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">
+                                {selectedRecipients.length} selected
+                              </Badge>
+                              <Select
+                                value={bulkCohortAssign}
+                                onValueChange={setBulkCohortAssign}
+                              >
+                                <SelectTrigger className="w-48">
+                                  <SelectValue placeholder="Assign to cohort..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {cohorts?.map((cohort) => (
+                                    <SelectItem key={cohort.id} value={cohort.id}>
+                                      {cohort.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {bulkCohortAssign && (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() =>
+                                    bulkAssignCohortMutation.mutate({
+                                      applicationIds: selectedRecipients,
+                                      cohortId: bulkCohortAssign,
+                                    })
+                                  }
+                                  disabled={bulkAssignCohortMutation.isPending}
+                                >
+                                  {bulkAssignCohortMutation.isPending && (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  )}
+                                  Assign Cohort
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
                         <div className="max-h-96 overflow-y-auto border rounded-md">
@@ -1161,7 +1237,7 @@ export default function AdminCertificates() {
                                 <TableHead>Email</TableHead>
                                 <TableHead>School</TableHead>
                                 <TableHead>Province</TableHead>
-                                <TableHead>Current Cohort</TableHead>
+                                <TableHead>Assign Cohort</TableHead>
                                 <TableHead className="w-12">View</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1187,9 +1263,26 @@ export default function AdminCertificates() {
                                   <TableCell className="text-sm">{app.school_name}</TableCell>
                                   <TableCell className="text-sm">{app.province}</TableCell>
                                   <TableCell>
-                                    <Badge variant="outline" className="text-xs">
-                                      {getCohortName(app.cohort_id)}
-                                    </Badge>
+                                    <Select
+                                      value={app.cohort_id || ""}
+                                      onValueChange={(value) =>
+                                        assignCohortMutation.mutate({
+                                          applicationId: app.id,
+                                          cohortId: value,
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="w-40 h-8 text-xs">
+                                        <SelectValue placeholder="Assign cohort..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {cohorts?.map((cohort) => (
+                                          <SelectItem key={cohort.id} value={cohort.id}>
+                                            {cohort.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </TableCell>
                                   <TableCell>
                                     <Button
@@ -1872,8 +1965,27 @@ export default function AdminCertificates() {
                     <Badge className="bg-green-500/10 text-green-600">{showApplicationPreview.status}</Badge>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-xs">Current Cohort</Label>
-                    <Badge variant="outline">{getCohortName(showApplicationPreview.cohort_id)}</Badge>
+                    <Label className="text-muted-foreground text-xs">Assign Cohort</Label>
+                    <Select
+                      value={showApplicationPreview.cohort_id || ""}
+                      onValueChange={(value) =>
+                        assignCohortMutation.mutate({
+                          applicationId: showApplicationPreview.id,
+                          cohortId: value,
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue placeholder="Assign cohort..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cohorts?.map((cohort) => (
+                          <SelectItem key={cohort.id} value={cohort.id}>
+                            {cohort.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="md:col-span-2">
                     <Label className="text-muted-foreground text-xs">Application Date</Label>
