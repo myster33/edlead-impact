@@ -67,6 +67,8 @@ import {
   BarChart3,
   Upload,
   Image,
+  Search,
+  UserPlus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
@@ -157,6 +159,9 @@ export default function AdminCertificates() {
   const [selectedForResend, setSelectedForResend] = useState<string[]>([]);
   const [showDesignDialog, setShowDesignDialog] = useState(false);
   const [designTemplate, setDesignTemplate] = useState<CertificateTemplate | null>(null);
+  const [browseAllApplications, setBrowseAllApplications] = useState(false);
+  const [applicationSearchTerm, setApplicationSearchTerm] = useState("");
+  const [showApplicationPreview, setShowApplicationPreview] = useState<Application | null>(null);
   const [designSettings, setDesignSettings] = useState<DesignSettings>({
     primaryColor: "#ED7621",
     secondaryColor: "#4A4A4A",
@@ -233,6 +238,21 @@ export default function AdminCertificates() {
       return data as Application[];
     },
     enabled: !!selectedCohort,
+  });
+
+  // Fetch ALL approved applications (for browse all mode)
+  const { data: allApprovedApplications, isLoading: allApprovedLoading } = useQuery({
+    queryKey: ["all-approved-applications"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("status", "approved")
+        .order("full_name");
+      if (error) throw error;
+      return data as Application[];
+    },
+    enabled: browseAllApplications,
   });
 
   // Fetch existing recipients for selected cohort
@@ -608,10 +628,29 @@ export default function AdminCertificates() {
     setShowTemplateDialog(true);
   };
 
+  // Get cohort name helper
+  const getCohortName = (cohortId: string | null | undefined) => {
+    if (!cohortId) return "Unassigned";
+    const cohort = cohorts?.find(c => c.id === cohortId);
+    return cohort ? cohort.name : "Unknown";
+  };
+
   // Get applications not yet added as recipients
   const availableApplications = applications?.filter(
     (app) => !existingRecipients?.some((r) => r.application_id === app.id)
   );
+
+  // Filter all approved applications based on search term
+  const filteredAllApprovedApplications = allApprovedApplications?.filter((app) => {
+    if (!applicationSearchTerm) return true;
+    const term = applicationSearchTerm.toLowerCase();
+    return (
+      app.full_name.toLowerCase().includes(term) ||
+      app.student_email.toLowerCase().includes(term) ||
+      app.school_name.toLowerCase().includes(term) ||
+      app.province.toLowerCase().includes(term)
+    );
+  });
 
   // Preview template with sample data
   const getPreviewHtml = () => {
@@ -979,14 +1018,18 @@ export default function AdminCertificates() {
               <CardHeader>
                 <CardTitle>Issue Certificates</CardTitle>
                 <CardDescription>
-                  Select a cohort, choose recipients, and send certificates
+                  Select a cohort, choose recipients, and send certificates. You can also browse all approved applications.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     <Label>Select Cohort</Label>
-                    <Select value={selectedCohort} onValueChange={setSelectedCohort}>
+                    <Select value={selectedCohort} onValueChange={(value) => {
+                      setSelectedCohort(value);
+                      setBrowseAllApplications(false);
+                      setSelectedRecipients([]);
+                    }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Choose a cohort" />
                       </SelectTrigger>
@@ -1024,27 +1067,180 @@ export default function AdminCertificates() {
                   </div>
                 </div>
 
-                {selectedTemplate && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedTemplate && (
+                    <Button
+                      variant="outline"
+                      onClick={generatePdfPreview}
+                      disabled={isGeneratingPreview}
+                    >
+                      {isGeneratingPreview ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Eye className="h-4 w-4 mr-2" />
+                      )}
+                      Preview Certificate PDF
+                    </Button>
+                  )}
                   <Button
-                    variant="outline"
-                    onClick={generatePdfPreview}
-                    disabled={isGeneratingPreview}
+                    variant={browseAllApplications ? "default" : "outline"}
+                    onClick={() => {
+                      setBrowseAllApplications(!browseAllApplications);
+                      setSelectedRecipients([]);
+                      setApplicationSearchTerm("");
+                    }}
                   >
-                    {isGeneratingPreview ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Eye className="h-4 w-4 mr-2" />
-                    )}
-                    Preview Certificate PDF
+                    <Users className="h-4 w-4 mr-2" />
+                    {browseAllApplications ? "Hide All Applications" : "Browse All Approved Applications"}
                   </Button>
+                </div>
+
+                {/* Browse All Approved Applications Section */}
+                {browseAllApplications && (
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        All Approved Applications
+                      </h3>
+                      <div className="relative w-64">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search applications..."
+                          value={applicationSearchTerm}
+                          onChange={(e) => setApplicationSearchTerm(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                    </div>
+                    
+                    {!selectedCohort && (
+                      <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md mb-4">
+                        ⚠️ Please select a cohort above before adding recipients. Applications will be assigned to the selected cohort.
+                      </p>
+                    )}
+
+                    {allApprovedLoading ? (
+                      <div className="flex justify-center p-4">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : filteredAllApprovedApplications && filteredAllApprovedApplications.length > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="select-all-browse"
+                              checked={
+                                filteredAllApprovedApplications.length > 0 &&
+                                filteredAllApprovedApplications.every((a) =>
+                                  selectedRecipients.includes(a.id)
+                                )
+                              }
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedRecipients(filteredAllApprovedApplications.map((a) => a.id));
+                                } else {
+                                  setSelectedRecipients([]);
+                                }
+                              }}
+                            />
+                            <Label htmlFor="select-all-browse">Select All ({filteredAllApprovedApplications.length})</Label>
+                          </div>
+                          {selectedRecipients.length > 0 && (
+                            <Badge variant="secondary">
+                              {selectedRecipients.length} selected
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="max-h-96 overflow-y-auto border rounded-md">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="w-12"></TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>School</TableHead>
+                                <TableHead>Province</TableHead>
+                                <TableHead>Current Cohort</TableHead>
+                                <TableHead className="w-12">View</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {filteredAllApprovedApplications.map((app) => (
+                                <TableRow key={app.id} className={selectedRecipients.includes(app.id) ? "bg-primary/5" : ""}>
+                                  <TableCell>
+                                    <Checkbox
+                                      checked={selectedRecipients.includes(app.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          setSelectedRecipients([...selectedRecipients, app.id]);
+                                        } else {
+                                          setSelectedRecipients(
+                                            selectedRecipients.filter((id) => id !== app.id)
+                                          );
+                                        }
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="font-medium">{app.full_name}</TableCell>
+                                  <TableCell className="text-sm">{app.student_email}</TableCell>
+                                  <TableCell className="text-sm">{app.school_name}</TableCell>
+                                  <TableCell className="text-sm">{app.province}</TableCell>
+                                  <TableCell>
+                                    <Badge variant="outline" className="text-xs">
+                                      {getCohortName(app.cohort_id)}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setShowApplicationPreview(app)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        {selectedRecipients.length > 0 && selectedCohort && (
+                          <div className="flex justify-end mt-4 gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => setSelectedRecipients([])}
+                            >
+                              Clear Selection
+                            </Button>
+                            <Button
+                              onClick={() => addRecipientsMutation.mutate(selectedRecipients)}
+                              disabled={addRecipientsMutation.isPending}
+                            >
+                              {addRecipientsMutation.isPending && (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              )}
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Add {selectedRecipients.length} as Recipients
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm text-center py-8">
+                        No approved applications found.
+                      </p>
+                    )}
+                  </div>
                 )}
 
-                {selectedCohort && (
+                {/* Cohort-specific recipients section */}
+                {selectedCohort && !browseAllApplications && (
                   <>
                     <div className="border-t pt-4">
                       <h3 className="font-semibold mb-4 flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Available Recipients (Approved Applications)
+                        Available Recipients from {cohorts?.find(c => c.id === selectedCohort)?.name}
                       </h3>
                       {applicationsLoading ? (
                         <div className="flex justify-center p-4">
@@ -1632,6 +1828,79 @@ export default function AdminCertificates() {
                 Save Design
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Application Preview Dialog */}
+        <Dialog open={!!showApplicationPreview} onOpenChange={(open) => !open && setShowApplicationPreview(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Application Details</DialogTitle>
+              <DialogDescription>
+                Preview application information
+              </DialogDescription>
+            </DialogHeader>
+            {showApplicationPreview && (
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Full Name</Label>
+                    <p className="font-medium">{showApplicationPreview.full_name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Email</Label>
+                    <p className="font-medium">{showApplicationPreview.student_email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">School</Label>
+                    <p className="font-medium">{showApplicationPreview.school_name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Grade</Label>
+                    <p className="font-medium">{showApplicationPreview.grade}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Province</Label>
+                    <p className="font-medium">{showApplicationPreview.province}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Country</Label>
+                    <p className="font-medium">{showApplicationPreview.country}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Status</Label>
+                    <Badge className="bg-green-500/10 text-green-600">{showApplicationPreview.status}</Badge>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Current Cohort</Label>
+                    <Badge variant="outline">{getCohortName(showApplicationPreview.cohort_id)}</Badge>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="text-muted-foreground text-xs">Application Date</Label>
+                    <p className="font-medium">{format(new Date(showApplicationPreview.created_at), "MMMM d, yyyy")}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowApplicationPreview(null)}
+                  >
+                    Close
+                  </Button>
+                  {!selectedRecipients.includes(showApplicationPreview.id) && (
+                    <Button
+                      onClick={() => {
+                        setSelectedRecipients([...selectedRecipients, showApplicationPreview.id]);
+                        setShowApplicationPreview(null);
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Select for Certificate
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
