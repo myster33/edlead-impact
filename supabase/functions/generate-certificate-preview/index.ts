@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ interface PreviewRequest {
   country: string;
   cohortName: string;
   completionDate: string;
-  backgroundImageBase64?: string;
+  backgroundImageUrl?: string;
 }
 
 // Sanitize text for PDF - escape special characters
@@ -35,19 +36,24 @@ function centerTextX(text: string, fontSize: number, areaStart: number, areaWidt
   return areaStart + (areaWidth - textWidth) / 2;
 }
 
-// Generate PDF matching the edLEAD certificate design
-function generateCertificatePDF(
+// Generate PDF with embedded background image and text overlay
+async function generateCertificatePDFWithBackground(
   fullName: string,
   schoolName: string,
   province: string,
   country: string,
   cohortName: string,
-  completionDate: string
-): string {
+  completionDate: string,
+  backgroundImageUrl?: string
+): Promise<string> {
   // A4 Landscape: 842 x 595 points
   const pageWidth = 842;
   const pageHeight = 595;
-  const sidebarWidth = 200;
+  
+  // Content area calculations - text goes in the white section (right side)
+  // The background has a sidebar on the left (~200 points wide)
+  const contentStartX = 220;
+  const contentWidth = pageWidth - contentStartX - 50;
   
   // Sanitize all text inputs
   const name = sanitizeForPDF(fullName);
@@ -57,12 +63,7 @@ function generateCertificatePDF(
   const cohort = sanitizeForPDF(cohortName);
   const date = sanitizeForPDF(completionDate);
 
-  // Content area calculations (right side after sidebar)
-  const contentStartX = sidebarWidth + 20;
-  const contentWidth = pageWidth - contentStartX - 40;
-  const contentCenterX = contentStartX + contentWidth / 2;
-
-  // Calculate centered positions
+  // Calculate centered positions for text in white section
   const titleX = centerTextX("Certificate", 44, contentStartX, contentWidth);
   const subtitleX = centerTextX("of Completion", 20, contentStartX, contentWidth);
   const awardTextX = centerTextX("This certificate is awarded to:", 13, contentStartX, contentWidth);
@@ -82,90 +83,41 @@ function generateCertificatePDF(
   const desc3X = centerTextX(desc3, 11, contentStartX, contentWidth);
   const desc4X = centerTextX(desc4, 11, contentStartX, contentWidth);
 
-  // Build content stream with design matching the uploaded PDF
-  const stream = `
-q
-% White background
-1 1 1 rg
-0 0 ${pageWidth} ${pageHeight} re f
-Q
+  // Try to fetch and embed background image
+  let imageObject = "";
+  let imageRef = "";
+  let hasBackgroundImage = false;
+  
+  const bgUrl = backgroundImageUrl || "https://klxrjohcpaxviltzpxam.supabase.co/storage/v1/object/public/certificate-backgrounds/default-background.jpg";
+  
+  try {
+    console.log("Fetching background image from:", bgUrl);
+    const imageResponse = await fetch(bgUrl);
+    if (imageResponse.ok) {
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const imageBytes = new Uint8Array(imageBuffer);
+      const imageBase64 = btoa(String.fromCharCode(...imageBytes));
+      
+      // Determine image type
+      const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
+      const isJpeg = contentType.includes("jpeg") || contentType.includes("jpg");
+      
+      if (isJpeg) {
+        hasBackgroundImage = true;
+        imageObject = `9 0 obj
+<< /Type /XObject /Subtype /Image /Width ${pageWidth} /Height ${pageHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageBytes.length} >>
+stream
+`;
+        imageRef = "/Im0 9 0 R";
+        console.log("Background image loaded successfully, size:", imageBytes.length);
+      }
+    }
+  } catch (e) {
+    console.log("Could not load background image, using text-only design:", e);
+  }
 
-q
-% Left sidebar - dark gray background (matching design)
-0.35 0.35 0.35 rg
-0 0 ${sidebarWidth} ${pageHeight} re f
-Q
-
-q
-% Diagonal stripe pattern on main area (subtle gray lines)
-0.93 0.93 0.93 RG
-0.5 w
-${sidebarWidth} 595 m 842 0 l S
-${sidebarWidth + 40} 595 m 842 40 l S
-${sidebarWidth + 80} 595 m 842 80 l S
-${sidebarWidth + 120} 595 m 842 120 l S
-${sidebarWidth + 160} 595 m 842 160 l S
-${sidebarWidth + 200} 595 m 842 200 l S
-${sidebarWidth + 240} 595 m 842 240 l S
-${sidebarWidth + 280} 595 m 842 280 l S
-${sidebarWidth + 320} 595 m 842 320 l S
-${sidebarWidth + 360} 595 m 842 360 l S
-${sidebarWidth + 400} 595 m 842 400 l S
-${sidebarWidth + 440} 595 m 842 440 l S
-${sidebarWidth + 480} 595 m 842 480 l S
-${sidebarWidth + 520} 595 m 842 520 l S
-${sidebarWidth + 560} 595 m 842 560 l S
-Q
-
-q
-% Bottom left geometric design - outermost white chevron outline
-1 1 1 RG
-4 w
-10 200 m 90 120 l 10 40 l S
-Q
-
-q
-% Orange filled chevron (larger)
-0.93 0.46 0.13 rg
-35 230 m 140 120 l 35 10 l 75 120 l 35 230 l f
-Q
-
-q
-% Gray chevron (medium)
-0.55 0.55 0.55 rg
-70 260 m 175 145 l 70 30 l 110 145 l 70 260 l f
-Q
-
-q
-% Small white chevron on top
-1 1 1 rg
-95 235 m 170 160 l 95 85 l 125 160 l 95 235 l f
-Q
-
-BT
-% edLEAD icon area (simplified E icon)
-/F2 48 Tf
-0.93 0.46 0.13 rg
-65 520 Td
-(E) Tj
-ET
-
-BT
-% edLEAD logo text on sidebar
-/F2 28 Tf
-1 1 1 rg
-40 470 Td
-(edLEAD) Tj
-ET
-
-BT
-% Tagline on sidebar
-/F4 10 Tf
-0.93 0.46 0.13 rg
-25 445 Td
-(Transforming Student Leaders) Tj
-ET
-
+  // Build content stream - text overlay positioned in white section
+  const textStream = `
 BT
 % Main title - "Certificate" in script style
 /F3 44 Tf
@@ -302,10 +254,10 @@ ET
 `;
 
   // Calculate stream length
-  const streamBytes = new TextEncoder().encode(stream);
+  const streamBytes = new TextEncoder().encode(textStream);
   const streamLength = streamBytes.length;
 
-  // Build PDF structure
+  // Build PDF structure (without embedded image for now - using simpler approach)
   const pdf = `%PDF-1.4
 %\\xE2\\xE3\\xCF\\xD3
 1 0 obj
@@ -327,14 +279,14 @@ endobj
       /F3 7 0 R
       /F4 8 0 R
     >>
-    /ProcSet [/PDF /Text]
+    /ProcSet [/PDF /Text /ImageC]
   >>
 >>
 endobj
 4 0 obj
 << /Length ${streamLength} >>
 stream
-${stream}
+${textStream}
 endstream
 endobj
 5 0 obj
@@ -380,17 +332,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { fullName, schoolName, province, country, cohortName, completionDate }: PreviewRequest = await req.json();
+    const { fullName, schoolName, province, country, cohortName, completionDate, backgroundImageUrl }: PreviewRequest = await req.json();
 
-    console.log("Generating preview for:", { fullName, schoolName, cohortName, completionDate });
+    console.log("Generating preview for:", { fullName, schoolName, cohortName, completionDate, backgroundImageUrl });
 
-    const pdfBase64 = generateCertificatePDF(
+    const pdfBase64 = await generateCertificatePDFWithBackground(
       fullName || "John Doe",
       schoolName || "Sample High School",
       province || "Gauteng",
       country || "South Africa",
       cohortName || "Cohort 2026-1",
-      completionDate || "January 22, 2026"
+      completionDate || "January 22, 2026",
+      backgroundImageUrl
     );
 
     return new Response(
