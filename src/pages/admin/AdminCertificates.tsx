@@ -65,6 +65,8 @@ import {
   AlertTriangle,
   Palette,
   BarChart3,
+  Upload,
+  Image,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
@@ -168,8 +170,9 @@ export default function AdminCertificates() {
     showDiagonalLines: true,
     signatureStyle: "line",
     fontStyle: "classic",
-    backgroundImageUrl: "/images/certificate-background.jpg",
+    backgroundImageUrl: "",
   });
+  const [isUploadingBackground, setIsUploadingBackground] = useState(false);
 
   // Cohort form state
   const [cohortForm, setCohortForm] = useState({
@@ -365,7 +368,49 @@ export default function AdminCertificates() {
     },
   });
 
-  // Add recipients mutation
+  // Upload background image handler
+  const handleBackgroundUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    setIsUploadingBackground(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `background-${designTemplate?.id || "default"}-${Date.now()}.${fileExt}`;
+      const filePath = fileName;
+
+      const { error: uploadError } = await supabase.storage
+        .from("certificate-backgrounds")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("certificate-backgrounds")
+        .getPublicUrl(filePath);
+
+      setDesignSettings({ ...designSettings, backgroundImageUrl: publicUrl });
+      toast.success("Background image uploaded successfully");
+    } catch (error: any) {
+      console.error("Error uploading background:", error);
+      toast.error(error.message || "Failed to upload background image");
+    } finally {
+      setIsUploadingBackground(false);
+    }
+  };
   const addRecipientsMutation = useMutation({
     mutationFn: async (applicationIds: string[]) => {
       const recipients = applicationIds.map((appId) => ({
@@ -468,27 +513,8 @@ export default function AdminCertificates() {
       const template = templates?.find((t) => t.id === selectedTemplate);
       const settings = (template?.design_settings as DesignSettings) || designSettings;
       
-      // Fetch background image if set
-      let backgroundImageBase64: string | undefined;
-      const bgUrl = settings.backgroundImageUrl || "/images/certificate-background.jpg";
-      
-      try {
-        const response = await fetch(bgUrl);
-        if (response.ok) {
-          const blob = await response.blob();
-          backgroundImageBase64 = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const result = reader.result as string;
-              // Extract base64 data without prefix
-              resolve(result.split(",")[1] || result);
-            };
-            reader.readAsDataURL(blob);
-          });
-        }
-      } catch (e) {
-        console.log("Could not load background image:", e);
-      }
+      // Use the background image URL from settings
+      const backgroundImageUrl = settings.backgroundImageUrl || "";
       
       const { data, error } = await supabase.functions.invoke("generate-certificate-preview", {
         body: {
@@ -498,7 +524,7 @@ export default function AdminCertificates() {
           country: "South Africa",
           cohortName: cohort?.name || "Cohort 2026-1",
           completionDate: format(new Date(completionDate), "MMMM d, yyyy"),
-          backgroundImageBase64,
+          backgroundImageUrl,
         },
       });
 
@@ -924,6 +950,7 @@ export default function AdminCertificates() {
                               showDiagonalLines: ds?.showDiagonalLines ?? true,
                               signatureStyle: ds?.signatureStyle || "line",
                               fontStyle: ds?.fontStyle || "classic",
+                              backgroundImageUrl: ds?.backgroundImageUrl || "",
                             });
                             setShowDesignDialog(true);
                           }}
@@ -1488,23 +1515,65 @@ export default function AdminCertificates() {
               </div>
 
               <div className="space-y-4 border-t pt-4">
-                <h4 className="font-medium">Background Image</h4>
+                <h4 className="font-medium flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  Background Image
+                </h4>
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    The certificate uses a fixed background design. Text will be positioned in the white content area.
+                    Upload a custom background image for the certificate. Text will be positioned in the white content area (right side).
                   </p>
-                  {designSettings.backgroundImageUrl && (
+                  
+                  {/* Upload button */}
+                  <div className="flex items-center gap-3">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        onChange={handleBackgroundUpload}
+                        className="hidden"
+                        disabled={isUploadingBackground}
+                      />
+                      <div className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                        {isUploadingBackground ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        <span>{isUploadingBackground ? "Uploading..." : "Upload Background"}</span>
+                      </div>
+                    </label>
+                    {designSettings.backgroundImageUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDesignSettings({ ...designSettings, backgroundImageUrl: "" })}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Preview */}
+                  {designSettings.backgroundImageUrl ? (
                     <div className="border rounded-lg p-2 bg-muted/50">
                       <img 
                         src={designSettings.backgroundImageUrl} 
                         alt="Certificate background" 
-                        className="w-full h-32 object-contain rounded"
+                        className="w-full h-40 object-contain rounded"
                       />
+                      <p className="text-xs text-muted-foreground mt-2 truncate">
+                        {designSettings.backgroundImageUrl}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground bg-muted/30">
+                      <Image className="h-12 w-12 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">No background image uploaded</p>
+                      <p className="text-xs">Upload a JPG or PNG image (max 5MB)</p>
                     </div>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Current: {designSettings.backgroundImageUrl || "/images/certificate-background.jpg"}
-                  </p>
                 </div>
               </div>
 
