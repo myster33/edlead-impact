@@ -37,10 +37,11 @@ interface TemplateHistory {
 }
 
 const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
+  // Learner Application Templates
   {
     template_key: "applicant-approved",
-    name: "Application Approved",
-    category: "Applications",
+    name: "Application Approved (Learner)",
+    category: "Applications - Learner",
     subject: "🎉 Congratulations! Your edLEAD Application Has Been Approved",
     variables: ["applicant_name", "reference_number"],
     is_active: true,
@@ -88,8 +89,8 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
   },
   {
     template_key: "applicant-rejected",
-    name: "Application Rejected",
-    category: "Applications",
+    name: "Application Rejected (Learner)",
+    category: "Applications - Learner",
     subject: "Update on Your edLEAD Application",
     variables: ["applicant_name", "reference_number"],
     is_active: true,
@@ -131,6 +132,323 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </body>
 </html>`,
   },
+  // Parent/Guardian Application Templates
+  {
+    template_key: "parent-approved",
+    name: "Application Approved (Parent)",
+    category: "Applications - Parent",
+    subject: "🎉 Great News! Your Child's edLEAD Application Has Been Approved",
+    variables: ["parent_name", "applicant_name", "reference_number"],
+    is_active: true,
+    html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .email-content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+      .email-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%) !important; }
+      .text-gray { color: #9ca3af !important; }
+      .border-gray { border-color: #374151 !important; }
+      .bg-light { background-color: #374151 !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">🎉 Application Approved!</h2>
+      </div>
+      <div style="padding: 30px;">
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{parent_name}}</strong>,</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">We are thrilled to inform you that <strong>{{applicant_name}}'s</strong> application to the edLEAD Programme has been <strong style="color: #10b981;">approved</strong>!</p>
+        <div class="bg-light" style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 0; font-size: 14px;"><strong>Applicant:</strong> {{applicant_name}}</p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Reference Number:</strong> {{reference_number}}</p>
+        </div>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">This is an exciting milestone in your child's leadership journey. As a parent/guardian, your support is invaluable to their success in this programme.</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">We will be in touch shortly with next steps and additional information about the programme, including orientation dates and resources for parents.</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">Thank you for supporting your child's leadership development!</p>
+        <p class="text-gray" style="font-size: 14px; color: #6b7280; margin-top: 30px;">Best regards,<br><strong>The edLEAD Team</strong></p>
+      </div>
+      <div class="border-gray" style="border-top: 1px solid #e5e7eb; padding: 20px; text-align: center;">
+        <p class="text-gray" style="font-size: 12px; color: #9ca3af; margin: 0;">© 2026 edLEAD Programme. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
+    template_key: "parent-rejected",
+    name: "Application Rejected (Parent)",
+    category: "Applications - Parent",
+    subject: "Update on Your Child's edLEAD Application",
+    variables: ["parent_name", "applicant_name", "reference_number"],
+    is_active: true,
+    html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .email-content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+      .email-header { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%) !important; }
+      .text-gray { color: #9ca3af !important; }
+      .border-gray { border-color: #374151 !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div class="email-content" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <div class="email-header" style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px;">Application Update</h2>
+      </div>
+      <div style="padding: 30px;">
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">Dear <strong>{{parent_name}}</strong>,</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">We are writing to inform you about the outcome of <strong>{{applicant_name}}'s</strong> application to the edLEAD Programme.</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">After careful consideration, we regret to inform you that their application was not successful at this time.</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">We encourage you to continue supporting your child's leadership development and consider applying again in the future. Your support as a parent/guardian is invaluable to their growth.</p>
+        <p style="font-size: 16px; line-height: 1.6; color: inherit;">Thank you for your interest in the edLEAD Programme.</p>
+        <p class="text-gray" style="font-size: 14px; color: #6b7280; margin-top: 30px;">Best regards,<br><strong>The edLEAD Team</strong></p>
+      </div>
+      <div class="border-gray" style="border-top: 1px solid #e5e7eb; padding: 20px; text-align: center;">
+        <p class="text-gray" style="font-size: 12px; color: #9ca3af; margin: 0;">© 2026 edLEAD Programme. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
+    template_key: "parent-status-approved",
+    name: "Status: Approved (Parent)",
+    category: "Applications - Parent",
+    subject: "🎉 Great News! Your Child's edLEAD Application Has Been Approved",
+    variables: ["parent_name", "applicant_name", "reference_number", "new_status"],
+    is_active: true,
+    html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+      .content p, .content li { color: #e5e7eb !important; }
+      .highlight { background-color: #1e3a8a !important; }
+      .highlight p { color: #bfdbfe !important; }
+      .footer { color: #9ca3af !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
+      <h1 style="color: #ffffff;">🎉 Congratulations!</h1>
+    </div>
+    <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+      <p>Dear {{parent_name}},</p>
+      <p>We are thrilled to inform you that <strong>{{applicant_name}}'s</strong> application to the <strong>edLEAD Leadership Programme</strong> has been approved!</p>
+      <div class="highlight" style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p><strong>Applicant:</strong> {{applicant_name}}</p>
+        <p><strong>Reference Number:</strong> {{reference_number}}</p>
+        <p><strong>New Status:</strong> {{new_status}}</p>
+      </div>
+      <p>This is an exciting milestone in your child's leadership journey. Our team will be in touch shortly with more details about the programme, including:</p>
+      <ul>
+        <li>Programme orientation dates</li>
+        <li>Required materials and resources</li>
+        <li>Next steps for enrollment</li>
+        <li>Information for parents/guardians</li>
+      </ul>
+      <p>As a parent/guardian, your support is invaluable to your child's success in this programme. Please ensure they have access to a device with internet connectivity.</p>
+      <p>Thank you for supporting your child's leadership development!</p>
+      <p>Warm regards,<br><strong>The edLEAD Team</strong></p>
+    </div>
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px;">
+      <p>© 2026 edLEAD Programme. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
+    template_key: "parent-status-rejected",
+    name: "Status: Rejected (Parent)",
+    category: "Applications - Parent",
+    subject: "Update on Your Child's edLEAD Application",
+    variables: ["parent_name", "applicant_name", "reference_number", "new_status"],
+    is_active: true,
+    html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+      .content p, .content li { color: #e5e7eb !important; }
+      .highlight { background-color: #1e3a8a !important; }
+      .highlight p { color: #bfdbfe !important; }
+      .footer { color: #9ca3af !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
+      <h1 style="color: #ffffff;">Application Update</h1>
+    </div>
+    <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+      <p>Dear {{parent_name}},</p>
+      <p>We are writing to inform you about the outcome of <strong>{{applicant_name}}'s</strong> application to the <strong>edLEAD Leadership Programme</strong>.</p>
+      <div class="highlight" style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p><strong>Applicant:</strong> {{applicant_name}}</p>
+        <p><strong>Reference Number:</strong> {{reference_number}}</p>
+        <p><strong>New Status:</strong> Not Successful</p>
+      </div>
+      <p>After careful consideration, we regret to inform you that we are unable to offer your child a place in the programme at this time.</p>
+      <p>We encourage you to support your child in:</p>
+      <ul>
+        <li>Continuing to develop their leadership skills in school and community</li>
+        <li>Seeking out other leadership opportunities and programmes</li>
+        <li>Considering applying again in future intake periods</li>
+      </ul>
+      <p>We truly appreciate your child's enthusiasm for leadership and your support as a parent/guardian.</p>
+      <p>Warm regards,<br><strong>The edLEAD Team</strong></p>
+    </div>
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px;">
+      <p>© 2026 edLEAD Programme. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
+    template_key: "parent-status-pending",
+    name: "Status: Pending (Parent)",
+    category: "Applications - Parent",
+    subject: "Update on Your Child's edLEAD Application",
+    variables: ["parent_name", "applicant_name", "reference_number", "new_status"],
+    is_active: true,
+    html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+      .content p, .content li { color: #e5e7eb !important; }
+      .highlight { background-color: #1e3a8a !important; }
+      .highlight p { color: #bfdbfe !important; }
+      .footer { color: #9ca3af !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
+      <h1 style="color: #ffffff;">Application Under Review</h1>
+    </div>
+    <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+      <p>Dear {{parent_name}},</p>
+      <p>We are writing to inform you about an update regarding <strong>{{applicant_name}}'s</strong> application to the <strong>edLEAD Leadership Programme</strong>.</p>
+      <div class="highlight" style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p><strong>Applicant:</strong> {{applicant_name}}</p>
+        <p><strong>Reference Number:</strong> {{reference_number}}</p>
+        <p><strong>New Status:</strong> Pending</p>
+      </div>
+      <p>The application has been moved back to pending review status. Our team is reviewing the application again. This may happen when:</p>
+      <ul>
+        <li>Additional information needs to be verified</li>
+        <li>The application is being reconsidered</li>
+        <li>There are updates to the review process</li>
+      </ul>
+      <p>We will notify both you and your child once a decision has been made.</p>
+      <p>Thank you for your patience and support in your child's leadership development journey.</p>
+      <p>Warm regards,<br><strong>The edLEAD Team</strong></p>
+    </div>
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px;">
+      <p>© 2026 edLEAD Programme. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
+    template_key: "parent-status-cancelled",
+    name: "Status: Cancelled (Parent)",
+    category: "Applications - Parent",
+    subject: "Your Child's edLEAD Application Has Been Cancelled",
+    variables: ["parent_name", "applicant_name", "reference_number", "new_status"],
+    is_active: true,
+    html_content: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a2e !important; }
+      .content { background-color: #1f2937 !important; color: #e5e7eb !important; }
+      .content p { color: #e5e7eb !important; }
+      .highlight { background-color: #1e3a8a !important; }
+      .highlight p { color: #bfdbfe !important; }
+      .footer { color: #9ca3af !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: Arial, sans-serif; line-height: 1.6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #4A4A4A; padding: 30px; text-align: center;">
+      <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto; margin-bottom: 15px;">
+      <h1 style="color: #ffffff;">Application Cancelled</h1>
+    </div>
+    <div class="content" style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+      <p>Dear {{parent_name}},</p>
+      <p>We are writing to inform you that <strong>{{applicant_name}}'s</strong> application to the <strong>edLEAD Leadership Programme</strong> has been cancelled.</p>
+      <div class="highlight" style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <p><strong>Applicant:</strong> {{applicant_name}}</p>
+        <p><strong>Reference Number:</strong> {{reference_number}}</p>
+        <p><strong>New Status:</strong> Cancelled</p>
+      </div>
+      <p>If you believe this was done in error or would like more information, please contact our support team.</p>
+      <p>Your child is welcome to submit a new application if they wish to be considered for future intakes.</p>
+      <p>Thank you for your interest in the edLEAD Leadership Programme.</p>
+      <p>Warm regards,<br><strong>The edLEAD Team</strong></p>
+    </div>
+    <div class="footer" style="text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px;">
+      <p>© 2026 edLEAD Programme. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  // Blog Templates
   {
     template_key: "story-approved",
     name: "Story Approved",
@@ -180,6 +498,7 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </body>
 </html>`,
   },
+  // General Templates
   {
     template_key: "contact-confirmation",
     name: "Contact Confirmation",
@@ -228,6 +547,7 @@ const defaultTemplates: Omit<EmailTemplate, "id" | "updated_at">[] = [
 </body>
 </html>`,
   },
+  // Admin Templates
   {
     template_key: "admin-notification",
     name: "Admin Notification",
