@@ -92,6 +92,7 @@ interface DesignSettings {
   showDiagonalLines?: boolean;
   signatureStyle?: string;
   fontStyle?: string;
+  backgroundImageUrl?: string;
 }
 
 interface CertificateTemplate {
@@ -167,6 +168,7 @@ export default function AdminCertificates() {
     showDiagonalLines: true,
     signatureStyle: "line",
     fontStyle: "classic",
+    backgroundImageUrl: "/images/certificate-background.jpg",
   });
 
   // Cohort form state
@@ -463,6 +465,30 @@ export default function AdminCertificates() {
     
     try {
       const cohort = cohorts?.find((c) => c.id === selectedCohort);
+      const template = templates?.find((t) => t.id === selectedTemplate);
+      const settings = (template?.design_settings as DesignSettings) || designSettings;
+      
+      // Fetch background image if set
+      let backgroundImageBase64: string | undefined;
+      const bgUrl = settings.backgroundImageUrl || "/images/certificate-background.jpg";
+      
+      try {
+        const response = await fetch(bgUrl);
+        if (response.ok) {
+          const blob = await response.blob();
+          backgroundImageBase64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              // Extract base64 data without prefix
+              resolve(result.split(",")[1] || result);
+            };
+            reader.readAsDataURL(blob);
+          });
+        }
+      } catch (e) {
+        console.log("Could not load background image:", e);
+      }
       
       const { data, error } = await supabase.functions.invoke("generate-certificate-preview", {
         body: {
@@ -472,6 +498,7 @@ export default function AdminCertificates() {
           country: "South Africa",
           cohortName: cohort?.name || "Cohort 2026-1",
           completionDate: format(new Date(completionDate), "MMMM d, yyyy"),
+          backgroundImageBase64,
         },
       });
 
@@ -1457,6 +1484,27 @@ export default function AdminCertificates() {
                       onCheckedChange={(checked) => setDesignSettings({ ...designSettings, showDiagonalLines: checked })}
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium">Background Image</h4>
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    The certificate uses a fixed background design. Text will be positioned in the white content area.
+                  </p>
+                  {designSettings.backgroundImageUrl && (
+                    <div className="border rounded-lg p-2 bg-muted/50">
+                      <img 
+                        src={designSettings.backgroundImageUrl} 
+                        alt="Certificate background" 
+                        className="w-full h-32 object-contain rounded"
+                      />
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Current: {designSettings.backgroundImageUrl || "/images/certificate-background.jpg"}
+                  </p>
                 </div>
               </div>
 
