@@ -25,6 +25,26 @@ interface PreviewRequest {
   cohortName: string;
   completionDate: string;
   backgroundImageUrl?: string;
+  referenceNumber?: string;
+}
+
+// Generate QR code image bytes using QR code API
+async function generateQRCode(url: string): Promise<Uint8Array | null> {
+  try {
+    // Use QR Server API to generate QR code as PNG
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(url)}&format=png`;
+    const response = await fetch(qrApiUrl);
+    
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      return new Uint8Array(arrayBuffer);
+    }
+    console.log("Failed to generate QR code:", response.status);
+    return null;
+  } catch (e) {
+    console.log("Error generating QR code:", e);
+    return null;
+  }
 }
 
 async function generateCertificatePDF(
@@ -34,7 +54,8 @@ async function generateCertificatePDF(
   country: string,
   cohortName: string,
   completionDate: string,
-  backgroundImageUrl?: string
+  backgroundImageUrl?: string,
+  referenceNumber?: string
 ): Promise<Uint8Array> {
   // Create a new PDF document - A4 Landscape
   const pdfDoc = await PDFDocument.create();
@@ -238,6 +259,45 @@ async function generateCertificatePDF(
     color: lightGray,
   });
   
+  // Add QR code to the bottom left of the content area
+  try {
+    const qrBytes = await generateQRCode("https://www.edlead.co.za");
+    if (qrBytes) {
+      const qrImage = await pdfDoc.embedPng(qrBytes);
+      const qrSize = 60;
+      page.drawImage(qrImage, {
+        x: contentStartX + 10,
+        y: 30,
+        width: qrSize,
+        height: qrSize,
+      });
+      
+      // Add small text below QR code
+      page.drawText("www.edlead.co.za", {
+        x: contentStartX + 5,
+        y: 18,
+        size: 7,
+        font: helvetica,
+        color: lightGray,
+      });
+      console.log("QR code embedded successfully");
+    }
+  } catch (e) {
+    console.log("Could not embed QR code:", e);
+  }
+  
+  // Add reference number if provided (bottom right of content area)
+  if (referenceNumber) {
+    const refText = `Ref: ${referenceNumber}`;
+    page.drawText(refText, {
+      x: width - 100,
+      y: 25,
+      size: 8,
+      font: helvetica,
+      color: lightGray,
+    });
+  }
+  
   // Serialize the PDF
   return await pdfDoc.save();
 }
@@ -250,9 +310,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { fullName, schoolName, province, country, cohortName, completionDate, backgroundImageUrl }: PreviewRequest = await req.json();
+    const { fullName, schoolName, province, country, cohortName, completionDate, backgroundImageUrl, referenceNumber }: PreviewRequest = await req.json();
 
-    console.log("Generating preview for:", { fullName, schoolName, cohortName, completionDate, backgroundImageUrl });
+    console.log("Generating preview for:", { fullName, schoolName, cohortName, completionDate, backgroundImageUrl, referenceNumber });
 
     const pdfBytes = await generateCertificatePDF(
       fullName || "John Doe",
@@ -261,7 +321,8 @@ const handler = async (req: Request): Promise<Response> => {
       country || "South Africa",
       cohortName || "Cohort 2026-1",
       completionDate || "January 22, 2026",
-      backgroundImageUrl
+      backgroundImageUrl,
+      referenceNumber || "ABC12345"
     );
 
     // Convert to base64 using chunked encoding for large arrays
