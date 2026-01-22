@@ -259,23 +259,26 @@ async function generateCertificatePDF(
     color: lightGray,
   });
   
-  // Add QR code to the bottom left of the content area
+  // Add QR code to the top right corner of the content area
   try {
     const qrBytes = await generateQRCode("https://www.edlead.co.za");
     if (qrBytes) {
       const qrImage = await pdfDoc.embedPng(qrBytes);
-      const qrSize = 60;
+      const qrSize = 55;
+      const qrX = width - qrSize - 25;
+      const qrY = height - qrSize - 25;
+      
       page.drawImage(qrImage, {
-        x: contentStartX + 10,
-        y: 30,
+        x: qrX,
+        y: qrY,
         width: qrSize,
         height: qrSize,
       });
       
       // Add small text below QR code
       page.drawText("www.edlead.co.za", {
-        x: contentStartX + 5,
-        y: 18,
+        x: qrX - 5,
+        y: qrY - 10,
         size: 7,
         font: helvetica,
         color: lightGray,
@@ -286,12 +289,13 @@ async function generateCertificatePDF(
     console.log("Could not embed QR code:", e);
   }
   
-  // Add reference number if provided (bottom right of content area)
+  // Add reference number below QR code (top right area)
   if (referenceNumber) {
     const refText = `Ref: ${referenceNumber}`;
+    const refWidth = helvetica.widthOfTextAtSize(refText, 8);
     page.drawText(refText, {
-      x: width - 100,
-      y: 25,
+      x: width - refWidth - 25,
+      y: height - 95,
       size: 8,
       font: helvetica,
       color: lightGray,
