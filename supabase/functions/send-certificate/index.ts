@@ -441,6 +441,7 @@ const handler = async (req: Request): Promise<Response> => {
       .select(`
         id,
         application_id,
+        tracking_id,
         applications:application_id (
           id,
           full_name,
@@ -552,6 +553,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p style="color: #718096; font-size: 12px; margin: 0;">
           © 2026 edLEAD Programme. All rights reserved.
         </p>
+        <img src="${supabaseUrl}/functions/v1/track-certificate?tid=${recipient.tracking_id}&action=open" width="1" height="1" style="display:none;" alt="" />
       </td>
     </tr>
   </table>

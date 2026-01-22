@@ -63,8 +63,11 @@ import {
   RefreshCw,
   Download,
   AlertTriangle,
+  Palette,
+  BarChart3,
 } from "lucide-react";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 
 interface Cohort {
   id: string;
@@ -76,12 +79,28 @@ interface Cohort {
   is_active: boolean;
 }
 
+interface DesignSettings {
+  primaryColor?: string;
+  secondaryColor?: string;
+  backgroundColor?: string;
+  sidebarColor?: string;
+  textColor?: string;
+  accentColor?: string;
+  layout?: string;
+  showSeal?: boolean;
+  showChevrons?: boolean;
+  showDiagonalLines?: boolean;
+  signatureStyle?: string;
+  fontStyle?: string;
+}
+
 interface CertificateTemplate {
   id: string;
   name: string;
   html_template: string;
-  available_fields: string[];
+  available_fields: unknown[];
   is_default: boolean;
+  design_settings?: DesignSettings | null;
 }
 
 interface Application {
@@ -105,6 +124,13 @@ interface CertificateRecipient {
   issued_at: string | null;
   email_sent: boolean;
   email_sent_at: string | null;
+  email_opened: boolean;
+  email_opened_at: string | null;
+  open_count: number;
+  certificate_downloaded: boolean;
+  certificate_downloaded_at: string | null;
+  download_count: number;
+  tracking_id: string;
   applications: Application;
 }
 
@@ -126,6 +152,22 @@ export default function AdminCertificates() {
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [showResendConfirm, setShowResendConfirm] = useState(false);
   const [selectedForResend, setSelectedForResend] = useState<string[]>([]);
+  const [showDesignDialog, setShowDesignDialog] = useState(false);
+  const [designTemplate, setDesignTemplate] = useState<CertificateTemplate | null>(null);
+  const [designSettings, setDesignSettings] = useState<DesignSettings>({
+    primaryColor: "#ED7621",
+    secondaryColor: "#4A4A4A",
+    backgroundColor: "#FFFFFF",
+    sidebarColor: "#595959",
+    textColor: "#4A4A4A",
+    accentColor: "#ED7621",
+    layout: "modern",
+    showSeal: true,
+    showChevrons: true,
+    showDiagonalLines: true,
+    signatureStyle: "line",
+    fontStyle: "classic",
+  });
 
   // Cohort form state
   const [cohortForm, setCohortForm] = useState({
@@ -299,6 +341,25 @@ export default function AdminCertificates() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to save template");
+    },
+  });
+
+  // Update design settings mutation
+  const updateDesignMutation = useMutation({
+    mutationFn: async ({ templateId, settings }: { templateId: string; settings: DesignSettings }) => {
+      const { error } = await supabase
+        .from("certificate_templates")
+        .update({ design_settings: JSON.parse(JSON.stringify(settings)) })
+        .eq("id", templateId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["certificate-templates"] });
+      toast.success("Design settings updated");
+      setShowDesignDialog(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update design settings");
     },
   });
 
@@ -811,11 +872,37 @@ export default function AdminCertificates() {
                           size="sm"
                           onClick={() => {
                             setSelectedTemplate(template.id);
-                            setShowPreviewDialog(true);
+                            generatePdfPreview();
                           }}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           Preview
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setDesignTemplate(template);
+                            const ds = template.design_settings as DesignSettings | null;
+                            setDesignSettings({
+                              primaryColor: ds?.primaryColor || "#ED7621",
+                              secondaryColor: ds?.secondaryColor || "#4A4A4A",
+                              backgroundColor: ds?.backgroundColor || "#FFFFFF",
+                              sidebarColor: ds?.sidebarColor || "#595959",
+                              textColor: ds?.textColor || "#4A4A4A",
+                              accentColor: ds?.accentColor || "#ED7621",
+                              layout: ds?.layout || "modern",
+                              showSeal: ds?.showSeal ?? true,
+                              showChevrons: ds?.showChevrons ?? true,
+                              showDiagonalLines: ds?.showDiagonalLines ?? true,
+                              signatureStyle: ds?.signatureStyle || "line",
+                              fontStyle: ds?.fontStyle || "classic",
+                            });
+                            setShowDesignDialog(true);
+                          }}
+                        >
+                          <Palette className="h-4 w-4 mr-2" />
+                          Design
                         </Button>
                       </div>
                     </CardContent>
@@ -986,10 +1073,36 @@ export default function AdminCertificates() {
 
                     {existingRecipients && existingRecipients.length > 0 && (
                       <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-4 flex items-center gap-2">
-                          <Award className="h-4 w-4" />
-                          Certificate Recipients
-                        </h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-semibold flex items-center gap-2">
+                            <Award className="h-4 w-4" />
+                            Certificate Recipients
+                          </h3>
+                          {/* Tracking Stats Summary */}
+                          <div className="flex gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Sent:</span>
+                              <Badge variant="outline">
+                                {existingRecipients.filter((r) => r.email_sent).length}/{existingRecipients.length}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Opened:</span>
+                              <Badge variant="outline" className="bg-primary/10">
+                                {existingRecipients.filter((r) => r.email_opened).length}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Download className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Downloaded:</span>
+                              <Badge variant="outline" className="bg-green-500/10">
+                                {existingRecipients.filter((r) => r.certificate_downloaded).length}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -997,7 +1110,8 @@ export default function AdminCertificates() {
                               <TableHead className="w-12">Resend</TableHead>
                               <TableHead>Name</TableHead>
                               <TableHead>Email</TableHead>
-                              <TableHead>Status</TableHead>
+                              <TableHead>Delivery</TableHead>
+                              <TableHead>Engagement</TableHead>
                               <TableHead>Sent At</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -1037,7 +1151,7 @@ export default function AdminCertificates() {
                                 <TableCell className="font-medium">
                                   {recipient.applications?.full_name}
                                 </TableCell>
-                                <TableCell>{recipient.applications?.student_email}</TableCell>
+                                <TableCell className="text-sm">{recipient.applications?.student_email}</TableCell>
                                 <TableCell>
                                   {recipient.email_sent ? (
                                     <Badge variant="default" className="gap-1">
@@ -1052,6 +1166,25 @@ export default function AdminCertificates() {
                                   )}
                                 </TableCell>
                                 <TableCell>
+                                  <div className="flex gap-1">
+                                    {recipient.email_opened && (
+                                      <Badge variant="outline" className="gap-1 text-xs bg-primary/10">
+                                        <Eye className="h-3 w-3" />
+                                        {recipient.open_count > 1 ? `${recipient.open_count}x` : "Opened"}
+                                      </Badge>
+                                    )}
+                                    {recipient.certificate_downloaded && (
+                                      <Badge variant="outline" className="gap-1 text-xs bg-green-500/10">
+                                        <Download className="h-3 w-3" />
+                                        {recipient.download_count > 1 ? `${recipient.download_count}x` : "Downloaded"}
+                                      </Badge>
+                                    )}
+                                    {!recipient.email_opened && !recipient.certificate_downloaded && recipient.email_sent && (
+                                      <span className="text-muted-foreground text-xs">Not opened</span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-sm">
                                   {recipient.email_sent_at
                                     ? format(new Date(recipient.email_sent_at), "MMM d, yyyy HH:mm")
                                     : "-"}
@@ -1219,6 +1352,171 @@ export default function AdminCertificates() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Design Settings Dialog */}
+        <Dialog open={showDesignDialog} onOpenChange={setShowDesignDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Certificate Design Settings
+              </DialogTitle>
+              <DialogDescription>
+                Customize the appearance of the PDF certificate for {designTemplate?.name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Primary Color (Orange accents)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={designSettings.primaryColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, primaryColor: e.target.value })}
+                      className="w-12 h-10 p-1"
+                    />
+                    <Input
+                      value={designSettings.primaryColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, primaryColor: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Sidebar Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={designSettings.sidebarColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, sidebarColor: e.target.value })}
+                      className="w-12 h-10 p-1"
+                    />
+                    <Input
+                      value={designSettings.sidebarColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, sidebarColor: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Text Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={designSettings.textColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, textColor: e.target.value })}
+                      className="w-12 h-10 p-1"
+                    />
+                    <Input
+                      value={designSettings.textColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, textColor: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={designSettings.backgroundColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, backgroundColor: e.target.value })}
+                      className="w-12 h-10 p-1"
+                    />
+                    <Input
+                      value={designSettings.backgroundColor}
+                      onChange={(e) => setDesignSettings({ ...designSettings, backgroundColor: e.target.value })}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium">Visual Elements</h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Show Seal</Label>
+                    <Switch
+                      checked={designSettings.showSeal}
+                      onCheckedChange={(checked) => setDesignSettings({ ...designSettings, showSeal: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Show Chevrons</Label>
+                    <Switch
+                      checked={designSettings.showChevrons}
+                      onCheckedChange={(checked) => setDesignSettings({ ...designSettings, showChevrons: checked })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Diagonal Lines</Label>
+                    <Switch
+                      checked={designSettings.showDiagonalLines}
+                      onCheckedChange={(checked) => setDesignSettings({ ...designSettings, showDiagonalLines: checked })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium">Style Options</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Font Style</Label>
+                    <Select
+                      value={designSettings.fontStyle}
+                      onValueChange={(value) => setDesignSettings({ ...designSettings, fontStyle: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="classic">Classic (Times)</SelectItem>
+                        <SelectItem value="modern">Modern (Helvetica)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Layout</Label>
+                    <Select
+                      value={designSettings.layout}
+                      onValueChange={(value) => setDesignSettings({ ...designSettings, layout: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="modern">Modern (Sidebar)</SelectItem>
+                        <SelectItem value="classic">Classic (Centered)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDesignDialog(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (designTemplate) {
+                    updateDesignMutation.mutate({
+                      templateId: designTemplate.id,
+                      settings: designSettings,
+                    });
+                  }
+                }}
+                disabled={updateDesignMutation.isPending}
+              >
+                {updateDesignMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Save Design
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
