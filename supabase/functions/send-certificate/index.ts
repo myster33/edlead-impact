@@ -29,7 +29,7 @@ interface CertificateRequest {
 
 // Send email using Resend API directly
 async function sendEmail(
-  to: string[],
+  to: string,
   subject: string,
   html: string,
   pdfContent: string,
@@ -44,7 +44,7 @@ async function sendEmail(
       },
       body: JSON.stringify({
         from: "edLEAD <noreply@edlead.co.za>",
-        to: to,
+        to: [to],
         subject,
         html,
         attachments: [
@@ -466,8 +466,8 @@ const handler = async (req: Request): Promise<Response> => {
           app.reference_number
         );
 
-        // Build email HTML with fixed logo and additional details
-        const emailHtml = `
+        // Build learner email HTML
+        const learnerEmailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -538,7 +538,7 @@ const handler = async (req: Request): Promise<Response> => {
           Transforming Student Leaders
         </p>
         <p style="color: #a0a0a0; font-size: 12px; margin: 0;">
-          &copy; ${new Date().getFullYear()} edLEAD. All rights reserved.
+          &copy; 2026 edLEAD Programme. All rights reserved.
         </p>
       </td>
     </tr>
@@ -546,23 +546,120 @@ const handler = async (req: Request): Promise<Response> => {
 </body>
 </html>`;
 
-        // Build recipient list - always include student, optionally include parent
-        const emailRecipients = [app.student_email];
-        if (app.parent_email && app.parent_email.trim() !== "" && app.parent_email !== app.student_email) {
-          emailRecipients.push(app.parent_email);
-          console.log(`Also sending certificate to parent: ${app.parent_email}`);
-        }
-
-        // Send email to student and parent
-        const emailResult = await sendEmail(
-          emailRecipients,
+        // Send learner email
+        const learnerResult = await sendEmail(
+          app.student_email,
           `Congratulations! Your edLEAD Certificate of Accomplishment`,
-          emailHtml,
+          learnerEmailHtml,
           pdfBase64,
           app.full_name
         );
 
-        if (emailResult.success) {
+        let parentSent = false;
+        
+        // Send parent email if parent email is provided and different from learner
+        if (app.parent_email && app.parent_email.trim() !== "" && app.parent_email !== app.student_email) {
+          const parentName = app.parent_name && app.parent_name.trim() !== "" ? app.parent_name : "Parent/Guardian";
+          
+          const parentEmailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <tr>
+      <td style="background-color: #4A4A4A; padding: 30px 40px; text-align: center;">
+        <img src="https://edlead.lovable.app/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto;">
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px;">
+        <h1 style="color: #2d3748; font-size: 24px; margin: 0 0 20px 0; font-weight: 600;">
+          Congratulations!
+        </h1>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          Dear <strong>${parentName}</strong>,
+        </p>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          We are thrilled to inform you that <strong>${app.full_name}</strong> has successfully completed the <strong>edLEAD Leadership Programme</strong>!
+        </p>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          Your child's dedication, leadership, and commitment to making a positive impact in their school community have been truly impressive. We are proud of their achievements and the growth they've demonstrated throughout this programme.
+        </p>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          Please find their <strong>Certificate of Accomplishment</strong> attached to this email. This certificate recognizes their outstanding participation in <strong>${cohort.name}</strong>.
+        </p>
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 25px 0;">
+          <h3 style="color: #2d3748; font-size: 16px; margin: 0 0 15px 0;">Programme Details:</h3>
+          <table style="width: 100%; font-size: 14px; color: #4a5568;">
+            <tr>
+              <td style="padding: 5px 0;"><strong>Participant:</strong></td>
+              <td style="padding: 5px 0;">${app.full_name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0;"><strong>School:</strong></td>
+              <td style="padding: 5px 0;">${app.school_name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0;"><strong>Cohort:</strong></td>
+              <td style="padding: 5px 0;">${cohort.name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0;"><strong>Completion Date:</strong></td>
+              <td style="padding: 5px 0;">${cohortEndDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0;"><strong>Application Reference:</strong></td>
+              <td style="padding: 5px 0;">${app.reference_number || 'N/A'}</td>
+            </tr>
+          </table>
+        </div>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          Thank you for your support throughout this journey. Your encouragement has been invaluable to your child's success!
+        </p>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0;">
+          Congratulations once again!
+        </p>
+        <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 20px 0 0 0;">
+          Warm regards,<br>
+          <strong>The edLEAD Team</strong>
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: #4A4A4A; padding: 25px 40px; text-align: center;">
+        <p style="color: #ffffff; font-size: 14px; margin: 0 0 10px 0;">
+          Transforming Student Leaders
+        </p>
+        <p style="color: #a0a0a0; font-size: 12px; margin: 0;">
+          &copy; 2026 edLEAD Programme. All rights reserved.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+          console.log(`Sending certificate to parent: ${app.parent_email}`);
+          const parentResult = await sendEmail(
+            app.parent_email,
+            `Congratulations! ${app.full_name}'s edLEAD Certificate of Accomplishment`,
+            parentEmailHtml,
+            pdfBase64,
+            app.full_name
+          );
+          parentSent = parentResult.success;
+          if (parentResult.success) {
+            console.log(`Certificate sent successfully to parent: ${app.parent_email}`);
+          } else {
+            console.error(`Failed to send certificate to parent: ${app.parent_email}`, parentResult.error);
+          }
+        }
+
+        if (learnerResult.success) {
           // Update recipient record
           await supabase
             .from("certificate_recipients")
@@ -574,10 +671,10 @@ const handler = async (req: Request): Promise<Response> => {
             .eq("id", recipient.id);
 
           results.success.push(recipient.id);
-          console.log(`Certificate sent successfully to ${emailRecipients.join(", ")}`);
+          console.log(`Certificate sent successfully to learner: ${app.student_email}${parentSent ? ` and parent: ${app.parent_email}` : ''}`);
         } else {
           results.failed.push(recipient.id);
-          console.error(`Failed to send certificate to ${app.student_email}:`, emailResult.error);
+          console.error(`Failed to send certificate to ${app.student_email}:`, learnerResult.error);
         }
       } catch (recipientError: any) {
         console.error(`Error processing recipient ${recipient.id}:`, recipientError);
