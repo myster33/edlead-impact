@@ -29,7 +29,7 @@ interface CertificateRequest {
 
 // Send email using Resend API directly
 async function sendEmail(
-  to: string,
+  to: string[],
   subject: string,
   html: string,
   pdfContent: string,
@@ -44,7 +44,7 @@ async function sendEmail(
       },
       body: JSON.stringify({
         from: "edLEAD <noreply@edlead.co.za>",
-        to: [to],
+        to: to,
         subject,
         html,
         attachments: [
@@ -414,6 +414,8 @@ const handler = async (req: Request): Promise<Response> => {
           id,
           full_name,
           student_email,
+          parent_email,
+          parent_name,
           school_name,
           province,
           country,
@@ -544,9 +546,16 @@ const handler = async (req: Request): Promise<Response> => {
 </body>
 </html>`;
 
-        // Send email
+        // Build recipient list - always include student, optionally include parent
+        const emailRecipients = [app.student_email];
+        if (app.parent_email && app.parent_email.trim() !== "" && app.parent_email !== app.student_email) {
+          emailRecipients.push(app.parent_email);
+          console.log(`Also sending certificate to parent: ${app.parent_email}`);
+        }
+
+        // Send email to student and parent
         const emailResult = await sendEmail(
-          app.student_email,
+          emailRecipients,
           `Congratulations! Your edLEAD Certificate of Accomplishment`,
           emailHtml,
           pdfBase64,
@@ -565,7 +574,7 @@ const handler = async (req: Request): Promise<Response> => {
             .eq("id", recipient.id);
 
           results.success.push(recipient.id);
-          console.log(`Certificate sent successfully to ${app.student_email}`);
+          console.log(`Certificate sent successfully to ${emailRecipients.join(", ")}`);
         } else {
           results.failed.push(recipient.id);
           console.error(`Failed to send certificate to ${app.student_email}:`, emailResult.error);
