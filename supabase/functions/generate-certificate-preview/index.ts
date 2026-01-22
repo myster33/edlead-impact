@@ -12,6 +12,7 @@ interface PreviewRequest {
   country: string;
   cohortName: string;
   completionDate: string;
+  backgroundImageBase64?: string;
 }
 
 // Sanitize text for PDF - escape special characters
@@ -23,8 +24,19 @@ function sanitizeForPDF(text: string): string {
     .replace(/[^\x20-\x7E]/g, '');
 }
 
-// Generate a professionally styled PDF certificate matching edLEAD design
-function generatePolishedPDF(
+// Calculate approximate text width
+function getTextWidth(text: string, fontSize: number): number {
+  return text.length * fontSize * 0.5;
+}
+
+// Center text X position in content area
+function centerTextX(text: string, fontSize: number, areaStart: number, areaWidth: number): number {
+  const textWidth = getTextWidth(text, fontSize);
+  return areaStart + (areaWidth - textWidth) / 2;
+}
+
+// Generate PDF matching the edLEAD certificate design
+function generateCertificatePDF(
   fullName: string,
   schoolName: string,
   province: string,
@@ -35,6 +47,7 @@ function generatePolishedPDF(
   // A4 Landscape: 842 x 595 points
   const pageWidth = 842;
   const pageHeight = 595;
+  const sidebarWidth = 200;
   
   // Sanitize all text inputs
   const name = sanitizeForPDF(fullName);
@@ -44,18 +57,32 @@ function generatePolishedPDF(
   const cohort = sanitizeForPDF(cohortName);
   const date = sanitizeForPDF(completionDate);
 
-  // Calculate center positions for main content area (right side, after sidebar)
-  const contentStartX = 220;
+  // Content area calculations (right side after sidebar)
+  const contentStartX = sidebarWidth + 20;
   const contentWidth = pageWidth - contentStartX - 40;
   const contentCenterX = contentStartX + contentWidth / 2;
-  
-  // Center name within content area
-  const nameWidth = name.length * 14;
-  const nameX = Math.max(contentStartX + 50, contentCenterX - nameWidth / 2);
-  const underlineStart = nameX - 30;
-  const underlineEnd = nameX + nameWidth + 30;
 
-  // Content stream with edLEAD certificate design
+  // Calculate centered positions
+  const titleX = centerTextX("Certificate", 44, contentStartX, contentWidth);
+  const subtitleX = centerTextX("of Completion", 20, contentStartX, contentWidth);
+  const awardTextX = centerTextX("This certificate is awarded to:", 13, contentStartX, contentWidth);
+  const nameX = centerTextX(name, 30, contentStartX, contentWidth);
+  const schoolText = `from ${school}`;
+  const schoolX = centerTextX(schoolText, 12, contentStartX, contentWidth);
+  const locationText = `${prov}, ${ctry}`;
+  const locationX = centerTextX(locationText, 11, contentStartX, contentWidth);
+  const cohortX = centerTextX(cohort, 13, contentStartX, contentWidth);
+  
+  const desc1 = "Has successfully completed the edLEAD Leadership Programme,";
+  const desc2 = "demonstrating exceptional leadership qualities, commitment to";
+  const desc3 = "academic excellence, and dedication to creating positive";
+  const desc4 = "change in their school community.";
+  const desc1X = centerTextX(desc1, 11, contentStartX, contentWidth);
+  const desc2X = centerTextX(desc2, 11, contentStartX, contentWidth);
+  const desc3X = centerTextX(desc3, 11, contentStartX, contentWidth);
+  const desc4X = centerTextX(desc4, 11, contentStartX, contentWidth);
+
+  // Build content stream with design matching the uploaded PDF
   const stream = `
 q
 % White background
@@ -64,80 +91,86 @@ q
 Q
 
 q
-% Left sidebar - dark gray background
+% Left sidebar - dark gray background (matching design)
 0.35 0.35 0.35 rg
-0 0 180 ${pageHeight} re f
+0 0 ${sidebarWidth} ${pageHeight} re f
 Q
 
 q
 % Diagonal stripe pattern on main area (subtle gray lines)
-0.92 0.92 0.92 RG
+0.93 0.93 0.93 RG
 0.5 w
-200 595 m 842 0 l S
-240 595 m 842 40 l S
-280 595 m 842 80 l S
-320 595 m 842 120 l S
-360 595 m 842 160 l S
-400 595 m 842 200 l S
-440 595 m 842 240 l S
-480 595 m 842 280 l S
-520 595 m 842 320 l S
-560 595 m 842 360 l S
-600 595 m 842 400 l S
-640 595 m 842 440 l S
-680 595 m 842 480 l S
-720 595 m 842 520 l S
-760 595 m 842 560 l S
+${sidebarWidth} 595 m 842 0 l S
+${sidebarWidth + 40} 595 m 842 40 l S
+${sidebarWidth + 80} 595 m 842 80 l S
+${sidebarWidth + 120} 595 m 842 120 l S
+${sidebarWidth + 160} 595 m 842 160 l S
+${sidebarWidth + 200} 595 m 842 200 l S
+${sidebarWidth + 240} 595 m 842 240 l S
+${sidebarWidth + 280} 595 m 842 280 l S
+${sidebarWidth + 320} 595 m 842 320 l S
+${sidebarWidth + 360} 595 m 842 360 l S
+${sidebarWidth + 400} 595 m 842 400 l S
+${sidebarWidth + 440} 595 m 842 440 l S
+${sidebarWidth + 480} 595 m 842 480 l S
+${sidebarWidth + 520} 595 m 842 520 l S
+${sidebarWidth + 560} 595 m 842 560 l S
 Q
 
 q
-% Orange starburst seal (top right) - simplified as filled circle with spikes
-0.93 0.46 0.13 rg
-760 530 m
-780 545 l 775 520 l 800 530 l 785 510 l 805 500 l 780 495 l 790 475 l 765 485 l 760 460 l 755 485 l 730 475 l 740 495 l 715 500 l 735 510 l 720 530 l 745 520 l 740 545 l 760 530 l
-f
-Q
-
-q
-% Bottom left geometric design - white chevron outline
+% Bottom left geometric design - outermost white chevron outline
 1 1 1 RG
-3 w
-20 180 m 80 120 l 20 60 l S
+4 w
+10 200 m 90 120 l 10 40 l S
 Q
 
 q
-% Bottom left geometric design - orange filled chevron
+% Orange filled chevron (larger)
 0.93 0.46 0.13 rg
-50 200 m 130 120 l 50 40 l 80 120 l 50 200 l f
+35 230 m 140 120 l 35 10 l 75 120 l 35 230 l f
 Q
 
 q
-% Bottom left geometric design - gray chevron
+% Gray chevron (medium)
 0.55 0.55 0.55 rg
-85 220 m 165 140 l 85 60 l 115 140 l 85 220 l f
+70 260 m 175 145 l 70 30 l 110 145 l 70 260 l f
+Q
+
+q
+% Small white chevron on top
+1 1 1 rg
+95 235 m 170 160 l 95 85 l 125 160 l 95 235 l f
 Q
 
 BT
+% edLEAD icon area (simplified E icon)
+/F2 48 Tf
+0.93 0.46 0.13 rg
+65 520 Td
+(E) Tj
+ET
+
+BT
 % edLEAD logo text on sidebar
-/F2 24 Tf
+/F2 28 Tf
 1 1 1 rg
-25 520 Td
+40 470 Td
 (edLEAD) Tj
 ET
 
 BT
 % Tagline on sidebar
-/F4 9 Tf
+/F4 10 Tf
 0.93 0.46 0.13 rg
-25 495 Td
+25 445 Td
 (Transforming Student Leaders) Tj
 ET
 
 BT
 % Main title - "Certificate" in script style
-/F3 48 Tf
-0.45 0.45 0.45 rg
-380 500 Td
+/F3 44 Tf
+0.35 0.35 0.35 rg
+${titleX} 485 Td
 (Certificate) Tj
 ET
 
@@ -145,55 +178,47 @@ BT
 % Subtitle - "of Completion"
 /F1 20 Tf
 0.93 0.46 0.13 rg
-420 460 Td
+${subtitleX} 445 Td
 (of Completion) Tj
 ET
 
 BT
 % Award text
-/F1 14 Tf
+/F1 13 Tf
 0.5 0.5 0.5 rg
-400 395 Td
-(this certificate is awarded to:) Tj
+${awardTextX} 390 Td
+(This certificate is awarded to:) Tj
 ET
 
 BT
 % Recipient name in script font
-/F3 32 Tf
-0.45 0.45 0.45 rg
-${nameX} 340 Td
+/F3 30 Tf
+0.35 0.35 0.35 rg
+${nameX} 345 Td
 (${name}) Tj
 ET
 
-q
-% Underline for name
-0.5 0.5 0.5 RG
-1 w
-${underlineStart} 330 m
-${underlineEnd} 330 l S
-Q
-
 BT
-% School and location info
+% School info
 /F1 12 Tf
 0.5 0.5 0.5 rg
-${contentCenterX - 80} 305 Td
-(from ${school}) Tj
+${schoolX} 310 Td
+(${schoolText}) Tj
 ET
 
 BT
 % Location
 /F1 11 Tf
 0.6 0.6 0.6 rg
-${contentCenterX - 50} 285 Td
-(${prov}, ${ctry}) Tj
+${locationX} 290 Td
+(${locationText}) Tj
 ET
 
 BT
-% Cohort section header
+% Cohort
 /F2 13 Tf
 0.35 0.35 0.35 rg
-420 235 Td
+${cohortX} 250 Td
 (${cohort}) Tj
 ET
 
@@ -201,38 +226,46 @@ BT
 % Description line 1
 /F1 11 Tf
 0.5 0.5 0.5 rg
-300 205 Td
-(Has successfully completed the edLEAD Leadership Programme, demonstrating) Tj
+${desc1X} 218 Td
+(${desc1}) Tj
 ET
 
 BT
 % Description line 2
 /F1 11 Tf
 0.5 0.5 0.5 rg
-300 188 Td
-(exceptional leadership qualities, commitment to academic excellence, and) Tj
+${desc2X} 202 Td
+(${desc2}) Tj
 ET
 
 BT
 % Description line 3
 /F1 11 Tf
 0.5 0.5 0.5 rg
-320 171 Td
-(dedication to creating positive change in their school community.) Tj
+${desc3X} 186 Td
+(${desc3}) Tj
+ET
+
+BT
+% Description line 4
+/F1 11 Tf
+0.5 0.5 0.5 rg
+${desc4X} 170 Td
+(${desc4}) Tj
 ET
 
 q
 % Date signature line
 0.45 0.45 0.45 RG
 1 w
-280 85 m 400 85 l S
+320 95 m 440 95 l S
 Q
 
 BT
 % Date value
 /F2 11 Tf
 0.93 0.46 0.13 rg
-305 95 Td
+345 108 Td
 (${date}) Tj
 ET
 
@@ -240,7 +273,7 @@ BT
 % Date label
 /F1 9 Tf
 0.6 0.6 0.6 rg
-325 70 Td
+365 78 Td
 (DATE) Tj
 ET
 
@@ -248,14 +281,14 @@ q
 % Signature line
 0.45 0.45 0.45 RG
 1 w
-580 85 m 720 85 l S
+580 95 m 720 95 l S
 Q
 
 BT
-% Signature placeholder
-/F3 14 Tf
+% Signature placeholder (script style)
+/F3 13 Tf
 0.45 0.45 0.45 rg
-610 95 Td
+615 108 Td
 (Director) Tj
 ET
 
@@ -263,7 +296,7 @@ BT
 % Signature label
 /F1 9 Tf
 0.6 0.6 0.6 rg
-620 70 Td
+620 78 Td
 (SIGNATURE) Tj
 ET
 `;
@@ -272,7 +305,7 @@ ET
   const streamBytes = new TextEncoder().encode(stream);
   const streamLength = streamBytes.length;
 
-  // Build PDF structure with 4 fonts
+  // Build PDF structure
   const pdf = `%PDF-1.4
 %\\xE2\\xE3\\xCF\\xD3
 1 0 obj
@@ -351,7 +384,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Generating preview for:", { fullName, schoolName, cohortName, completionDate });
 
-    const pdfBase64 = generatePolishedPDF(
+    const pdfBase64 = generateCertificatePDF(
       fullName || "John Doe",
       schoolName || "Sample High School",
       province || "Gauteng",
