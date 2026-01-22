@@ -32,6 +32,7 @@ import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminResetPassword from "./pages/admin/AdminResetPassword";
 import AdminEmailTemplates from "./pages/admin/AdminEmailTemplates";
 import AdminPermissions from "./pages/admin/AdminPermissions";
+import AdminCertificates from "./pages/admin/AdminCertificates";
 
 const queryClient = new QueryClient();
 
@@ -139,6 +140,14 @@ const App = () => (
                 element={
                   <ProtectedRoute moduleKey="permissions">
                     <AdminPermissions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/certificates"
+                element={
+                  <ProtectedRoute moduleKey="certificates">
+                    <AdminCertificates />
                   </ProtectedRoute>
                 }
               />
