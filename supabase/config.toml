@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.send-certificate]
 verify_jwt = false
+
+[functions.generate-certificate-preview]
+verify_jwt = false
