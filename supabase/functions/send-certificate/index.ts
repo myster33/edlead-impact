@@ -15,18 +15,6 @@ interface CertificateRequest {
   completionDate: string;
 }
 
-// Replace template variables with actual values
-function replaceTemplateVariables(
-  template: string,
-  data: Record<string, string>
-): string {
-  let result = template;
-  for (const [key, value] of Object.entries(data)) {
-    result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value || '');
-  }
-  return result;
-}
-
 // Send email using Resend API directly
 async function sendEmail(
   to: string,
@@ -69,8 +57,17 @@ async function sendEmail(
   }
 }
 
-// Generate a simple PDF (base64 encoded)
-function generateSimplePDF(
+// Sanitize text for PDF - escape special characters
+function sanitizeForPDF(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/[^\x20-\x7E]/g, '');
+}
+
+// Generate a professionally styled PDF certificate
+function generatePolishedPDF(
   fullName: string,
   schoolName: string,
   province: string,
@@ -78,9 +75,207 @@ function generateSimplePDF(
   cohortName: string,
   completionDate: string
 ): string {
-  // This is a minimal PDF structure - in production, you'd use a proper PDF library
-  // For now, we'll create a simple text-based PDF
-  const pdfTemplate = `%PDF-1.4
+  // A4 Landscape: 842 x 595 points
+  const pageWidth = 842;
+  const pageHeight = 595;
+  
+  // Sanitize all text inputs
+  const name = sanitizeForPDF(fullName);
+  const school = sanitizeForPDF(schoolName);
+  const prov = sanitizeForPDF(province);
+  const ctry = sanitizeForPDF(country);
+  const cohort = sanitizeForPDF(cohortName);
+  const date = sanitizeForPDF(completionDate);
+
+  // Calculate center positions
+  const nameX = Math.max(100, (pageWidth - name.length * 12) / 2);
+  const schoolX = Math.max(100, (pageWidth - ("from " + school).length * 7) / 2);
+  const locationX = Math.max(100, (pageWidth - (prov + ", " + ctry).length * 6) / 2);
+  const cohortX = Math.max(100, (pageWidth - cohort.length * 6) / 2);
+  const dateX = Math.max(100, (pageWidth - ("Issued on " + date).length * 5) / 2);
+  const underlineStart = Math.max(100, nameX - 20);
+  const underlineEnd = Math.min(742, nameX + name.length * 12 + 20);
+
+  // Content stream with proper certificate layout
+  const stream = `
+q
+% Background border - outer orange frame
+0.93 0.46 0.13 RG
+4 w
+30 30 782 535 re S
+
+% Inner border - dark gray
+0.29 0.29 0.29 RG
+2 w
+45 45 752 505 re S
+
+% Decorative corner elements
+0.93 0.46 0.13 rg
+30 30 20 20 re f
+792 30 20 20 re f
+30 545 20 20 re f
+792 545 20 20 re f
+
+% Horizontal decorative line top
+0.93 0.46 0.13 RG
+2 w
+100 480 m 742 480 l S
+
+% Horizontal decorative line bottom
+1 w
+150 100 m 692 100 l S
+Q
+
+BT
+% Header text
+/F2 12 Tf
+0.5 0.5 0.5 rg
+321 520 Td
+(EDLEAD LEADERSHIP PROGRAMME) Tj
+ET
+
+BT
+% Main title
+/F3 36 Tf
+0.2 0.2 0.2 rg
+185 430 Td
+(Certificate of Accomplishment) Tj
+ET
+
+BT
+% Subtitle
+/F1 14 Tf
+0.5 0.5 0.5 rg
+350 385 Td
+(This is to certify that) Tj
+ET
+
+BT
+% Recipient name - centered
+/F3 28 Tf
+0.93 0.46 0.13 rg
+${nameX} 340 Td
+(${name}) Tj
+ET
+
+q
+% Underline for name
+0.93 0.46 0.13 RG
+1 w
+${underlineStart} 335 m
+${underlineEnd} 335 l S
+Q
+
+BT
+% School info
+/F1 13 Tf
+0.3 0.3 0.3 rg
+${schoolX} 295 Td
+(from ${school}) Tj
+ET
+
+BT
+% Location
+/F1 11 Tf
+0.5 0.5 0.5 rg
+${locationX} 275 Td
+(${prov}, ${ctry}) Tj
+ET
+
+BT
+% Description line 1
+/F1 12 Tf
+0.3 0.3 0.3 rg
+175 235 Td
+(has successfully completed the edLEAD Leadership Programme,) Tj
+ET
+
+BT
+% Description line 2
+/F1 12 Tf
+0.3 0.3 0.3 rg
+180 215 Td
+(demonstrating exceptional leadership qualities and commitment) Tj
+ET
+
+BT
+% Description line 3
+/F1 12 Tf
+0.3 0.3 0.3 rg
+205 195 Td
+(to creating positive change in their school community.) Tj
+ET
+
+BT
+% Cohort
+/F2 11 Tf
+0.93 0.46 0.13 rg
+${cohortX} 155 Td
+(${cohort}) Tj
+ET
+
+BT
+% Date
+/F1 10 Tf
+0.5 0.5 0.5 rg
+${dateX} 135 Td
+(Issued on ${date}) Tj
+ET
+
+q
+% Signature lines
+0.4 0.4 0.4 RG
+0.5 w
+170 70 m 310 70 l S
+532 70 m 672 70 l S
+Q
+
+BT
+% Signature titles
+/F1 9 Tf
+0.5 0.5 0.5 rg
+195 55 Td
+(Programme Director) Tj
+ET
+
+BT
+/F1 9 Tf
+0.5 0.5 0.5 rg
+550 55 Td
+(Academic Coordinator) Tj
+ET
+
+q
+% Certificate seal - circles
+0.93 0.46 0.13 RG
+2 w
+421 75 m
+456 75 456 110 421 110 c
+386 110 386 75 421 75 c
+h S
+1 w
+421 75 m
+449 75 449 103 421 103 c
+393 103 393 75 421 75 c
+h S
+Q
+
+BT
+% Seal text
+/F2 7 Tf
+0.93 0.46 0.13 rg
+400 87 Td
+(CERTIFIED) Tj
+ET
+`;
+
+  // Calculate stream length
+  const streamBytes = new TextEncoder().encode(stream);
+  const streamLength = streamBytes.length;
+
+  // Build PDF structure
+  const pdf = `%PDF-1.4
+%\\xE2\\xE3\\xCF\\xD3
 1 0 obj
 << /Type /Catalog /Pages 2 0 R >>
 endobj
@@ -88,64 +283,55 @@ endobj
 << /Type /Pages /Kids [3 0 R] /Count 1 >>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+<<
+  /Type /Page
+  /Parent 2 0 R
+  /MediaBox [0 0 ${pageWidth} ${pageHeight}]
+  /Contents 4 0 R
+  /Resources <<
+    /Font <<
+      /F1 5 0 R
+      /F2 6 0 R
+      /F3 7 0 R
+    >>
+    /ProcSet [/PDF /Text]
+  >>
+>>
 endobj
 4 0 obj
-<< /Length 800 >>
+<< /Length ${streamLength} >>
 stream
-BT
-/F1 12 Tf
-200 550 Td
-(EDLEAD LEADERSHIP PROGRAMME) Tj
-0 -40 Td
-/F2 24 Tf
-(Certificate of Accomplishment) Tj
-0 -60 Td
-/F1 14 Tf
-(This is to certify that) Tj
-0 -30 Td
-/F2 18 Tf
-(${fullName}) Tj
-0 -30 Td
-/F1 12 Tf
-(from ${schoolName}, ${province}, ${country}) Tj
-0 -30 Td
-(has successfully completed the edLEAD Leadership Programme,) Tj
-0 -20 Td
-(demonstrating exceptional leadership qualities and commitment to) Tj
-0 -20 Td
-(creating positive change in their school community.) Tj
-0 -40 Td
-(${cohortName}) Tj
-0 -20 Td
-(Issued on ${completionDate}) Tj
-ET
+${stream}
 endstream
 endobj
 5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
 endobj
 6 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Times-BoldItalic /Encoding /WinAnsiEncoding >>
 endobj
 xref
-0 7
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-0000000270 00000 n
-0000001120 00000 n
-0000001187 00000 n
+0 8
+0000000000 65535 f 
+0000000017 00000 n 
+0000000066 00000 n 
+0000000123 00000 n 
+0000000340 00000 n 
+0000002800 00000 n 
+0000002900 00000 n 
+0000003010 00000 n 
 trailer
-<< /Size 7 /Root 1 0 R >>
+<< /Size 8 /Root 1 0 R >>
 startxref
-1260
+3120
 %%EOF`;
 
   // Convert to base64
   const encoder = new TextEncoder();
-  const pdfBytes = encoder.encode(pdfTemplate);
+  const pdfBytes = encoder.encode(pdf);
   return btoa(String.fromCharCode(...pdfBytes));
 }
 
@@ -242,8 +428,8 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Generate PDF
-        const pdfBase64 = generateSimplePDF(
+        // Generate polished PDF certificate
+        const pdfBase64 = generatePolishedPDF(
           app.full_name,
           app.school_name,
           app.province,
@@ -270,7 +456,7 @@ const handler = async (req: Request): Promise<Response> => {
     <tr>
       <td style="padding: 40px;">
         <h1 style="color: #2d3748; font-size: 24px; margin: 0 0 20px 0; font-weight: 600;">
-          🎉 Congratulations, ${app.full_name}!
+          Congratulations, ${app.full_name}!
         </h1>
         <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
           We are thrilled to inform you that you have successfully completed the <strong>edLEAD Leadership Programme</strong>!
@@ -328,7 +514,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Send email
         const emailResult = await sendEmail(
           app.student_email,
-          `🎓 Your edLEAD Certificate of Accomplishment - ${cohort.name}`,
+          `Your edLEAD Certificate of Accomplishment - ${cohort.name}`,
           emailHtml,
           pdfBase64,
           app.full_name
