@@ -12,6 +12,8 @@ interface ApplicantApprovedRequest {
   applicantEmail: string;
   applicantName: string;
   referenceNumber: string;
+  parentEmail?: string;
+  parentName?: string;
 }
 
 // Default template as fallback
@@ -96,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { applicantEmail, applicantName, referenceNumber }: ApplicantApprovedRequest = await req.json();
+    const { applicantEmail, applicantName, referenceNumber, parentEmail, parentName }: ApplicantApprovedRequest = await req.json();
 
     console.log(`Sending approval notification to applicant: ${applicantEmail}`);
 
@@ -117,6 +119,13 @@ const handler = async (req: Request): Promise<Response> => {
     const subject = replaceVariables(template.subject, variables);
     const htmlContent = replaceVariables(template.html_content, variables);
 
+    // Build recipient list - always include applicant, optionally include parent
+    const recipients = [applicantEmail];
+    if (parentEmail && parentEmail.trim() !== "" && parentEmail !== applicantEmail) {
+      recipients.push(parentEmail);
+      console.log(`Also sending to parent: ${parentEmail}`);
+    }
+
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -125,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "edLEAD <noreply@edlead.co.za>",
-        to: [applicantEmail],
+        to: recipients,
         subject,
         html: htmlContent,
       }),
@@ -134,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
     const data = await emailResponse.json();
     console.log("Approval notification sent successfully:", data);
 
-    return new Response(JSON.stringify({ success: true, data }), {
+    return new Response(JSON.stringify({ success: true, data, recipients }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
