@@ -491,6 +491,16 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if parent emails are enabled globally
+    const { data: settingsData } = await supabase
+      .from("system_settings")
+      .select("setting_value")
+      .eq("setting_key", "parent_emails_enabled")
+      .maybeSingle();
+    
+    const parentEmailsEnabled = settingsData?.setting_value === true || settingsData?.setting_value === "true";
+    console.log(`Parent emails enabled: ${parentEmailsEnabled}`);
+
     const results: { learner: boolean; parent: boolean } = { learner: false, parent: false };
 
     // Send learner email
@@ -511,8 +521,8 @@ const handler = async (req: Request): Promise<Response> => {
     const learnerResult = await sendEmail(applicantEmail, learnerSubject, learnerHtmlContent);
     results.learner = learnerResult.success;
 
-    // Send parent email if parent email is provided and different from learner
-    if (parentEmail && parentEmail.trim() !== "" && parentEmail !== applicantEmail) {
+    // Send parent email if parent emails are enabled, and parent email is provided and different from learner
+    if (parentEmailsEnabled && parentEmail && parentEmail.trim() !== "" && parentEmail !== applicantEmail) {
       const parentTemplateKey = `parent-status-${newStatus}`;
       const parentTemplate = await getEmailTemplate(supabase, parentTemplateKey, newStatus, true);
       
@@ -532,12 +542,15 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending parent notification to: ${parentEmail}`);
       const parentResult = await sendEmail(parentEmail, parentSubject, parentHtmlContent);
       results.parent = parentResult.success;
+    } else if (!parentEmailsEnabled && parentEmail) {
+      console.log("Parent emails are disabled globally, skipping parent notification");
     }
 
     return new Response(JSON.stringify({ 
       success: true, 
       results,
-      message: `Learner: ${results.learner ? 'sent' : 'failed'}, Parent: ${parentEmail ? (results.parent ? 'sent' : 'failed') : 'not applicable'}`
+      parentEmailsEnabled,
+      message: `Learner: ${results.learner ? 'sent' : 'failed'}, Parent: ${parentEmailsEnabled ? (parentEmail ? (results.parent ? 'sent' : 'failed') : 'not applicable') : 'disabled'}`
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

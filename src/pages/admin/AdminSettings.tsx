@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +98,10 @@ export default function AdminSettings() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
+  
+  // System settings state (admin only)
+  const [parentEmailsEnabled, setParentEmailsEnabled] = useState(true);
+  const [isLoadingSystemSettings, setIsLoadingSystemSettings] = useState(false);
   const [isSendingDigest, setIsSendingDigest] = useState(false);
 
   useEffect(() => {
@@ -109,7 +113,69 @@ export default function AdminSettings() {
   useEffect(() => {
     fetchMfaFactors();
     fetchProfile();
+    if (adminUser?.role === "admin") {
+      fetchSystemSettings();
+    }
   }, [adminUser]);
+
+  const fetchSystemSettings = async () => {
+    setIsLoadingSystemSettings(true);
+    try {
+      // Type assertion needed as system_settings is a new table
+      const { data, error } = await (supabase
+        .from("system_settings" as any)
+        .select("setting_value")
+        .eq("setting_key", "parent_emails_enabled")
+        .maybeSingle() as unknown as Promise<{ data: { setting_value: any } | null; error: any }>);
+      
+      if (error) throw error;
+      
+      if (data) {
+        setParentEmailsEnabled(data.setting_value === true || data.setting_value === "true");
+      }
+    } catch (error) {
+      console.error("Error fetching system settings:", error);
+    } finally {
+      setIsLoadingSystemSettings(false);
+    }
+  };
+
+  const handleParentEmailsToggle = async (enabled: boolean) => {
+    try {
+      // Type assertion needed as system_settings is a new table
+      const { error } = await (supabase
+        .from("system_settings" as any)
+        .update({ 
+          setting_value: enabled,
+          updated_by: adminUser?.id 
+        })
+        .eq("setting_key", "parent_emails_enabled") as unknown as Promise<{ error: any }>);
+      
+      if (error) throw error;
+      
+      setParentEmailsEnabled(enabled);
+      
+      await logAction({
+        action: enabled ? "parent_emails_enabled" : "parent_emails_disabled",
+        table_name: "system_settings",
+        record_id: undefined,
+        new_values: { parent_emails_enabled: enabled },
+      });
+      
+      toast({
+        title: enabled ? "Parent emails enabled" : "Parent emails disabled",
+        description: enabled 
+          ? "Parents/guardians will receive notification emails." 
+          : "Parents/guardians will no longer receive notification emails.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update setting",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchProfile = async () => {
     if (!adminUser?.id) return;
@@ -980,54 +1046,89 @@ export default function AdminSettings() {
               </CardContent>
             </Card>
 
-            {/* Send Digest (Admin Only) */}
+            {/* Admin Only Section */}
             {adminUser?.role === "admin" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Send Audit Digest
-                  </CardTitle>
-                  <CardDescription>
-                    Manually trigger the weekly audit log digest to all subscribed admins.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Send Digest Now</p>
-                      <p className="text-sm text-muted-foreground">
-                        Send a summary of the last 7 days of admin activity to all subscribed admins.
-                      </p>
+              <>
+                {/* Global Email Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserCheck className="h-5 w-5" />
+                      Global Email Settings
+                    </CardTitle>
+                    <CardDescription>
+                      System-wide email notification settings that affect all users.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="parent-emails-toggle" className="font-medium">Parent/Guardian Emails</Label>
+                          <p className="text-sm text-muted-foreground">
+                            When enabled, parents/guardians will receive copies of all learner notification emails (status changes, approvals, certificates).
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="parent-emails-toggle"
+                        checked={parentEmailsEnabled}
+                        onCheckedChange={handleParentEmailsToggle}
+                        disabled={isLoadingSystemSettings}
+                      />
                     </div>
-                    <Button
-                      onClick={async () => {
-                        setIsSendingDigest(true);
-                        try {
-                          const { data, error } = await supabase.functions.invoke("send-audit-digest");
-                          if (error) throw error;
-                          toast({
-                            title: "Digest sent",
-                            description: `Successfully sent digest to ${data.emailsSent} admin(s).`,
-                          });
-                        } catch (error: any) {
-                          toast({
-                            title: "Failed to send digest",
-                            description: error.message,
-                            variant: "destructive",
-                          });
-                        } finally {
-                          setIsSendingDigest(false);
-                        }
-                      }}
-                      disabled={isSendingDigest}
-                    >
-                      {isSendingDigest && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Send Digest Now
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Send Digest */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Send Audit Digest
+                    </CardTitle>
+                    <CardDescription>
+                      Manually trigger the weekly audit log digest to all subscribed admins.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Send Digest Now</p>
+                        <p className="text-sm text-muted-foreground">
+                          Send a summary of the last 7 days of admin activity to all subscribed admins.
+                        </p>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          setIsSendingDigest(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke("send-audit-digest");
+                            if (error) throw error;
+                            toast({
+                              title: "Digest sent",
+                              description: `Successfully sent digest to ${data.emailsSent} admin(s).`,
+                            });
+                          } catch (error: any) {
+                            toast({
+                              title: "Failed to send digest",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsSendingDigest(false);
+                          }
+                        }}
+                        disabled={isSendingDigest}
+                      >
+                        {isSendingDigest && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Send Digest Now
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
             )}
           </TabsContent>
         </Tabs>
