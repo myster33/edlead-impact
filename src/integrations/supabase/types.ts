@@ -145,6 +145,7 @@ export type Database = {
       applications: {
         Row: {
           academic_importance: string
+          cohort_id: string | null
           country: string
           created_at: string
           date_of_birth: string
@@ -193,6 +194,7 @@ export type Database = {
         }
         Insert: {
           academic_importance: string
+          cohort_id?: string | null
           country?: string
           created_at?: string
           date_of_birth: string
@@ -241,6 +243,7 @@ export type Database = {
         }
         Update: {
           academic_importance?: string
+          cohort_id?: string | null
           country?: string
           created_at?: string
           date_of_birth?: string
@@ -287,7 +290,15 @@ export type Database = {
           why_edlead?: string
           willing_to_commit?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "applications_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blog_comments: {
         Row: {
@@ -422,6 +433,136 @@ export type Database = {
           title?: string
           updated_at?: string
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      certificate_recipients: {
+        Row: {
+          application_id: string
+          certificate_url: string | null
+          cohort_id: string
+          created_at: string
+          email_sent: boolean
+          email_sent_at: string | null
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          template_id: string
+        }
+        Insert: {
+          application_id: string
+          certificate_url?: string | null
+          cohort_id: string
+          created_at?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          template_id: string
+        }
+        Update: {
+          application_id?: string
+          certificate_url?: string | null
+          cohort_id?: string
+          created_at?: string
+          email_sent?: boolean
+          email_sent_at?: string | null
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_recipients_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_recipients_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_recipients_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      certificate_templates: {
+        Row: {
+          available_fields: Json
+          created_at: string
+          created_by: string | null
+          html_template: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          available_fields?: Json
+          created_at?: string
+          created_by?: string | null
+          html_template: string
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          available_fields?: Json
+          created_at?: string
+          created_by?: string | null
+          html_template?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cohorts: {
+        Row: {
+          cohort_number: number
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean
+          name: string
+          start_date: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          cohort_number: number
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean
+          name: string
+          start_date: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          cohort_number?: number
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          start_date?: string
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }

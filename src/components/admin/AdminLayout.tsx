@@ -33,6 +33,7 @@ import {
   MapPin,
   Mail,
   Lock,
+  Award,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 
@@ -97,6 +98,12 @@ const allMenuItems = [
     url: "/admin/permissions",
     icon: Lock,
     moduleKey: "permissions",
+  },
+  {
+    title: "Certificates",
+    url: "/admin/certificates",
+    icon: Award,
+    moduleKey: "certificates",
   },
 ];
 
