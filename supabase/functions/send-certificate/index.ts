@@ -69,7 +69,26 @@ async function sendEmail(
   }
 }
 
-// Generate PDF with embedded background image and text overlay
+// Generate QR code image bytes using QR code API
+async function generateQRCode(url: string): Promise<Uint8Array | null> {
+  try {
+    // Use QR Server API to generate QR code as PNG
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(url)}&format=png`;
+    const response = await fetch(qrApiUrl);
+    
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      return new Uint8Array(arrayBuffer);
+    }
+    console.log("Failed to generate QR code:", response.status);
+    return null;
+  } catch (e) {
+    console.log("Error generating QR code:", e);
+    return null;
+  }
+}
+
+// Generate PDF with embedded background image, text overlay, and QR code
 async function generateCertificatePDF(
   fullName: string,
   schoolName: string,
@@ -77,7 +96,8 @@ async function generateCertificatePDF(
   country: string,
   cohortName: string,
   completionDate: string,
-  backgroundImageUrl?: string
+  backgroundImageUrl?: string,
+  referenceNumber?: string
 ): Promise<string> {
   // Create a new PDF document - A4 Landscape
   const pdfDoc = await PDFDocument.create();
@@ -280,9 +300,58 @@ async function generateCertificatePDF(
     color: lightGray,
   });
   
+  // Add QR code to the bottom left of the content area
+  try {
+    const qrBytes = await generateQRCode("https://www.edlead.co.za");
+    if (qrBytes) {
+      const qrImage = await pdfDoc.embedPng(qrBytes);
+      const qrSize = 60;
+      page.drawImage(qrImage, {
+        x: contentStartX + 10,
+        y: 30,
+        width: qrSize,
+        height: qrSize,
+      });
+      
+      // Add small text below QR code
+      page.drawText("www.edlead.co.za", {
+        x: contentStartX + 5,
+        y: 18,
+        size: 7,
+        font: helvetica,
+        color: lightGray,
+      });
+      console.log("QR code embedded successfully");
+    }
+  } catch (e) {
+    console.log("Could not embed QR code:", e);
+  }
+  
+  // Add reference number if provided (bottom right of content area)
+  if (referenceNumber) {
+    const refText = `Ref: ${referenceNumber}`;
+    page.drawText(refText, {
+      x: width - 100,
+      y: 25,
+      size: 8,
+      font: helvetica,
+      color: lightGray,
+    });
+  }
+  
   // Serialize the PDF and convert to base64 using chunked encoding
   const pdfBytes = await pdfDoc.save();
   return uint8ArrayToBase64(pdfBytes);
+}
+
+// Format date for display
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', { 
+    day: 'numeric', 
+    month: 'long', 
+    year: 'numeric' 
+  });
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -353,7 +422,8 @@ const handler = async (req: Request): Promise<Response> => {
           province,
           country,
           grade,
-          project_idea
+          project_idea,
+          reference_number
         )
       `)
       .in("id", recipientIds);
@@ -372,6 +442,9 @@ const handler = async (req: Request): Promise<Response> => {
     const designSettings = template.design_settings as any;
     const backgroundImageUrl = designSettings?.backgroundImageUrl;
 
+    // Format the cohort end date for display
+    const cohortEndDate = formatDate(cohort.end_date);
+
     const results: { success: string[]; failed: string[] } = { success: [], failed: [] };
 
     for (const recipient of recipients) {
@@ -383,7 +456,7 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Generate PDF certificate with background image
+        // Generate PDF certificate with background image and QR code
         const pdfBase64 = await generateCertificatePDF(
           app.full_name,
           app.school_name,
@@ -391,10 +464,11 @@ const handler = async (req: Request): Promise<Response> => {
           app.country,
           cohort.name,
           completionDate,
-          backgroundImageUrl
+          backgroundImageUrl,
+          app.reference_number
         );
 
-        // Build email HTML
+        // Build email HTML with fixed logo and additional details
         const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -406,7 +480,7 @@ const handler = async (req: Request): Promise<Response> => {
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
       <td style="background-color: #4A4A4A; padding: 30px 40px; text-align: center;">
-        <img src="https://klxrjohcpaxviltzpxam.supabase.co/storage/v1/object/public/blog-images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto;">
+        <img src="https://edlead.lovable.app/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto;">
       </td>
     </tr>
     <tr>
@@ -440,7 +514,11 @@ const handler = async (req: Request): Promise<Response> => {
             </tr>
             <tr>
               <td style="padding: 5px 0;"><strong>Completion Date:</strong></td>
-              <td style="padding: 5px 0;">${completionDate}</td>
+              <td style="padding: 5px 0;">${cohortEndDate}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0;"><strong>Application Reference:</strong></td>
+              <td style="padding: 5px 0;">${app.reference_number || 'N/A'}</td>
             </tr>
           </table>
         </div>
