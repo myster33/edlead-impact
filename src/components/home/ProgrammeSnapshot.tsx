@@ -2,7 +2,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Calendar, Monitor, Users, Award, FileText, Briefcase, ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import conferenceImage from "@/assets/programme-snapshot-conference.jpg";
+import conferenceImage1 from "@/assets/programme-snapshot-conference.jpg";
+import conferenceImage2 from "@/assets/programme-conference-2.jpg";
+import conferenceImage3 from "@/assets/programme-conference-3.jpg";
+import conferenceImage4 from "@/assets/programme-conference-4.jpg";
+
+const conferenceImages = [conferenceImage1, conferenceImage2, conferenceImage3, conferenceImage4];
 
 const features = [
   {
@@ -39,6 +44,7 @@ const features = [
 
 export const ProgrammeSnapshot = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -58,6 +64,15 @@ export const ProgrammeSnapshot = () => {
 
     return () => observer.disconnect();
   }, []);
+
+  // Auto-rotate images every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % conferenceImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <section ref={sectionRef} className="py-20 bg-secondary text-secondary-foreground">
       <div className="container">
@@ -99,14 +114,19 @@ export const ProgrammeSnapshot = () => {
             ))}
           </div>
 
-          {/* Left column - Image aligned with bottom boxes */}
+          {/* Left column - Image carousel aligned with bottom boxes */}
           <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '200ms' }}>
-            <div className="rounded-xl overflow-hidden shadow-lg h-full">
-              <img 
-                src={conferenceImage} 
-                alt="Student leader speaking at edLEAD conference with diverse learners in the audience" 
-                className="w-full h-full object-cover scale-x-[-1]"
-              />
+            <div className="rounded-xl overflow-hidden shadow-lg h-full relative">
+              {conferenceImages.map((image, index) => (
+                <img 
+                  key={index}
+                  src={image} 
+                  alt="Student leader speaking at edLEAD conference with diverse learners in the audience" 
+                  className={`w-full h-full object-cover scale-x-[-1] transition-opacity duration-1000 ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0 absolute inset-0'
+                  }`}
+                />
+              ))}
             </div>
           </div>
 
