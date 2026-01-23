@@ -63,13 +63,6 @@ export const ProgrammeSnapshot = () => {
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
-              <img 
-                src={conferenceImage} 
-                alt="Student leader speaking at edLEAD conference with diverse learners in the audience" 
-                className="w-full h-auto object-cover"
-              />
-            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               Programme Snapshot
             </h2>
@@ -77,11 +70,18 @@ export const ProgrammeSnapshot = () => {
               edLEAD Captains participate in a structured, three-month programme combining mentorship, training, collaboration, and practical leadership experience.
             </p>
             <Link to="/programme">
-              <Button size="lg" className="gap-2">
+              <Button size="lg" className="gap-2 mb-8">
                 Explore the Programme
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
+            <div className="rounded-xl overflow-hidden shadow-lg">
+              <img 
+                src={conferenceImage} 
+                alt="Student leader speaking at edLEAD conference with diverse learners in the audience" 
+                className="w-full h-auto object-cover scale-x-[-1]"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
