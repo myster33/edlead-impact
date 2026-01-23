@@ -6,6 +6,7 @@ import conferenceImage1 from "@/assets/programme-snapshot-conference.jpg";
 import conferenceImage2 from "@/assets/programme-conference-2.jpg";
 import conferenceImage3 from "@/assets/programme-conference-3.jpg";
 import conferenceImage4 from "@/assets/programme-conference-4.jpg";
+import imageBlinder from "@/assets/image-blinder.png";
 
 const conferenceImages = [conferenceImage1, conferenceImage2, conferenceImage3, conferenceImage4];
 
@@ -117,6 +118,7 @@ export const ProgrammeSnapshot = () => {
           {/* Left column - Image carousel aligned with bottom boxes */}
           <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: '200ms' }}>
             <div className="rounded-xl overflow-hidden shadow-lg h-full relative">
+              {/* Background images that transition */}
               {conferenceImages.map((image, index) => (
                 <img 
                   key={index}
@@ -127,6 +129,12 @@ export const ProgrammeSnapshot = () => {
                   }`}
                 />
               ))}
+              {/* Blinder overlay on top with reduced opacity */}
+              <img 
+                src={imageBlinder} 
+                alt="" 
+                className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+              />
             </div>
           </div>
 
