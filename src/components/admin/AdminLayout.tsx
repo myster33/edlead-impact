@@ -207,7 +207,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <Sidebar className="border-r">
           <SidebarHeader className="p-4 border-b">
             <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <img src={theme === "dark" ? edleadLogoDark : edleadLogo} alt="edLEAD" className="h-8" />
+              <div className="relative h-8">
+                <img 
+                  src={edleadLogo} 
+                  alt="edLEAD" 
+                  className={`h-8 absolute transition-opacity duration-300 ${theme === "dark" ? "opacity-0" : "opacity-100"}`}
+                />
+                <img 
+                  src={edleadLogoDark} 
+                  alt="edLEAD" 
+                  className={`h-8 transition-opacity duration-300 ${theme === "dark" ? "opacity-100" : "opacity-0"}`}
+                />
+              </div>
               <Badge variant="secondary" className="text-xs">Admin</Badge>
             </Link>
           </SidebarHeader>
