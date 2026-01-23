@@ -98,6 +98,7 @@ export type Database = {
           profile_picture_url: string | null
           province: string | null
           role: Database["public"]["Enums"]["app_role"]
+          theme_preference: string | null
           user_id: string
         }
         Insert: {
@@ -118,6 +119,7 @@ export type Database = {
           profile_picture_url?: string | null
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          theme_preference?: string | null
           user_id: string
         }
         Update: {
@@ -138,6 +140,7 @@ export type Database = {
           profile_picture_url?: string | null
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          theme_preference?: string | null
           user_id?: string
         }
         Relationships: []
