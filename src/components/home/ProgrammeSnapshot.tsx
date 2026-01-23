@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Calendar, Monitor, Users, Award, FileText, Briefcase, ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import conferenceImage from "@/assets/programme-snapshot-conference.jpg";
 
 const features = [
   {
@@ -62,6 +63,13 @@ export const ProgrammeSnapshot = () => {
       <div className="container">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
+              <img 
+                src={conferenceImage} 
+                alt="Student leader speaking at edLEAD conference with diverse learners in the audience" 
+                className="w-full h-auto object-cover"
+              />
+            </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
               Programme Snapshot
             </h2>
