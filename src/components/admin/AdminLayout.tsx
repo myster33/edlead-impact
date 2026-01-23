@@ -22,6 +22,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   LayoutDashboard,
   Users,
   FileText,
@@ -37,6 +43,7 @@ import {
   Award,
   Moon,
   Sun,
+  Monitor,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 
@@ -140,9 +147,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
 
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -281,19 +285,37 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="h-9 w-9"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                >
+                  {theme === "dark" ? (
+                    <Moon className="h-5 w-5" />
+                  ) : theme === "light" ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Monitor className="h-5 w-5" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  <Sun className="h-4 w-4 mr-2" />
+                  Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  <Moon className="h-4 w-4 mr-2" />
+                  Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
+                  <Monitor className="h-4 w-4 mr-2" />
+                  System
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
           <div className="p-6">
             {children}
