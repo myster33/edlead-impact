@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail, Moon, Sun, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
+import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
 import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
@@ -369,13 +370,13 @@ export default function AdminLogin() {
           </div>
           <div className="flex justify-center mb-2">
             <img 
-              src={edleadLogo} 
+              src={theme === "dark" ? edleadLogoDark : edleadLogo} 
               alt="edLEAD Logo" 
               className="h-16 w-auto"
             />
           </div>
-          <CardTitle className="text-2xl font-bold">Admin Portal</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-foreground">Admin Portal</CardTitle>
+          <CardDescription className="text-muted-foreground">
             {showForgotPassword 
               ? "Enter your email to reset your password" 
               : "Sign in or create an account to access the dashboard"}

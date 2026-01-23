@@ -46,6 +46,7 @@ import {
   Monitor,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
+import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -206,7 +207,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <Sidebar className="border-r">
           <SidebarHeader className="p-4 border-b">
             <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <img src={edleadLogo} alt="edLEAD" className="h-8" />
+              <img src={theme === "dark" ? edleadLogoDark : edleadLogo} alt="edLEAD" className="h-8" />
               <Badge variant="secondary" className="text-xs">Admin</Badge>
             </Link>
           </SidebarHeader>
@@ -261,7 +262,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{displayName}</p>
+                <p className="text-sm font-medium truncate text-foreground">{displayName}</p>
                 {profile?.position && (
                   <p className="text-xs text-muted-foreground truncate">{profile.position}</p>
                 )}
