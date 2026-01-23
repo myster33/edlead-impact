@@ -57,6 +57,7 @@ interface AdminProfile {
   profile_picture_url: string | null;
   country: string | null;
   province: string | null;
+  theme_preference: string | null;
 }
 
 // Module key to menu item mapping
@@ -154,17 +155,33 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       
       const { data } = await supabase
         .from("admin_users")
-        .select("full_name, position, profile_picture_url, country, province")
+        .select("full_name, position, profile_picture_url, country, province, theme_preference")
         .eq("id", adminUser.id)
         .maybeSingle();
       
       if (data) {
         setProfile(data);
+        // Apply saved theme preference
+        if (data.theme_preference) {
+          setTheme(data.theme_preference);
+        }
       }
     };
 
     fetchProfile();
-  }, [adminUser?.id]);
+  }, [adminUser?.id, setTheme]);
+
+  // Save theme preference to database when it changes
+  const handleThemeChange = async (newTheme: string) => {
+    setTheme(newTheme);
+    
+    if (adminUser?.id) {
+      await supabase
+        .from("admin_users")
+        .update({ theme_preference: newTheme })
+        .eq("id", adminUser.id);
+    }
+  };
 
   // Get filtered menu items based on role and permissions
   const menuItems = useMemo(
@@ -302,15 +319,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
+                <DropdownMenuItem onClick={() => handleThemeChange("light")}>
                   <Sun className="h-4 w-4 mr-2" />
                   Light
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                <DropdownMenuItem onClick={() => handleThemeChange("dark")}>
                   <Moon className="h-4 w-4 mr-2" />
                   Dark
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
+                <DropdownMenuItem onClick={() => handleThemeChange("system")}>
                   <Monitor className="h-4 w-4 mr-2" />
                   System
                 </DropdownMenuItem>
