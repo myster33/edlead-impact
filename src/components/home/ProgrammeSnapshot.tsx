@@ -129,11 +129,11 @@ export const ProgrammeSnapshot = () => {
                   }`}
                 />
               ))}
-              {/* Blinder overlay on top with reduced opacity */}
+              {/* Blinder overlay on top */}
               <img 
                 src={imageBlinder} 
                 alt="" 
-                className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover opacity-100 pointer-events-none"
               />
             </div>
           </div>
