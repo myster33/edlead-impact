@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuditLog } from "@/hooks/use-audit-log";
@@ -13,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const countries = [
   "South Africa", "Nigeria", "Kenya", "Ghana", "Tanzania", "Uganda", 
@@ -65,6 +67,8 @@ export default function AdminSettings() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { logAction } = useAuditLog();
+  const { theme, setTheme } = useTheme();
+  const [themePreference, setThemePreference] = useState<string>("system");
 
   // Profile state
   const [fullName, setFullName] = useState("");
@@ -183,7 +187,7 @@ export default function AdminSettings() {
     try {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled, notify_applications, notify_blogs, notify_admin_changes, notify_critical_alerts, notify_performance_reports")
+        .select("full_name, phone, position, country, province, profile_picture_url, email_digest_enabled, notify_applications, notify_blogs, notify_admin_changes, notify_critical_alerts, notify_performance_reports, theme_preference")
         .eq("id", adminUser.id)
         .maybeSingle();
       
@@ -202,9 +206,26 @@ export default function AdminSettings() {
         setNotifyAdminChanges(data.notify_admin_changes ?? true);
         setNotifyCriticalAlerts(data.notify_critical_alerts ?? true);
         setNotifyPerformanceReports(data.notify_performance_reports ?? true);
+        setThemePreference(data.theme_preference || "system");
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
+    }
+  };
+
+  const handleThemeChange = async (newTheme: string) => {
+    setTheme(newTheme);
+    setThemePreference(newTheme);
+    
+    if (adminUser?.id) {
+      try {
+        await supabase
+          .from("admin_users")
+          .update({ theme_preference: newTheme })
+          .eq("id", adminUser.id);
+      } catch (error) {
+        console.error("Error saving theme preference:", error);
+      }
     }
   };
 
@@ -744,6 +765,62 @@ export default function AdminSettings() {
                   <Save className="mr-2 h-4 w-4" />
                   Save Profile
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Theme Preference */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sun className="h-5 w-5" />
+                  Appearance
+                </CardTitle>
+                <CardDescription>
+                  Choose your preferred theme for the admin portal.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={themePreference}
+                  onValueChange={handleThemeChange}
+                  className="grid grid-cols-3 gap-4"
+                >
+                  <Label
+                    htmlFor="theme-light"
+                    className={`flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                      themePreference === "light" ? "border-primary" : "border-muted"
+                    }`}
+                  >
+                    <RadioGroupItem value="light" id="theme-light" className="sr-only" />
+                    <Sun className="h-6 w-6 mb-2" />
+                    <span className="text-sm font-medium">Light</span>
+                  </Label>
+                  <Label
+                    htmlFor="theme-dark"
+                    className={`flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                      themePreference === "dark" ? "border-primary" : "border-muted"
+                    }`}
+                  >
+                    <RadioGroupItem value="dark" id="theme-dark" className="sr-only" />
+                    <Moon className="h-6 w-6 mb-2" />
+                    <span className="text-sm font-medium">Dark</span>
+                  </Label>
+                  <Label
+                    htmlFor="theme-system"
+                    className={`flex flex-col items-center justify-center rounded-md border-2 p-4 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                      themePreference === "system" ? "border-primary" : "border-muted"
+                    }`}
+                  >
+                    <RadioGroupItem value="system" id="theme-system" className="sr-only" />
+                    <Monitor className="h-6 w-6 mb-2" />
+                    <span className="text-sm font-medium">System</span>
+                  </Label>
+                </RadioGroup>
+                <p className="text-sm text-muted-foreground mt-4">
+                  {themePreference === "system" 
+                    ? "Theme will automatically match your device settings." 
+                    : `Using ${themePreference} theme.`}
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
