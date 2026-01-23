@@ -207,7 +207,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <Sidebar className="border-r">
           <SidebarHeader className="p-4 border-b">
             <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <div className="relative h-8">
+              <div className="relative h-8 transition-transform duration-200 hover:scale-105">
                 <img 
                   src={edleadLogo} 
                   alt="edLEAD" 
