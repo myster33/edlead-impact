@@ -1,5 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useModulePermissions, ModulePermission } from "@/hooks/use-module-permissions";
@@ -34,6 +35,8 @@ import {
   Mail,
   Lock,
   Award,
+  Moon,
+  Sun,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 
@@ -135,6 +138,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { adminUser, signOut } = useAdminAuth();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const { data: modulePermissions } = useModulePermissions();
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -267,12 +275,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <main className="flex-1 overflow-auto">
           <header className="sticky top-0 z-10 bg-background border-b h-14 flex items-center px-4">
             <SidebarTrigger />
-            <div className="ml-4">
+            <div className="ml-4 flex-1">
               <h1 className="text-lg font-semibold">
                 {menuItems.find(item => location.pathname === item.url)?.title || 
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-9 w-9"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
           </header>
           <div className="p-6">
             {children}
