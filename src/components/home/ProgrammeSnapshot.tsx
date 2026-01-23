@@ -61,9 +61,9 @@ export const ProgrammeSnapshot = () => {
   return (
     <section ref={sectionRef} className="py-20 bg-secondary text-secondary-foreground">
       <div className="container">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
           <div className={`transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
+            <div className="mb-8 rounded-xl overflow-hidden shadow-lg">
               <img 
                 src={conferenceImage} 
                 alt="Student leader speaking at edLEAD conference with diverse learners in the audience" 
