@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
+import { UpdateNotificationBanner } from "./UpdateNotificationBanner";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -349,7 +350,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto flex flex-col">
+          {/* Update notification banner - only shows in Electron when update available */}
+          <UpdateNotificationBanner />
+          
           <header className="sticky top-0 z-10 bg-background border-b h-14 flex items-center px-4">
             <SidebarTrigger />
             <div className="ml-4 flex-1">
