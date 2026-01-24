@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useModulePermissions, ModulePermission } from "@/hooks/use-module-permissions";
+import { useElectron } from "@/hooks/use-electron";
 import {
   Sidebar,
   SidebarContent,
@@ -44,6 +45,8 @@ import {
   Moon,
   Sun,
   Monitor,
+  Download,
+  Apple,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -148,6 +151,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
+  const { isElectron } = useElectron();
 
 
   useEffect(() => {
@@ -263,6 +267,46 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarContent>
 
           <SidebarFooter className="p-4 border-t">
+            {/* Download Desktop App - Only show on web, not in Electron */}
+            {!isElectron && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mb-3"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Desktop App
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <a 
+                      href="https://github.com/edlead/admin-desktop/releases/latest/download/edLEAD-Admin-Setup.exe"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center cursor-pointer"
+                    >
+                      <Monitor className="h-4 w-4 mr-2" />
+                      Windows (.exe)
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a 
+                      href="https://github.com/edlead/admin-desktop/releases/latest/download/edLEAD-Admin.dmg"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center cursor-pointer"
+                    >
+                      <Apple className="h-4 w-4 mr-2" />
+                      macOS (.dmg)
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-10 w-10">
                 {profile?.profile_picture_url && (
