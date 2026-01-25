@@ -284,24 +284,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <DropdownMenuContent align="center" className="w-48">
                   <DropdownMenuItem asChild>
                     <a 
-                      href="https://github.com/edlead/admin-desktop/releases/latest/download/edLEAD-Admin-Setup.exe"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="/downloads/edLEAD-Admin-Windows.zip"
+                      download="edLEAD-Admin-Windows.zip"
                       className="flex items-center cursor-pointer"
                     >
                       <Monitor className="h-4 w-4 mr-2" />
-                      Windows (.exe)
+                      Windows (.zip)
                     </a>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <a 
-                      href="https://github.com/edlead/admin-desktop/releases/latest/download/edLEAD-Admin.dmg"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="/downloads/edLEAD-Admin-macOS.zip"
+                      download="edLEAD-Admin-macOS.zip"
                       className="flex items-center cursor-pointer"
                     >
                       <Apple className="h-4 w-4 mr-2" />
-                      macOS (.dmg)
+                      macOS (.zip)
                     </a>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
