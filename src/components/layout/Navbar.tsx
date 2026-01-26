@@ -11,7 +11,9 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { useTheme } from "next-themes";
 import edleadLogo from "@/assets/edlead-logo.png";
+import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import programmeConference from "@/assets/programme-conference.jpg";
 import admissionsHero from "@/assets/admissions-hero.jpg";
 import impactHero from "@/assets/impact-hero.jpg";
@@ -27,6 +29,7 @@ export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   const handleTriggerClick = (path: string) => {
     navigate(path);
@@ -49,7 +52,18 @@ export const Navbar = () => {
       <nav className="bg-background border-b border-border">
         <div className="container flex h-20 items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src={edleadLogo} alt="edLEAD" className="h-12 md:h-14" />
+            <div className="relative h-12 md:h-14 w-auto">
+              <img 
+                src={edleadLogo} 
+                alt="edLEAD" 
+                className={`h-12 md:h-14 transition-opacity duration-300 ${theme === "dark" ? "opacity-0" : "opacity-100"}`}
+              />
+              <img 
+                src={edleadLogoDark} 
+                alt="edLEAD" 
+                className={`h-12 md:h-14 absolute top-0 left-0 transition-opacity duration-300 ${theme === "dark" ? "opacity-100" : "opacity-0"}`}
+              />
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
