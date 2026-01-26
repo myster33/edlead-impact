@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -29,7 +29,7 @@ export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const handleTriggerClick = (path: string) => {
     navigate(path);
@@ -235,10 +235,22 @@ export const Navbar = () => {
             </NavigationMenuList>
           </NavigationMenu>
 
-          <div className="hidden lg:block">
+          <div className="hidden lg:flex items-center gap-2">
             <Link to="/admissions">
               <Button>Apply Now</Button>
             </Link>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -340,10 +352,22 @@ export const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              <div className="pt-4 px-4">
-                <Link to="/admissions" onClick={() => setIsOpen(false)}>
+              <div className="pt-4 px-4 flex gap-2">
+                <Link to="/admissions" onClick={() => setIsOpen(false)} className="flex-1">
                   <Button className="w-full">Apply Now</Button>
                 </Link>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? (
+                    <Sun className="h-5 w-5" />
+                  ) : (
+                    <Moon className="h-5 w-5" />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
