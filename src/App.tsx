@@ -33,6 +33,8 @@ import AdminResetPassword from "./pages/admin/AdminResetPassword";
 import AdminEmailTemplates from "./pages/admin/AdminEmailTemplates";
 import AdminPermissions from "./pages/admin/AdminPermissions";
 import AdminCertificates from "./pages/admin/AdminCertificates";
+import AdminMessageTemplates from "./pages/admin/AdminMessageTemplates";
+import AdminMessageCenter from "./pages/admin/AdminMessageCenter";
 
 const queryClient = new QueryClient();
 
@@ -148,6 +150,22 @@ const App = () => (
                 element={
                   <ProtectedRoute moduleKey="certificates">
                     <AdminCertificates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/message-templates"
+                element={
+                  <ProtectedRoute moduleKey="message-templates">
+                    <AdminMessageTemplates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/message-center"
+                element={
+                  <ProtectedRoute moduleKey="message-center">
+                    <AdminMessageCenter />
                   </ProtectedRoute>
                 }
               />

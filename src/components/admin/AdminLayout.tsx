@@ -42,6 +42,8 @@ import {
   Mail,
   Lock,
   Award,
+  MessageSquare,
+  Send,
   Moon,
   Sun,
   Monitor,
@@ -102,6 +104,18 @@ const allMenuItems = [
     url: "/admin/email-templates",
     icon: Mail,
     moduleKey: "email-templates",
+  },
+  {
+    title: "Message Templates",
+    url: "/admin/message-templates",
+    icon: MessageSquare,
+    moduleKey: "message-templates",
+  },
+  {
+    title: "Message Center",
+    url: "/admin/message-center",
+    icon: Send,
+    moduleKey: "message-center",
   },
   {
     title: "Audit Log",

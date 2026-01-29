@@ -673,6 +673,136 @@ export type Database = {
         }
         Relationships: []
       }
+      message_logs: {
+        Row: {
+          application_id: string | null
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message_content: string
+          recipient_phone: string
+          recipient_type: string
+          sent_by: string | null
+          status: string
+          template_key: string | null
+          twilio_sid: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_content: string
+          recipient_phone: string
+          recipient_type: string
+          sent_by?: string | null
+          status?: string
+          template_key?: string | null
+          twilio_sid?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message_content?: string
+          recipient_phone?: string
+          recipient_type?: string
+          sent_by?: string | null
+          status?: string
+          template_key?: string | null
+          twilio_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_logs_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_template_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by: string | null
+          id: string
+          message_content: string
+          template_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          message_content: string
+          template_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          message_content?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_template_history_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          category: string
+          channel: string
+          created_at: string
+          id: string
+          is_active: boolean
+          message_content: string
+          name: string
+          template_key: string
+          updated_at: string
+          updated_by: string | null
+          variables: Json
+        }
+        Insert: {
+          category: string
+          channel: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_content: string
+          name: string
+          template_key: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Update: {
+          category?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          message_content?: string
+          name?: string
+          template_key?: string
+          updated_at?: string
+          updated_by?: string | null
+          variables?: Json
+        }
+        Relationships: []
+      }
       module_permissions: {
         Row: {
           allowed_roles: Database["public"]["Enums"]["app_role"][]

@@ -68,3 +68,21 @@ verify_jwt = false
 
 [functions.track-certificate]
 verify_jwt = false
+
+[functions.notify-applicant-status-change]
+verify_jwt = false
+
+[functions.get-email-template]
+verify_jwt = false
+
+[functions.send-sms]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.send-bulk-message]
+verify_jwt = false
+
+[functions.get-message-template]
+verify_jwt = false
