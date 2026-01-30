@@ -21,7 +21,11 @@ export type AuditAction =
   | "mfa_enabled"
   | "mfa_disabled"
   | "parent_emails_enabled"
-  | "parent_emails_disabled";
+  | "parent_emails_disabled"
+  | "sms_notifications_enabled"
+  | "sms_notifications_disabled"
+  | "whatsapp_notifications_enabled"
+  | "whatsapp_notifications_disabled";
 
 // Actions that trigger instant critical alerts
 const criticalActions: AuditAction[] = [
