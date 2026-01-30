@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +105,8 @@ export default function AdminSettings() {
   
   // System settings state (admin only)
   const [parentEmailsEnabled, setParentEmailsEnabled] = useState(true);
+  const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
+  const [whatsappNotificationsEnabled, setWhatsappNotificationsEnabled] = useState(false);
   const [isLoadingSystemSettings, setIsLoadingSystemSettings] = useState(false);
   const [isSendingDigest, setIsSendingDigest] = useState(false);
 
@@ -125,17 +127,24 @@ export default function AdminSettings() {
   const fetchSystemSettings = async () => {
     setIsLoadingSystemSettings(true);
     try {
-      // Type assertion needed as system_settings is a new table
-      const { data, error } = await (supabase
-        .from("system_settings" as any)
-        .select("setting_value")
-        .eq("setting_key", "parent_emails_enabled")
-        .maybeSingle() as unknown as Promise<{ data: { setting_value: any } | null; error: any }>);
+      const { data, error } = await supabase
+        .from("system_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["parent_emails_enabled", "sms_notifications_enabled", "whatsapp_notifications_enabled"]);
       
       if (error) throw error;
       
       if (data) {
-        setParentEmailsEnabled(data.setting_value === true || data.setting_value === "true");
+        data.forEach((setting: any) => {
+          const value = setting.setting_value === true || setting.setting_value === "true";
+          if (setting.setting_key === "parent_emails_enabled") {
+            setParentEmailsEnabled(value);
+          } else if (setting.setting_key === "sms_notifications_enabled") {
+            setSmsNotificationsEnabled(value);
+          } else if (setting.setting_key === "whatsapp_notifications_enabled") {
+            setWhatsappNotificationsEnabled(value);
+          }
+        });
       }
     } catch (error) {
       console.error("Error fetching system settings:", error);
@@ -146,14 +155,13 @@ export default function AdminSettings() {
 
   const handleParentEmailsToggle = async (enabled: boolean) => {
     try {
-      // Type assertion needed as system_settings is a new table
-      const { error } = await (supabase
-        .from("system_settings" as any)
+      const { error } = await supabase
+        .from("system_settings")
         .update({ 
           setting_value: enabled,
           updated_by: adminUser?.id 
         })
-        .eq("setting_key", "parent_emails_enabled") as unknown as Promise<{ error: any }>);
+        .eq("setting_key", "parent_emails_enabled");
       
       if (error) throw error;
       
@@ -171,6 +179,78 @@ export default function AdminSettings() {
         description: enabled 
           ? "Parents/guardians will receive notification emails." 
           : "Parents/guardians will no longer receive notification emails.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update setting",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSmsToggle = async (enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .update({ 
+          setting_value: enabled,
+          updated_by: adminUser?.id 
+        })
+        .eq("setting_key", "sms_notifications_enabled");
+      
+      if (error) throw error;
+      
+      setSmsNotificationsEnabled(enabled);
+      
+      await logAction({
+        action: enabled ? "sms_notifications_enabled" : "sms_notifications_disabled",
+        table_name: "system_settings",
+        record_id: undefined,
+        new_values: { sms_notifications_enabled: enabled },
+      });
+      
+      toast({
+        title: enabled ? "SMS notifications enabled" : "SMS notifications disabled",
+        description: enabled 
+          ? "Applicants will receive SMS notifications." 
+          : "SMS notifications are now disabled.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update setting",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleWhatsappToggle = async (enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .update({ 
+          setting_value: enabled,
+          updated_by: adminUser?.id 
+        })
+        .eq("setting_key", "whatsapp_notifications_enabled");
+      
+      if (error) throw error;
+      
+      setWhatsappNotificationsEnabled(enabled);
+      
+      await logAction({
+        action: enabled ? "whatsapp_notifications_enabled" : "whatsapp_notifications_disabled",
+        table_name: "system_settings",
+        record_id: undefined,
+        new_values: { whatsapp_notifications_enabled: enabled },
+      });
+      
+      toast({
+        title: enabled ? "WhatsApp notifications enabled" : "WhatsApp notifications disabled",
+        description: enabled 
+          ? "Applicants will receive WhatsApp notifications." 
+          : "WhatsApp notifications are now disabled.",
       });
     } catch (error: any) {
       toast({
@@ -1152,6 +1232,56 @@ export default function AdminSettings() {
                         id="parent-emails-toggle"
                         checked={parentEmailsEnabled}
                         onCheckedChange={handleParentEmailsToggle}
+                        disabled={isLoadingSystemSettings}
+                      />
+                    </div>
+                </CardContent>
+                </Card>
+
+                {/* SMS & WhatsApp Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5" />
+                      SMS & WhatsApp Notifications
+                    </CardTitle>
+                    <CardDescription>
+                      Enable or disable SMS and WhatsApp notifications for applicants and parents.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="sms-toggle" className="font-medium">SMS Notifications</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Send SMS notifications to applicants and parents for status updates, approvals, and important announcements.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="sms-toggle"
+                        checked={smsNotificationsEnabled}
+                        onCheckedChange={handleSmsToggle}
+                        disabled={isLoadingSystemSettings}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="space-y-0.5">
+                          <Label htmlFor="whatsapp-toggle" className="font-medium">WhatsApp Notifications</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Send WhatsApp messages to applicants and parents for status updates, approvals, and important announcements.
+                          </p>
+                        </div>
+                      </div>
+                      <Switch
+                        id="whatsapp-toggle"
+                        checked={whatsappNotificationsEnabled}
+                        onCheckedChange={handleWhatsappToggle}
                         disabled={isLoadingSystemSettings}
                       />
                     </div>
