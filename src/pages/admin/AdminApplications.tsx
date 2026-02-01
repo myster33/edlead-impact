@@ -330,7 +330,7 @@ export default function AdminApplications() {
 
       const referenceNumber = application.reference_number || application.id.slice(0, 8).toUpperCase();
       
-      // Send status change notification email to learner and parent
+      // Send status change notification (email, SMS, WhatsApp) to learner and parent
       supabase.functions.invoke("notify-applicant-status-change", {
         body: {
           applicantEmail: application.student_email,
@@ -340,6 +340,8 @@ export default function AdminApplications() {
           oldStatus: application.status,
           parentEmail: application.parent_email,
           parentName: application.parent_name,
+          applicantPhone: application.student_phone,
+          parentPhone: application.parent_phone,
         },
       }).catch(err => console.error("Failed to send status change notification:", err));
 
@@ -438,6 +440,8 @@ export default function AdminApplications() {
             oldStatus: app.status,
             parentEmail: app.parent_email,
             parentName: app.parent_name,
+            applicantPhone: app.student_phone,
+            parentPhone: app.parent_phone,
           },
         }).catch(err => console.error("Failed to send status change notification:", err));
       }
