@@ -14,6 +14,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     subject: "",
     message: "",
   });
@@ -30,7 +31,7 @@ const Contact = () => {
       if (error) throw error;
 
       toast.success("Thank you for your message! We'll get back to you soon.");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast.error(error.message || "Failed to send message. Please try again.");
@@ -90,17 +91,32 @@ const Contact = () => {
                     />
                   </div>
                 </div>
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
-                    Subject
-                  </label>
-                  <Input
-                    id="subject"
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    required
-                    disabled={isSubmitting}
-                  />
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">
+                      Phone Number
+                    </label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      disabled={isSubmitting}
+                      placeholder="+27 XX XXX XXXX"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
+                      Subject
+                    </label>
+                    <Input
+                      id="subject"
+                      value={formData.subject}
+                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
