@@ -84,7 +84,7 @@ const Admissions = () => {
                 </Button>
               </Link>
               <p className="text-sm text-muted-foreground mt-4 text-center">
-                Applications for 2026 are now open
+                Applications for Cohort 1 are now open
               </p>
             </div>
           </div>

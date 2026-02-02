@@ -152,27 +152,8 @@ const Contact = () => {
                   <div>
                     <h3 className="font-semibold text-foreground">Location</h3>
                     <p className="text-muted-foreground">
-                      Johannesburg, Africa
+                      19 Ameshoff St, Braamfontein, Johannesburg
                     </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Office Hours */}
-              <div className="bg-muted rounded-xl p-6 border border-border">
-                <h3 className="font-semibold text-foreground mb-4">Office Hours</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Monday - Friday</span>
-                    <span className="text-foreground">08:00 - 17:00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Saturday</span>
-                    <span className="text-foreground">09:00 - 13:00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sunday</span>
-                    <span className="text-foreground">Closed</span>
                   </div>
                 </div>
               </div>
