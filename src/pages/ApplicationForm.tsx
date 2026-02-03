@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { FormFieldWrapper } from "@/components/form/FormFieldWrapper";
 import { Send, CheckCircle, Circle, Save, Trash2, Search, Loader2 } from "lucide-react";
+import { PassportPhotoUpload } from "@/components/form/PassportPhotoUpload";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -205,6 +206,7 @@ interface FormData {
   parent_signature: string;
   parent_signature_date: string;
   video_link: string;
+  learner_photo_url: string;
 }
 
 interface SectionStatus {
@@ -260,6 +262,7 @@ const ApplicationForm = () => {
     parent_signature: "",
     parent_signature_date: "",
     video_link: "",
+    learner_photo_url: "",
   });
 
   const [declarations, setDeclarations] = useState({
@@ -391,6 +394,7 @@ const ApplicationForm = () => {
       parent_signature: "",
       parent_signature_date: "",
       video_link: "",
+      learner_photo_url: "",
     });
     setDeclarations({
       declaration1: false,
@@ -434,6 +438,7 @@ const ApplicationForm = () => {
   const requiredFields = [
     { field: "full_name", label: "Full Name" },
     { field: "date_of_birth", label: "Date of Birth" },
+    { field: "learner_photo_url", label: "Passport Photo" },
     { field: "grade", label: "Grade", type: "select" as const },
     { field: "school_name", label: "School Name" },
     { field: "school_address", label: "School Address" },
@@ -471,7 +476,7 @@ const ApplicationForm = () => {
       {
         name: "Learner Information",
         id: "section-1",
-        complete: !!(formData.full_name && formData.date_of_birth && formData.grade && formData.school_name && formData.school_address && formData.country && (formData.country === "Other" || !countryRegions[formData.country] || formData.province) && formData.student_email && formData.student_phone),
+        complete: !!(formData.full_name && formData.date_of_birth && formData.learner_photo_url && formData.grade && formData.school_name && formData.school_address && formData.country && (formData.country === "Other" || !countryRegions[formData.country] || formData.province) && formData.student_email && formData.student_phone),
       },
       {
         name: "Parent/Guardian",
@@ -654,6 +659,7 @@ const ApplicationForm = () => {
         parent_signature: normalizedFormData.parent_name,
         parent_signature_date: toISODate(new Date()),
         video_link: normalizedFormData.video_link || null,
+        learner_photo_url: normalizedFormData.learner_photo_url || null,
       };
 
       const { data, error } = await supabase.functions.invoke("submit-application", {
@@ -934,6 +940,14 @@ const ApplicationForm = () => {
                     </Select>
                   </FormFieldWrapper>
                 </div>
+
+                {/* Passport Photo Upload */}
+                <PassportPhotoUpload
+                  value={formData.learner_photo_url}
+                  onChange={(url) => updateField("learner_photo_url", url)}
+                  applicantName={formData.full_name}
+                  error={getFieldError("learner_photo_url")}
+                />
 
                 <FormFieldWrapper error={getFieldError("school_name")}>
                   <Label htmlFor="school_name" className={cn(hasError("school_name") && "text-destructive")}>School Name *</Label>

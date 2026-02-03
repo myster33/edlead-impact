@@ -94,6 +94,7 @@ interface Application {
   why_edlead?: string;
   leadership_meaning?: string;
   cohort_id?: string;
+  learner_photo_url?: string;
 }
 
 interface Cohort {
@@ -342,6 +343,7 @@ export default function AdminApplications() {
           parentName: application.parent_name,
           applicantPhone: application.student_phone,
           parentPhone: application.parent_phone,
+          applicantPhotoUrl: application.learner_photo_url,
         },
       }).catch(err => console.error("Failed to send status change notification:", err));
 
@@ -442,6 +444,7 @@ export default function AdminApplications() {
             parentName: app.parent_name,
             applicantPhone: app.student_phone,
             parentPhone: app.parent_phone,
+            applicantPhotoUrl: app.learner_photo_url,
           },
         }).catch(err => console.error("Failed to send status change notification:", err));
       }

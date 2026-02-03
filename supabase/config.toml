@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.get-message-template]
 verify_jwt = false
+
+[functions.generate-social-banner]
+verify_jwt = false

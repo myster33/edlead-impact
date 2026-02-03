@@ -20,6 +20,7 @@ interface ApplicantApprovedRequest {
   parentName?: string;
   applicantPhone?: string;
   parentPhone?: string;
+  applicantPhotoUrl?: string;
 }
 
 // Default email templates
@@ -265,7 +266,8 @@ const handler = async (req: Request): Promise<Response> => {
       parentEmail, 
       parentName,
       applicantPhone,
-      parentPhone 
+      parentPhone,
+      applicantPhotoUrl
     }: ApplicantApprovedRequest = await req.json();
 
     console.log(`Sending approval notification to applicant: ${applicantEmail}`);
@@ -273,6 +275,33 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Generate social media banner using AI
+    let socialBannerUrl: string | null = null;
+    try {
+      console.log("Generating social media banner...");
+      const bannerResponse = await fetch(`${supabaseUrl}/functions/v1/generate-social-banner`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          applicantName,
+          applicantPhotoUrl: applicantPhotoUrl || "",
+        }),
+      });
+
+      if (bannerResponse.ok) {
+        const bannerData = await bannerResponse.json();
+        socialBannerUrl = bannerData.bannerUrl;
+        console.log("Social banner generated:", socialBannerUrl ? "success" : "no URL");
+      } else {
+        console.error("Failed to generate banner:", await bannerResponse.text());
+      }
+    } catch (bannerError) {
+      console.error("Error generating social banner:", bannerError);
+    }
 
     // Fetch all system settings at once
     const { data: settingsData } = await supabase
@@ -295,18 +324,54 @@ const handler = async (req: Request): Promise<Response> => {
       email: { learner: false, parent: false },
       sms: { learner: false, parent: false },
       whatsapp: { learner: false, parent: false },
+      socialBanner: socialBannerUrl ? true : false,
     };
 
     const variables = {
       applicant_name: applicantName,
       reference_number: referenceNumber,
       parent_name: parentName || "Parent/Guardian",
+      social_banner_url: socialBannerUrl || "",
     };
 
-    // Send learner email
+    // Create enhanced email with social banner
+    const socialBannerSection = socialBannerUrl ? `
+        <div style="margin: 30px 0; text-align: center;">
+          <h3 style="color: #ED7621; margin-bottom: 15px;">🎉 Share Your Achievement!</h3>
+          <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            We've created a special shareable image for you. Download and share on your social media to celebrate!
+          </p>
+          <img src="${socialBannerUrl}" alt="Your edLEAD Acceptance Banner" style="max-width: 400px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+          <p style="font-size: 12px; color: #888; margin-top: 10px;">
+            Tag us <strong>@edlead_za</strong> when you share! 📱
+          </p>
+          <a href="${socialBannerUrl}" download="edLEAD-Acceptance-${applicantName.replace(/[^a-zA-Z0-9]/g, '_')}.png" 
+             style="display: inline-block; margin-top: 15px; padding: 12px 24px; background-color: #ED7621; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            📥 Download Your Banner
+          </a>
+        </div>
+    ` : "";
+
+    // Send learner email with social banner
     const learnerTemplate = await getEmailTemplate(supabase, "applicant-approved", false);
+    let learnerHtml = replaceVariables(learnerTemplate.html_content, variables);
+    
+    // Insert social banner before the closing content div
+    if (socialBannerUrl && learnerHtml.includes("</div>")) {
+      // Find a good place to insert the banner (before "Best regards" or at end of content)
+      const insertPoint = learnerHtml.lastIndexOf("<p style=\"font-size: 14px; color: #6b7280; margin-top: 30px;\">Best regards");
+      if (insertPoint > 0) {
+        learnerHtml = learnerHtml.slice(0, insertPoint) + socialBannerSection + learnerHtml.slice(insertPoint);
+      } else {
+        // Fallback: insert before last closing div
+        const lastDivIndex = learnerHtml.lastIndexOf("</div>");
+        if (lastDivIndex > 0) {
+          learnerHtml = learnerHtml.slice(0, lastDivIndex) + socialBannerSection + learnerHtml.slice(lastDivIndex);
+        }
+      }
+    }
+    
     const learnerSubject = replaceVariables(learnerTemplate.subject, variables);
-    const learnerHtml = replaceVariables(learnerTemplate.html_content, variables);
     const learnerEmailResult = await sendEmail(applicantEmail, learnerSubject, learnerHtml);
     results.email.learner = learnerEmailResult.success;
     console.log("Learner email sent:", learnerEmailResult.success);
