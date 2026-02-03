@@ -22,6 +22,7 @@ interface StatusChangeRequest {
   parentName?: string;
   applicantPhone?: string;
   parentPhone?: string;
+  applicantPhotoUrl?: string;
 }
 
 // Format phone number to E.164 format
@@ -468,7 +469,8 @@ const handler = async (req: Request): Promise<Response> => {
       parentEmail, 
       parentName,
       applicantPhone,
-      parentPhone 
+      parentPhone,
+      applicantPhotoUrl
     }: StatusChangeRequest = await req.json();
 
     console.log(`Sending status change notification: ${oldStatus} -> ${newStatus}`);
@@ -478,6 +480,35 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Generate social banner for approved status
+    let socialBannerUrl: string | null = null;
+    if (newStatus === "approved") {
+      try {
+        console.log("Generating social media banner for approved applicant...");
+        const bannerResponse = await fetch(`${supabaseUrl}/functions/v1/generate-social-banner`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            applicantName,
+            applicantPhotoUrl: applicantPhotoUrl || "",
+          }),
+        });
+
+        if (bannerResponse.ok) {
+          const bannerData = await bannerResponse.json();
+          socialBannerUrl = bannerData.bannerUrl;
+          console.log("Social banner generated:", socialBannerUrl ? "success" : "no URL");
+        } else {
+          console.error("Failed to generate banner:", await bannerResponse.text());
+        }
+      } catch (bannerError) {
+        console.error("Error generating social banner:", bannerError);
+      }
+    }
 
     // Check notification settings
     const { data: settingsData } = await supabase
@@ -519,7 +550,42 @@ const handler = async (req: Request): Promise<Response> => {
     const learnerTemplateKey = `applicant-status-${newStatus}`;
     const learnerTemplate = await getEmailTemplate(supabase, learnerTemplateKey, newStatus, false);
     const learnerSubject = replaceVariables(learnerTemplate.subject, variables);
-    const learnerHtmlContent = replaceVariables(learnerTemplate.html_content, variables);
+    let learnerHtmlContent = replaceVariables(learnerTemplate.html_content, variables);
+    
+    // Add social banner section for approved status
+    if (newStatus === "approved" && socialBannerUrl) {
+      const socialBannerSection = `
+        <div style="margin: 30px 0; text-align: center; padding: 20px; background: #fff8f5; border-radius: 8px;">
+          <h3 style="color: #ED7621; margin-bottom: 15px; font-size: 18px;">🎉 Share Your Achievement!</h3>
+          <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            We've created a special shareable image for you. Download and share on your social media to celebrate!
+          </p>
+          <img src="${socialBannerUrl}" alt="Your edLEAD Acceptance Banner" style="max-width: 400px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
+          <p style="font-size: 12px; color: #888; margin-top: 10px;">
+            Tag us <strong>@edlead_za</strong> when you share! 📱
+          </p>
+          <a href="${socialBannerUrl}" download="edLEAD-Acceptance-${applicantName.replace(/[^a-zA-Z0-9]/g, '_')}.png" 
+             style="display: inline-block; margin-top: 15px; padding: 12px 24px; background-color: #ED7621; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            📥 Download Your Banner
+          </a>
+        </div>
+      `;
+      
+      // Insert before "Warm regards" or at the end of content
+      const insertPoint = learnerHtmlContent.lastIndexOf("<p>Warm regards");
+      if (insertPoint > 0) {
+        learnerHtmlContent = learnerHtmlContent.slice(0, insertPoint) + socialBannerSection + learnerHtmlContent.slice(insertPoint);
+      } else {
+        // Fallback: insert before the footer section
+        const footerIndex = learnerHtmlContent.lastIndexOf("</div>");
+        if (footerIndex > 0) {
+          const secondLastDiv = learnerHtmlContent.lastIndexOf("</div>", footerIndex - 1);
+          if (secondLastDiv > 0) {
+            learnerHtmlContent = learnerHtmlContent.slice(0, secondLastDiv) + socialBannerSection + learnerHtmlContent.slice(secondLastDiv);
+          }
+        }
+      }
+    }
     
     console.log(`Sending learner email to: ${applicantEmail}`);
     const learnerEmailResult = await sendEmail(applicantEmail, learnerSubject, learnerHtmlContent);

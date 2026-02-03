@@ -92,6 +92,7 @@ interface ApplicationData {
   parent_signature_date: string;
   video_link?: string;
   country?: string;
+  learner_photo_url?: string;
 }
 
 interface ValidationResult {
@@ -262,6 +263,7 @@ function sanitizeApplication(data: ApplicationData): ApplicationData {
     parent_signature_date: data.parent_signature_date,
     video_link: data.video_link ? sanitizeString(data.video_link, 500) : undefined,
     country: data.country ? sanitizeString(data.country, 100) : "South Africa",
+    learner_photo_url: data.learner_photo_url ? sanitizeString(data.learner_photo_url, 500) : undefined,
   };
 }
 
