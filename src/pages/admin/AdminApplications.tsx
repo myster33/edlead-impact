@@ -67,8 +67,10 @@ import {
   X,
   MapPin,
   Users,
+  Share2,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SocialBannerPreview } from "@/components/admin/SocialBannerPreview";
 
 interface Application {
   id: string;
@@ -143,6 +145,7 @@ export default function AdminApplications() {
     currentStatus: string;
     applicantName: string;
   } | null>(null);
+  const [showBannerPreview, setShowBannerPreview] = useState(false);
 
   const regionInfo = getAdminRegionInfo(adminUser);
 
@@ -1276,6 +1279,35 @@ export default function AdminApplications() {
                   </div>
                 </div>
 
+                {/* Passport Photo & Banner Preview */}
+                {selectedApplication.learner_photo_url && (
+                  <div className="col-span-full pt-4 border-t">
+                    <h4 className="font-semibold mb-3">Passport Photo & Social Banner</h4>
+                    <div className="flex items-start gap-4">
+                      <div className="w-24 h-24 rounded-lg overflow-hidden border bg-muted">
+                        <img
+                          src={selectedApplication.learner_photo_url}
+                          alt={`${selectedApplication.full_name}'s photo`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm text-muted-foreground">
+                          Preview the social media banner that will be<br />sent with the approval email.
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowBannerPreview(true)}
+                        >
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Preview Social Banner
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="col-span-full flex justify-between items-center pt-4 border-t">
                   <div>
                     <span className="text-sm text-muted-foreground mr-2">Status:</span>
@@ -1353,6 +1385,16 @@ export default function AdminApplications() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Social Banner Preview Dialog */}
+        {selectedApplication && (
+          <SocialBannerPreview
+            applicantName={selectedApplication.full_name}
+            applicantPhotoUrl={selectedApplication.learner_photo_url}
+            open={showBannerPreview}
+            onOpenChange={setShowBannerPreview}
+          />
+        )}
       </div>
     </AdminLayout>
   );
