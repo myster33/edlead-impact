@@ -13,20 +13,42 @@ interface GenerateBannerRequest {
   applicantPhotoUrl?: string;
 }
 
-// Template URL from storage
 const TEMPLATE_PATH = "templates/social-banner-template.jpg";
 
-async function getTemplateUrl(supabase: any): Promise<string> {
-  const { data } = supabase.storage
-    .from("applicant-photos")
-    .getPublicUrl(TEMPLATE_PATH);
-  return data.publicUrl;
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    console.log("Fetching image:", url);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error("Failed to fetch image:", response.status, response.statusText);
+      return null;
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Convert to base64
+    let binary = "";
+    for (let i = 0; i < uint8Array.length; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    const base64 = btoa(binary);
+    
+    // Detect content type
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    
+    return `data:${contentType};base64,${base64}`;
+  } catch (error) {
+    console.error("Error fetching image:", error);
+    return null;
+  }
 }
 
 async function composeBannerWithAI(
-  templateUrl: string,
+  templateBase64: string,
   applicantName: string,
-  applicantPhotoUrl?: string
+  applicantPhotoBase64?: string | null
 ): Promise<string | null> {
   if (!LOVABLE_API_KEY) {
     console.error("Missing LOVABLE_API_KEY");
@@ -35,13 +57,11 @@ async function composeBannerWithAI(
 
   try {
     console.log("Composing banner for:", applicantName);
-    console.log("Template URL:", templateUrl);
-    console.log("Photo URL:", applicantPhotoUrl || "none");
+    console.log("Has photo:", !!applicantPhotoBase64);
 
     const content: any[] = [];
 
-    // Build the prompt based on whether we have a photo
-    if (applicantPhotoUrl && applicantPhotoUrl.trim() !== "") {
+    if (applicantPhotoBase64) {
       content.push({
         type: "text",
         text: `Edit this social media banner template by:
@@ -54,8 +74,8 @@ async function composeBannerWithAI(
 
 Output a single composited image.`,
       });
-      content.push({ type: "image_url", image_url: { url: templateUrl } });
-      content.push({ type: "image_url", image_url: { url: applicantPhotoUrl } });
+      content.push({ type: "image_url", image_url: { url: templateBase64 } });
+      content.push({ type: "image_url", image_url: { url: applicantPhotoBase64 } });
     } else {
       content.push({
         type: "text",
@@ -68,7 +88,7 @@ Output a single composited image.`,
 
 Output a single edited image.`,
       });
-      content.push({ type: "image_url", image_url: { url: templateUrl } });
+      content.push({ type: "image_url", image_url: { url: templateBase64 } });
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -164,12 +184,33 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get template URL
-    const templateUrl = await getTemplateUrl(supabase);
-    console.log("Using template:", templateUrl);
+    // Get template URL and fetch as base64
+    const { data: templateUrlData } = supabase.storage
+      .from("applicant-photos")
+      .getPublicUrl(TEMPLATE_PATH);
+    
+    console.log("Template URL:", templateUrlData.publicUrl);
+    
+    const templateBase64 = await fetchImageAsBase64(templateUrlData.publicUrl);
+    if (!templateBase64) {
+      return new Response(
+        JSON.stringify({ error: "Failed to fetch template image" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Fetch applicant photo as base64 if provided
+    let applicantPhotoBase64: string | null = null;
+    if (applicantPhotoUrl && applicantPhotoUrl.trim() !== "") {
+      console.log("Fetching applicant photo:", applicantPhotoUrl);
+      applicantPhotoBase64 = await fetchImageAsBase64(applicantPhotoUrl);
+      if (!applicantPhotoBase64) {
+        console.warn("Could not fetch applicant photo, proceeding without it");
+      }
+    }
 
     // Compose banner with AI
-    const composedBanner = await composeBannerWithAI(templateUrl, applicantName, applicantPhotoUrl);
+    const composedBanner = await composeBannerWithAI(templateBase64, applicantName, applicantPhotoBase64);
 
     if (!composedBanner) {
       return new Response(
