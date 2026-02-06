@@ -67,8 +67,9 @@ async function composeBannerWithAI(
         text: `Edit this social media banner template by:
 1. Take the person's photo (second image) and place it in the circular frame area near the top of the banner
 2. Crop the photo to a perfect circle and fit it within the existing circular frame
-3. Add the name "${applicantName}" as elegant white text, centered below the photo area
-4. Use a clean, modern sans-serif font for the name
+3. Add the following text below the photo area, centered and in elegant white text:
+   "CONGRATULATIONS, ${applicantName.toUpperCase()}, YOU HAVE BEEN ACCEPTED INTO THE edLEAD LEADERSHIP PROGRAM"
+4. Use a clean, modern sans-serif font
 5. Keep all other elements of the template exactly as they are
 6. The final result should look professional and celebratory
 
@@ -80,9 +81,10 @@ Output a single composited image.`,
       content.push({
         type: "text",
         text: `Edit this social media banner template by:
-1. Add the name "${applicantName}" as elegant white text, centered in the area below where a photo would go
-2. Use a clean, modern sans-serif font for the name
-3. Keep the circular frame area as-is (it can remain empty or with existing placeholder)
+1. Keep the circular frame area as-is (it can remain empty or with existing placeholder)
+2. Add the following text below the photo area, centered and in elegant white text:
+   "CONGRATULATIONS, ${applicantName.toUpperCase()}, YOU HAVE BEEN ACCEPTED INTO THE edLEAD LEADERSHIP PROGRAM"
+3. Use a clean, modern sans-serif font
 4. Keep all other elements of the template exactly as they are
 5. The final result should look professional and celebratory
 
