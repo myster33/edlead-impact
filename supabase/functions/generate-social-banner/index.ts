@@ -10,35 +10,66 @@ const corsHeaders = {
 
 interface GenerateBannerRequest {
   applicantName: string;
-  applicantPhotoUrl: string;
-  referenceNumber?: string;
+  applicantPhotoUrl?: string;
 }
 
-async function generateBaseBanner(applicantName: string): Promise<string | null> {
+// Template URL from storage
+const TEMPLATE_PATH = "templates/social-banner-template.jpg";
+
+async function getTemplateUrl(supabase: any): Promise<string> {
+  const { data } = supabase.storage
+    .from("applicant-photos")
+    .getPublicUrl(TEMPLATE_PATH);
+  return data.publicUrl;
+}
+
+async function composeBannerWithAI(
+  templateUrl: string,
+  applicantName: string,
+  applicantPhotoUrl?: string
+): Promise<string | null> {
   if (!LOVABLE_API_KEY) {
     console.error("Missing LOVABLE_API_KEY");
     return null;
   }
 
   try {
-    console.log("Generating base banner for:", applicantName);
-    
-    const prompt = `Create a professional, celebratory 1:1 square social media announcement banner for a student leadership program acceptance.
+    console.log("Composing banner for:", applicantName);
+    console.log("Template URL:", templateUrl);
+    console.log("Photo URL:", applicantPhotoUrl || "none");
 
-Design requirements:
-- Professional and elegant design with orange (#ED7621) as the primary accent color
-- Dark charcoal gray (#4A4A4A) as secondary color
-- Clean, modern typography
-- Include a prominent circular placeholder area (about 150-200px diameter) in the center-top area with a subtle border or glow effect - leave this area as a clean circle shape ready for a photo overlay
-- The text "Accepted into the" in smaller font above the main headline
-- "edLEAD Leadership Programme" as the main headline in bold
-- The student name "${applicantName}" prominently displayed below the photo area
-- Include decorative elements like subtle geometric patterns or confetti
-- Add "@edlead_za" social media tag at the bottom
-- Make it shareable and social media ready
-- Professional gradient background
+    const content: any[] = [];
 
-This is a 1:1 aspect ratio image (square format) for social media sharing. Ultra high resolution.`;
+    // Build the prompt based on whether we have a photo
+    if (applicantPhotoUrl && applicantPhotoUrl.trim() !== "") {
+      content.push({
+        type: "text",
+        text: `Edit this social media banner template by:
+1. Take the person's photo (second image) and place it in the circular frame area near the top of the banner
+2. Crop the photo to a perfect circle and fit it within the existing circular frame
+3. Add the name "${applicantName}" as elegant white text, centered below the photo area
+4. Use a clean, modern sans-serif font for the name
+5. Keep all other elements of the template exactly as they are
+6. The final result should look professional and celebratory
+
+Output a single composited image.`,
+      });
+      content.push({ type: "image_url", image_url: { url: templateUrl } });
+      content.push({ type: "image_url", image_url: { url: applicantPhotoUrl } });
+    } else {
+      content.push({
+        type: "text",
+        text: `Edit this social media banner template by:
+1. Add the name "${applicantName}" as elegant white text, centered in the area below where a photo would go
+2. Use a clean, modern sans-serif font for the name
+3. Keep the circular frame area as-is (it can remain empty or with existing placeholder)
+4. Keep all other elements of the template exactly as they are
+5. The final result should look professional and celebratory
+
+Output a single edited image.`,
+      });
+      content.push({ type: "image_url", image_url: { url: templateUrl } });
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -48,7 +79,7 @@ This is a 1:1 aspect ratio image (square format) for social media sharing. Ultra
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content }],
         modalities: ["image", "text"],
       }),
     });
@@ -61,7 +92,7 @@ This is a 1:1 aspect ratio image (square format) for social media sharing. Ultra
 
     const data = await response.json();
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
+
     if (!imageUrl) {
       console.error("No image URL in response");
       return null;
@@ -69,115 +100,20 @@ This is a 1:1 aspect ratio image (square format) for social media sharing. Ultra
 
     return imageUrl;
   } catch (error) {
-    console.error("Error generating base banner:", error);
+    console.error("Error composing banner:", error);
     return null;
   }
 }
 
-async function overlayPhotoOnBanner(
-  bannerBase64: string,
-  applicantPhotoUrl: string,
+async function uploadBannerToStorage(
+  supabase: any,
+  base64Image: string,
   applicantName: string
 ): Promise<string | null> {
-  if (!LOVABLE_API_KEY) {
-    console.error("Missing LOVABLE_API_KEY");
-    return null;
-  }
-
   try {
-    console.log("Overlaying photo onto banner for:", applicantName);
-
-    const prompt = `Composite these two images: Take the second image (the person's photo) and overlay it onto the first image (the banner). 
-Place the person's photo in the circular placeholder area near the top-center of the banner.
-- Crop the person's photo to a circle shape
-- Scale it to fit nicely in the placeholder area (approximately 150-200px diameter)
-- Add a subtle white or orange border around the circular photo
-- Ensure the photo blends naturally with the banner design
-- Keep the rest of the banner exactly as is
-- The final result should look like a professional social media announcement with the person's face prominently featured.`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: bannerBase64 } },
-              { type: "image_url", image_url: { url: applicantPhotoUrl } },
-            ],
-          },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI Gateway overlay error:", response.status, errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
-    if (!imageUrl) {
-      console.error("No image URL in overlay response");
-      return null;
-    }
-
-    return imageUrl;
-  } catch (error) {
-    console.error("Error overlaying photo:", error);
-    return null;
-  }
-}
-
-async function generateSocialBanner(
-  applicantName: string,
-  applicantPhotoUrl: string
-): Promise<string | null> {
-  try {
-    // Step 1: Generate base banner
-    console.log("Step 1: Generating base banner...");
-    const baseBanner = await generateBaseBanner(applicantName);
-    
-    if (!baseBanner) {
-      console.error("Failed to generate base banner");
-      return null;
-    }
-
-    let finalBanner = baseBanner;
-
-    // Step 2: If photo URL provided, overlay it onto the banner
-    if (applicantPhotoUrl && applicantPhotoUrl.trim() !== "") {
-      console.log("Step 2: Overlaying applicant photo...");
-      const bannerWithPhoto = await overlayPhotoOnBanner(baseBanner, applicantPhotoUrl, applicantName);
-      
-      if (bannerWithPhoto) {
-        finalBanner = bannerWithPhoto;
-        console.log("Successfully overlaid photo onto banner");
-      } else {
-        console.warn("Failed to overlay photo, using base banner");
-      }
-    } else {
-      console.log("No applicant photo provided, using base banner");
-    }
-
-    // Step 3: Upload final banner to storage
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const base64Data = finalBanner.replace(/^data:image\/\w+;base64,/, "");
+    const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
     const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-    
+
     const timestamp = Date.now();
     const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
     const fileName = `banners/${sanitizedName}_${timestamp}.png`;
@@ -192,17 +128,17 @@ async function generateSocialBanner(
 
     if (uploadError) {
       console.error("Failed to upload banner:", uploadError);
-      return finalBanner; // Return base64 as fallback
+      return null;
     }
 
     const { data: urlData } = supabase.storage
       .from("applicant-photos")
       .getPublicUrl(uploadData.path);
 
-    console.log("Banner uploaded successfully:", urlData.publicUrl);
+    console.log("Banner uploaded:", urlData.publicUrl);
     return urlData.publicUrl;
   } catch (error) {
-    console.error("Error generating banner:", error);
+    console.error("Error uploading banner:", error);
     return null;
   }
 }
@@ -224,12 +160,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Generating social banner for ${applicantName}`);
 
-    const bannerUrl = await generateSocialBanner(applicantName, applicantPhotoUrl);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (!bannerUrl) {
+    // Get template URL
+    const templateUrl = await getTemplateUrl(supabase);
+    console.log("Using template:", templateUrl);
+
+    // Compose banner with AI
+    const composedBanner = await composeBannerWithAI(templateUrl, applicantName, applicantPhotoUrl);
+
+    if (!composedBanner) {
       return new Response(
         JSON.stringify({ error: "Failed to generate banner", bannerUrl: null }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Upload to storage
+    const bannerUrl = await uploadBannerToStorage(supabase, composedBanner, applicantName);
+
+    if (!bannerUrl) {
+      // Return base64 as fallback
+      return new Response(
+        JSON.stringify({ success: true, bannerUrl: composedBanner }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
