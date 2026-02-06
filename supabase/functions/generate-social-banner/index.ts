@@ -67,11 +67,14 @@ async function composeBannerWithAI(
         text: `Edit this social media banner template by:
 1. Take the person's photo (second image) and place it in the circular frame area near the top of the banner
 2. Crop the photo to a perfect circle and fit it within the existing circular frame
-3. Add the following text below the photo area, centered and in elegant white text:
-   "CONGRATULATIONS, ${applicantName.toUpperCase()}, YOU HAVE BEEN ACCEPTED INTO THE edLEAD LEADERSHIP PROGRAM"
-4. Use a clean, modern sans-serif font
-5. Keep all other elements of the template exactly as they are
-6. The final result should look professional and celebratory
+3. Add elegant text below the photo area, centered, with the following format:
+   - "CONGRATULATIONS" in white text with subtle shadow
+   - "${applicantName.toUpperCase()}" in gold/golden color (prominent, slightly larger)
+   - "YOU HAVE BEEN ACCEPTED INTO THE edLEAD LEADERSHIP PROGRAM" in white text
+4. Use Montserrat or similar modern sans-serif font, medium weight
+5. Add subtle text shadow for better readability against the background
+6. Keep all other elements of the template exactly as they are
+7. The final result should look professional, elegant and celebratory
 
 Output a single composited image.`,
       });
@@ -82,11 +85,14 @@ Output a single composited image.`,
         type: "text",
         text: `Edit this social media banner template by:
 1. Keep the circular frame area as-is (it can remain empty or with existing placeholder)
-2. Add the following text below the photo area, centered and in elegant white text:
-   "CONGRATULATIONS, ${applicantName.toUpperCase()}, YOU HAVE BEEN ACCEPTED INTO THE edLEAD LEADERSHIP PROGRAM"
-3. Use a clean, modern sans-serif font
-4. Keep all other elements of the template exactly as they are
-5. The final result should look professional and celebratory
+2. Add elegant text below the photo area, centered, with the following format:
+   - "CONGRATULATIONS" in white text with subtle shadow
+   - "${applicantName.toUpperCase()}" in gold/golden color (prominent, slightly larger)
+   - "YOU HAVE BEEN ACCEPTED INTO THE edLEAD LEADERSHIP PROGRAM" in white text
+3. Use Montserrat or similar modern sans-serif font, medium weight
+4. Add subtle text shadow for better readability against the background
+5. Keep all other elements of the template exactly as they are
+6. The final result should look professional, elegant and celebratory
 
 Output a single edited image.`,
       });
