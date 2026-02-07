@@ -211,7 +211,7 @@ async function sendSms(to: string, message: string): Promise<{ success: boolean;
   }
 }
 
-async function sendWhatsapp(to: string, message: string): Promise<{ success: boolean; error?: string; sid?: string }> {
+async function sendWhatsapp(to: string, message: string, mediaUrl?: string): Promise<{ success: boolean; error?: string; sid?: string }> {
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
     return { success: false, error: "Twilio WhatsApp not configured" };
   }
@@ -227,6 +227,17 @@ async function sendWhatsapp(to: string, message: string): Promise<{ success: boo
       ? TWILIO_WHATSAPP_NUMBER 
       : `whatsapp:${TWILIO_WHATSAPP_NUMBER}`;
 
+    const params: Record<string, string> = {
+      To: `whatsapp:${formattedPhone}`,
+      From: whatsappFrom,
+      Body: message,
+    };
+
+    // Add media URL if provided (for banner image)
+    if (mediaUrl && mediaUrl.startsWith("http")) {
+      params.MediaUrl = mediaUrl;
+    }
+
     const response = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
       {
@@ -235,11 +246,7 @@ async function sendWhatsapp(to: string, message: string): Promise<{ success: boo
           "Authorization": `Basic ${credentials}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          To: `whatsapp:${formattedPhone}`,
-          From: whatsappFrom,
-          Body: message,
-        }),
+        body: new URLSearchParams(params),
       }
     );
 
@@ -407,18 +414,18 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send WhatsApp if enabled
+    // Send WhatsApp if enabled (with banner image attached)
     if (whatsappEnabled) {
-      // Learner WhatsApp
+      // Learner WhatsApp with banner
       if (applicantPhone) {
         const waTemplate = await getMessageTemplate(supabase, "approved_learner_whatsapp", "whatsapp") || defaultWhatsappLearnerMessage;
         const waMessage = replaceVariables(waTemplate, variables);
-        const waResult = await sendWhatsapp(applicantPhone, waMessage);
+        const waResult = await sendWhatsapp(applicantPhone, waMessage, socialBannerUrl || undefined);
         results.whatsapp.learner = waResult.success;
-        console.log("Learner WhatsApp sent:", waResult.success, waResult.error || "");
+        console.log("Learner WhatsApp sent:", waResult.success, socialBannerUrl ? "with banner" : "no banner", waResult.error || "");
       }
 
-      // Parent WhatsApp
+      // Parent WhatsApp (no banner for parent)
       if (parentPhone && parentPhone !== applicantPhone) {
         const waTemplate = await getMessageTemplate(supabase, "approved_parent_whatsapp", "whatsapp") || defaultWhatsappParentMessage;
         const waMessage = replaceVariables(waTemplate, variables);
