@@ -57,9 +57,7 @@ export const useFormValidation = () => {
       return `${label} is required`;
     }
     
-    if (type === "email" && !emailRegex.test(value)) {
-      return "Please enter a valid email address";
-    }
+    // Email validation removed - just check it's not empty
 
     if (type === "phone") {
       return validatePhoneByCountry(value, country || "");
