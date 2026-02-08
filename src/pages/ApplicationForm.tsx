@@ -1013,7 +1013,7 @@ const ApplicationForm = () => {
                     <Input 
                       id="student_email" 
                       type="email" 
-                      placeholder="your.email@example.com"
+                      placeholder="e.g. yourname@email.com"
                       value={formData.student_email}
                       onChange={(e) => {
                         updateField("student_email", e.target.value);
@@ -1082,7 +1082,7 @@ const ApplicationForm = () => {
                     <Input 
                       id="parent_email" 
                       type="email" 
-                      placeholder="parent.email@example.com"
+                      placeholder="e.g. parent@email.com"
                       value={formData.parent_email}
                       onChange={(e) => {
                         updateField("parent_email", e.target.value);
@@ -1169,7 +1169,7 @@ const ApplicationForm = () => {
                     <Input 
                       id="school_email" 
                       type="email" 
-                      placeholder="teacher@school.edu.za"
+                      placeholder="e.g. teacher@school.edu.za"
                       value={formData.school_email}
                       onChange={(e) => {
                         updateField("school_email", e.target.value);
