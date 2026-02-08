@@ -412,23 +412,18 @@ const ApplicationForm = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showPopiaTerms, setShowPopiaTerms] = useState(false);
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   const updateField = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     clearError(field);
   };
 
-  const validateEmailRealtime = (field: keyof FormData, value: string, label: string) => {
-    if (value && !emailRegex.test(value)) {
-      validateSingleField(field, value, label, "email");
-    } else if (value) {
-      clearError(field);
-    }
-  };
-
+  // Email validation removed - just clear errors on blur if value exists
   const validateEmailOnBlur = (field: keyof FormData, label: string) => {
-    validateSingleField(field, formData[field], label, "email");
+    if (formData[field]) {
+      clearError(field);
+    } else {
+      validateSingleField(field, formData[field], label);
+    }
   };
 
   const validatePhoneOnBlur = (field: keyof FormData, label: string) => {
@@ -1022,7 +1017,6 @@ const ApplicationForm = () => {
                       value={formData.student_email}
                       onChange={(e) => {
                         updateField("student_email", e.target.value);
-                        validateEmailRealtime("student_email", e.target.value, "Student Email");
                       }}
                       onBlur={() => validateEmailOnBlur("student_email", "Student Email")}
                       className={cn(hasError("student_email") && "border-destructive")}
@@ -1092,7 +1086,6 @@ const ApplicationForm = () => {
                       value={formData.parent_email}
                       onChange={(e) => {
                         updateField("parent_email", e.target.value);
-                        validateEmailRealtime("parent_email", e.target.value, "Parent/Guardian Email");
                       }}
                       onBlur={() => validateEmailOnBlur("parent_email", "Parent/Guardian Email")}
                       className={cn(hasError("parent_email") && "border-destructive")}
@@ -1180,7 +1173,6 @@ const ApplicationForm = () => {
                       value={formData.school_email}
                       onChange={(e) => {
                         updateField("school_email", e.target.value);
-                        validateEmailRealtime("school_email", e.target.value, "School Email");
                       }}
                       onBlur={() => validateEmailOnBlur("school_email", "School Email")}
                       className={cn(hasError("school_email") && "border-destructive")}
