@@ -111,15 +111,15 @@ function validateApplication(data: ApplicationData): ValidationResult {
     errors.push("Full name must be less than 100 characters");
   }
 
-  // Email validations
-  if (!data.student_email || !isValidEmail(data.student_email)) {
-    errors.push("A valid student email is required");
+  // Email validations - only check that emails are provided (format validation relaxed)
+  if (!data.student_email || data.student_email.trim().length === 0) {
+    errors.push("Student email is required");
   }
-  if (!data.parent_email || !isValidEmail(data.parent_email)) {
-    errors.push("A valid parent/guardian email is required");
+  if (!data.parent_email || data.parent_email.trim().length === 0) {
+    errors.push("Parent/guardian email is required");
   }
-  if (!data.school_email || !isValidEmail(data.school_email)) {
-    errors.push("A valid school email is required");
+  if (!data.school_email || data.school_email.trim().length === 0) {
+    errors.push("School email is required");
   }
 
   // Phone validations
