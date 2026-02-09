@@ -44,7 +44,16 @@ async function sendWhatsApp(to: string, body: string): Promise<{ success: boolea
   }
 
   const formattedTo = formatWhatsAppNumber(to);
-  console.log(`Sending WhatsApp message to ${formattedTo}`);
+  
+  // Clean and format the From number - remove spaces and ensure whatsapp: prefix
+  const cleanedFromNumber = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
+  const formattedFrom = cleanedFromNumber.startsWith("whatsapp:") 
+    ? cleanedFromNumber 
+    : `whatsapp:${cleanedFromNumber}`;
+  
+  console.log(`Sending WhatsApp message from ${formattedFrom} to ${formattedTo}`);
+  
+  console.log(`Sending WhatsApp message from ${formattedFrom} to ${formattedTo}`);
 
   try {
     const response = await fetch(
@@ -57,7 +66,7 @@ async function sendWhatsApp(to: string, body: string): Promise<{ success: boolea
         },
         body: new URLSearchParams({
           To: formattedTo,
-          From: TWILIO_WHATSAPP_NUMBER,
+          From: formattedFrom,
           Body: body,
         }),
       }
