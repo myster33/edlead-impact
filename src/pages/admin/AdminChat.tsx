@@ -44,7 +44,9 @@ export default function AdminChat() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [filter, setFilter] = useState<"all" | "open" | "closed">("open");
+  const [visitorTyping, setVisitorTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const { playNotification } = useChatNotificationSound();
 
   const isRegionRestricted = adminUser?.role !== "admin" && (adminUser?.country || adminUser?.province);
@@ -141,6 +143,31 @@ export default function AdminChat() {
     };
   }, [selectedConv?.id, fetchConversations]);
 
+  // Typing indicator channel for selected conversation
+  useEffect(() => {
+    if (!selectedConv?.id) {
+      setVisitorTyping(false);
+      return;
+    }
+
+    const typingChannel = supabase
+      .channel(`chat-typing-${selectedConv.id}`)
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.sender === "visitor") {
+          setVisitorTyping(true);
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setVisitorTyping(false), 3000);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(typingChannel);
+      clearTimeout(typingTimeoutRef.current);
+      setVisitorTyping(false);
+    };
+  }, [selectedConv?.id]);
+
   // Scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
@@ -208,6 +235,20 @@ export default function AdminChat() {
       setMessages([]);
     }
     fetchConversations();
+  };
+
+  const broadcastTyping = useCallback(() => {
+    if (!selectedConv?.id) return;
+    supabase.channel(`chat-typing-${selectedConv.id}`).send({
+      type: "broadcast",
+      event: "typing",
+      payload: { sender: "admin" },
+    });
+  }, [selectedConv?.id]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    broadcastTyping();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -380,6 +421,18 @@ export default function AdminChat() {
                       </div>
                     </div>
                   ))}
+                  {visitorTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 text-sm">
+                        <div className="flex gap-1 items-center">
+                          <span className="text-xs text-muted-foreground mr-1">typing</span>
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
 
@@ -389,7 +442,7 @@ export default function AdminChat() {
                     <Input
                       placeholder="Type a reply..."
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={handleInputChange}
                       onKeyDown={handleKeyDown}
                       disabled={sending}
                     />

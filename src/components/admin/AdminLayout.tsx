@@ -212,11 +212,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
     fetchUnread();
 
+    // Request notification permission on mount
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
     const channel = supabase
       .channel("admin-chat-badge")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: "sender_type=eq.visitor" }, () => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: "sender_type=eq.visitor" }, (payload) => {
         fetchUnread();
         playNotification();
+
+        // Browser push notification when tab not focused
+        if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+          const msg = payload.new as { content?: string };
+          new Notification("New Chat Message", {
+            body: msg?.content?.slice(0, 100) || "You have a new message",
+            icon: "/edlead-icon.png",
+            tag: "chat-notification",
+          });
+        }
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_messages" }, () => fetchUnread())
       .subscribe();
