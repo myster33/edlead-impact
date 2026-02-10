@@ -2,6 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +15,7 @@ const corsHeaders = {
 interface ApprovalNotificationRequest {
   author_email: string;
   author_name: string;
+  author_phone?: string;
   title: string;
   slug: string;
 }
@@ -111,6 +116,64 @@ function replaceVariables(content: string, variables: Record<string, string>): s
   return result;
 }
 
+function formatPhoneNumber(phone: string): string {
+  let cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    cleaned = "27" + cleaned.substring(1);
+  } else if (cleaned.length === 9 && !cleaned.startsWith("27")) {
+    cleaned = "27" + cleaned;
+  }
+  return "+" + cleaned;
+}
+
+function formatWhatsAppNumber(phone: string): string {
+  const formatted = formatPhoneNumber(phone);
+  return `whatsapp:${formatted}`;
+}
+
+async function sendTwilioMessage(
+  to: string,
+  body: string,
+  channel: "sms" | "whatsapp"
+): Promise<{ success: boolean; sid?: string; error?: string }> {
+  const fromNumber = channel === "whatsapp" ? TWILIO_WHATSAPP_NUMBER : TWILIO_PHONE_NUMBER;
+  const formattedTo = channel === "whatsapp" ? formatWhatsAppNumber(to) : formatPhoneNumber(to);
+
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !fromNumber) {
+    return { success: false, error: `Twilio ${channel} credentials not configured` };
+  }
+
+  const cleanedFrom = channel === "whatsapp"
+    ? (fromNumber.startsWith("whatsapp:") ? fromNumber : `whatsapp:${fromNumber}`)
+    : fromNumber;
+
+  try {
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+        },
+        body: new URLSearchParams({
+          To: formattedTo,
+          From: cleanedFrom,
+          Body: body,
+        }),
+      }
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { success: false, error: data.message || `Failed to send ${channel}` };
+    }
+    return { success: true, sid: data.sid };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("notify-author-approval function called");
 
@@ -130,7 +193,6 @@ const handler = async (req: Request): Promise<Response> => {
     const data: ApprovalNotificationRequest = await req.json();
     console.log("Sending approval notification to:", data.author_email);
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -140,7 +202,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const blogUrl = `https://edlead.lovable.app/blog/${data.slug}`;
 
-    // Replace variables
     const variables = {
       author_name: data.author_name,
       title: data.title,
@@ -150,6 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
     const subject = replaceVariables(template.subject, variables);
     const htmlContent = replaceVariables(template.html_content, variables);
 
+    // Send email
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -165,19 +227,77 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResult = await emailResponse.json();
-    
+
     if (!emailResponse.ok) {
       console.error("Resend API error:", emailResult);
-      return new Response(
-        JSON.stringify({ error: emailResult.message || `Resend API returned ${emailResponse.status}` }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    } else {
+      console.log("Email sent successfully:", emailResult);
     }
 
-    console.log("Email sent successfully:", emailResult);
+    // Send SMS/WhatsApp if author_phone is provided
+    const messagingResults: { sms?: any; whatsapp?: any } = {};
+
+    if (data.author_phone) {
+      const smsMessage = `🎉 Congrats ${data.author_name}! Your story "${data.title}" has been published on edLEAD. View it here: ${blogUrl}`;
+
+      // Check SMS settings
+      const { data: smsSettings } = await supabase
+        .from("system_settings")
+        .select("setting_value")
+        .eq("setting_key", "sms_notifications_enabled")
+        .maybeSingle();
+
+      const smsEnabled = smsSettings?.setting_value === true || smsSettings?.setting_value === "true";
+
+      if (smsEnabled) {
+        const smsResult = await sendTwilioMessage(data.author_phone, smsMessage, "sms");
+        messagingResults.sms = smsResult;
+        console.log("SMS result:", smsResult);
+
+        await supabase.from("message_logs").insert({
+          channel: "sms",
+          recipient_phone: data.author_phone,
+          recipient_type: "learner",
+          message_content: smsMessage,
+          status: smsResult.success ? "sent" : "failed",
+          twilio_sid: smsResult.sid,
+          error_message: smsResult.error,
+        });
+      }
+
+      // Check WhatsApp settings
+      const { data: whatsappSettings } = await supabase
+        .from("system_settings")
+        .select("setting_value")
+        .eq("setting_key", "whatsapp_notifications_enabled")
+        .maybeSingle();
+
+      const whatsappEnabled = whatsappSettings?.setting_value === true || whatsappSettings?.setting_value === "true";
+
+      if (whatsappEnabled) {
+        const waResult = await sendTwilioMessage(data.author_phone, smsMessage, "whatsapp");
+        messagingResults.whatsapp = waResult;
+        console.log("WhatsApp result:", waResult);
+
+        await supabase.from("message_logs").insert({
+          channel: "whatsapp",
+          recipient_phone: data.author_phone,
+          recipient_type: "learner",
+          message_content: smsMessage,
+          status: waResult.success ? "sent" : "failed",
+          twilio_sid: waResult.sid,
+          error_message: waResult.error,
+        });
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Approval notification sent", id: emailResult.id }),
+      JSON.stringify({
+        success: true,
+        message: "Approval notification sent",
+        id: emailResult.id,
+        messaging: messagingResults,
+      }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {

@@ -25,6 +25,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, PenLine, X, Image as ImageIcon, Video } from "lucide-react";
 import { PopiaConsentCheckbox, PopiaTermsDialog } from "@/components/shared/PopiaConsentTerms";
+import { countryCodes } from "@/lib/country-codes";
 
 const africanCountries = [
   "South Africa",
@@ -139,6 +140,8 @@ export const StorySubmissionForm = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedCountry, setSelectedCountry] = useState<string>("South Africa");
+  const [authorPhoneCode, setAuthorPhoneCode] = useState("+27|South Africa");
+  const [authorPhone, setAuthorPhone] = useState("");
 
   const {
     register,
@@ -254,6 +257,7 @@ export const StorySubmissionForm = () => {
         author_country: data.author_country,
         author_province: data.author_province,
         author_email: data.author_email,
+        author_phone: authorPhone.trim() ? `${authorPhoneCode.split("|")[0]}${authorPhone.trim()}` : null,
         category: data.category,
         reference_number: data.reference_number,
         featured_image_url: featuredImageUrl,
@@ -296,6 +300,8 @@ export const StorySubmissionForm = () => {
 
       reset();
       removeImage();
+      setAuthorPhone("");
+      setAuthorPhoneCode("+27|South Africa");
       setPopiaConsent(false);
       setIsOpen(false);
     } catch (error) {
@@ -407,9 +413,39 @@ export const StorySubmissionForm = () => {
                 {...register("author_email")}
               />
               {errors.author_email && (
-                <p className="text-sm text-destructive">{errors.author_email.message}</p>
-              )}
+              <p className="text-sm text-destructive">{errors.author_email.message}</p>
+            )}
             </div>
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="author_phone">WhatsApp / Phone Number (Optional)</Label>
+            <div className="flex">
+              <Select value={authorPhoneCode} onValueChange={setAuthorPhoneCode}>
+                <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {countryCodes.map((c) => (
+                    <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                      {c.flag} {c.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                id="author_phone"
+                type="tel"
+                placeholder="Phone number"
+                className="rounded-l-none"
+                value={authorPhone}
+                onChange={(e) => setAuthorPhone(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              We'll notify you via SMS/WhatsApp when your story is approved
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

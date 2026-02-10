@@ -374,6 +374,7 @@ export type Database = {
           author_country: string | null
           author_email: string
           author_name: string
+          author_phone: string | null
           author_province: string
           author_school: string
           category: string
@@ -397,6 +398,7 @@ export type Database = {
           author_country?: string | null
           author_email: string
           author_name: string
+          author_phone?: string | null
           author_province: string
           author_school: string
           category?: string
@@ -420,6 +422,7 @@ export type Database = {
           author_country?: string | null
           author_email?: string
           author_name?: string
+          author_phone?: string | null
           author_province?: string
           author_school?: string
           category?: string
