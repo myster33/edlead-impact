@@ -5,6 +5,7 @@ import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useModulePermissions, ModulePermission } from "@/hooks/use-module-permissions";
 import { useElectron } from "@/hooks/use-electron";
+import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 import {
   Sidebar,
   SidebarContent,
@@ -175,7 +176,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
   const { isElectron } = useElectron();
-
+  const { playNotification } = useChatNotificationSound();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -213,7 +214,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
     const channel = supabase
       .channel("admin-chat-badge")
-      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, () => fetchUnread())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: "sender_type=eq.visitor" }, () => {
+        fetchUnread();
+        playNotification();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_messages" }, () => fetchUnread())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };

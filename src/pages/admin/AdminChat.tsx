@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -44,6 +45,7 @@ export default function AdminChat() {
   const [sending, setSending] = useState(false);
   const [filter, setFilter] = useState<"all" | "open" | "closed">("open");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { playNotification } = useChatNotificationSound();
 
   const isRegionRestricted = adminUser?.role !== "admin" && (adminUser?.country || adminUser?.province);
 
@@ -125,6 +127,9 @@ export default function AdminChat() {
                 .eq("id", msg.id)
                 .then();
             }
+          } else if (msg.sender_type === "visitor") {
+            // Play sound for messages not in the active conversation
+            playNotification();
           }
           fetchConversations();
         }
