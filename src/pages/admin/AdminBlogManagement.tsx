@@ -306,6 +306,7 @@ const AdminBlogManagement = () => {
       body: {
         author_email: selectedPost.author_email,
         author_name: selectedPost.author_name,
+        author_phone: (selectedPost as any).author_phone || null,
         title: selectedPost.title,
         slug: data?.slug || selectedPost.slug,
       },
