@@ -89,3 +89,9 @@ verify_jwt = false
 
 [functions.generate-social-banner]
 verify_jwt = false
+
+[functions.chat-ai-faq]
+verify_jwt = false
+
+[functions.chat-whatsapp-escalation]
+verify_jwt = false
