@@ -16,24 +16,9 @@ import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-const countryCodes: { code: string; country: string }[] = [
-  { code: "+27", country: "South Africa" },
-  { code: "+234", country: "Nigeria" },
-  { code: "+254", country: "Kenya" },
-  { code: "+233", country: "Ghana" },
-  { code: "+255", country: "Tanzania" },
-  { code: "+256", country: "Uganda" },
-  { code: "+263", country: "Zimbabwe" },
-  { code: "+267", country: "Botswana" },
-  { code: "+264", country: "Namibia" },
-  { code: "+260", country: "Zambia" },
-  { code: "+258", country: "Mozambique" },
-  { code: "+250", country: "Rwanda" },
-  { code: "+251", country: "Ethiopia" },
-  { code: "+265", country: "Malawi" },
-  { code: "+266", country: "Lesotho" },
-  { code: "+268", country: "Eswatini" },
-];
+import { countryCodes } from "@/lib/country-codes";
+
+const getCodeFromValue = (val: string) => val.split("|")[0];
 
 // Phone validation patterns by country code
 const phonePatterns: { [code: string]: { regex: RegExp; message: string } } = {
@@ -78,7 +63,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    countryCode: "+27",
+    countryCode: "+27|South Africa",
     phone: "",
     subject: "",
     message: "",
@@ -86,7 +71,7 @@ const Contact = () => {
 
   const handlePhoneBlur = () => {
     if (formData.phone) {
-      const error = validatePhone(formData.phone, formData.countryCode);
+      const error = validatePhone(formData.phone, getCodeFromValue(formData.countryCode));
       setPhoneError(error);
     } else {
       setPhoneError("");
@@ -98,7 +83,7 @@ const Contact = () => {
     
     // Validate phone if provided
     if (formData.phone) {
-      const phoneValidationError = validatePhone(formData.phone, formData.countryCode);
+      const phoneValidationError = validatePhone(formData.phone, getCodeFromValue(formData.countryCode));
       if (phoneValidationError) {
         setPhoneError(phoneValidationError);
         toast.error("Please fix the phone number before submitting.");
@@ -113,7 +98,7 @@ const Contact = () => {
         body: {
           name: formData.name,
           email: formData.email,
-          phone: formData.phone ? `${formData.countryCode} ${formData.phone}` : "",
+          phone: formData.phone ? `${getCodeFromValue(formData.countryCode)} ${formData.phone}` : "",
           subject: formData.subject,
           message: formData.message,
         },
@@ -122,7 +107,7 @@ const Contact = () => {
       if (error) throw error;
 
       toast.success("Thank you for your message! We'll get back to you soon.");
-      setFormData({ name: "", email: "", countryCode: "+27", phone: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", countryCode: "+27|South Africa", phone: "", subject: "", message: "" });
       setPhoneError("");
     } catch (error: any) {
       console.error("Error sending message:", error);
@@ -197,13 +182,13 @@ const Contact = () => {
                         }}
                         disabled={isSubmitting}
                       >
-                        <SelectTrigger className="w-[100px] rounded-r-none border-r-0">
+                        <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[300px]">
                           {countryCodes.map((c) => (
-                            <SelectItem key={c.code} value={c.code}>
-                              {c.code}
+                            <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                              {c.flag} {c.code}
                             </SelectItem>
                           ))}
                         </SelectContent>
