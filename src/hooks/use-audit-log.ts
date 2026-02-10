@@ -25,7 +25,8 @@ export type AuditAction =
   | "sms_notifications_enabled"
   | "sms_notifications_disabled"
   | "whatsapp_notifications_enabled"
-  | "whatsapp_notifications_disabled";
+  | "whatsapp_notifications_disabled"
+  | "support_whatsapp_number_updated";
 
 // Actions that trigger instant critical alerts
 const criticalActions: AuditAction[] = [

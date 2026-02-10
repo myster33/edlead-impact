@@ -107,6 +107,8 @@ export default function AdminSettings() {
   const [parentEmailsEnabled, setParentEmailsEnabled] = useState(true);
   const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
   const [whatsappNotificationsEnabled, setWhatsappNotificationsEnabled] = useState(false);
+  const [supportWhatsappNumber, setSupportWhatsappNumber] = useState("");
+  const [isSavingSupportNumber, setIsSavingSupportNumber] = useState(false);
   const [isLoadingSystemSettings, setIsLoadingSystemSettings] = useState(false);
   const [isSendingDigest, setIsSendingDigest] = useState(false);
 
@@ -130,19 +132,24 @@ export default function AdminSettings() {
       const { data, error } = await supabase
         .from("system_settings")
         .select("setting_key, setting_value")
-        .in("setting_key", ["parent_emails_enabled", "sms_notifications_enabled", "whatsapp_notifications_enabled"]);
+        .in("setting_key", ["parent_emails_enabled", "sms_notifications_enabled", "whatsapp_notifications_enabled", "support_whatsapp_number"]);
       
       if (error) throw error;
       
       if (data) {
         data.forEach((setting: any) => {
-          const value = setting.setting_value === true || setting.setting_value === "true";
-          if (setting.setting_key === "parent_emails_enabled") {
-            setParentEmailsEnabled(value);
-          } else if (setting.setting_key === "sms_notifications_enabled") {
-            setSmsNotificationsEnabled(value);
-          } else if (setting.setting_key === "whatsapp_notifications_enabled") {
-            setWhatsappNotificationsEnabled(value);
+          if (setting.setting_key === "support_whatsapp_number") {
+            const val = typeof setting.setting_value === "string" ? setting.setting_value : String(setting.setting_value || "");
+            setSupportWhatsappNumber(val);
+          } else {
+            const value = setting.setting_value === true || setting.setting_value === "true";
+            if (setting.setting_key === "parent_emails_enabled") {
+              setParentEmailsEnabled(value);
+            } else if (setting.setting_key === "sms_notifications_enabled") {
+              setSmsNotificationsEnabled(value);
+            } else if (setting.setting_key === "whatsapp_notifications_enabled") {
+              setWhatsappNotificationsEnabled(value);
+            }
           }
         });
       }
@@ -258,6 +265,41 @@ export default function AdminSettings() {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSaveSupportNumber = async () => {
+    setIsSavingSupportNumber(true);
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .update({ 
+          setting_value: supportWhatsappNumber.trim(),
+          updated_by: adminUser?.id 
+        })
+        .eq("setting_key", "support_whatsapp_number");
+      
+      if (error) throw error;
+      
+      await logAction({
+        action: "support_whatsapp_number_updated",
+        table_name: "system_settings",
+        record_id: undefined,
+        new_values: { support_whatsapp_number: supportWhatsappNumber.trim() },
+      });
+      
+      toast({
+        title: "Support number updated",
+        description: "Chat escalations will now be sent to this WhatsApp number.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update number",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingSupportNumber(false);
     }
   };
 
@@ -1284,6 +1326,36 @@ export default function AdminSettings() {
                         onCheckedChange={handleWhatsappToggle}
                         disabled={isLoadingSystemSettings}
                       />
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <div className="flex items-start gap-3">
+                        <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div className="space-y-2 flex-1">
+                          <Label htmlFor="support-whatsapp" className="font-medium">Support WhatsApp Number</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Chat escalations (unanswered after 3 minutes) will be forwarded to this WhatsApp number.
+                          </p>
+                          <div className="flex gap-2">
+                            <Input
+                              id="support-whatsapp"
+                              placeholder="+27839227289"
+                              value={supportWhatsappNumber}
+                              onChange={(e) => setSupportWhatsappNumber(e.target.value)}
+                              className="max-w-xs"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={handleSaveSupportNumber}
+                              disabled={isSavingSupportNumber}
+                            >
+                              {isSavingSupportNumber && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                              <Save className="h-4 w-4 mr-1" />
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
