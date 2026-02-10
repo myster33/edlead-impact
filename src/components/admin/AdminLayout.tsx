@@ -171,6 +171,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const { adminUser, signOut } = useAdminAuth();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
+  const [unreadChats, setUnreadChats] = useState(0);
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
   const { isElectron } = useElectron();
@@ -197,6 +198,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
     fetchProfile();
   }, [adminUser?.id, setTheme]);
+
+  // Fetch unread chat count and subscribe to realtime updates
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from("chat_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("sender_type", "visitor")
+        .eq("is_read", false);
+      setUnreadChats(count || 0);
+    };
+    fetchUnread();
+
+    const channel = supabase
+      .channel("admin-chat-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, () => fetchUnread())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   // Save theme preference to database when it changes
   const handleThemeChange = async (newTheme: string) => {
@@ -259,9 +280,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton asChild isActive={isActive}>
-                          <Link to={item.url}>
+                          <Link to={item.url} className="flex items-center gap-2">
                             <item.icon className="h-4 w-4" />
-                            <span>{item.title}</span>
+                            <span className="flex-1">{item.title}</span>
+                            {item.moduleKey === "chat" && unreadChats > 0 && (
+                              <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
+                                {unreadChats}
+                              </Badge>
+                            )}
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -381,6 +407,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>
+            <Link to="/admin/chat" className="relative mr-2">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <MessageCircle className="h-5 w-5" />
+                {unreadChats > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center px-1">
+                    {unreadChats}
+                  </span>
+                )}
+              </Button>
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
