@@ -268,7 +268,30 @@ export default function AdminSettings() {
     }
   };
 
+  const validateWhatsAppNumber = (number: string): string | null => {
+    const trimmed = number.trim();
+    if (!trimmed) return "Please enter a WhatsApp number.";
+    // Must start with + followed by country code and digits, 10-15 digits total
+    const intlPattern = /^\+\d{10,15}$/;
+    // Also allow local SA format starting with 0
+    const localPattern = /^0\d{9}$/;
+    if (!intlPattern.test(trimmed) && !localPattern.test(trimmed)) {
+      return "Enter a valid number starting with + and country code (e.g. +27839227289) or a 10-digit local number.";
+    }
+    return null;
+  };
+
   const handleSaveSupportNumber = async () => {
+    const validationError = validateWhatsAppNumber(supportWhatsappNumber);
+    if (validationError) {
+      toast({
+        title: "Invalid phone number",
+        description: validationError,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSavingSupportNumber(true);
     try {
       const { error } = await supabase
