@@ -43,6 +43,7 @@ import {
   Lock,
   Award,
   MessageSquare,
+  MessageCircle,
   Send,
   Moon,
   Sun,
@@ -134,6 +135,12 @@ const allMenuItems = [
     url: "/admin/certificates",
     icon: Award,
     moduleKey: "certificates",
+  },
+  {
+    title: "Live Chat",
+    url: "/admin/chat",
+    icon: MessageCircle,
+    moduleKey: "chat",
   },
 ];
 
