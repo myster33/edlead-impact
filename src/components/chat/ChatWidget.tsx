@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageCircle, X, Send, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,9 +31,10 @@ export function ChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [adminTyping, setAdminTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef(getSessionId());
-
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   // Check for existing conversation on mount
   useEffect(() => {
     const checkExisting = async () => {
@@ -56,11 +57,11 @@ export function ChatWidget() {
     checkExisting();
   }, []);
 
-  // Realtime subscription for new messages
+  // Realtime subscription for new messages and typing indicator
   useEffect(() => {
     if (!conversationId) return;
 
-    const channel = supabase
+    const msgChannel = supabase
       .channel(`chat-${conversationId}`)
       .on(
         "postgres_changes",
@@ -76,12 +77,28 @@ export function ChatWidget() {
             if (prev.find((m) => m.id === msg.id)) return prev;
             return [...prev, msg];
           });
+          if (msg.sender_type === "admin") {
+            setAdminTyping(false);
+          }
         }
       )
       .subscribe();
 
+    const typingChannel = supabase
+      .channel(`chat-typing-${conversationId}`)
+      .on("broadcast", { event: "typing" }, (payload) => {
+        if (payload.payload?.sender === "admin") {
+          setAdminTyping(true);
+          clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setAdminTyping(false), 3000);
+        }
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(msgChannel);
+      supabase.removeChannel(typingChannel);
+      clearTimeout(typingTimeoutRef.current);
     };
   }, [conversationId]);
 
@@ -130,6 +147,20 @@ export function ChatWidget() {
     }
   };
 
+  const broadcastTyping = useCallback(() => {
+    if (!conversationId) return;
+    supabase.channel(`chat-typing-${conversationId}`).send({
+      type: "broadcast",
+      event: "typing",
+      payload: { sender: "visitor" },
+    });
+  }, [conversationId]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    broadcastTyping();
+  };
+
   const sendMessage = async () => {
     if (!newMessage.trim() || !conversationId || sending) return;
     setSending(true);
@@ -140,7 +171,6 @@ export function ChatWidget() {
       content: newMessage.trim(),
     });
 
-    // Update last_message_at
     await supabase
       .from("chat_conversations")
       .update({ last_message_at: new Date().toISOString() })
@@ -236,7 +266,7 @@ export function ChatWidget() {
       ) : (
         <>
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
             <div className="space-y-3">
               {messages.map((msg) => (
                 <div
@@ -257,6 +287,17 @@ export function ChatWidget() {
                   </div>
                 </div>
               ))}
+              {adminTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 text-sm">
+                    <div className="flex gap-1 items-center">
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </ScrollArea>
 
@@ -266,7 +307,7 @@ export function ChatWidget() {
               <Input
                 placeholder="Type a message..."
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 disabled={sending}
               />
