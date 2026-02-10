@@ -239,6 +239,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Update browser tab title with unread count
+  useEffect(() => {
+    const baseTitle = "edLEAD Admin";
+    if (unreadChats > 0) {
+      document.title = `(${unreadChats}) ${baseTitle}`;
+    } else {
+      document.title = baseTitle;
+    }
+    return () => { document.title = baseTitle; };
+  }, [unreadChats]);
+
   // Save theme preference to database when it changes
   const handleThemeChange = async (newTheme: string) => {
     setTheme(newTheme);
