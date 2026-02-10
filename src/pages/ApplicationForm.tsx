@@ -142,7 +142,7 @@ const normalizeRegionValue = (country: string, value: string) => {
 
 const countries = Object.keys(countryRegions).concat(["Other"]);
 
-import { countryCodeMap, getFlagForCountry } from "@/lib/country-codes";
+import { countryCodes, countryCodeMap, getFlagForCountry } from "@/lib/country-codes";
 
 const grades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 
@@ -201,6 +201,9 @@ const ApplicationForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [applicationRef, setApplicationRef] = useState("");
+  const [studentPhoneCode, setStudentPhoneCode] = useState("+27|South Africa");
+  const [parentPhoneCode, setParentPhoneCode] = useState("+27|South Africa");
+  const [schoolPhoneCode, setSchoolPhoneCode] = useState("+27|South Africa");
   
   const [formData, setFormData] = useState<FormData>({
     full_name: "",
@@ -1006,9 +1009,18 @@ const ApplicationForm = () => {
                   <FormFieldWrapper error={getFieldError("student_phone")}>
                     <Label htmlFor="student_phone" className={cn(hasError("student_phone") && "text-destructive")}>Student Mobile Number *</Label>
                     <div className="flex">
-                      <span className="inline-flex items-center gap-1 px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
-                        {getFlagForCountry(formData.country)} {countryCodeMap[formData.country]?.code || "+"}
-                      </span>
+                      <Select value={studentPhoneCode} onValueChange={setStudentPhoneCode}>
+                        <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {countryCodes.map((c) => (
+                            <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                              {c.flag} {c.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input 
                         id="student_phone" 
                         type="tel" 
@@ -1075,9 +1087,18 @@ const ApplicationForm = () => {
                   <FormFieldWrapper error={getFieldError("parent_phone")}>
                     <Label htmlFor="parent_phone" className={cn(hasError("parent_phone") && "text-destructive")}>Parent/Guardian Mobile Number *</Label>
                     <div className="flex">
-                      <span className="inline-flex items-center gap-1 px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
-                        {getFlagForCountry(formData.country)} {countryCodeMap[formData.country]?.code || "+"}
-                      </span>
+                      <Select value={parentPhoneCode} onValueChange={setParentPhoneCode}>
+                        <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {countryCodes.map((c) => (
+                            <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                              {c.flag} {c.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input 
                         id="parent_phone" 
                         type="tel" 
@@ -1162,9 +1183,18 @@ const ApplicationForm = () => {
                   <FormFieldWrapper error={getFieldError("school_contact")}>
                     <Label htmlFor="school_contact" className={cn(hasError("school_contact") && "text-destructive")}>Contact Number *</Label>
                     <div className="flex">
-                      <span className="inline-flex items-center gap-1 px-3 text-sm text-muted-foreground bg-muted border border-r-0 border-input rounded-l-md">
-                        {getFlagForCountry(formData.country)} {countryCodeMap[formData.country]?.code || "+"}
-                      </span>
+                      <Select value={schoolPhoneCode} onValueChange={setSchoolPhoneCode}>
+                        <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {countryCodes.map((c) => (
+                            <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                              {c.flag} {c.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input 
                         id="school_contact" 
                         type="tel" 
