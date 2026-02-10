@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send, MessageCircle, User, MapPin, Clock, X } from "lucide-react";
+import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Phone } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
 interface Conversation {
@@ -34,6 +34,7 @@ interface ChatMessage {
   sender_id: string | null;
   is_read: boolean;
   created_at: string;
+  is_ai_response?: boolean;
 }
 
 export default function AdminChat() {
@@ -180,7 +181,7 @@ export default function AdminChat() {
 
     const { data } = await supabase
       .from("chat_messages")
-      .select("*")
+      .select("id, conversation_id, content, sender_type, sender_id, is_read, created_at, is_ai_response")
       .eq("conversation_id", conv.id)
       .order("created_at", { ascending: true });
 
@@ -405,7 +406,12 @@ export default function AdminChat() {
                             : "bg-muted text-foreground rounded-bl-sm"
                         }`}
                       >
-                        {msg.content}
+                        {msg.is_ai_response && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground rounded px-1.5 py-0.5 mb-1">
+                            <Bot className="h-2.5 w-2.5" /> AI Response
+                          </span>
+                        )}
+                        <span className="block">{msg.content}</span>
                         <p
                           className={`text-[10px] mt-1 ${
                             msg.sender_type === "admin"

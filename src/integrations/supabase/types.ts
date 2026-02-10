@@ -560,7 +560,9 @@ export type Database = {
       chat_conversations: {
         Row: {
           assigned_to: string | null
+          chat_topic: string | null
           created_at: string
+          escalated_to_whatsapp: boolean | null
           id: string
           last_message_at: string | null
           session_id: string
@@ -569,11 +571,14 @@ export type Database = {
           visitor_country: string | null
           visitor_email: string | null
           visitor_name: string | null
+          visitor_phone: string | null
           visitor_province: string | null
         }
         Insert: {
           assigned_to?: string | null
+          chat_topic?: string | null
           created_at?: string
+          escalated_to_whatsapp?: boolean | null
           id?: string
           last_message_at?: string | null
           session_id: string
@@ -582,11 +587,14 @@ export type Database = {
           visitor_country?: string | null
           visitor_email?: string | null
           visitor_name?: string | null
+          visitor_phone?: string | null
           visitor_province?: string | null
         }
         Update: {
           assigned_to?: string | null
+          chat_topic?: string | null
           created_at?: string
+          escalated_to_whatsapp?: boolean | null
           id?: string
           last_message_at?: string | null
           session_id?: string
@@ -595,6 +603,7 @@ export type Database = {
           visitor_country?: string | null
           visitor_email?: string | null
           visitor_name?: string | null
+          visitor_phone?: string | null
           visitor_province?: string | null
         }
         Relationships: [
@@ -613,6 +622,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          is_ai_response: boolean | null
           is_read: boolean
           sender_id: string | null
           sender_type: string
@@ -622,6 +632,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          is_ai_response?: boolean | null
           is_read?: boolean
           sender_id?: string | null
           sender_type: string
@@ -631,6 +642,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          is_ai_response?: boolean | null
           is_read?: boolean
           sender_id?: string | null
           sender_type?: string
