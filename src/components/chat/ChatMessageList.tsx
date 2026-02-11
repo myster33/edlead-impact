@@ -8,6 +8,7 @@ interface ChatMessageItem {
   sender_type: "visitor" | "admin";
   created_at: string;
   is_ai_response?: boolean;
+  sender_name?: string;
 }
 
 interface ChatMessageListProps {
@@ -35,7 +36,12 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
               >
                 {msg.is_ai_response && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-accent-foreground bg-accent rounded px-1.5 py-0.5 mb-1">
-                    <Bot className="h-2.5 w-2.5" /> AI
+                    <Bot className="h-2.5 w-2.5" /> edLEAD AI
+                  </span>
+                )}
+                {msg.sender_name && !msg.is_ai_response && msg.sender_type === "admin" && (
+                  <span className="block text-[10px] font-semibold mb-0.5">
+                    {msg.sender_name}
                   </span>
                 )}
                 <span className="block">{msg.content}</span>

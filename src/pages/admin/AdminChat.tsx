@@ -408,7 +408,7 @@ export default function AdminChat() {
                       >
                         {msg.is_ai_response && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground rounded px-1.5 py-0.5 mb-1">
-                            <Bot className="h-2.5 w-2.5" /> AI Response
+                            <Bot className="h-2.5 w-2.5" /> edLEAD AI
                           </span>
                         )}
                         <span className="block">{msg.content}</span>
