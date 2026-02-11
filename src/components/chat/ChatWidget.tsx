@@ -338,7 +338,10 @@ export function ChatWidget() {
     const hasHumanAdmin = messages.some((m) => m.sender_type === "admin" && !m.is_ai_response);
 
     if (!hasHumanAdmin) {
-      // AI mode — respond immediately (no delay)
+      // AI mode — show typing for 2s then respond
+      setAiLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setAiLoading(false);
       await callAiFaq(conversationId, aiMessages);
       startEscalationTimer(conversationId);
     } else {
