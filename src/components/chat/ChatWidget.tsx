@@ -211,8 +211,17 @@ export function ChatWidget() {
       });
 
       if (handoff) {
-        // Start escalation timer when handing off to human
-        startEscalationTimer(convId);
+        // Handoff: wait 3s then send away message
+        setAiLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        setAiLoading(false);
+        setEscalated(true);
+        await supabase.from("chat_messages").insert({
+          conversation_id: convId,
+          sender_type: "admin",
+          content: "Our team is currently away. 🕐 Please visit our [Contact Us](/contact) page and leave us your query — our team will get back to you ASAP. You can also email us directly at info@edlead.co.za 📧",
+          is_ai_response: true,
+        });
       }
     } catch (e) {
       console.error("AI FAQ error:", e);
@@ -329,10 +338,7 @@ export function ChatWidget() {
     const hasHumanAdmin = messages.some((m) => m.sender_type === "admin" && !m.is_ai_response);
 
     if (!hasHumanAdmin) {
-      // AI mode — show typing for 3s then respond
-      setAiLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      setAiLoading(false);
+      // AI mode — respond immediately (no delay)
       await callAiFaq(conversationId, aiMessages);
       startEscalationTimer(conversationId);
     } else {
