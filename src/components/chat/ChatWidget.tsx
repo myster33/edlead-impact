@@ -164,25 +164,18 @@ export function ChatWidget() {
     clearTimeout(escalationTimerRef.current);
     escalationTimerRef.current = setTimeout(async () => {
       if (aiAutoContinueCount.current >= 3) {
-        // After 3 AI auto-continues, show contact form and escalate
-        try {
-          await supabase.functions.invoke("chat-whatsapp-escalation", {
-            body: { conversation_id: convId },
-          });
-          setEscalated(true);
-          setShowContactForm(true);
-          aiAutoContinueCount.current = 0;
+        // After 3 AI auto-continues, show contact form (no WhatsApp escalation)
+        setEscalated(true);
+        setShowContactForm(true);
+        aiAutoContinueCount.current = 0;
 
-          // Send away message as AI
-          await supabase.from("chat_messages").insert({
-            conversation_id: convId,
-            sender_type: "admin",
-            content: "Our team is currently away. I'd recommend browsing our website at edlead.co.za for more information, or you can leave us your query using the contact form below and our team will respond to you ASAP. You can also email us directly at info@edlead.co.za 📧",
-            is_ai_response: true,
-          });
-        } catch (e) {
-          console.error("WhatsApp escalation failed:", e);
-        }
+        // Send away message as AI
+        await supabase.from("chat_messages").insert({
+          conversation_id: convId,
+          sender_type: "admin",
+          content: "Our team is currently away. I'd recommend browsing our website at edlead.co.za for more information, or you can leave us your query using the contact form below and our team will respond to you ASAP. You can also email us directly at info@edlead.co.za 📧",
+          is_ai_response: true,
+        });
       } else {
         // AI auto-continues the conversation
         aiAutoContinueCount.current += 1;
