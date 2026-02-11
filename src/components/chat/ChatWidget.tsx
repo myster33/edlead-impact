@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatIntroForm } from "./ChatIntroForm";
 import { ChatTopicButtons } from "./ChatTopicButtons";
 import { ChatMessageList } from "./ChatMessageList";
+import { ChatContactForm } from "./ChatContactForm";
 import edleadIcon from "@/assets/edlead-icon.png";
 
 interface ChatMessage {
@@ -38,6 +39,8 @@ export function ChatWidget() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [escalated, setEscalated] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [visitorEmail, setVisitorEmail] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef(getSessionId());
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -96,6 +99,7 @@ export function ChatWidget() {
             // Admin responded — clear escalation timer and reset AI counter
             clearTimeout(escalationTimerRef.current);
             aiAutoContinueCount.current = 0;
+            setShowContactForm(false);
           }
         }
       )
@@ -160,13 +164,22 @@ export function ChatWidget() {
     clearTimeout(escalationTimerRef.current);
     escalationTimerRef.current = setTimeout(async () => {
       if (aiAutoContinueCount.current >= 3) {
-        // After 3 AI auto-continues, escalate to WhatsApp
+        // After 3 AI auto-continues, show contact form and escalate
         try {
           await supabase.functions.invoke("chat-whatsapp-escalation", {
             body: { conversation_id: convId },
           });
           setEscalated(true);
+          setShowContactForm(true);
           aiAutoContinueCount.current = 0;
+
+          // Send away message as AI
+          await supabase.from("chat_messages").insert({
+            conversation_id: convId,
+            sender_type: "admin",
+            content: "Our team is currently away. I'd recommend browsing our website at edlead.co.za for more information, or you can leave us your query using the contact form below and our team will respond to you ASAP. You can also email us directly at info@edlead.co.za 📧",
+            is_ai_response: true,
+          });
         } catch (e) {
           console.error("WhatsApp escalation failed:", e);
         }
@@ -220,6 +233,7 @@ export function ChatWidget() {
   const startChat = async (name: string, email: string, phone: string, province: string) => {
     if (!name.trim()) return;
     setVisitorName(name.trim());
+    setVisitorEmail(email.trim());
 
     const { data, error } = await supabase
       .from("chat_conversations")
@@ -411,10 +425,8 @@ export function ChatWidget() {
         <>
           <ChatMessageList messages={messages} adminTyping={adminTyping} aiLoading={aiLoading} ref={scrollRef} />
 
-          {escalated && (
-            <div className="px-4 py-2 bg-accent text-accent-foreground text-xs text-center border-t">
-              📱 Our team is currently away. We've forwarded your message to WhatsApp and will reply shortly.
-            </div>
+          {showContactForm && (
+            <ChatContactForm visitorName={visitorName} visitorEmail={visitorEmail} />
           )}
 
           {/* Input */}
