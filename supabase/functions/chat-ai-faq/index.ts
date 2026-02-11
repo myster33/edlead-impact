@@ -119,13 +119,9 @@ edLEAD has an Alumni Programme for graduates of the programme to stay connected 
 - Office: 19 Ameshoff St, Braamfontein, Johannesburg
 - Visitors can use the live chat on the website or the Contact Us page to reach the team
 
-=== APPLICATION & BLOG STORY STATUS LOOKUP ===
+=== APPLICATION & BLOG STORY STATUS ===
 
-If a visitor provides a reference number, you can look up their application status or blog story status. When a visitor shares a reference number or asks about their application/story status, respond with exactly:
-LOOKUP_STATUS:REFERENCE_NUMBER_HERE
-
-Replace REFERENCE_NUMBER_HERE with the actual reference number they provided. For example, if they say "my reference number is 486E675F", respond with:
-LOOKUP_STATUS:486E675F
+Visitors can check their application or blog story status by providing their reference number. You can let them know that they can check their status on the website at edlead.co.za/check-status, or they can simply share their reference number with you in this chat and you'll look it up for them.
 
 === GUIDELINES ===
 
@@ -204,6 +200,20 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Check if the latest user message contains a reference number
+    const lastUserMsg = (messages || []).filter((m: any) => m.role === "user").pop();
+    // Reference numbers are alphanumeric hashes (e.g. H9RK8B9N, 486E675F) — must contain both letters AND digits
+    const refMatch = lastUserMsg?.content?.match(/\b(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*[0-9])([A-Z0-9]{6,12})\b/i);
+    const looksLikeStatusCheck = lastUserMsg?.content && /\b(status|reference|ref|check|application|story|track|number)\b/i.test(lastUserMsg.content);
+
+    if (refMatch && looksLikeStatusCheck) {
+      const statusReply = await lookupStatus(refMatch[1]);
+      return new Response(
+        JSON.stringify({ reply: statusReply, handoff: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const systemContent = topic
       ? `${EDLEAD_SYSTEM_PROMPT}\n\nThe visitor selected the topic: "${topic}". Focus your initial response on this topic.`
       : EDLEAD_SYSTEM_PROMPT;
@@ -246,17 +256,6 @@ serve(async (req) => {
 
     const data = await response.json();
     let reply = data.choices?.[0]?.message?.content || "HANDOFF_TO_HUMAN";
-
-    // Check for status lookup
-    const lookupMatch = reply.match(/LOOKUP_STATUS:(\S+)/);
-    if (lookupMatch) {
-      const refNumber = lookupMatch[1];
-      reply = await lookupStatus(refNumber);
-      return new Response(
-        JSON.stringify({ reply, handoff: false }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const isHandoff = reply.includes("HANDOFF_TO_HUMAN");
 
