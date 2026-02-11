@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
+const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,22 +39,31 @@ function formatWhatsAppNumber(phone: string): string {
 }
 
 async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; sid?: string; error?: string }> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
     console.error("Missing Twilio credentials");
-    return { success: false, error: "Twilio WhatsApp credentials not configured" };
+    return { success: false, error: "Twilio credentials not configured" };
   }
 
   const formattedTo = formatWhatsAppNumber(to);
   
-  // Clean and format the From number - remove spaces and ensure whatsapp: prefix
-  const cleanedFromNumber = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
-  const formattedFrom = cleanedFromNumber.startsWith("whatsapp:") 
-    ? cleanedFromNumber 
-    : `whatsapp:${cleanedFromNumber}`;
-  
-  console.log(`Sending WhatsApp message from ${formattedFrom} to ${formattedTo}`);
-  
-  console.log(`Sending WhatsApp message from ${formattedFrom} to ${formattedTo}`);
+  // Build request params — prefer MessagingServiceSid for production
+  const params: Record<string, string> = {
+    To: formattedTo,
+    Body: body,
+  };
+
+  if (TWILIO_MESSAGING_SERVICE_SID) {
+    params.MessagingServiceSid = TWILIO_MESSAGING_SERVICE_SID;
+    console.log(`Sending WhatsApp via MessagingService to ${formattedTo}`);
+  } else if (TWILIO_WHATSAPP_NUMBER) {
+    const cleanedFromNumber = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
+    params.From = cleanedFromNumber.startsWith("whatsapp:") 
+      ? cleanedFromNumber 
+      : `whatsapp:${cleanedFromNumber}`;
+    console.log(`Sending WhatsApp from ${params.From} to ${formattedTo}`);
+  } else {
+    return { success: false, error: "No WhatsApp sender configured" };
+  }
 
   try {
     const response = await fetch(
@@ -64,11 +74,7 @@ async function sendWhatsApp(to: string, body: string): Promise<{ success: boolea
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
         },
-        body: new URLSearchParams({
-          To: formattedTo,
-          From: formattedFrom,
-          Body: body,
-        }),
+        body: new URLSearchParams(params),
       }
     );
 
