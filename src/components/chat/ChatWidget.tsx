@@ -14,6 +14,7 @@ interface ChatMessage {
   sender_type: "visitor" | "admin";
   created_at: string;
   is_ai_response?: boolean;
+  sender_name?: string;
 }
 
 const getSessionId = () => {
@@ -126,25 +127,42 @@ export function ChatWidget() {
   const fetchMessages = async (convId: string) => {
     const { data } = await supabase
       .from("chat_messages")
-      .select("id, content, sender_type, created_at, is_ai_response")
+      .select("id, content, sender_type, created_at, is_ai_response, sender_id")
       .eq("conversation_id", convId)
       .order("created_at", { ascending: true });
-    if (data) setMessages(data as ChatMessage[]);
+    if (data) {
+      // Fetch admin names for messages with sender_id
+      const adminIds = [...new Set(data.filter(m => m.sender_id).map(m => m.sender_id!))];
+      let adminNames: Record<string, string> = {};
+      if (adminIds.length > 0) {
+        const { data: admins } = await supabase
+          .from("admin_users")
+          .select("id, full_name")
+          .in("id", adminIds);
+        admins?.forEach(a => { adminNames[a.id] = a.full_name || "Team Member"; });
+      }
+      setMessages(data.map(m => ({
+        ...m,
+        sender_name: m.sender_id ? adminNames[m.sender_id] : undefined,
+      })) as ChatMessage[]);
+    }
   };
 
   const startEscalationTimer = useCallback((convId: string) => {
     clearTimeout(escalationTimerRef.current);
     escalationTimerRef.current = setTimeout(async () => {
+      // After 90 seconds with no admin response, AI auto-continues the conversation
       try {
-        await supabase.functions.invoke("chat-whatsapp-escalation", {
-          body: { conversation_id: convId },
-        });
-        setEscalated(true);
+        const history = messages.map((m) => ({
+          role: m.sender_type === "visitor" ? "user" : "assistant",
+          content: m.content,
+        }));
+        await callAiFaq(convId, history);
       } catch (e) {
-        console.error("Escalation failed:", e);
+        console.error("AI auto-continue failed:", e);
       }
-    }, 3 * 60 * 1000); // 3 minutes
-  }, []);
+    }, 90 * 1000); // 90 seconds
+  }, [messages]);
 
   const callAiFaq = async (convId: string, userMessages: { role: string; content: string }[], topic?: string) => {
     setAiLoading(true);
