@@ -329,9 +329,11 @@ export function ChatWidget() {
     const hasHumanAdmin = messages.some((m) => m.sender_type === "admin" && !m.is_ai_response);
 
     if (!hasHumanAdmin) {
-      // AI mode — respond automatically
+      // AI mode — show typing for 3s then respond
+      setAiLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      setAiLoading(false);
       await callAiFaq(conversationId, aiMessages);
-      // Start escalation timer
       startEscalationTimer(conversationId);
     } else {
       // Human admin is active, start escalation timer in case they don't respond
