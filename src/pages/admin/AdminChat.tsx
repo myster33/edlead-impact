@@ -172,9 +172,14 @@ export default function AdminChat() {
   // Scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (viewport) {
+        viewport.scrollTop = viewport.scrollHeight;
+      } else {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
-  }, [messages]);
+  }, [messages, visitorTyping]);
 
   const selectConversation = async (conv: Conversation) => {
     setSelectedConv(conv);
@@ -408,7 +413,7 @@ export default function AdminChat() {
                       >
                         {msg.is_ai_response && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground rounded px-1.5 py-0.5 mb-1">
-                            <Bot className="h-2.5 w-2.5" /> edLEAD AI
+                            <Bot className="h-2.5 w-2.5" /> edLEAD
                           </span>
                         )}
                         <span className="block">{msg.content}</span>
