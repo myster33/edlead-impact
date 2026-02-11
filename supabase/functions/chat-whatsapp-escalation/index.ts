@@ -1,62 +1,52 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
-const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function formatWhatsAppNumber(phone: string): string {
+function formatPhoneNumber(phone: string): string {
   let cleaned = phone.replace(/\D/g, "");
   if (cleaned.startsWith("0") && cleaned.length === 10) {
     cleaned = "27" + cleaned.substring(1);
   } else if (cleaned.length === 9 && !cleaned.startsWith("27")) {
     cleaned = "27" + cleaned;
   }
-  return `whatsapp:+${cleaned}`;
+  return cleaned;
 }
 
-async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; sid?: string; error?: string }> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-    return { success: false, error: "Twilio credentials not configured" };
+async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    return { success: false, error: "WhatsApp Cloud API credentials not configured" };
   }
 
-  const formattedTo = formatWhatsAppNumber(to);
-
-  const params: Record<string, string> = {
-    To: formattedTo,
-    Body: body,
-  };
-
-  if (TWILIO_MESSAGING_SERVICE_SID) {
-    params.MessagingServiceSid = TWILIO_MESSAGING_SERVICE_SID;
-  } else if (TWILIO_WHATSAPP_NUMBER) {
-    const cleanedFrom = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
-    params.From = cleanedFrom.startsWith("whatsapp:") ? cleanedFrom : `whatsapp:${cleanedFrom}`;
-  } else {
-    return { success: false, error: "No WhatsApp sender configured" };
-  }
+  const formattedTo = formatPhoneNumber(to);
 
   try {
     const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+          "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
         },
-        body: new URLSearchParams(params),
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: formattedTo,
+          type: "text",
+          text: { body },
+        }),
       }
     );
     const data = await response.json();
-    if (!response.ok) return { success: false, error: data.message || "Failed" };
-    return { success: true, sid: data.sid };
+    if (!response.ok) return { success: false, error: data?.error?.message || "Failed" };
+    return { success: true, messageId: data?.messages?.[0]?.id };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
@@ -71,7 +61,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get conversation
     const { data: conv } = await supabase
       .from("chat_conversations")
       .select("*")
@@ -91,7 +80,6 @@ serve(async (req) => {
       });
     }
 
-    // Get messages for summary
     const { data: messages } = await supabase
       .from("chat_messages")
       .select("content, sender_type, created_at")
@@ -105,7 +93,6 @@ serve(async (req) => {
 
     const adminMessage = `📩 Chat Escalation\nVisitor: ${conv.visitor_name || "Anonymous"}${conv.visitor_email ? `\nEmail: ${conv.visitor_email}` : ""}${conv.visitor_province ? `\nProvince: ${conv.visitor_province}` : ""}${conv.visitor_phone ? `\nPhone: ${conv.visitor_phone}` : ""}\n\nConversation:\n${summary}`;
 
-    // Get edLEAD support WhatsApp number from system settings
     const { data: settingsData } = await supabase
       .from("system_settings")
       .select("setting_value")
@@ -115,20 +102,17 @@ serve(async (req) => {
     const supportNumber = settingsData?.setting_value as string | null;
     const results: any[] = [];
 
-    // Send to support team
     if (supportNumber) {
       const r = await sendWhatsApp(supportNumber, adminMessage);
       results.push({ target: "support", ...r });
     }
 
-    // Send to visitor if they provided a phone
     if (conv.visitor_phone) {
       const visitorMsg = `Hi ${conv.visitor_name || "there"}! 👋 Our team at edLEAD received your chat message. We'll get back to you shortly via WhatsApp. Thank you for your patience!`;
       const r = await sendWhatsApp(conv.visitor_phone, visitorMsg);
       results.push({ target: "visitor", ...r });
     }
 
-    // Mark as escalated
     await supabase
       .from("chat_conversations")
       .update({ escalated_to_whatsapp: true })
