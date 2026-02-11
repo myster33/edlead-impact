@@ -171,7 +171,7 @@ export function ChatWidget() {
         await supabase.from("chat_messages").insert({
           conversation_id: convId,
           sender_type: "admin",
-          content: "Our team is currently away. 🕐 I'd recommend browsing our website at edlead.co.za for more information, or click the **Contact Us** button on our website and leave us your query — our team will get back to you ASAP. You can also email us directly at info@edlead.co.za 📧",
+          content: "Our team is currently away. 🕐 Please visit our [Contact Us](/contact) page and leave us your query — our team will get back to you ASAP. You can also email us directly at info@edlead.co.za 📧",
           is_ai_response: true,
         });
       } else {
