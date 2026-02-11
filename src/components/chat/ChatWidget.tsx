@@ -42,6 +42,7 @@ export function ChatWidget() {
   const sessionId = useRef(getSessionId());
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const escalationTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const aiAutoContinueCount = useRef(0);
 
   // Show tooltip on first visit
   useEffect(() => {
@@ -92,8 +93,9 @@ export function ChatWidget() {
           });
           if (msg.sender_type === "admin" && !msg.is_ai_response) {
             setAdminTyping(false);
-            // Admin responded — clear escalation timer
+            // Admin responded — clear escalation timer and reset AI counter
             clearTimeout(escalationTimerRef.current);
+            aiAutoContinueCount.current = 0;
           }
         }
       )
@@ -151,15 +153,29 @@ export function ChatWidget() {
   const startEscalationTimer = useCallback((convId: string) => {
     clearTimeout(escalationTimerRef.current);
     escalationTimerRef.current = setTimeout(async () => {
-      // After 90 seconds with no admin response, AI auto-continues the conversation
-      try {
-        const history = messages.map((m) => ({
-          role: m.sender_type === "visitor" ? "user" : "assistant",
-          content: m.content,
-        }));
-        await callAiFaq(convId, history);
-      } catch (e) {
-        console.error("AI auto-continue failed:", e);
+      if (aiAutoContinueCount.current >= 3) {
+        // After 3 AI auto-continues, escalate to WhatsApp
+        try {
+          await supabase.functions.invoke("chat-whatsapp-escalation", {
+            body: { conversation_id: convId },
+          });
+          setEscalated(true);
+          aiAutoContinueCount.current = 0;
+        } catch (e) {
+          console.error("WhatsApp escalation failed:", e);
+        }
+      } else {
+        // AI auto-continues the conversation
+        aiAutoContinueCount.current += 1;
+        try {
+          const history = messages.map((m) => ({
+            role: m.sender_type === "visitor" ? "user" : "assistant",
+            content: m.content,
+          }));
+          await callAiFaq(convId, history);
+        } catch (e) {
+          console.error("AI auto-continue failed:", e);
+        }
       }
     }, 90 * 1000); // 90 seconds
   }, [messages]);
