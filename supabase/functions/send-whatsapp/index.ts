@@ -50,10 +50,12 @@ async function sendWhatsApp(to: string, body: string): Promise<{ success: boolea
   console.log(`Sending WhatsApp via Meta Cloud API to ${formattedTo}`);
   console.log("Request payload:", JSON.stringify(payload));
   console.log("Phone Number ID:", WHATSAPP_PHONE_NUMBER_ID);
+  console.log("Token starts with:", WHATSAPP_ACCESS_TOKEN?.substring(0, 10));
+  console.log("Token length:", WHATSAPP_ACCESS_TOKEN?.length);
 
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      `https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         method: "POST",
         headers: {
