@@ -2,6 +2,26 @@ import { forwardRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot } from "lucide-react";
 
+const renderMessageContent = (content: string) => {
+  // Parse markdown-style links [text](url) and **bold**
+  const parts = content.split(/(\[.*?\]\(.*?\)|\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+    if (linkMatch) {
+      return (
+        <a key={i} href={linkMatch[2]} className="underline font-semibold hover:opacity-80" target={linkMatch[2].startsWith('/') ? '_self' : '_blank'} rel="noopener noreferrer">
+          {linkMatch[1]}
+        </a>
+      );
+    }
+    const boldMatch = part.match(/\*\*(.*?)\*\*/);
+    if (boldMatch) {
+      return <strong key={i}>{boldMatch[1]}</strong>;
+    }
+    return part;
+  });
+};
+
 interface ChatMessageItem {
   id: string;
   content: string;
@@ -36,7 +56,7 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
               >
                 {msg.is_ai_response && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-accent-foreground bg-accent rounded px-1.5 py-0.5 mb-1">
-                    <Bot className="h-2.5 w-2.5" /> edLEAD AI
+                    <Bot className="h-2.5 w-2.5" /> edLEAD
                   </span>
                 )}
                 {msg.sender_name && !msg.is_ai_response && msg.sender_type === "admin" && (
@@ -44,7 +64,7 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
                     {msg.sender_name}
                   </span>
                 )}
-                <span className="block">{msg.content}</span>
+                <span className="block">{renderMessageContent(msg.content)}</span>
                 <p className={`text-[10px] mt-1 ${msg.sender_type === "visitor" ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
