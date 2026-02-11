@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatIntroForm } from "./ChatIntroForm";
 import { ChatTopicButtons } from "./ChatTopicButtons";
 import { ChatMessageList } from "./ChatMessageList";
-import { ChatContactForm } from "./ChatContactForm";
+// ChatContactForm removed — visitors are directed to the Contact Us page instead
 import edleadIcon from "@/assets/edlead-icon.png";
 
 interface ChatMessage {
@@ -39,7 +39,7 @@ export function ChatWidget() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [escalated, setEscalated] = useState(false);
-  const [showContactForm, setShowContactForm] = useState(false);
+  // showContactForm removed — visitors directed to Contact Us page
   const [visitorEmail, setVisitorEmail] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef(getSessionId());
@@ -99,7 +99,6 @@ export function ChatWidget() {
             // Admin responded — clear escalation timer and reset AI counter
             clearTimeout(escalationTimerRef.current);
             aiAutoContinueCount.current = 0;
-            setShowContactForm(false);
           }
         }
       )
@@ -164,16 +163,15 @@ export function ChatWidget() {
     clearTimeout(escalationTimerRef.current);
     escalationTimerRef.current = setTimeout(async () => {
       if (aiAutoContinueCount.current >= 3) {
-        // After 3 AI auto-continues, show contact form (no WhatsApp escalation)
+        // After 3 AI auto-continues, team is away — direct to Contact Us page
         setEscalated(true);
-        setShowContactForm(true);
         aiAutoContinueCount.current = 0;
 
         // Send away message as AI
         await supabase.from("chat_messages").insert({
           conversation_id: convId,
           sender_type: "admin",
-          content: "Our team is currently away. I'd recommend browsing our website at edlead.co.za for more information, or you can leave us your query using the contact form below and our team will respond to you ASAP. You can also email us directly at info@edlead.co.za 📧",
+          content: "Our team is currently away. 🕐 I'd recommend browsing our website at edlead.co.za for more information, or click the **Contact Us** button on our website and leave us your query — our team will get back to you ASAP. You can also email us directly at info@edlead.co.za 📧",
           is_ai_response: true,
         });
       } else {
@@ -418,9 +416,7 @@ export function ChatWidget() {
         <>
           <ChatMessageList messages={messages} adminTyping={adminTyping} aiLoading={aiLoading} ref={scrollRef} />
 
-          {showContactForm && (
-            <ChatContactForm visitorName={visitorName} visitorEmail={visitorEmail} />
-          )}
+          {/* Contact form removed — visitors directed to Contact Us page */}
 
           {/* Input */}
           <div className="p-3 border-t shrink-0">
