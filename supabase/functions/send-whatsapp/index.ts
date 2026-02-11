@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
-const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
-const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
-const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,73 +18,63 @@ interface SendWhatsAppRequest {
   sentBy?: string;
 }
 
-// Format phone number to E.164 format for WhatsApp
-function formatWhatsAppNumber(phone: string): string {
-  // Remove all non-digit characters
+// Format phone number to international format for WhatsApp Cloud API (no + prefix, no whatsapp: prefix)
+function formatPhoneNumber(phone: string): string {
   let cleaned = phone.replace(/\D/g, "");
-  
-  // Handle South African numbers
+
   if (cleaned.startsWith("0") && cleaned.length === 10) {
-    // South African mobile starting with 0
     cleaned = "27" + cleaned.substring(1);
   } else if (cleaned.length === 9 && !cleaned.startsWith("27")) {
-    // 9 digit number, assume SA
     cleaned = "27" + cleaned;
   }
-  
-  // WhatsApp format requires whatsapp: prefix
-  return `whatsapp:+${cleaned}`;
+
+  return "+" + cleaned;
 }
 
-async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; sid?: string; error?: string }> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-    console.error("Missing Twilio credentials");
-    return { success: false, error: "Twilio credentials not configured" };
+async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    console.error("Missing WhatsApp Cloud API credentials");
+    return { success: false, error: "WhatsApp Cloud API credentials not configured" };
   }
 
-  const formattedTo = formatWhatsAppNumber(to);
-  
-  // Build request params — prefer MessagingServiceSid for production
-  const params: Record<string, string> = {
-    To: formattedTo,
-    Body: body,
+  const formattedTo = formatPhoneNumber(to);
+
+  const payload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: formattedTo,
+    type: "text",
+    text: { preview_url: false, body: body },
   };
 
-  if (TWILIO_MESSAGING_SERVICE_SID) {
-    params.MessagingServiceSid = TWILIO_MESSAGING_SERVICE_SID;
-    console.log(`Sending WhatsApp via MessagingService to ${formattedTo}`);
-  } else if (TWILIO_WHATSAPP_NUMBER) {
-    const cleanedFromNumber = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
-    params.From = cleanedFromNumber.startsWith("whatsapp:") 
-      ? cleanedFromNumber 
-      : `whatsapp:${cleanedFromNumber}`;
-    console.log(`Sending WhatsApp from ${params.From} to ${formattedTo}`);
-  } else {
-    return { success: false, error: "No WhatsApp sender configured" };
-  }
+  console.log(`Sending WhatsApp via Meta Cloud API to ${formattedTo}`);
+  console.log("Request payload:", JSON.stringify(payload));
+  console.log("Phone Number ID:", WHATSAPP_PHONE_NUMBER_ID);
 
   try {
     const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+          "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
         },
-        body: new URLSearchParams(params),
+        body: JSON.stringify(payload),
       }
     );
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Twilio WhatsApp API error:", data);
-      return { success: false, error: data.message || "Failed to send WhatsApp message" };
+      console.error("WhatsApp Cloud API error:", JSON.stringify(data));
+      const errorMsg = data?.error?.message || "Failed to send WhatsApp message";
+      return { success: false, error: errorMsg };
     }
 
-    console.log("WhatsApp message sent successfully:", data.sid);
-    return { success: true, sid: data.sid };
+    const messageId = data?.messages?.[0]?.id;
+    console.log("WhatsApp message sent successfully:", messageId);
+    return { success: true, messageId };
   } catch (error: any) {
     console.error("Error sending WhatsApp message:", error);
     return { success: false, error: error.message };
@@ -108,7 +96,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -121,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
       .maybeSingle();
 
     const whatsappEnabled = settingsData?.setting_value === true || settingsData?.setting_value === "true";
-    
+
     if (!whatsappEnabled) {
       console.log("WhatsApp notifications are disabled globally");
       return new Response(
@@ -130,7 +117,6 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Send the WhatsApp message
     const result = await sendWhatsApp(to, message);
 
     // Log the message
@@ -141,7 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
       template_key: templateKey,
       message_content: message,
       status: result.success ? "sent" : "failed",
-      twilio_sid: result.sid,
+      twilio_sid: result.messageId,
       error_message: result.error,
       application_id: applicationId,
       sent_by: sentBy,
@@ -150,7 +136,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({
         success: result.success,
-        sid: result.sid,
+        messageId: result.messageId,
         error: result.error,
       }),
       { status: result.success ? 200 : 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
