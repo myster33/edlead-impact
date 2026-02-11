@@ -5,6 +5,7 @@ const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
+const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,11 +49,26 @@ async function sendTwilioMessage(
   body: string,
   channel: "sms" | "whatsapp"
 ): Promise<{ success: boolean; sid?: string; error?: string }> {
-  const fromNumber = channel === "whatsapp" ? TWILIO_WHATSAPP_NUMBER : TWILIO_PHONE_NUMBER;
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    return { success: false, error: `Twilio credentials not configured` };
+  }
+
   const formattedTo = channel === "whatsapp" ? formatWhatsAppNumber(to) : formatPhoneNumber(to);
 
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !fromNumber) {
-    return { success: false, error: `Twilio ${channel} credentials not configured` };
+  // Build request params
+  const params: Record<string, string> = {
+    To: formattedTo,
+    Body: body,
+  };
+
+  if (channel === "whatsapp" && TWILIO_MESSAGING_SERVICE_SID) {
+    params.MessagingServiceSid = TWILIO_MESSAGING_SERVICE_SID;
+  } else {
+    const fromNumber = channel === "whatsapp" ? TWILIO_WHATSAPP_NUMBER : TWILIO_PHONE_NUMBER;
+    if (!fromNumber) {
+      return { success: false, error: `Twilio ${channel} sender not configured` };
+    }
+    params.From = fromNumber;
   }
 
   try {
@@ -64,11 +80,7 @@ async function sendTwilioMessage(
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
         },
-        body: new URLSearchParams({
-          To: formattedTo,
-          From: fromNumber,
-          Body: body,
-        }),
+        body: new URLSearchParams(params),
       }
     );
 

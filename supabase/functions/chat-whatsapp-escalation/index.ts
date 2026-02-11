@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_WHATSAPP_NUMBER = Deno.env.get("TWILIO_WHATSAPP_NUMBER");
+const TWILIO_MESSAGING_SERVICE_SID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,13 +22,25 @@ function formatWhatsAppNumber(phone: string): string {
 }
 
 async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; sid?: string; error?: string }> {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
-    return { success: false, error: "Twilio WhatsApp credentials not configured" };
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+    return { success: false, error: "Twilio credentials not configured" };
   }
 
   const formattedTo = formatWhatsAppNumber(to);
-  const cleanedFrom = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
-  const formattedFrom = cleanedFrom.startsWith("whatsapp:") ? cleanedFrom : `whatsapp:${cleanedFrom}`;
+
+  const params: Record<string, string> = {
+    To: formattedTo,
+    Body: body,
+  };
+
+  if (TWILIO_MESSAGING_SERVICE_SID) {
+    params.MessagingServiceSid = TWILIO_MESSAGING_SERVICE_SID;
+  } else if (TWILIO_WHATSAPP_NUMBER) {
+    const cleanedFrom = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
+    params.From = cleanedFrom.startsWith("whatsapp:") ? cleanedFrom : `whatsapp:${cleanedFrom}`;
+  } else {
+    return { success: false, error: "No WhatsApp sender configured" };
+  }
 
   try {
     const response = await fetch(
@@ -38,7 +51,7 @@ async function sendWhatsApp(to: string, body: string): Promise<{ success: boolea
           "Content-Type": "application/x-www-form-urlencoded",
           Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
         },
-        body: new URLSearchParams({ To: formattedTo, From: formattedFrom, Body: body }),
+        body: new URLSearchParams(params),
       }
     );
     const data = await response.json();
