@@ -177,7 +177,7 @@ export function ChatWidget() {
           console.error("AI auto-continue failed:", e);
         }
       }
-    }, 90 * 1000); // 90 seconds
+    }, 15 * 1000); // 15 seconds (temporary for testing)
   }, [messages]);
 
   const callAiFaq = async (convId: string, userMessages: { role: string; content: string }[], topic?: string) => {
