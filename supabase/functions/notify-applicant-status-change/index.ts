@@ -427,6 +427,14 @@ async function sendWhatsApp(to: string, message: string): Promise<{ success: boo
     const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
+    // Clean the WhatsApp From number — remove spaces and ensure proper format
+    const cleanedFromNumber = TWILIO_WHATSAPP_NUMBER.replace(/\s/g, "");
+    const formattedFrom = cleanedFromNumber.startsWith("whatsapp:")
+      ? cleanedFromNumber
+      : `whatsapp:${cleanedFromNumber}`;
+
+    console.log(`Sending WhatsApp from ${formattedFrom} to whatsapp:${formattedPhone}`);
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -435,7 +443,7 @@ async function sendWhatsApp(to: string, message: string): Promise<{ success: boo
       },
       body: new URLSearchParams({
         To: `whatsapp:${formattedPhone}`,
-        From: `whatsapp:${TWILIO_WHATSAPP_NUMBER}`,
+        From: formattedFrom,
         Body: message,
       }),
     });
