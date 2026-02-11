@@ -28,7 +28,7 @@ function formatPhoneNumber(phone: string): string {
     cleaned = "27" + cleaned;
   }
 
-  return "+" + cleaned;
+  return cleaned;
 }
 
 async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
