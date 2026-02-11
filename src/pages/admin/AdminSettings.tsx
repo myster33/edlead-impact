@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { countryCodes } from "@/lib/country-codes";
 import {
   Dialog,
   DialogContent,
@@ -28,13 +30,6 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -108,6 +103,7 @@ export default function AdminSettings() {
   const [smsNotificationsEnabled, setSmsNotificationsEnabled] = useState(false);
   const [whatsappNotificationsEnabled, setWhatsappNotificationsEnabled] = useState(false);
   const [supportWhatsappNumber, setSupportWhatsappNumber] = useState("");
+  const [supportWhatsappCountryCode, setSupportWhatsappCountryCode] = useState("+27|South Africa");
   const [isSavingSupportNumber, setIsSavingSupportNumber] = useState(false);
   const [isLoadingSystemSettings, setIsLoadingSystemSettings] = useState(false);
   const [isSendingDigest, setIsSendingDigest] = useState(false);
@@ -140,7 +136,28 @@ export default function AdminSettings() {
         data.forEach((setting: any) => {
           if (setting.setting_key === "support_whatsapp_number") {
             const val = typeof setting.setting_value === "string" ? setting.setting_value : String(setting.setting_value || "");
-            setSupportWhatsappNumber(val);
+            // Parse "code number" format (e.g. "+27 839227289") or full number (e.g. "+27839227289")
+            const spaceIdx = val.indexOf(" ");
+            if (spaceIdx > 0) {
+              const code = val.slice(0, spaceIdx);
+              const num = val.slice(spaceIdx + 1);
+              const match = countryCodes.find(c => c.code === code);
+              if (match) {
+                setSupportWhatsappCountryCode(`${match.code}|${match.country}`);
+                setSupportWhatsappNumber(num);
+              } else {
+                setSupportWhatsappNumber(val);
+              }
+            } else {
+              // Try to match country code prefix
+              const match = countryCodes.find(c => val.startsWith(c.code) && c.code.length > 1);
+              if (match) {
+                setSupportWhatsappCountryCode(`${match.code}|${match.country}`);
+                setSupportWhatsappNumber(val.slice(match.code.length));
+              } else {
+                setSupportWhatsappNumber(val);
+              }
+            }
           } else {
             const value = setting.setting_value === true || setting.setting_value === "true";
             if (setting.setting_key === "parent_emails_enabled") {
@@ -271,10 +288,11 @@ export default function AdminSettings() {
   const handleSaveSupportNumber = async () => {
     setIsSavingSupportNumber(true);
     try {
+      const fullNumber = `${supportWhatsappCountryCode.split("|")[0]} ${supportWhatsappNumber.trim()}`;
       const { error } = await supabase
         .from("system_settings")
         .update({ 
-          setting_value: supportWhatsappNumber.trim(),
+          setting_value: fullNumber,
           updated_by: adminUser?.id 
         })
         .eq("setting_key", "support_whatsapp_number");
@@ -1334,15 +1352,27 @@ export default function AdminSettings() {
                         <div className="space-y-2 flex-1">
                           <Label htmlFor="support-whatsapp" className="font-medium">Support WhatsApp Number</Label>
                           <p className="text-sm text-muted-foreground">
-                            Chat escalations (unanswered after 3 minutes) will be forwarded to this WhatsApp number.
+                            Chat escalations (AI auto-continues 3 times, then forwards) will be sent to this WhatsApp number.
                           </p>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 items-center">
+                            <Select value={supportWhatsappCountryCode} onValueChange={setSupportWhatsappCountryCode}>
+                              <SelectTrigger className="w-[100px] shrink-0 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[300px]">
+                                {countryCodes.map((c) => (
+                                  <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                                    {c.flag} {c.code}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <Input
                               id="support-whatsapp"
-                              placeholder="+27839227289"
+                              placeholder="839227289"
                               value={supportWhatsappNumber}
                               onChange={(e) => setSupportWhatsappNumber(e.target.value)}
-                              className="max-w-xs"
+                              className="max-w-[180px]"
                             />
                             <Button
                               size="sm"
