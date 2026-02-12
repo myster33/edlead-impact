@@ -53,6 +53,20 @@ async function sendWhatsApp(to: string, body: string): Promise<{ success: boolea
   console.log("Token starts with:", WHATSAPP_ACCESS_TOKEN?.substring(0, 10));
   console.log("Token length:", WHATSAPP_ACCESS_TOKEN?.length);
 
+  // First, debug: verify token permissions by checking the phone number
+  try {
+    const debugResp = await fetch(
+      `https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}`,
+      {
+        headers: { "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}` },
+      }
+    );
+    const debugData = await debugResp.json();
+    console.log("Phone number lookup result:", JSON.stringify(debugData));
+  } catch (e) {
+    console.error("Debug lookup failed:", e);
+  }
+
   try {
     const response = await fetch(
       `https://graph.facebook.com/v22.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
