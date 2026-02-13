@@ -267,7 +267,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         reply: isHandoff
-          ? "For that information, let me connect you with our team for more detailed assistance. One moment please! 🙋"
+          ? "I'm not sure about that one — but our team can definitely help! 😊 Please visit our [Contact Us](/contact) page or email us at info@edlead.co.za and we'll get back to you ASAP."
           : reply,
         handoff: isHandoff,
       }),

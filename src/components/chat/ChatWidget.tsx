@@ -38,14 +38,12 @@ export function ChatWidget() {
   const [adminTyping, setAdminTyping] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [escalated, setEscalated] = useState(false);
-  // showContactForm removed — visitors directed to Contact Us page
   const [visitorEmail, setVisitorEmail] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionId = useRef(getSessionId());
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const escalationTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const aiAutoContinueCount = useRef(0);
+  const lastHumanAdminMsgTime = useRef<number>(0);
+  const humanAdminResumeTimer = useRef<ReturnType<typeof setTimeout>>();
 
   // Show tooltip on first visit
   useEffect(() => {
@@ -71,7 +69,6 @@ export function ChatWidget() {
       if (data) {
         setConversationId(data.id);
         setVisitorName(data.visitor_name || "");
-        setEscalated(!!data.escalated_to_whatsapp);
         setStep("chat");
         fetchMessages(data.id);
       }
@@ -96,9 +93,8 @@ export function ChatWidget() {
           });
           if (msg.sender_type === "admin" && !msg.is_ai_response) {
             setAdminTyping(false);
-            // Admin responded — clear escalation timer and reset AI counter
-            clearTimeout(escalationTimerRef.current);
-            aiAutoContinueCount.current = 0;
+            // Human admin responded — record the time so AI pauses
+            lastHumanAdminMsgTime.current = Date.now();
           }
         }
       )
@@ -159,36 +155,10 @@ export function ChatWidget() {
     }
   };
 
-  const startEscalationTimer = useCallback((convId: string) => {
-    clearTimeout(escalationTimerRef.current);
-    escalationTimerRef.current = setTimeout(async () => {
-      if (aiAutoContinueCount.current >= 3) {
-        // After 3 AI auto-continues, team is away — direct to Contact Us page
-        setEscalated(true);
-        aiAutoContinueCount.current = 0;
-
-        // Send away message as AI
-        await supabase.from("chat_messages").insert({
-          conversation_id: convId,
-          sender_type: "admin",
-          content: "Our team is currently away. 🕐 Please visit our [Contact Us](/contact) page and leave us your query — our team will get back to you ASAP. You can also email us directly at info@edlead.co.za 📧",
-          is_ai_response: true,
-        });
-      } else {
-        // AI auto-continues the conversation
-        aiAutoContinueCount.current += 1;
-        try {
-          const history = messages.map((m) => ({
-            role: m.sender_type === "visitor" ? "user" : "assistant",
-            content: m.content,
-          }));
-          await callAiFaq(convId, history);
-        } catch (e) {
-          console.error("AI auto-continue failed:", e);
-        }
-      }
-    }, 15 * 1000); // 15 seconds (temporary for testing)
-  }, [messages]);
+  // Check if human admin is currently active (sent a message within the last 15 seconds)
+  const isHumanAdminActive = useCallback(() => {
+    return lastHumanAdminMsgTime.current > 0 && (Date.now() - lastHumanAdminMsgTime.current) < 15000;
+  }, []);
 
   const callAiFaq = async (convId: string, userMessages: { role: string; content: string }[], topic?: string) => {
     setAiLoading(true);
@@ -210,19 +180,8 @@ export function ChatWidget() {
         is_ai_response: true,
       });
 
-      if (handoff) {
-        // Handoff: wait 3s then send away message
-        setAiLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        setAiLoading(false);
-        setEscalated(true);
-        await supabase.from("chat_messages").insert({
-          conversation_id: convId,
-          sender_type: "admin",
-          content: "Our team is currently away. 🕐 Please visit our [Contact Us](/contact) page and leave us your query — our team will get back to you ASAP. You can also email us directly at info@edlead.co.za 📧",
-          is_ai_response: true,
-        });
-      }
+      // Handoff just means AI couldn't answer — the reply already contains contact info
+      // No separate away message needed
     } catch (e) {
       console.error("AI FAQ error:", e);
     } finally {
@@ -334,19 +293,23 @@ export function ChatWidget() {
       content: m.content,
     }));
 
-    // Check if a real admin has replied (non-AI message from admin)
-    const hasHumanAdmin = messages.some((m) => m.sender_type === "admin" && !m.is_ai_response);
-
-    if (!hasHumanAdmin) {
+    if (isHumanAdminActive()) {
+      // Human admin is actively chatting — wait for them to respond
+      // If they don't respond within 15s, AI will handle the next message
+      clearTimeout(humanAdminResumeTimer.current);
+      humanAdminResumeTimer.current = setTimeout(async () => {
+        // After 15s of admin inactivity, AI responds
+        setAiLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        setAiLoading(false);
+        await callAiFaq(conversationId, aiMessages);
+      }, 15000);
+    } else {
       // AI mode — show typing for 2s then respond
       setAiLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setAiLoading(false);
       await callAiFaq(conversationId, aiMessages);
-      startEscalationTimer(conversationId);
-    } else {
-      // Human admin is active, start escalation timer in case they don't respond
-      startEscalationTimer(conversationId);
     }
   };
 
@@ -363,9 +326,9 @@ export function ChatWidget() {
     localStorage.setItem("edlead-chat-tooltip-seen", "true");
   };
 
-  // Cleanup escalation timer
+  // Cleanup timers
   useEffect(() => {
-    return () => clearTimeout(escalationTimerRef.current);
+    return () => clearTimeout(humanAdminResumeTimer.current);
   }, []);
 
   if (!isOpen) {
