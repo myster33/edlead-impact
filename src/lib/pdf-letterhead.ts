@@ -47,12 +47,6 @@ export const addPDFLetterhead = (
     doc.text("edLEAD", 14, 18);
   }
 
-  // Organisation name beside logo
-  doc.setFontSize(8);
-  doc.setTextColor(100);
-  doc.text("edLEAD Africa", 46, 14);
-  doc.text("Empowering Young Leaders Across Africa", 46, 18);
-
   // Title
   doc.setFontSize(16);
   doc.setTextColor(30, 30, 30);
