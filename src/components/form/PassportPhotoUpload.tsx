@@ -183,10 +183,6 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
       {error && (
         <p className="text-sm text-destructive">{error}</p>
       )}
-      
-      <p className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-        💡 <strong>Tip:</strong> This photo will be used to create a personalized social media shareable image when you're accepted into the programme!
-      </p>
     </div>
   );
 }
