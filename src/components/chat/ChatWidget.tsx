@@ -231,6 +231,7 @@ export function ChatWidget() {
   const startApplyMode = async () => {
     if (!conversationId) return;
     setApplyMode(true);
+    setStep("chat");
 
     // Send initial message
     const visitorMsg = "I'd like to apply to the edLEAD programme right here in the chat!";
