@@ -28,7 +28,7 @@ edLEAD aims to nurture a generation of student leaders who transform their schoo
 
 === PROGRAMME STRUCTURE ===
 
-edLEAD identifies promising learners nominated by their schools who show leadership potential. Selected Captains participate in a year-long hybrid program combining:
+edLEAD identifies promising learners nominated by their schools who show leadership potential. High school graduates may also self-nominate. Selected Captains participate in a year-long hybrid program combining:
 
 - **Weekly**: Online mentorship & leadership development modules (via slides/resources)
 - **Monthly**: Virtual meetups with interactive workshops led by experienced mentors or facilitators
@@ -73,7 +73,7 @@ Sustainability is supported through partnerships with NGOs, educational institut
 === ADMISSIONS & APPLICATIONS ===
 
 - Applications are submitted online through the edLEAD website (edlead.co.za)
-- Requirements: Must be a South African student (Grade 9–12) or a high school graduate, nominated by a teacher, have parental consent, and access to a device with internet
+- Requirements: Must be a South African student (Grade 9–12) or a high school graduate. Current students must be nominated by a teacher; graduates may self-nominate. Parental consent and access to a device with internet are required.
 - The application includes personal details, school information, a teacher nomination, essay questions about leadership, and a community project proposal
 - Applicants receive a unique reference number upon submission
 - Applicants can check their application status using their reference number on the website at edlead.co.za/check-status
