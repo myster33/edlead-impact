@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileDown, FileText, Download } from "lucide-react";
+import { FileDown, FileText, Download, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -355,6 +355,7 @@ const AdminReports = () => {
                 <div className="flex gap-2">
                   <Button onClick={exportAppPDF} size="sm"><FileDown className="h-4 w-4 mr-2" />Download PDF</Button>
                   <Button onClick={exportAppCSV} variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Download CSV</Button>
+                  <Button onClick={() => window.print()} variant="outline" size="sm"><Printer className="h-4 w-4 mr-2" />Print</Button>
                   <span className="text-sm text-muted-foreground self-center ml-2">{filteredApps.length} applications</span>
                 </div>
 
@@ -404,6 +405,7 @@ const AdminReports = () => {
                 <div className="flex gap-2">
                   <Button onClick={exportCohortPDF} size="sm"><FileDown className="h-4 w-4 mr-2" />Download PDF</Button>
                   <Button onClick={exportCohortCSV} variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Download CSV</Button>
+                  <Button onClick={() => window.print()} variant="outline" size="sm"><Printer className="h-4 w-4 mr-2" />Print</Button>
                   <span className="text-sm text-muted-foreground self-center ml-2">{cohorts.length} cohorts</span>
                 </div>
 
@@ -473,6 +475,7 @@ const AdminReports = () => {
                 <div className="flex gap-2">
                   <Button onClick={exportBlogPDF} size="sm"><FileDown className="h-4 w-4 mr-2" />Download PDF</Button>
                   <Button onClick={exportBlogCSV} variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />Download CSV</Button>
+                  <Button onClick={() => window.print()} variant="outline" size="sm"><Printer className="h-4 w-4 mr-2" />Print</Button>
                   <span className="text-sm text-muted-foreground self-center ml-2">{filteredBlog.length} posts</span>
                 </div>
 
