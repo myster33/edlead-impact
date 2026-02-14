@@ -55,6 +55,7 @@ import {
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { UpdateNotificationBanner } from "./UpdateNotificationBanner";
+import { NotificationBell } from "./NotificationBell";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -438,6 +439,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>
+            <NotificationBell />
             <Link to="/admin/chat" className="relative mr-2">
               <Button variant="ghost" size="icon" className="h-9 w-9">
                 <MessageCircle className="h-5 w-5" />
