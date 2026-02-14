@@ -1,104 +1,123 @@
 
+# Switch AI from Lovable AI to AWS Bedrock
 
-# Platform Enhancement Plan
+## Overview
 
-This plan covers four major improvements to the edLEAD platform, delivered in phases.
+Your project has **3 edge functions** that currently use the Lovable AI gateway. We'll switch all of them to call **AWS Bedrock** directly using the REST API with AWS Signature V4 authentication.
 
----
-
-## Phase 1: Enhanced Dashboard Analytics
-
-**What it does:** Adds richer visualizations to the admin dashboard and analytics page, including demographic breakdowns (gender, age), conversion funnels (pending to approved/rejected over time), and trend comparisons.
-
-### Changes:
-- **AdminAnalytics.tsx** -- Add new chart sections:
-  - Gender distribution pie chart (using existing `gender` field from applications)
-  - Age distribution bar chart (calculated from `date_of_birth`)
-  - Conversion funnel visualization showing pending → approved/rejected rates over time
-  - Month-over-month trend comparison line chart
-  - School-level breakdown table (top schools by application count)
-- **AdminDashboard.tsx** -- Add a quick "trends" card showing week-over-week change percentages for total, pending, approved, rejected counts
+### Affected Edge Functions
+1. **chat-ai-faq** -- The main chat assistant (FAQ, status lookups)
+2. **chat-apply** -- The conversational application assistant
+3. **generate-social-banner** -- AI-generated social media banner text
 
 ---
 
-## Phase 2: Admin Notification Center
+## Step 1: Store AWS Credentials as Secrets
 
-**What it does:** Adds a real-time in-app notification bell in the admin header, showing alerts for new applications, blog submissions, status changes, and system events -- beyond just chat messages.
+You'll need to provide **3 secrets** from your AWS account:
 
-### Database Changes:
-- Create `admin_notifications` table:
-  - `id` (uuid, primary key)
-  - `admin_user_id` (uuid, references admin_users)
-  - `type` (text -- e.g., "new_application", "blog_submission", "status_change", "system")
-  - `title` (text)
-  - `message` (text)
-  - `link` (text, nullable -- URL to navigate to)
-  - `is_read` (boolean, default false)
-  - `created_at` (timestamptz, default now())
-- Add RLS policies for admin access
-- Enable realtime on the table
-- Create a database trigger/function to auto-generate notifications when:
-  - A new application is inserted
-  - A blog post is submitted (status = 'pending')
+| Secret Name | Where to Find It |
+|---|---|
+| `AWS_ACCESS_KEY_ID` | IAM Console -- your IAM user's access key |
+| `AWS_SECRET_ACCESS_KEY` | IAM Console -- shown once when you create the access key |
+| `AWS_REGION` | The region where Bedrock is enabled (e.g. `us-east-1`) |
 
-### Frontend Changes:
-- **New component: `NotificationBell.tsx`** -- Bell icon with unread count badge in the admin header, with a dropdown popover listing recent notifications
-- **New component: `NotificationList.tsx`** -- Scrollable list of notifications with mark-as-read, mark-all-read, and click-to-navigate functionality
-- **AdminLayout.tsx** -- Add the NotificationBell to the header bar (next to the existing chat icon and theme toggle)
-- Subscribe to realtime inserts on `admin_notifications` for live updates
+Your IAM user/role must have the `bedrock:InvokeModel` permission.
 
 ---
 
-## Phase 3: Blog System Improvements
+## Step 2: Create a Shared AWS Signing Utility
 
-**What it does:** Enhances the public blog with tags/keywords, better SEO metadata, and a richer editing experience for admins.
+Create a shared helper at `supabase/functions/bedrock-utils.ts` that:
 
-### Database Changes:
-- Add columns to `blog_posts` table:
-  - `tags` (text array, nullable) -- for keyword tagging
-  - `meta_description` (text, nullable) -- SEO meta description
-  - `reading_time_minutes` (integer, nullable) -- estimated reading time
+- Implements AWS Signature V4 signing for Bedrock REST API calls
+- Provides a `callBedrock()` function that accepts messages and model ID, signs the request, and returns the response
+- Defaults to **Claude 3.5 Sonnet** (`anthropic.claude-3-5-sonnet-20240620-v1:0`) or another model you prefer
+- Uses the Anthropic Messages API format that Bedrock expects
 
-### Frontend Changes:
-- **Blog.tsx** -- Add tag-based filtering alongside category filtering; display reading time on cards
-- **BlogCard.tsx** -- Show reading time estimate and tags
-- **BlogPost.tsx** -- Display tags as clickable badges, add proper SEO meta tags using react-helmet
-- **AdminBlogManagement.tsx** -- Add fields in the edit dialog for tags (comma-separated input), meta description, and auto-calculated reading time
-- **StorySubmissionForm.tsx** -- Add optional tags input for authors
+```text
+callBedrock({ messages, system, tools?, tool_choice?, model? })
+  --> POST https://bedrock-runtime.{region}.amazonaws.com/model/{modelId}/invoke
+  --> Signs with SigV4
+  --> Returns parsed JSON response
+```
 
 ---
 
-## Phase 4: Reporting and Data Export
+## Step 3: Update Each Edge Function
 
-**What it does:** Lets admins generate and download comprehensive PDF and Excel-style (CSV) reports on applications, cohort statistics, and blog activity.
+### 3a. chat-ai-faq (main chat)
+- Replace `LOVABLE_API_KEY` with `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
+- Replace `fetch("https://ai.gateway.lovable.dev/...")` with `callBedrock()`
+- Convert the OpenAI-style message format to Bedrock/Anthropic Messages API format
+- Keep the same response structure returned to the frontend (no frontend changes needed)
 
-### Frontend Changes:
-- **New page: `AdminReports.tsx`** -- A dedicated reports page with:
-  - Application summary report (filterable by date range, province, status, cohort)
-  - Cohort comparison report
-  - Blog activity report (submissions, approvals, rejections over time)
-  - Each report has "Download PDF" and "Download CSV" buttons
-- **App.tsx** -- Add route `/admin/reports` with ProtectedRoute
-- **AdminLayout.tsx** -- Add "Reports" menu item with `FileBarChart` icon
-- **Database module_permissions** -- Insert a new permission entry for the "reports" module
-- Uses existing `jspdf` and `jspdf-autotable` dependencies (already installed) for PDF generation
-- CSV export using the same pattern already used in the reviewer activity export on the dashboard
+### 3b. chat-apply (application assistant)
+- Same credential swap
+- Convert the `tools` / `tool_choice` schema from OpenAI format to Anthropic tool-calling format
+- The Anthropic tool format uses `input_schema` instead of `parameters`, and tool results come back in `content` blocks with `type: "tool_use"`
+- Parse the tool call response accordingly
+
+### 3c. generate-social-banner (banner text generation)
+- Same credential swap
+- Straightforward text completion -- simplest conversion
+
+---
+
+## Step 4: Model Format Differences
+
+The main change is translating between OpenAI and Anthropic/Bedrock formats:
+
+```text
+OpenAI Format (current)          -->  Bedrock/Anthropic Format (new)
+-------------------------------------------------------------------
+messages[0].role: "system"       -->  Separate "system" parameter
+model: "google/gemini-..."       -->  modelId in URL path
+tools[].function.parameters      -->  tools[].input_schema
+tool_calls[0].function.arguments -->  content[].type: "tool_use", content[].input
+```
+
+---
+
+## Step 5: No Frontend Changes
+
+All changes are backend-only. The edge functions return the same JSON shape to the frontend, so the chat widget, apply flow, and banner generation will work without any client-side updates.
 
 ---
 
 ## Technical Details
 
-### Implementation Order
-1. Phase 1 (Analytics) -- No database changes needed, uses existing data
-2. Phase 2 (Notifications) -- Requires new table + triggers + new components
-3. Phase 3 (Blog improvements) -- Requires schema additions + frontend updates
-4. Phase 4 (Reports) -- New page + route, no database changes
+### AWS SigV4 Signing in Deno
+Since we can't use the full AWS SDK in Deno edge functions, we'll implement a lightweight SigV4 signer using Web Crypto APIs (`crypto.subtle`) available in Deno. This involves:
+- Creating a canonical request
+- Generating a string to sign
+- Computing HMAC-SHA256 signatures
+- Adding the `Authorization` header with the signature
 
-### Existing Patterns Followed
-- All new admin pages use `AdminLayout` wrapper
-- All routes use `ProtectedRoute` with `moduleKey`
-- Charts use `recharts` (already installed)
-- PDF export uses `jspdf` + `jspdf-autotable` (already installed)
-- Realtime subscriptions follow the pattern in `AdminLayout.tsx`
-- RLS policies follow the existing `admin_users` auth pattern
+### Bedrock Request Format (Anthropic Claude)
+```json
+{
+  "anthropic_version": "bedrock-2023-05-31",
+  "max_tokens": 1024,
+  "system": "You are a helpful assistant...",
+  "messages": [
+    { "role": "user", "content": "Hello" }
+  ]
+}
+```
 
+### Recommended Bedrock Model
+- **anthropic.claude-3-5-sonnet-20240620-v1:0** -- good balance of quality, speed, and cost
+- Make sure this model is enabled in your AWS Bedrock console under "Model access"
+
+---
+
+## Summary of Changes
+
+| File | Action |
+|---|---|
+| `supabase/functions/bedrock-utils.ts` | New -- shared AWS SigV4 signing + Bedrock caller |
+| `supabase/functions/chat-ai-faq/index.ts` | Edit -- swap to Bedrock |
+| `supabase/functions/chat-apply/index.ts` | Edit -- swap to Bedrock + convert tool format |
+| `supabase/functions/generate-social-banner/index.ts` | Edit -- swap to Bedrock |
+| 3 new secrets | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` |
