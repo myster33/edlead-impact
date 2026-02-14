@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callBedrock } from "../bedrock-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,7 +148,6 @@ async function lookupStatus(referenceNumber: string) {
 
   const cleanRef = referenceNumber.trim().toUpperCase();
 
-  // Try application first
   const { data: app } = await supabase
     .from("applications")
     .select("reference_number, status, created_at, full_name")
@@ -163,14 +163,11 @@ async function lookupStatus(referenceNumber: string) {
       cancelled: "Cancelled",
     };
     const submittedDate = new Date(app.created_at).toLocaleDateString("en-ZA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      year: "numeric", month: "long", day: "numeric",
     });
     return `Hi ${firstName}! 👋 Here's your application status:\n\n📋 **Reference**: ${app.reference_number}\n📅 **Submitted**: ${submittedDate}\n📌 **Status**: ${statusLabels[app.status] || app.status}\n\nIf you have any questions about your application, feel free to ask or contact us at info@edlead.co.za.`;
   }
 
-  // Try blog story
   const { data: blog } = await supabase
     .from("blog_posts")
     .select("reference_number, status, title, created_at, author_name")
@@ -185,9 +182,7 @@ async function lookupStatus(referenceNumber: string) {
       rejected: "Not Published",
     };
     const submittedDate = new Date(blog.created_at).toLocaleDateString("en-ZA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      year: "numeric", month: "long", day: "numeric",
     });
     return `Hi ${firstName}! 👋 Here's the status of your story:\n\n📋 **Reference**: ${blog.reference_number}\n📝 **Title**: "${blog.title}"\n📅 **Submitted**: ${submittedDate}\n📌 **Status**: ${statusLabels[blog.status] || blog.status}\n\nIf you have questions about your submission, feel free to ask or email us at info@edlead.co.za.`;
   }
@@ -202,12 +197,9 @@ serve(async (req) => {
 
   try {
     const { messages, topic } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     // Check if the latest user message contains a reference number
     const lastUserMsg = (messages || []).filter((m: any) => m.role === "user").pop();
-    // Reference numbers are alphanumeric hashes (e.g. H9RK8B9N, 486E675F) — must contain both letters AND digits
     const refMatch = lastUserMsg?.content?.match(/\b(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*[0-9])([A-Z0-9]{6,12})\b/i);
     const looksLikeStatusCheck = lastUserMsg?.content && /\b(status|reference|ref|check|application|story|track|number)\b/i.test(lastUserMsg.content);
 
@@ -223,44 +215,23 @@ serve(async (req) => {
       ? `${EDLEAD_SYSTEM_PROMPT}\n\nThe visitor selected the topic: "${topic}". Focus your initial response on this topic.`
       : EDLEAD_SYSTEM_PROMPT;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemContent },
-          ...(messages || []),
-        ],
-      }),
+    // Convert messages: filter out system messages (Bedrock uses separate system param)
+    const userMessages = (messages || [])
+      .filter((m: any) => m.role !== "system")
+      .map((m: any) => ({ role: m.role, content: m.content }));
+
+    const bedrockResponse = await callBedrock({
+      system: systemContent,
+      messages: userMessages,
+      max_tokens: 2048,
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Extract text from Bedrock response
+    let reply = "HANDOFF_TO_HUMAN";
+    const textBlock = bedrockResponse.content?.find((b: any) => b.type === "text");
+    if (textBlock?.text) {
+      reply = textBlock.text;
     }
-
-    const data = await response.json();
-    let reply = data.choices?.[0]?.message?.content || "HANDOFF_TO_HUMAN";
 
     const isHandoff = reply.includes("HANDOFF_TO_HUMAN");
 
