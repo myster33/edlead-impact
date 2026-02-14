@@ -49,7 +49,7 @@ const sanitizeName = (name: string): string => {
 };
 
 // Valid options for select fields
-const validGrades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+const validGrades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "High School Graduate"];
 
 interface ApplicationData {
   full_name: string;

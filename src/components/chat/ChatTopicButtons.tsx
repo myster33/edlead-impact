@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GraduationCap, BookOpen, Coins, MapPin, HelpCircle } from "lucide-react";
+import { GraduationCap, BookOpen, Coins, MapPin, HelpCircle, FileText } from "lucide-react";
 
 const TOPICS = [
   { label: "Admissions & Applications", icon: GraduationCap, value: "admissions" },
@@ -11,10 +11,11 @@ const TOPICS = [
 
 interface ChatTopicButtonsProps {
   onSelect: (topic: string) => void;
+  onApply?: () => void;
   disabled?: boolean;
 }
 
-export function ChatTopicButtons({ onSelect, disabled }: ChatTopicButtonsProps) {
+export function ChatTopicButtons({ onSelect, onApply, disabled }: ChatTopicButtonsProps) {
   return (
     <div className="px-4 py-3">
       <p className="text-xs text-muted-foreground mb-3 text-center">Choose a topic or type your question below:</p>
@@ -32,6 +33,18 @@ export function ChatTopicButtons({ onSelect, disabled }: ChatTopicButtonsProps) 
             {t.label}
           </Button>
         ))}
+        {onApply && (
+          <Button
+            variant="default"
+            size="sm"
+            className="justify-start gap-2 text-xs h-9 mt-1"
+            onClick={onApply}
+            disabled={disabled}
+          >
+            <FileText className="h-3.5 w-3.5 shrink-0" />
+            📝 Apply Now (via Chat)
+          </Button>
+        )}
       </div>
     </div>
   );

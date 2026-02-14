@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, X, Minimize2, Send } from "lucide-react";
+import { MessageCircle, X, Minimize2, Send, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatIntroForm } from "./ChatIntroForm";
 import { ChatTopicButtons } from "./ChatTopicButtons";
 import { ChatMessageList } from "./ChatMessageList";
-// ChatContactForm removed — visitors are directed to the Contact Us page instead
+import { ChatApplyActions } from "./ChatApplyActions";
 import edleadIcon from "@/assets/edlead-icon.png";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
   id: string;
@@ -28,6 +29,7 @@ const getSessionId = () => {
 };
 
 export function ChatWidget() {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<"intro" | "topics" | "chat">("intro");
   const [visitorName, setVisitorName] = useState("");
@@ -44,6 +46,14 @@ export function ChatWidget() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastHumanAdminMsgTime = useRef<number>(0);
   const humanAdminResumeTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // Apply mode state
+  const [applyMode, setApplyMode] = useState(false);
+  const [applicationData, setApplicationData] = useState<Record<string, any>>({});
+  const [applyComplete, setApplyComplete] = useState(false);
+  const [applySubmitting, setApplySubmitting] = useState(false);
+  const [applyCollectedCount, setApplyCollectedCount] = useState(0);
+  const [applyTotalRequired, setApplyTotalRequired] = useState(30);
 
   // Show tooltip on first visit
   useEffect(() => {
@@ -93,7 +103,6 @@ export function ChatWidget() {
           });
           if (msg.sender_type === "admin" && !msg.is_ai_response) {
             setAdminTyping(false);
-            // Human admin responded — record the time so AI pauses
             lastHumanAdminMsgTime.current = Date.now();
           }
         }
@@ -121,7 +130,6 @@ export function ChatWidget() {
   // Scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
-      // ScrollArea uses an inner viewport div
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
       if (viewport) {
         viewport.scrollTop = viewport.scrollHeight;
@@ -138,7 +146,6 @@ export function ChatWidget() {
       .eq("conversation_id", convId)
       .order("created_at", { ascending: true });
     if (data) {
-      // Fetch admin names for messages with sender_id
       const adminIds = [...new Set(data.filter(m => m.sender_id).map(m => m.sender_id!))];
       let adminNames: Record<string, string> = {};
       if (adminIds.length > 0) {
@@ -155,7 +162,6 @@ export function ChatWidget() {
     }
   };
 
-  // Check if human admin is currently active (sent a message within the last 15 seconds)
   const isHumanAdminActive = useCallback(() => {
     return lastHumanAdminMsgTime.current > 0 && (Date.now() - lastHumanAdminMsgTime.current) < 15000;
   }, []);
@@ -166,26 +172,203 @@ export function ChatWidget() {
       const { data, error } = await supabase.functions.invoke("chat-ai-faq", {
         body: { messages: userMessages, topic },
       });
-
       if (error) throw error;
 
       const reply = data?.reply || "I'm sorry, I couldn't process that right now.";
-      const handoff = data?.handoff || false;
-
-      // Store AI response as admin message with is_ai_response flag
       await supabase.from("chat_messages").insert({
         conversation_id: convId,
         sender_type: "admin",
         content: reply,
         is_ai_response: true,
       });
-
-      // Handoff just means AI couldn't answer — the reply already contains contact info
-      // No separate away message needed
     } catch (e) {
       console.error("AI FAQ error:", e);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  // Apply mode: call chat-apply edge function
+  const callApplyAi = async (convId: string, userMessages: { role: string; content: string }[]) => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("chat-apply", {
+        body: {
+          messages: userMessages,
+          collected_data: applicationData,
+          visitor_name: visitorName,
+        },
+      });
+      if (error) throw error;
+
+      const reply = data?.reply || "Let's continue with your application!";
+      const extractedData = data?.extracted_data || {};
+      const isComplete = data?.is_complete || false;
+
+      // Update application data with newly extracted fields
+      if (Object.keys(extractedData).length > 0) {
+        setApplicationData(prev => ({ ...prev, ...extractedData }));
+      }
+
+      setApplyComplete(isComplete);
+      setApplyCollectedCount(data?.collected_count || 0);
+      setApplyTotalRequired(data?.total_required || 30);
+
+      // Store AI response
+      await supabase.from("chat_messages").insert({
+        conversation_id: convId,
+        sender_type: "admin",
+        content: reply,
+        is_ai_response: true,
+      });
+    } catch (e) {
+      console.error("Apply AI error:", e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const startApplyMode = async () => {
+    if (!conversationId) return;
+    setApplyMode(true);
+
+    // Send initial message
+    const visitorMsg = "I'd like to apply to the edLEAD programme right here in the chat!";
+    await supabase.from("chat_messages").insert({
+      conversation_id: conversationId,
+      sender_type: "visitor",
+      content: visitorMsg,
+    });
+
+    // Pre-fill name and email from intro form
+    const initialData: Record<string, any> = {};
+    if (visitorName) initialData.full_name = visitorName;
+    if (visitorEmail) initialData.student_email = visitorEmail;
+    setApplicationData(initialData);
+
+    // Get first AI response
+    const aiMessages = [{ role: "user", content: visitorMsg }];
+    await callApplyAi(conversationId, aiMessages);
+  };
+
+  const handlePhotoUploaded = (url: string) => {
+    setApplicationData(prev => ({ ...prev, learner_photo_url: url }));
+    // Add a message about the photo
+    if (conversationId) {
+      supabase.from("chat_messages").insert({
+        conversation_id: conversationId,
+        sender_type: "admin",
+        content: "📸 Passport photo uploaded successfully! ✓",
+        is_ai_response: true,
+      });
+    }
+  };
+
+  const handleApplySubmit = async () => {
+    if (!conversationId || applySubmitting) return;
+    setApplySubmitting(true);
+
+    try {
+      const isGraduate = applicationData.grade === "High School Graduate";
+      const toISODate = (d: Date) => d.toISOString().split("T")[0];
+
+      const payload = {
+        full_name: applicationData.full_name || "",
+        date_of_birth: applicationData.date_of_birth || "",
+        gender: applicationData.gender || null,
+        grade: applicationData.grade || "",
+        school_name: applicationData.school_name || "",
+        school_address: applicationData.school_address || "",
+        country: applicationData.country || "South Africa",
+        province: applicationData.province || "",
+        student_email: applicationData.student_email || "",
+        student_phone: applicationData.student_phone || "",
+        parent_name: applicationData.parent_name || "",
+        parent_relationship: applicationData.parent_relationship || "",
+        parent_email: applicationData.parent_email || "",
+        parent_phone: applicationData.parent_phone || "",
+        parent_consent: applicationData.parent_consent === "yes",
+        nominating_teacher: isGraduate ? "Self-Nominated" : (applicationData.nominating_teacher || ""),
+        teacher_position: isGraduate ? "N/A" : (applicationData.teacher_position || ""),
+        school_email: isGraduate ? (applicationData.student_email || "") : (applicationData.school_email || ""),
+        school_contact: isGraduate ? (applicationData.student_phone || "") : (applicationData.school_contact || ""),
+        formally_nominated: isGraduate ? false : applicationData.formally_nominated === "yes",
+        is_learner_leader: applicationData.is_learner_leader === "yes",
+        leader_roles: applicationData.leader_roles || null,
+        school_activities: applicationData.school_activities || "",
+        why_edlead: applicationData.why_edlead || "",
+        leadership_meaning: applicationData.leadership_meaning || "",
+        school_challenge: applicationData.school_challenge || "",
+        project_idea: applicationData.project_idea || "",
+        project_problem: applicationData.project_problem || "",
+        project_benefit: applicationData.project_benefit || "",
+        project_team: applicationData.project_team || "",
+        manage_schoolwork: applicationData.manage_schoolwork || "",
+        academic_importance: applicationData.academic_importance || "",
+        willing_to_commit: applicationData.willing_to_commit === "yes",
+        has_device_access: applicationData.has_device_access === "yes",
+        learner_signature: applicationData.full_name || "",
+        learner_signature_date: toISODate(new Date()),
+        parent_signature_name: applicationData.parent_name || "",
+        parent_signature: applicationData.parent_name || "",
+        parent_signature_date: toISODate(new Date()),
+        video_link: null,
+        learner_photo_url: applicationData.learner_photo_url || null,
+      };
+
+      const { data, error } = await supabase.functions.invoke("submit-application", {
+        body: payload,
+      });
+
+      if (error) throw error;
+
+      const refNumber = data?.referenceNumber || data?.applicationId?.slice(0, 8).toUpperCase() || "SUBMITTED";
+
+      // Post success message
+      await supabase.from("chat_messages").insert({
+        conversation_id: conversationId,
+        sender_type: "admin",
+        content: `🎉 **Your application has been submitted successfully!**\n\n📋 **Reference Number**: ${refNumber}\n\nYou'll receive a confirmation email shortly. You can check your application status anytime at [edlead.co.za/check-status](/check-status) or share your reference number with us in this chat.\n\nWelcome to the edLEAD journey! 🌟`,
+        is_ai_response: true,
+      });
+
+      setApplyMode(false);
+      setApplyComplete(false);
+      setApplicationData({});
+
+      toast({
+        title: "Application Submitted!",
+        description: "Your edLEAD application has been submitted via chat.",
+      });
+    } catch (error: any) {
+      console.error("Chat submit error:", error);
+
+      let errorMsg = "There was an error submitting your application. Please try again.";
+      try {
+        if (error?.context instanceof Response) {
+          const body = await error.context.clone().json().catch(() => null);
+          if (body?.details?.length) {
+            errorMsg = body.details.slice(0, 3).join(" • ");
+          } else if (body?.error) {
+            errorMsg = body.error;
+          }
+        }
+      } catch { /* ignore */ }
+
+      await supabase.from("chat_messages").insert({
+        conversation_id: conversationId,
+        sender_type: "admin",
+        content: `❌ Submission failed: ${errorMsg}\n\nPlease check your details and try again, or visit [edlead.co.za/apply](/apply) to submit the full application form.`,
+        is_ai_response: true,
+      });
+
+      toast({
+        title: "Submission Failed",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setApplySubmitting(false);
     }
   };
 
@@ -209,8 +392,6 @@ export function ChatWidget() {
 
     if (data && !error) {
       setConversationId(data.id);
-
-      // Send auto-greeting
       await supabase.from("chat_messages").insert({
         conversation_id: data.id,
         sender_type: "admin",
@@ -225,7 +406,6 @@ export function ChatWidget() {
   const handleTopicSelect = async (topic: string) => {
     if (!conversationId) return;
 
-    // Update conversation topic
     await supabase
       .from("chat_conversations")
       .update({ chat_topic: topic })
@@ -239,7 +419,6 @@ export function ChatWidget() {
       other: "Other Question",
     };
 
-    // Send visitor message about the topic
     const visitorMsg = `I'd like to know about: ${topicLabels[topic] || topic}`;
     await supabase.from("chat_messages").insert({
       conversation_id: conversationId,
@@ -248,8 +427,6 @@ export function ChatWidget() {
     });
 
     setStep("chat");
-
-    // Get AI response
     await callAiFaq(conversationId, [{ role: "user", content: visitorMsg }], topic);
   };
 
@@ -293,19 +470,21 @@ export function ChatWidget() {
       content: m.content,
     }));
 
-    if (isHumanAdminActive()) {
-      // Human admin is actively chatting — wait for them to respond
-      // If they don't respond within 15s, AI will handle the next message
+    if (applyMode) {
+      // In apply mode — use chat-apply
+      setAiLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setAiLoading(false);
+      await callApplyAi(conversationId, aiMessages);
+    } else if (isHumanAdminActive()) {
       clearTimeout(humanAdminResumeTimer.current);
       humanAdminResumeTimer.current = setTimeout(async () => {
-        // After 15s of admin inactivity, AI responds
         setAiLoading(true);
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setAiLoading(false);
         await callAiFaq(conversationId, aiMessages);
       }, 15000);
     } else {
-      // AI mode — show typing for 2s then respond
       setAiLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setAiLoading(false);
@@ -345,7 +524,6 @@ export function ChatWidget() {
           className="relative h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center"
           aria-label="Open chat"
         >
-          {/* Pulsing ring */}
           <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
           <span className="relative">
             <MessageCircle className="h-6 w-6" />
@@ -362,10 +540,14 @@ export function ChatWidget() {
         <div className="flex items-center gap-3">
           <img src={edleadIcon} alt="edLEAD" className="h-8 w-8 rounded-full bg-primary-foreground/10 p-0.5" />
           <div>
-            <h3 className="font-semibold text-sm">edLEAD Chat</h3>
+            <h3 className="font-semibold text-sm">
+              {applyMode ? "edLEAD Application" : "edLEAD Chat"}
+            </h3>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-              <p className="text-xs opacity-80">Online · We reply in minutes</p>
+              <p className="text-xs opacity-80">
+                {applyMode ? "Applying via chat" : "Online · We reply in minutes"}
+              </p>
             </div>
           </div>
         </div>
@@ -384,19 +566,30 @@ export function ChatWidget() {
       ) : step === "topics" ? (
         <div className="flex-1 flex flex-col overflow-hidden">
           <ChatMessageList messages={messages} adminTyping={adminTyping} aiLoading={aiLoading} ref={scrollRef} />
-          <ChatTopicButtons onSelect={handleTopicSelect} disabled={aiLoading} />
+          <ChatTopicButtons onSelect={handleTopicSelect} onApply={startApplyMode} disabled={aiLoading} />
         </div>
       ) : (
         <>
           <ChatMessageList messages={messages} adminTyping={adminTyping} aiLoading={aiLoading} ref={scrollRef} />
 
-          {/* Contact form removed — visitors directed to Contact Us page */}
+          {/* Apply mode actions */}
+          {applyMode && (
+            <ChatApplyActions
+              applicationData={applicationData}
+              onPhotoUploaded={handlePhotoUploaded}
+              onSubmit={handleApplySubmit}
+              isComplete={applyComplete}
+              isSubmitting={applySubmitting}
+              collectedCount={applyCollectedCount}
+              totalRequired={applyTotalRequired}
+            />
+          )}
 
           {/* Input */}
           <div className="p-3 border-t shrink-0">
             <div className="flex gap-2">
               <Input
-                placeholder="Type a message..."
+                placeholder={applyMode ? "Answer here..." : "Type a message..."}
                 value={newMessage}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
