@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { loadLogoBase64, addPDFLetterhead, addPDFFooter } from "@/lib/pdf-letterhead";
 
 // ── helpers ──────────────────────────────────────────────
 
@@ -148,13 +149,10 @@ const AdminReports = () => {
     format(new Date(a.created_at), "yyyy-MM-dd"),
   ];
 
-  const exportAppPDF = () => {
+  const exportAppPDF = async () => {
     const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(18);
-    doc.text("edLEAD Applications Report", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 30);
-    doc.text(`Total: ${filteredApps.length} applications`, 14, 36);
+    let logoBase64 = "";
+    try { logoBase64 = await loadLogoBase64(); } catch {}
 
     const filters: string[] = [];
     if (appStatus !== "all") filters.push(`Status: ${appStatus}`);
@@ -165,14 +163,18 @@ const AdminReports = () => {
     }
     if (appDateFrom) filters.push(`From: ${appDateFrom}`);
     if (appDateTo) filters.push(`To: ${appDateTo}`);
-    if (filters.length) doc.text(`Filters: ${filters.join(" | ")}`, 14, 42);
+
+    const subtitle = `Generated: ${format(new Date(), "PPpp")} • Total: ${filteredApps.length} applications${filters.length ? ` • ${filters.join(" | ")}` : ""}`;
+    const startY = addPDFLetterhead(doc, logoBase64, "Applications Report", subtitle);
 
     autoTable(doc, {
       head: [appHeaders],
       body: filteredApps.map(appRow),
-      startY: filters.length ? 48 : 42,
+      startY,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [237, 118, 33] },
+      headStyles: { fillColor: [249, 115, 22] },
+      alternateRowStyles: { fillColor: [255, 247, 237] },
+      didDrawPage: () => addPDFFooter(doc),
     });
 
     doc.save(`edlead-applications-report-${format(new Date(), "yyyy-MM-dd")}.pdf`);
@@ -204,19 +206,21 @@ const AdminReports = () => {
     ];
   };
 
-  const exportCohortPDF = () => {
+  const exportCohortPDF = async () => {
     const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(18);
-    doc.text("edLEAD Cohort Comparison Report", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 30);
+    let logoBase64 = "";
+    try { logoBase64 = await loadLogoBase64(); } catch {}
+
+    const startY = addPDFLetterhead(doc, logoBase64, "Cohort Comparison Report", `Generated: ${format(new Date(), "PPpp")}`);
 
     autoTable(doc, {
       head: [cohortHeaders],
       body: cohorts.map(cohortRow),
-      startY: 36,
+      startY,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [237, 118, 33] },
+      headStyles: { fillColor: [249, 115, 22] },
+      alternateRowStyles: { fillColor: [255, 247, 237] },
+      didDrawPage: () => addPDFFooter(doc),
     });
 
     doc.save(`edlead-cohort-report-${format(new Date(), "yyyy-MM-dd")}.pdf`);
@@ -241,20 +245,21 @@ const AdminReports = () => {
     b.approved_at ? format(new Date(b.approved_at), "yyyy-MM-dd") : "N/A",
   ];
 
-  const exportBlogPDF = () => {
+  const exportBlogPDF = async () => {
     const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(18);
-    doc.text("edLEAD Blog Activity Report", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 30);
-    doc.text(`Total: ${filteredBlog.length} posts`, 14, 36);
+    let logoBase64 = "";
+    try { logoBase64 = await loadLogoBase64(); } catch {}
+
+    const startY = addPDFLetterhead(doc, logoBase64, "Blog Activity Report", `Generated: ${format(new Date(), "PPpp")} • Total: ${filteredBlog.length} posts`);
 
     autoTable(doc, {
       head: [blogHeaders],
       body: filteredBlog.map(blogRow),
-      startY: 42,
+      startY,
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [237, 118, 33] },
+      headStyles: { fillColor: [249, 115, 22] },
+      alternateRowStyles: { fillColor: [255, 247, 237] },
+      didDrawPage: () => addPDFFooter(doc),
     });
 
     doc.save(`edlead-blog-report-${format(new Date(), "yyyy-MM-dd")}.pdf`);

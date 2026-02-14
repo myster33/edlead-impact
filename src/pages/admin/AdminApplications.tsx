@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { loadLogoBase64, addPDFLetterhead, addPDFFooter } from "@/lib/pdf-letterhead";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useAuditLog } from "@/hooks/use-audit-log";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -71,6 +72,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SocialBannerPreview } from "@/components/admin/SocialBannerPreview";
+import { ApplicationDetailView } from "@/components/admin/ApplicationDetailView";
 
 interface Application {
   id: string;
@@ -79,6 +81,8 @@ interface Application {
   student_email: string;
   school_name: string;
   school_address: string;
+  school_email?: string;
+  school_contact?: string;
   grade: string;
   province: string;
   country?: string;
@@ -90,11 +94,20 @@ interface Application {
   parent_name?: string;
   parent_email?: string;
   parent_phone?: string;
+  parent_relationship?: string;
   nominating_teacher?: string;
   teacher_position?: string;
   project_idea?: string;
+  project_problem?: string;
+  project_benefit?: string;
+  project_team?: string;
   why_edlead?: string;
   leadership_meaning?: string;
+  school_challenge?: string;
+  school_activities?: string;
+  academic_importance?: string;
+  manage_schoolwork?: string;
+  video_link?: string;
   cohort_id?: string;
   learner_photo_url?: string;
 }
@@ -692,7 +705,7 @@ export default function AdminApplications() {
     });
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (filteredApplications.length === 0) {
       toast({
         title: "No Data",
@@ -704,15 +717,13 @@ export default function AdminApplications() {
 
     const doc = new jsPDF({ orientation: "landscape" });
     
-    doc.setFontSize(18);
-    doc.text("edLEAD Applications Report", 14, 22);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    const dateStr = new Date().toLocaleDateString("en-ZA", { dateStyle: "full" });
-    doc.text(`Generated on ${dateStr}`, 14, 30);
-    doc.text(`Total: ${filteredApplications.length} applications`, 14, 36);
-    
+    let logoBase64 = "";
+    try {
+      logoBase64 = await loadLogoBase64();
+    } catch (e) {
+      console.warn("Could not load logo for PDF", e);
+    }
+
     const filters = [];
     if (statusFilter !== "all") filters.push(`Status: ${statusFilter}`);
     if (provinceFilter !== "all") filters.push(`Province: ${provinceFilter}`);
@@ -722,9 +733,10 @@ export default function AdminApplications() {
     }
     if (startDate) filters.push(`From: ${format(startDate, "dd/MM/yyyy")}`);
     if (endDate) filters.push(`To: ${format(endDate, "dd/MM/yyyy")}`);
-    if (filters.length > 0) {
-      doc.text(`Filters: ${filters.join(", ")}`, 14, 42);
-    }
+
+    const subtitle = `Generated on ${new Date().toLocaleDateString("en-ZA", { dateStyle: "full" })} • Total: ${filteredApplications.length} applications${filters.length ? ` • Filters: ${filters.join(", ")}` : ""}`;
+
+    const startY = addPDFLetterhead(doc, logoBase64, "Applications Report", subtitle);
 
     const tableData = filteredApplications.map(app => [
       app.reference_number || app.id.slice(0, 8).toUpperCase(),
@@ -739,11 +751,11 @@ export default function AdminApplications() {
     ]);
 
     autoTable(doc, {
-      startY: filters.length > 0 ? 48 : 42,
+      startY,
       head: [["Ref", "Name", "Email", "School", "Grade", "Province", "Cohort", "Status", "Date"]],
       body: tableData,
-      headStyles: { fillColor: [30, 64, 175] },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
+      headStyles: { fillColor: [249, 115, 22] },
+      alternateRowStyles: { fillColor: [255, 247, 237] },
       styles: { fontSize: 7, cellPadding: 2 },
       columnStyles: {
         0: { cellWidth: 18 },
@@ -755,7 +767,8 @@ export default function AdminApplications() {
         6: { cellWidth: 25 },
         7: { cellWidth: 18 },
         8: { cellWidth: 20 }
-      }
+      },
+      didDrawPage: () => addPDFFooter(doc),
     });
 
     doc.save(`edlead-applications-${new Date().toISOString().split("T")[0]}.pdf`);
@@ -1187,69 +1200,36 @@ export default function AdminApplications() {
 
         {/* Application Detail Dialog */}
         <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+            <DialogHeader className="sr-only">
               <DialogTitle>Application Details</DialogTitle>
               <DialogDescription>
                 Reference: {selectedApplication?.reference_number || selectedApplication?.id.slice(0, 8).toUpperCase()}
               </DialogDescription>
             </DialogHeader>
             {selectedApplication && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Personal Information</h4>
-                  <dl className="space-y-1 text-sm">
-                    <div><dt className="text-muted-foreground inline">Name:</dt> <dd className="inline">{selectedApplication.full_name}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Email:</dt> <dd className="inline">{selectedApplication.student_email}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Phone:</dt> <dd className="inline">{selectedApplication.student_phone || "N/A"}</dd></div>
-                    <div><dt className="text-muted-foreground inline">DOB:</dt> <dd className="inline">{selectedApplication.date_of_birth || "N/A"}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Gender:</dt> <dd className="inline">{selectedApplication.gender || "N/A"}</dd></div>
-                  </dl>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">School Information</h4>
-                  <dl className="space-y-1 text-sm">
-                    <div><dt className="text-muted-foreground inline">School:</dt> <dd className="inline">{selectedApplication.school_name}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Address:</dt> <dd className="inline">{selectedApplication.school_address}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Grade:</dt> <dd className="inline">{selectedApplication.grade}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Province:</dt> <dd className="inline">{selectedApplication.province}</dd></div>
-                  </dl>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Parent/Guardian</h4>
-                  <dl className="space-y-1 text-sm">
-                    <div><dt className="text-muted-foreground inline">Name:</dt> <dd className="inline">{selectedApplication.parent_name || "N/A"}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Email:</dt> <dd className="inline">{selectedApplication.parent_email || "N/A"}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Phone:</dt> <dd className="inline">{selectedApplication.parent_phone || "N/A"}</dd></div>
-                  </dl>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Teacher Nomination</h4>
-                  <dl className="space-y-1 text-sm">
-                    <div><dt className="text-muted-foreground inline">Teacher:</dt> <dd className="inline">{selectedApplication.nominating_teacher || "N/A"}</dd></div>
-                    <div><dt className="text-muted-foreground inline">Position:</dt> <dd className="inline">{selectedApplication.teacher_position || "N/A"}</dd></div>
-                  </dl>
-                </div>
-                {selectedApplication.project_idea && (
-                  <div className="col-span-full">
-                    <h4 className="font-semibold mb-2">Project Idea</h4>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.project_idea}</p>
+              <div className="space-y-6">
+                <ApplicationDetailView
+                  application={selectedApplication}
+                  cohortName={getCohortName(selectedApplication.cohort_id)}
+                />
+
+                {/* Passport Photo & Banner Preview */}
+                {selectedApplication.learner_photo_url && (
+                  <div className="no-print flex items-center gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowBannerPreview(true)}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Preview Social Banner
+                    </Button>
                   </div>
                 )}
-                {selectedApplication.why_edlead && (
-                  <div className="col-span-full">
-                    <h4 className="font-semibold mb-2">Why edLEAD</h4>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.why_edlead}</p>
-                  </div>
-                )}
-                {selectedApplication.leadership_meaning && (
-                  <div className="col-span-full">
-                    <h4 className="font-semibold mb-2">Leadership Meaning</h4>
-                    <p className="text-sm text-muted-foreground">{selectedApplication.leadership_meaning}</p>
-                  </div>
-                )}
+
                 {/* Cohort Assignment */}
-                <div className="col-span-full pt-4 border-t">
+                <div className="no-print border-t pt-4">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
@@ -1279,41 +1259,12 @@ export default function AdminApplications() {
                   </div>
                 </div>
 
-                {/* Passport Photo & Banner Preview */}
-                {selectedApplication.learner_photo_url && (
-                  <div className="col-span-full pt-4 border-t">
-                    <h4 className="font-semibold mb-3">Passport Photo & Social Banner</h4>
-                    <div className="flex items-start gap-4">
-                      <div className="w-24 h-24 rounded-lg overflow-hidden border bg-muted">
-                        <img
-                          src={selectedApplication.learner_photo_url}
-                          alt={`${selectedApplication.full_name}'s photo`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <p className="text-sm text-muted-foreground">
-                          Preview the social media banner that will be<br />sent with the approval email.
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowBannerPreview(true)}
-                        >
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Preview Social Banner
-                        </Button>
-                      </div>
-                    </div>
+                {/* Status Actions */}
+                <div className="no-print flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Change Status:</span>
                   </div>
-                )}
-
-                <div className="col-span-full flex justify-between items-center pt-4 border-t">
-                  <div>
-                    <span className="text-sm text-muted-foreground mr-2">Status:</span>
-                    {getStatusBadge(selectedApplication.status)}
-                  </div>
-                <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {selectedApplication.status !== "approved" && (
                       <Button
                         size="sm"
@@ -1340,7 +1291,6 @@ export default function AdminApplications() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
                         onClick={() => handleStatusChange(selectedApplication.id, "pending")}
                         disabled={isUpdating}
                       >
