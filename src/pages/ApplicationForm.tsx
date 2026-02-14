@@ -430,11 +430,13 @@ const ApplicationForm = () => {
     { field: "parent_email", label: "Parent/Guardian Email", type: "email" as const },
     { field: "parent_phone", label: "Parent/Guardian Phone", type: "phone" as const },
     { field: "parent_consent", label: "Parent Consent", type: "radio" as const },
-    { field: "nominating_teacher", label: "Nominating Teacher" },
-    { field: "teacher_position", label: "Teacher Position" },
-    { field: "school_email", label: "School Email", type: "email" as const },
-    { field: "school_contact", label: "School Contact", type: "phone" as const },
-    { field: "formally_nominated", label: "School Nomination", type: "radio" as const },
+    ...(formData.grade !== "High School Graduate" ? [
+      { field: "nominating_teacher", label: "Nominating Teacher" },
+      { field: "teacher_position", label: "Teacher Position" },
+      { field: "school_email", label: "School Email", type: "email" as const },
+      { field: "school_contact", label: "School Contact", type: "phone" as const },
+      { field: "formally_nominated", label: "School Nomination", type: "radio" as const },
+    ] : []),
     { field: "is_learner_leader", label: "Learner Leader Status", type: "radio" as const },
     { field: "school_activities", label: "School Activities" },
     { field: "why_edlead", label: "Why edLEAD" },
@@ -463,9 +465,9 @@ const ApplicationForm = () => {
         complete: !!(formData.parent_name && formData.parent_relationship && formData.parent_email && formData.parent_phone && formData.parent_consent),
       },
       {
-        name: "School Nomination",
+        name: formData.grade === "High School Graduate" ? "Self-Nomination" : "School Nomination",
         id: "section-3",
-        complete: !!(formData.nominating_teacher && formData.teacher_position && formData.school_email && formData.school_contact && formData.formally_nominated),
+        complete: formData.grade === "High School Graduate" ? true : !!(formData.nominating_teacher && formData.teacher_position && formData.school_email && formData.school_contact && formData.formally_nominated),
       },
       {
         name: "Leadership Experience",
@@ -594,6 +596,7 @@ const ApplicationForm = () => {
     };
 
     try {
+      const isGraduate = normalizedFormData.grade === "High School Graduate";
       const applicationPayload = {
         full_name: normalizedFormData.full_name,
         date_of_birth: normalizedFormData.date_of_birth,
@@ -613,11 +616,11 @@ const ApplicationForm = () => {
         parent_email: normalizedFormData.parent_email,
         parent_phone: normalizedFormData.parent_phone,
         parent_consent: normalizedFormData.parent_consent === "yes",
-        nominating_teacher: normalizedFormData.nominating_teacher,
-        teacher_position: normalizedFormData.teacher_position,
-        school_email: normalizedFormData.school_email,
-        school_contact: normalizedFormData.school_contact,
-        formally_nominated: normalizedFormData.formally_nominated === "yes",
+        nominating_teacher: isGraduate ? "Self-Nominated" : normalizedFormData.nominating_teacher,
+        teacher_position: isGraduate ? "N/A" : normalizedFormData.teacher_position,
+        school_email: isGraduate ? normalizedFormData.student_email : normalizedFormData.school_email,
+        school_contact: isGraduate ? normalizedFormData.student_phone : normalizedFormData.school_contact,
+        formally_nominated: isGraduate ? false : normalizedFormData.formally_nominated === "yes",
         is_learner_leader: normalizedFormData.is_learner_leader === "yes",
         leader_roles: normalizedFormData.leader_roles || null,
         school_activities: normalizedFormData.school_activities,
@@ -1132,102 +1135,115 @@ const ApplicationForm = () => {
               </CardContent>
             </Card>
 
-            {/* Section 3: School Nomination Details */}
+            {/* Section 3: School Nomination Details / Self-Nomination */}
             <Card id="section-3">
               <CardHeader>
                 <CardTitle className="text-xl text-primary">
-                  Section 3: School Nomination Details
+                  {formData.grade === "High School Graduate" 
+                    ? "Section 3: Self-Nomination" 
+                    : "Section 3: School Nomination Details"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <FormFieldWrapper error={getFieldError("nominating_teacher")}>
-                    <Label htmlFor="nominating_teacher" className={cn(hasError("nominating_teacher") && "text-destructive")}>Name of Nominating Teacher / School Representative *</Label>
-                    <Input 
-                      id="nominating_teacher" 
-                      placeholder="Enter teacher name"
-                      value={formData.nominating_teacher}
-                      onChange={(e) => updateField("nominating_teacher", e.target.value)}
-                      onBlur={() => markTouched("nominating_teacher")}
-                      className={cn(hasError("nominating_teacher") && "border-destructive")}
-                    />
-                  </FormFieldWrapper>
-                  <FormFieldWrapper error={getFieldError("teacher_position")}>
-                    <Label htmlFor="teacher_position" className={cn(hasError("teacher_position") && "text-destructive")}>Position *</Label>
-                    <Input 
-                      id="teacher_position" 
-                      placeholder="e.g. Teacher, HOD, Principal"
-                      value={formData.teacher_position}
-                      onChange={(e) => updateField("teacher_position", e.target.value)}
-                      onBlur={() => markTouched("teacher_position")}
-                      className={cn(hasError("teacher_position") && "border-destructive")}
-                    />
-                  </FormFieldWrapper>
-                </div>
+                {formData.grade === "High School Graduate" ? (
+                  <div className="bg-muted rounded-lg p-6">
+                    <p className="text-foreground font-medium mb-2">Self-Nomination</p>
+                    <p className="text-muted-foreground text-sm">
+                      As a high school graduate, you are self-nominating for the edLEAD programme. No school nomination is required. Please continue to the next section.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <FormFieldWrapper error={getFieldError("nominating_teacher")}>
+                        <Label htmlFor="nominating_teacher" className={cn(hasError("nominating_teacher") && "text-destructive")}>Name of Nominating Teacher / School Representative *</Label>
+                        <Input 
+                          id="nominating_teacher" 
+                          placeholder="Enter teacher name"
+                          value={formData.nominating_teacher}
+                          onChange={(e) => updateField("nominating_teacher", e.target.value)}
+                          onBlur={() => markTouched("nominating_teacher")}
+                          className={cn(hasError("nominating_teacher") && "border-destructive")}
+                        />
+                      </FormFieldWrapper>
+                      <FormFieldWrapper error={getFieldError("teacher_position")}>
+                        <Label htmlFor="teacher_position" className={cn(hasError("teacher_position") && "text-destructive")}>Position *</Label>
+                        <Input 
+                          id="teacher_position" 
+                          placeholder="e.g. Teacher, HOD, Principal"
+                          value={formData.teacher_position}
+                          onChange={(e) => updateField("teacher_position", e.target.value)}
+                          onBlur={() => markTouched("teacher_position")}
+                          className={cn(hasError("teacher_position") && "border-destructive")}
+                        />
+                      </FormFieldWrapper>
+                    </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <FormFieldWrapper error={getFieldError("school_email")}>
-                    <Label htmlFor="school_email" className={cn(hasError("school_email") && "text-destructive")}>School Email Address *</Label>
-                    <Input 
-                      id="school_email" 
-                      type="email" 
-                      placeholder="e.g. teacher@school.edu.za"
-                      value={formData.school_email}
-                      onChange={(e) => {
-                        updateField("school_email", e.target.value);
-                      }}
-                      onBlur={() => validateEmailOnBlur("school_email", "School Email")}
-                      className={cn(hasError("school_email") && "border-destructive")}
-                    />
-                  </FormFieldWrapper>
-                  <FormFieldWrapper error={getFieldError("school_contact")}>
-                    <Label htmlFor="school_contact" className={cn(hasError("school_contact") && "text-destructive")}>Contact Number *</Label>
-                    <div className="flex">
-                      <Select value={schoolPhoneCode} onValueChange={setSchoolPhoneCode}>
-                        <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                          {countryCodes.map((c) => (
-                            <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
-                              {c.flag} {c.code}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Input 
-                        id="school_contact" 
-                        type="tel" 
-                        placeholder="e.g. 0111234567"
-                        value={formData.school_contact}
-                        onChange={(e) => updateField("school_contact", e.target.value)}
-                        onBlur={() => validatePhoneOnBlur("school_contact", "School Contact")}
-                        className={cn("rounded-l-none", hasError("school_contact") && "border-destructive")}
-                      />
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <FormFieldWrapper error={getFieldError("school_email")}>
+                        <Label htmlFor="school_email" className={cn(hasError("school_email") && "text-destructive")}>School Email Address *</Label>
+                        <Input 
+                          id="school_email" 
+                          type="email" 
+                          placeholder="e.g. teacher@school.edu.za"
+                          value={formData.school_email}
+                          onChange={(e) => {
+                            updateField("school_email", e.target.value);
+                          }}
+                          onBlur={() => validateEmailOnBlur("school_email", "School Email")}
+                          className={cn(hasError("school_email") && "border-destructive")}
+                        />
+                      </FormFieldWrapper>
+                      <FormFieldWrapper error={getFieldError("school_contact")}>
+                        <Label htmlFor="school_contact" className={cn(hasError("school_contact") && "text-destructive")}>Contact Number *</Label>
+                        <div className="flex">
+                          <Select value={schoolPhoneCode} onValueChange={setSchoolPhoneCode}>
+                            <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {countryCodes.map((c) => (
+                                <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                                  {c.flag} {c.code}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            id="school_contact" 
+                            type="tel" 
+                            placeholder="e.g. 0111234567"
+                            value={formData.school_contact}
+                            onChange={(e) => updateField("school_contact", e.target.value)}
+                            onBlur={() => validatePhoneOnBlur("school_contact", "School Contact")}
+                            className={cn("rounded-l-none", hasError("school_contact") && "border-destructive")}
+                          />
+                        </div>
+                      </FormFieldWrapper>
                     </div>
-                  </FormFieldWrapper>
-                </div>
 
-                <FormFieldWrapper error={getFieldError("formally_nominated")}>
-                  <Label className={cn(hasError("formally_nominated") && "text-destructive")}>Has this learner been formally nominated by the school? *</Label>
-                  <RadioGroup 
-                    id="formally_nominated"
-                    value={formData.formally_nominated} 
-                    onValueChange={(v) => updateField("formally_nominated", v)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="nominated-yes" />
-                      <Label htmlFor="nominated-yes" className="font-normal">Yes</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="nominated-no" />
-                      <Label htmlFor="nominated-no" className="font-normal">No</Label>
-                    </div>
-                  </RadioGroup>
-                  <p className="text-sm text-muted-foreground">
-                    Note: Only school-nominated learners will be considered.
-                  </p>
-                </FormFieldWrapper>
+                    <FormFieldWrapper error={getFieldError("formally_nominated")}>
+                      <Label className={cn(hasError("formally_nominated") && "text-destructive")}>Has this learner been formally nominated by the school? *</Label>
+                      <RadioGroup 
+                        id="formally_nominated"
+                        value={formData.formally_nominated} 
+                        onValueChange={(v) => updateField("formally_nominated", v)}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="yes" id="nominated-yes" />
+                          <Label htmlFor="nominated-yes" className="font-normal">Yes</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="no" id="nominated-no" />
+                          <Label htmlFor="nominated-no" className="font-normal">No</Label>
+                        </div>
+                      </RadioGroup>
+                      <p className="text-sm text-muted-foreground">
+                        Note: Only school-nominated learners will be considered.
+                      </p>
+                    </FormFieldWrapper>
+                  </>
+                )}
               </CardContent>
             </Card>
 
