@@ -114,13 +114,7 @@ export function ApplicationDetailView({ application, cohortName }: ApplicationDe
       {/* Letterhead Header */}
       <div className="border-b-2 border-primary pb-4 mb-6">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <img src={edleadLogo} alt="edLEAD" className="h-12 w-auto" />
-            <div>
-              <h1 className="text-lg font-bold text-primary">edLEAD Africa</h1>
-              <p className="text-xs text-muted-foreground">Empowering Young Leaders Across Africa</p>
-            </div>
-          </div>
+          <img src={edleadLogo} alt="edLEAD" className="h-12 w-auto" />
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Application Reference</p>
             <code className="text-sm font-mono font-bold text-primary">{refNumber}</code>
