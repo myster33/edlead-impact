@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, MapPin, ArrowRight, Share2, Facebook, Twitter, Linkedin, Link as LinkIcon, MessageCircle } from "lucide-react";
+import { Calendar, MapPin, ArrowRight, Share2, Facebook, Twitter, Linkedin, Link as LinkIcon, MessageCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -25,6 +25,8 @@ interface BlogCardProps {
   approvedAt: string;
   category: string;
   featuredImageUrl?: string;
+  tags?: string[];
+  readingTimeMinutes?: number;
 }
 
 export const BlogCard = ({
@@ -38,6 +40,8 @@ export const BlogCard = ({
   approvedAt,
   category,
   featuredImageUrl,
+  tags,
+  readingTimeMinutes,
 }: BlogCardProps) => {
   const initials = authorName
     .split(" ")
@@ -152,6 +156,18 @@ export const BlogCard = ({
       </CardHeader>
       <CardContent className="pb-3">
         <p className="text-muted-foreground text-sm line-clamp-3">{summary}</p>
+        {tags && tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {tags.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0">
+                {tag}
+              </Badge>
+            ))}
+            {tags.length > 3 && (
+              <span className="text-xs text-muted-foreground">+{tags.length - 3}</span>
+            )}
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col gap-3 pt-0">
         <div className="flex items-center justify-between w-full text-xs text-muted-foreground">
@@ -163,6 +179,12 @@ export const BlogCard = ({
             <Calendar className="h-3 w-3" />
             <span>{format(new Date(approvedAt), "MMM d, yyyy")}</span>
           </div>
+          {readingTimeMinutes && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{readingTimeMinutes} min read</span>
+            </div>
+          )}
         </div>
         <Link to={`/blog/${slug}`} className="w-full">
           <Button variant="outline" className="w-full group/btn">
