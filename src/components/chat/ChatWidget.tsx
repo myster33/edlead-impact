@@ -93,16 +93,26 @@ export function ChatWidget() {
         setStep("chat");
         fetchMessages(data.id);
 
-        // Restore apply mode if it was active
+        // Restore apply mode if it was active and name matches
         const savedApplyMode = localStorage.getItem("edlead-chat-apply-mode");
         if (savedApplyMode === "true") {
-          setApplyMode(true);
           try {
             const savedData = localStorage.getItem("edlead-chat-apply-data");
-            if (savedData) {
-              setApplicationData(JSON.parse(savedData));
+            const parsed = savedData ? JSON.parse(savedData) : {};
+            const savedName = (parsed.full_name || "").toLowerCase().trim();
+            const currentName = (data.visitor_name || "").toLowerCase().trim();
+            if (savedName && currentName && savedName === currentName) {
+              setApplyMode(true);
+              setApplicationData(parsed);
+            } else {
+              // Name mismatch — clear stale apply data
+              localStorage.removeItem("edlead-chat-apply-mode");
+              localStorage.removeItem("edlead-chat-apply-data");
             }
-          } catch { /* ignore parse errors */ }
+          } catch {
+            localStorage.removeItem("edlead-chat-apply-mode");
+            localStorage.removeItem("edlead-chat-apply-data");
+          }
         }
       }
     };
