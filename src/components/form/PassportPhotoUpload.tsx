@@ -16,6 +16,7 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>(value || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -133,17 +134,38 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
             className="hidden"
             id="passport-photo-input"
           />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            capture="user"
+            onChange={handleFileSelect}
+            className="hidden"
+            id="passport-camera-input"
+          />
           
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            {previewUrl ? "Change Photo" : "Upload Photo"}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {previewUrl ? "Change Photo" : "Upload Photo"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={isUploading}
+              className="gap-2"
+            >
+              <Camera className="h-4 w-4" />
+              Take Photo
+            </Button>
+          </div>
 
           <div className="text-sm text-muted-foreground space-y-1">
             <p className="font-medium">Photo Requirements:</p>
