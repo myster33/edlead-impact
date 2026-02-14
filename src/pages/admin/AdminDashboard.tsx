@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -84,6 +85,14 @@ export default function AdminDashboard() {
     approved: 0,
     rejected: 0,
   });
+
+  // Week-over-week trends
+  const [weekTrends, setWeekTrends] = useState<{
+    totalChange: number;
+    pendingChange: number;
+    approvedChange: number;
+    rejectedChange: number;
+  } | null>(null);
   const [pendingBlogPosts, setPendingBlogPosts] = useState(0);
   
   // Reviewer activity stats (for admins to see all reviewer activity)
@@ -109,6 +118,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchStats();
     fetchPendingBlogPosts();
+    fetchWeekTrends();
   }, [adminUser]);
   
   // Separate effect for reviewer activity with date filters
@@ -147,6 +157,62 @@ export default function AdminDashboard() {
     }
   };
   
+  const fetchWeekTrends = async () => {
+    try {
+      const now = new Date();
+      const oneWeekAgo = new Date(now);
+      oneWeekAgo.setDate(now.getDate() - 7);
+      const twoWeeksAgo = new Date(now);
+      twoWeeksAgo.setDate(now.getDate() - 14);
+
+      let thisWeekQuery = supabase
+        .from("applications")
+        .select("status")
+        .gte("created_at", oneWeekAgo.toISOString());
+
+      let lastWeekQuery = supabase
+        .from("applications")
+        .select("status")
+        .gte("created_at", twoWeeksAgo.toISOString())
+        .lt("created_at", oneWeekAgo.toISOString());
+
+      if (regionInfo.hasRestrictions && regionInfo.province) {
+        thisWeekQuery = thisWeekQuery.eq("province", regionInfo.province);
+        lastWeekQuery = lastWeekQuery.eq("province", regionInfo.province);
+      }
+
+      const [thisWeekRes, lastWeekRes] = await Promise.all([thisWeekQuery, lastWeekQuery]);
+
+      if (thisWeekRes.error || lastWeekRes.error) return;
+
+      const thisWeek = thisWeekRes.data || [];
+      const lastWeek = lastWeekRes.data || [];
+
+      const calcChange = (curr: number, prev: number) => {
+        if (prev === 0) return curr > 0 ? 100 : 0;
+        return Math.round(((curr - prev) / prev) * 100);
+      };
+
+      setWeekTrends({
+        totalChange: calcChange(thisWeek.length, lastWeek.length),
+        pendingChange: calcChange(
+          thisWeek.filter(a => a.status === "pending").length,
+          lastWeek.filter(a => a.status === "pending").length
+        ),
+        approvedChange: calcChange(
+          thisWeek.filter(a => a.status === "approved").length,
+          lastWeek.filter(a => a.status === "approved").length
+        ),
+        rejectedChange: calcChange(
+          thisWeek.filter(a => a.status === "rejected").length,
+          lastWeek.filter(a => a.status === "rejected").length
+        ),
+      });
+    } catch (error) {
+      console.error("Error fetching week trends:", error);
+    }
+  };
+
   const fetchPendingBlogPosts = async () => {
     try {
       const { count, error } = await supabase
@@ -535,6 +601,43 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Week-over-Week Trends */}
+        {weekTrends && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Week-over-Week Trends
+              </CardTitle>
+              <CardDescription>Compared to previous 7 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Total", value: weekTrends.totalChange },
+                  { label: "Pending", value: weekTrends.pendingChange },
+                  { label: "Approved", value: weekTrends.approvedChange },
+                  { label: "Rejected", value: weekTrends.rejectedChange },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    {item.value >= 0 ? (
+                      <TrendingUp className="h-5 w-5 text-green-500 shrink-0" />
+                    ) : (
+                      <TrendingDown className="h-5 w-5 text-destructive shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-sm text-muted-foreground">{item.label}</p>
+                      <p className={`text-lg font-semibold ${item.value >= 0 ? "text-green-600" : "text-destructive"}`}>
+                        {item.value >= 0 ? "+" : ""}{item.value}%
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Application Status Charts */}
         <ApplicationCharts regionInfo={regionInfo} />
