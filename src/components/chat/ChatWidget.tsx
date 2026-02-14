@@ -64,6 +64,17 @@ export function ChatWidget() {
     }
   }, []);
 
+  // Persist apply mode in localStorage
+  useEffect(() => {
+    if (applyMode) {
+      localStorage.setItem("edlead-chat-apply-mode", "true");
+      localStorage.setItem("edlead-chat-apply-data", JSON.stringify(applicationData));
+    } else {
+      localStorage.removeItem("edlead-chat-apply-mode");
+      localStorage.removeItem("edlead-chat-apply-data");
+    }
+  }, [applyMode, applicationData]);
+
   // Check for existing conversation on mount
   useEffect(() => {
     const checkExisting = async () => {
@@ -81,6 +92,18 @@ export function ChatWidget() {
         setVisitorName(data.visitor_name || "");
         setStep("chat");
         fetchMessages(data.id);
+
+        // Restore apply mode if it was active
+        const savedApplyMode = localStorage.getItem("edlead-chat-apply-mode");
+        if (savedApplyMode === "true") {
+          setApplyMode(true);
+          try {
+            const savedData = localStorage.getItem("edlead-chat-apply-data");
+            if (savedData) {
+              setApplicationData(JSON.parse(savedData));
+            }
+          } catch { /* ignore parse errors */ }
+        }
       }
     };
     checkExisting();
