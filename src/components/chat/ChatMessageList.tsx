@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot } from "lucide-react";
+import edleadIcon from "@/assets/edlead-icon.png";
 
 const renderMessageContent = (content: string) => {
   // Parse markdown-style links [text](url) and **bold**
@@ -56,7 +57,7 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
               >
                 {msg.is_ai_response && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-accent-foreground bg-accent rounded px-1.5 py-0.5 mb-1">
-                    <Bot className="h-2.5 w-2.5" /> edLEAD
+                    <img src={edleadIcon} alt="edLEAD" className="h-3 w-3 rounded-sm" /> edLEAD
                   </span>
                 )}
                 {msg.sender_name && !msg.is_ai_response && msg.sender_type === "admin" && (
@@ -75,7 +76,7 @@ export const ChatMessageList = forwardRef<HTMLDivElement, ChatMessageListProps>(
             <div className="flex justify-start">
               <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 text-sm">
                 <div className="flex gap-1 items-center">
-                  {aiLoading && <Bot className="h-3 w-3 text-muted-foreground mr-1" />}
+                  {aiLoading && <img src={edleadIcon} alt="edLEAD" className="h-3 w-3 rounded-sm mr-1" />}
                   <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
                   <span className="h-2 w-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
