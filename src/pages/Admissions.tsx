@@ -5,7 +5,7 @@ import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { Link } from "react-router-dom";
 
 const requirements = [
-  "High school learners (Grades 7–12)",
+  "Students (Grade 9–12) and Graduates from High School",
   "Nominated by their school",
   "Demonstrated leadership potential or commitment to positive change",
   "Willingness to participate in three-month programme",

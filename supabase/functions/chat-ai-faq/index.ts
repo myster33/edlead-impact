@@ -43,7 +43,7 @@ edLEAD identifies promising learners nominated by their schools who show leaders
 
 **Duration**: 12 months (renewable annually)
 
-**Target Beneficiaries**: High school learners (Grades 9-12) nominated by schools for leadership potential.
+**Target Beneficiaries**: Students (Grade 9–12) and Graduates from High School, nominated by schools for leadership potential.
 
 **Geographic Coverage**: Pilot phase (20–50 schools), expansion to provincial and then national levels.
 
@@ -73,7 +73,7 @@ Sustainability is supported through partnerships with NGOs, educational institut
 === ADMISSIONS & APPLICATIONS ===
 
 - Applications are submitted online through the edLEAD website (edlead.co.za)
-- Requirements: Must be a South African high school learner (Grade 9-12), nominated by a teacher, have parental consent, and access to a device with internet
+- Requirements: Must be a South African student (Grade 9–12) or a high school graduate, nominated by a teacher, have parental consent, and access to a device with internet
 - The application includes personal details, school information, a teacher nomination, essay questions about leadership, and a community project proposal
 - Applicants receive a unique reference number upon submission
 - Applicants can check their application status using their reference number on the website at edlead.co.za/check-status
