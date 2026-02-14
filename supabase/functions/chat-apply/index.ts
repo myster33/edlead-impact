@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callBedrock } from "../bedrock-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,59 +88,56 @@ ${missing.length > 0 ? missing.join(", ") : "ALL FIELDS COLLECTED! Tell the visi
 - For boolean fields, convert to "yes" or "no" strings`;
 }
 
-const TOOL_SCHEMA = {
-  type: "function" as const,
-  function: {
-    name: "respond_and_collect",
-    description: "Provide a conversational reply and extract any new application data from the visitor's message",
-    parameters: {
-      type: "object",
-      properties: {
-        reply: { type: "string", description: "Your conversational reply to the visitor" },
-        extracted_data: {
-          type: "object",
-          description: "New application fields extracted from the visitor's latest message. Only include fields that were just provided.",
-          properties: {
-            full_name: { type: "string" },
-            date_of_birth: { type: "string", description: "YYYY-MM-DD format" },
-            gender: { type: "string" },
-            grade: { type: "string", description: "Must be: Grade 9, Grade 10, Grade 11, Grade 12, or High School Graduate" },
-            school_name: { type: "string" },
-            school_address: { type: "string" },
-            country: { type: "string" },
-            province: { type: "string" },
-            student_email: { type: "string" },
-            student_phone: { type: "string" },
-            parent_name: { type: "string" },
-            parent_relationship: { type: "string" },
-            parent_email: { type: "string" },
-            parent_phone: { type: "string" },
-            parent_consent: { type: "string", description: "yes or no" },
-            nominating_teacher: { type: "string" },
-            teacher_position: { type: "string" },
-            school_email: { type: "string" },
-            school_contact: { type: "string" },
-            formally_nominated: { type: "string", description: "yes or no" },
-            is_learner_leader: { type: "string", description: "yes or no" },
-            leader_roles: { type: "string" },
-            school_activities: { type: "string" },
-            why_edlead: { type: "string" },
-            leadership_meaning: { type: "string" },
-            school_challenge: { type: "string" },
-            project_idea: { type: "string" },
-            project_problem: { type: "string" },
-            project_benefit: { type: "string" },
-            project_team: { type: "string" },
-            manage_schoolwork: { type: "string" },
-            academic_importance: { type: "string" },
-            willing_to_commit: { type: "string", description: "yes or no" },
-            has_device_access: { type: "string", description: "yes or no" },
-          },
+const BEDROCK_TOOL = {
+  name: "respond_and_collect",
+  description: "Provide a conversational reply and extract any new application data from the visitor's message",
+  input_schema: {
+    type: "object",
+    properties: {
+      reply: { type: "string", description: "Your conversational reply to the visitor" },
+      extracted_data: {
+        type: "object",
+        description: "New application fields extracted from the visitor's latest message. Only include fields that were just provided.",
+        properties: {
+          full_name: { type: "string" },
+          date_of_birth: { type: "string", description: "YYYY-MM-DD format" },
+          gender: { type: "string" },
+          grade: { type: "string", description: "Must be: Grade 9, Grade 10, Grade 11, Grade 12, or High School Graduate" },
+          school_name: { type: "string" },
+          school_address: { type: "string" },
+          country: { type: "string" },
+          province: { type: "string" },
+          student_email: { type: "string" },
+          student_phone: { type: "string" },
+          parent_name: { type: "string" },
+          parent_relationship: { type: "string" },
+          parent_email: { type: "string" },
+          parent_phone: { type: "string" },
+          parent_consent: { type: "string", description: "yes or no" },
+          nominating_teacher: { type: "string" },
+          teacher_position: { type: "string" },
+          school_email: { type: "string" },
+          school_contact: { type: "string" },
+          formally_nominated: { type: "string", description: "yes or no" },
+          is_learner_leader: { type: "string", description: "yes or no" },
+          leader_roles: { type: "string" },
+          school_activities: { type: "string" },
+          why_edlead: { type: "string" },
+          leadership_meaning: { type: "string" },
+          school_challenge: { type: "string" },
+          project_idea: { type: "string" },
+          project_problem: { type: "string" },
+          project_benefit: { type: "string" },
+          project_team: { type: "string" },
+          manage_schoolwork: { type: "string" },
+          academic_importance: { type: "string" },
+          willing_to_commit: { type: "string", description: "yes or no" },
+          has_device_access: { type: "string", description: "yes or no" },
         },
-        is_complete: { type: "boolean", description: "True if all required fields have been collected" },
       },
-      required: ["reply", "extracted_data", "is_complete"],
+      is_complete: { type: "boolean", description: "True if all required fields have been collected" },
     },
+    required: ["reply", "extracted_data", "is_complete"],
   },
 };
 
@@ -150,75 +148,45 @@ serve(async (req) => {
 
   try {
     const { messages, collected_data, visitor_name } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const collected = collected_data || {};
     const systemPrompt = buildSystemPrompt(collected);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...(messages || []),
-        ],
-        tools: [TOOL_SCHEMA],
-        tool_choice: { type: "function", function: { name: "respond_and_collect" } },
-      }),
+    // Convert messages: filter out system messages
+    const userMessages = (messages || [])
+      .filter((m: any) => m.role !== "system")
+      .map((m: any) => ({ role: m.role, content: m.content }));
+
+    const bedrockResponse = await callBedrock({
+      system: systemPrompt,
+      messages: userMessages,
+      tools: [BEDROCK_TOOL],
+      tool_choice: { type: "tool", name: "respond_and_collect" },
+      max_tokens: 4096,
     });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limited, please try again shortly." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI service temporarily unavailable." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI service error" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
 
     let reply = "Let's continue with your application! What would you like to share next?";
     let extractedData: Record<string, any> = {};
     let isComplete = false;
 
-    if (toolCall?.function?.arguments) {
-      try {
-        const args = JSON.parse(toolCall.function.arguments);
-        reply = args.reply || reply;
-        extractedData = args.extracted_data || {};
-        isComplete = args.is_complete || false;
+    // Parse Bedrock/Anthropic tool_use response
+    const toolUseBlock = bedrockResponse.content?.find((b: any) => b.type === "tool_use");
 
-        // Clean extracted data - remove empty/null values
-        Object.keys(extractedData).forEach(key => {
-          if (extractedData[key] === null || extractedData[key] === undefined || extractedData[key] === "") {
-            delete extractedData[key];
-          }
-        });
-      } catch (e) {
-        console.error("Failed to parse tool call:", e);
-        // Fall back to text content
-        reply = data.choices?.[0]?.message?.content || reply;
-      }
+    if (toolUseBlock?.input) {
+      reply = toolUseBlock.input.reply || reply;
+      extractedData = toolUseBlock.input.extracted_data || {};
+      isComplete = toolUseBlock.input.is_complete || false;
+
+      // Clean extracted data
+      Object.keys(extractedData).forEach(key => {
+        if (extractedData[key] === null || extractedData[key] === undefined || extractedData[key] === "") {
+          delete extractedData[key];
+        }
+      });
     } else {
       // No tool call - use text content
-      reply = data.choices?.[0]?.message?.content || reply;
+      const textBlock = bedrockResponse.content?.find((b: any) => b.type === "text");
+      reply = textBlock?.text || reply;
     }
 
     // Merge new data with existing
