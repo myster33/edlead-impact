@@ -286,7 +286,22 @@ const AdminReports = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <style>{`
+        @media print {
+          /* Hide sidebar, nav, and non-essential UI */
+          aside, nav, header, [data-sidebar], .no-print { display: none !important; }
+          /* Make main content full width */
+          main, [role="main"], .flex-1 { 
+            margin: 0 !important; padding: 10mm !important; 
+            width: 100% !important; max-width: 100% !important;
+          }
+          /* Remove max-height scroll constraints on tables */
+          .max-h-96 { max-height: none !important; overflow: visible !important; }
+          /* Show all table rows, not just first 20 */
+          body { font-size: 11px; }
+        }
+      `}</style>
+      <div className="space-y-6 print-area">
         <div>
           <h2 className="text-2xl font-bold">Reports & Data Export</h2>
           <p className="text-muted-foreground">Generate and download reports for applications, cohorts, and blog activity.</p>
