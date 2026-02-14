@@ -36,6 +36,7 @@ import AdminCertificates from "./pages/admin/AdminCertificates";
 import AdminMessageTemplates from "./pages/admin/AdminMessageTemplates";
 import AdminMessageCenter from "./pages/admin/AdminMessageCenter";
 import AdminChat from "./pages/admin/AdminChat";
+import AdminReports from "./pages/admin/AdminReports";
 
 const queryClient = new QueryClient();
 
@@ -175,6 +176,14 @@ const App = () => (
                 element={
                   <ProtectedRoute moduleKey="chat">
                     <AdminChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/reports"
+                element={
+                  <ProtectedRoute moduleKey="reports">
+                    <AdminReports />
                   </ProtectedRoute>
                 }
               />

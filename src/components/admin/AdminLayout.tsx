@@ -51,6 +51,7 @@ import {
   Monitor,
   Download,
   Apple,
+  FileBarChart,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -143,6 +144,12 @@ const allMenuItems = [
     url: "/admin/chat",
     icon: MessageCircle,
     moduleKey: "chat",
+  },
+  {
+    title: "Reports",
+    url: "/admin/reports",
+    icon: FileBarChart,
+    moduleKey: "reports",
   },
 ];
 
