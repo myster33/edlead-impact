@@ -627,6 +627,7 @@ export function ChatWidget() {
               applicationData={applicationData}
               onSubmit={handleApplySubmit}
               onEdit={() => setShowReview(false)}
+              onFieldUpdate={(field, value) => setApplicationData(prev => ({ ...prev, [field]: value }))}
               isSubmitting={applySubmitting}
             />
           )}
