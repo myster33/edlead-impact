@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, X, Minimize2, Send } from "lucide-react";
+import { MessageCircle, X, Minimize2, Maximize2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,7 @@ const getSessionId = () => {
 export function ChatWidget() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [step, setStep] = useState<"intro" | "topics" | "chat">("intro");
   const [visitorName, setVisitorName] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -570,7 +571,11 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] rounded-2xl border bg-background shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in-0 duration-300 sm:w-[380px] max-sm:w-[calc(100vw-1rem)] max-sm:right-2 max-sm:bottom-2 max-sm:left-2 max-sm:max-w-none" style={{ height: "520px" }}>
+    <div className={`fixed z-50 rounded-2xl border bg-background shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in-0 duration-300 transition-all ${
+      isMaximized
+        ? "bottom-4 right-4 left-4 sm:left-auto sm:w-[700px] sm:right-6 sm:bottom-6 max-sm:right-2 max-sm:bottom-2 max-sm:left-2"
+        : "bottom-6 right-6 w-[380px] max-w-[calc(100vw-2rem)] sm:w-[380px] max-sm:w-[calc(100vw-1rem)] max-sm:right-2 max-sm:bottom-2 max-sm:left-2 max-sm:max-w-none"
+    }`} style={{ height: isMaximized ? "min(85vh, 800px)" : "520px" }}>
       {/* Header */}
       <div className="bg-primary text-primary-foreground px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -588,8 +593,8 @@ export function ChatWidget() {
           </div>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)}>
-            <Minimize2 className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsMaximized(!isMaximized)}>
+            {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)}>
             <X className="h-4 w-4" />
