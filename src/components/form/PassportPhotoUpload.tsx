@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Camera, Upload, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { WebcamCaptureDialog } from "./WebcamCaptureDialog";
 
 interface PassportPhotoUploadProps {
   value: string;
@@ -15,13 +16,10 @@ interface PassportPhotoUploadProps {
 export function PassportPhotoUpload({ value, onChange, applicantName, error }: PassportPhotoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>(value || "");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const uploadFile = async (file: File) => {
     // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
@@ -38,13 +36,11 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
     setIsUploading(true);
 
     try {
-      // Create a unique filename
       const timestamp = Date.now();
       const sanitizedName = (applicantName || "applicant").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
-      const ext = file.name.split(".").pop();
+      const ext = file.name.split(".").pop() || "jpg";
       const fileName = `${sanitizedName}_${timestamp}.${ext}`;
 
-      // Upload to Supabase storage
       const { data, error: uploadError } = await supabase.storage
         .from("applicant-photos")
         .upload(fileName, file, {
@@ -57,7 +53,6 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
         throw uploadError;
       }
 
-      // Get the public URL
       const { data: urlData } = supabase.storage
         .from("applicant-photos")
         .getPublicUrl(data.path);
@@ -71,6 +66,16 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleCameraCapture = async (file: File) => {
+    await uploadFile(file);
   };
 
   const handleRemove = () => {
@@ -134,15 +139,6 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
             className="hidden"
             id="passport-photo-input"
           />
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            capture="user"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="passport-camera-input"
-          />
           
           <div className="flex gap-2 flex-wrap">
             <Button
@@ -158,7 +154,7 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
             <Button
               type="button"
               variant="outline"
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => setCameraOpen(true)}
               disabled={isUploading}
               className="gap-2"
             >
@@ -183,6 +179,12 @@ export function PassportPhotoUpload({ value, onChange, applicantName, error }: P
       {error && (
         <p className="text-sm text-destructive">{error}</p>
       )}
+
+      <WebcamCaptureDialog
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 }
