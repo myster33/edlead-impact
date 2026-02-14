@@ -6,10 +6,10 @@ import { Link } from "react-router-dom";
 
 const requirements = [
   "Students (Grade 9–12) and Graduates from High School",
-  "Nominated by their school",
+  "Nominated by their school or self-nominated (for graduates)",
   "Demonstrated leadership potential or commitment to positive change",
-  "Willingness to participate in three-month programme",
-  "Commitment to complete school-based projects",
+  "Willingness to participate in the full programme",
+  "Commitment to complete community or school-based projects",
 ];
 
 const steps = [
