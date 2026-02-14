@@ -111,6 +111,9 @@ interface BlogPost {
   is_featured: boolean;
   featured_image_url: string | null;
   video_url: string | null;
+  tags: string[] | null;
+  meta_description: string | null;
+  reading_time_minutes: number | null;
 }
 
 const AdminBlogManagement = () => {
@@ -170,6 +173,8 @@ const AdminBlogManagement = () => {
     author_province: "",
     author_email: "",
     video_url: "",
+    tags: "",
+    meta_description: "",
   });
 
   useEffect(() => {
@@ -480,6 +485,8 @@ const AdminBlogManagement = () => {
       author_province: post.author_province,
       author_email: post.author_email,
       video_url: post.video_url || "",
+      tags: post.tags ? post.tags.join(", ") : "",
+      meta_description: post.meta_description || "",
     });
     // Reset image state
     setSelectedImage(null);
@@ -508,6 +515,13 @@ const AdminBlogManagement = () => {
       }
     }
 
+    // Parse tags and calculate reading time
+    const parsedTags = editForm.tags.trim() 
+      ? editForm.tags.split(",").map(t => t.trim()).filter(Boolean)
+      : null;
+    const wordCount = editForm.content.trim().split(/\s+/).length;
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
     const { error } = await supabase
       .from("blog_posts")
       .update({
@@ -522,6 +536,9 @@ const AdminBlogManagement = () => {
         author_email: editForm.author_email,
         video_url: editForm.video_url || null,
         featured_image_url: newImageUrl,
+        tags: parsedTags,
+        meta_description: editForm.meta_description || null,
+        reading_time_minutes: readingTime,
       })
       .eq("id", selectedPost.id);
 
@@ -1497,6 +1514,35 @@ const AdminBlogManagement = () => {
                 value={editForm.video_url}
                 onChange={(e) => setEditForm({ ...editForm, video_url: e.target.value })}
               />
+            </div>
+
+            {/* Tags & SEO Section */}
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Tags & SEO</h4>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-tags">Tags (comma-separated)</Label>
+                  <Input
+                    id="edit-tags"
+                    placeholder="leadership, community, innovation"
+                    value={editForm.tags}
+                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">Separate tags with commas</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-meta-description">SEO Meta Description</Label>
+                  <Textarea
+                    id="edit-meta-description"
+                    rows={2}
+                    placeholder="A concise description for search engines (max 160 characters)"
+                    value={editForm.meta_description}
+                    onChange={(e) => setEditForm({ ...editForm, meta_description: e.target.value })}
+                    maxLength={160}
+                  />
+                  <p className="text-xs text-muted-foreground">{editForm.meta_description.length}/160 characters</p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-2">

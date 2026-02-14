@@ -424,11 +424,14 @@ export type Database = {
           featured_image_url: string | null
           id: string
           is_featured: boolean
+          meta_description: string | null
+          reading_time_minutes: number | null
           reference_number: string | null
           slug: string | null
           status: string
           submitted_at: string
           summary: string
+          tags: string[] | null
           title: string
           updated_at: string
           video_url: string | null
@@ -448,11 +451,14 @@ export type Database = {
           featured_image_url?: string | null
           id?: string
           is_featured?: boolean
+          meta_description?: string | null
+          reading_time_minutes?: number | null
           reference_number?: string | null
           slug?: string | null
           status?: string
           submitted_at?: string
           summary: string
+          tags?: string[] | null
           title: string
           updated_at?: string
           video_url?: string | null
@@ -472,11 +478,14 @@ export type Database = {
           featured_image_url?: string | null
           id?: string
           is_featured?: boolean
+          meta_description?: string | null
+          reading_time_minutes?: number | null
           reference_number?: string | null
           slug?: string | null
           status?: string
           submitted_at?: string
           summary?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
           video_url?: string | null

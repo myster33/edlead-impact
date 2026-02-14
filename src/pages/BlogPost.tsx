@@ -20,7 +20,9 @@ import {
   Link as LinkIcon,
   MessageCircle,
   Video,
-  ExternalLink
+  ExternalLink,
+  Clock,
+  Tag
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -45,6 +47,9 @@ interface BlogPostData {
   slug: string;
   category: string;
   video_url: string | null;
+  tags: string[] | null;
+  meta_description: string | null;
+  reading_time_minutes: number | null;
 }
 
 // Helper function to extract video embed URL
@@ -205,9 +210,9 @@ const BlogPost = () => {
     <Layout>
       <Helmet>
         <title>{post.title} | edLEAD Leaders' Blogs</title>
-        <meta name="description" content={post.summary} />
+        <meta name="description" content={post.meta_description || post.summary} />
         <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.summary} />
+        <meta property="og:description" content={post.meta_description || post.summary} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={shareUrl} />
         {post.featured_image_url && (
@@ -215,7 +220,10 @@ const BlogPost = () => {
         )}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.summary} />
+        <meta name="twitter:description" content={post.meta_description || post.summary} />
+        {post.tags && post.tags.length > 0 && (
+          <meta name="keywords" content={post.tags.join(', ')} />
+        )}
       </Helmet>
 
       <article className="container py-12 max-w-4xl">
@@ -227,9 +235,16 @@ const BlogPost = () => {
 
         {/* Header */}
         <header className="mb-8">
-          <Badge variant="secondary" className="mb-4">
-            {post.category}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <Badge variant="secondary">
+              {post.category}
+            </Badge>
+            {post.tags && post.tags.length > 0 && post.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
             {post.title}
           </h1>
@@ -263,6 +278,12 @@ const BlogPost = () => {
               <Calendar className="h-4 w-4" />
               <span>{format(new Date(post.approved_at), "MMMM d, yyyy")}</span>
             </div>
+            {post.reading_time_minutes && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>{post.reading_time_minutes} min read</span>
+              </div>
+            )}
           </div>
 
           {/* Share and Like buttons */}

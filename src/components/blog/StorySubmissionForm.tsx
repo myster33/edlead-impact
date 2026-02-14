@@ -125,6 +125,7 @@ const storySchema = z.object({
   category: z.string().min(1, "Please select a category"),
   reference_number: z.string().min(1, "Please enter your Captain Reference Number").max(50, "Reference number must be less than 50 characters"),
   video_url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  tags: z.string().optional(),
 });
 
 type StoryFormData = z.infer<typeof storySchema>;
@@ -248,6 +249,13 @@ export const StorySubmissionForm = () => {
         featuredImageUrl = await uploadImage(selectedImage);
       }
 
+      // Parse tags and calculate reading time
+      const parsedTags = data.tags?.trim() 
+        ? data.tags.split(",").map(t => t.trim()).filter(Boolean)
+        : null;
+      const wordCount = data.content.trim().split(/\s+/).length;
+      const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
       const { error } = await supabase.from("blog_posts").insert({
         title: data.title,
         summary: data.summary,
@@ -262,6 +270,8 @@ export const StorySubmissionForm = () => {
         reference_number: data.reference_number,
         featured_image_url: featuredImageUrl,
         video_url: data.video_url || null,
+        tags: parsedTags,
+        reading_time_minutes: readingTime,
       });
 
       if (error) throw error;
@@ -571,6 +581,19 @@ export const StorySubmissionForm = () => {
             )}
             <p className="text-xs text-muted-foreground">
               Add a link to a YouTube, Vimeo, or other video of your story
+            </p>
+          </div>
+
+          {/* Tags (Optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="tags">Tags (Optional)</Label>
+            <Input
+              id="tags"
+              placeholder="e.g., leadership, community, innovation"
+              {...register("tags")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Separate tags with commas to help readers find your story
             </p>
           </div>
 

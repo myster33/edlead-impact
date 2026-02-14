@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Search, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { BookOpen, Search, ChevronLeft, ChevronRight, Star, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,6 +26,8 @@ interface BlogPost {
   category: string;
   featured_image_url: string | null;
   is_featured: boolean;
+  tags: string[] | null;
+  reading_time_minutes: number | null;
 }
 
 const Blog = () => {
@@ -40,7 +42,7 @@ const Blog = () => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
         .from("blog_posts")
-        .select("id, slug, title, summary, author_name, author_school, author_province, approved_at, category, featured_image_url, is_featured")
+        .select("id, slug, title, summary, author_name, author_school, author_province, approved_at, category, featured_image_url, is_featured, tags, reading_time_minutes")
         .eq("status", "approved")
         .order("is_featured", { ascending: false })
         .order("approved_at", { ascending: false });
@@ -268,6 +270,8 @@ const Blog = () => {
                     approvedAt={post.approved_at}
                     category={post.category}
                     featuredImageUrl={post.featured_image_url || undefined}
+                    tags={post.tags || undefined}
+                    readingTimeMinutes={post.reading_time_minutes || undefined}
                   />
                 ))}
               </div>
