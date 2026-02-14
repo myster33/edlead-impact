@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, X, Minimize2, Send, FileText } from "lucide-react";
+import { MessageCircle, X, Minimize2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { ChatIntroForm } from "./ChatIntroForm";
 import { ChatTopicButtons } from "./ChatTopicButtons";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatApplyActions } from "./ChatApplyActions";
+import { ChatApplyReview } from "./ChatApplyReview";
 import edleadIcon from "@/assets/edlead-icon.png";
 import { useToast } from "@/hooks/use-toast";
 
@@ -54,6 +55,7 @@ export function ChatWidget() {
   const [applySubmitting, setApplySubmitting] = useState(false);
   const [applyCollectedCount, setApplyCollectedCount] = useState(0);
   const [applyTotalRequired, setApplyTotalRequired] = useState(30);
+  const [showReview, setShowReview] = useState(false);
 
   // Show tooltip on first visit
   useEffect(() => {
@@ -607,15 +609,25 @@ export function ChatWidget() {
           <ChatMessageList messages={messages} adminTyping={adminTyping} aiLoading={aiLoading} ref={scrollRef} />
 
           {/* Apply mode actions */}
-          {applyMode && (
+          {applyMode && !showReview && (
             <ChatApplyActions
               applicationData={applicationData}
               onPhotoUploaded={handlePhotoUploaded}
-              onSubmit={handleApplySubmit}
+              onSubmit={() => setShowReview(true)}
               isComplete={applyComplete}
               isSubmitting={applySubmitting}
               collectedCount={applyCollectedCount}
               totalRequired={applyTotalRequired}
+            />
+          )}
+
+          {/* Review step before final submit */}
+          {applyMode && showReview && (
+            <ChatApplyReview
+              applicationData={applicationData}
+              onSubmit={handleApplySubmit}
+              onEdit={() => setShowReview(false)}
+              isSubmitting={applySubmitting}
             />
           )}
 
