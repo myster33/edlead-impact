@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.chat-whatsapp-escalation]
 verify_jwt = false
+
+[functions.chat-apply]
+verify_jwt = false

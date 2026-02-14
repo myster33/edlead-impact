@@ -907,7 +907,7 @@ const ApplicationForm = () => {
                     </Select>
                   </div>
                   <FormFieldWrapper error={getFieldError("grade")}>
-                    <Label className={cn(hasError("grade") && "text-destructive")}><Label className={cn(hasError("grade") && "text-destructive")}>Grade *</Label></Label>
+                    <Label className={cn(hasError("grade") && "text-destructive")}>Grade *</Label>
                     <Select value={formData.grade} onValueChange={(v) => updateField("grade", v)}>
                       <SelectTrigger id="grade" className={cn(hasError("grade") && "border-destructive")}>
                         <SelectValue placeholder="Select grade" />
