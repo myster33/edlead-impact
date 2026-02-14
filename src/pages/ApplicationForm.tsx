@@ -144,7 +144,7 @@ const countries = Object.keys(countryRegions).concat(["Other"]);
 
 import { countryCodes, countryCodeMap, getFlagForCountry } from "@/lib/country-codes";
 
-const grades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
+const grades = ["Grade 9", "Grade 10", "Grade 11", "Grade 12", "High School Graduate"];
 
 interface FormData {
   full_name: string;
@@ -516,7 +516,7 @@ const ApplicationForm = () => {
     if (normalizedFormData.grade && !grades.includes(normalizedFormData.grade)) {
       toast({
         title: "Please select a valid grade",
-        description: "Choose a grade between Grade 7 and Grade 12.",
+        description: "Choose a grade between Grade 9 and Grade 12, or High School Graduate.",
         variant: "destructive",
       });
 
