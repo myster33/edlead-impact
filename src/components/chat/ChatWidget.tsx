@@ -8,6 +8,8 @@ import { ChatTopicButtons } from "./ChatTopicButtons";
 import { ChatMessageList } from "./ChatMessageList";
 import { ChatApplyActions } from "./ChatApplyActions";
 import { ChatApplyReview } from "./ChatApplyReview";
+import { ChatStoryActions } from "./ChatStoryActions";
+import { ChatStoryReview } from "./ChatStoryReview";
 import edleadIcon from "@/assets/edlead-icon.png";
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,6 +60,15 @@ export function ChatWidget() {
   const [applyTotalRequired, setApplyTotalRequired] = useState(30);
   const [showReview, setShowReview] = useState(false);
 
+  // Story mode state
+  const [storyMode, setStoryMode] = useState(false);
+  const [storyData, setStoryData] = useState<Record<string, any>>({});
+  const [storyComplete, setStoryComplete] = useState(false);
+  const [storySubmitting, setStorySubmitting] = useState(false);
+  const [storyCollectedCount, setStoryCollectedCount] = useState(0);
+  const [storyTotalRequired, setStoryTotalRequired] = useState(10);
+  const [showStoryReview, setShowStoryReview] = useState(false);
+
   // Show tooltip on first visit
   useEffect(() => {
     const seen = localStorage.getItem("edlead-chat-tooltip-seen");
@@ -77,6 +88,17 @@ export function ChatWidget() {
       localStorage.removeItem("edlead-chat-apply-data");
     }
   }, [applyMode, applicationData]);
+
+  // Persist story mode in localStorage
+  useEffect(() => {
+    if (storyMode) {
+      localStorage.setItem("edlead-chat-story-mode", "true");
+      localStorage.setItem("edlead-chat-story-data", JSON.stringify(storyData));
+    } else {
+      localStorage.removeItem("edlead-chat-story-mode");
+      localStorage.removeItem("edlead-chat-story-data");
+    }
+  }, [storyMode, storyData]);
 
   // Check for existing conversation on mount
   useEffect(() => {
@@ -115,6 +137,27 @@ export function ChatWidget() {
           } catch {
             localStorage.removeItem("edlead-chat-apply-mode");
             localStorage.removeItem("edlead-chat-apply-data");
+          }
+        }
+
+        // Restore story mode if it was active and name matches
+        const savedStoryMode = localStorage.getItem("edlead-chat-story-mode");
+        if (savedStoryMode === "true") {
+          try {
+            const savedData = localStorage.getItem("edlead-chat-story-data");
+            const parsed = savedData ? JSON.parse(savedData) : {};
+            const savedName = (parsed.author_name || "").toLowerCase().trim();
+            const currentName = (data.visitor_name || "").toLowerCase().trim();
+            if (savedName && currentName && savedName === currentName) {
+              setStoryMode(true);
+              setStoryData(parsed);
+            } else {
+              localStorage.removeItem("edlead-chat-story-mode");
+              localStorage.removeItem("edlead-chat-story-data");
+            }
+          } catch {
+            localStorage.removeItem("edlead-chat-story-mode");
+            localStorage.removeItem("edlead-chat-story-data");
           }
         }
       }
@@ -409,6 +452,183 @@ export function ChatWidget() {
     }
   };
 
+  // Story mode: call chat-story-submit edge function
+  const callStoryAi = async (convId: string, userMessages: { role: string; content: string }[]) => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("chat-story-submit", {
+        body: {
+          messages: userMessages,
+          collected_data: storyData,
+          visitor_name: visitorName,
+        },
+      });
+      if (error) throw error;
+
+      const reply = data?.reply || "Let's continue with your story!";
+      const extractedData = data?.extracted_data || {};
+      const isComplete = data?.is_complete || false;
+
+      if (Object.keys(extractedData).length > 0) {
+        setStoryData(prev => ({ ...prev, ...extractedData }));
+      }
+
+      setStoryComplete(isComplete);
+      setStoryCollectedCount(data?.collected_count || 0);
+      setStoryTotalRequired(data?.total_required || 10);
+
+      await supabase.from("chat_messages").insert({
+        conversation_id: convId,
+        sender_type: "admin",
+        content: reply,
+        is_ai_response: true,
+      });
+    } catch (e) {
+      console.error("Story AI error:", e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const startStoryMode = async () => {
+    if (!conversationId) return;
+    setStoryMode(true);
+    setStep("chat");
+
+    const visitorMsg = "I'd like to submit my Leader's Story through the chat!";
+    await supabase.from("chat_messages").insert({
+      conversation_id: conversationId,
+      sender_type: "visitor",
+      content: visitorMsg,
+    });
+
+    const initialData: Record<string, any> = {};
+    if (visitorName) initialData.author_name = visitorName;
+    if (visitorEmail) initialData.author_email = visitorEmail;
+    setStoryData(initialData);
+
+    const aiMessages = [{ role: "user", content: visitorMsg }];
+    await callStoryAi(conversationId, aiMessages);
+  };
+
+  const handleStoryPhotoUploaded = (url: string) => {
+    setStoryData(prev => ({ ...prev, featured_image_url: url }));
+    if (conversationId) {
+      supabase.from("chat_messages").insert({
+        conversation_id: conversationId,
+        sender_type: "admin",
+        content: "🖼️ Featured image uploaded successfully! ✓",
+        is_ai_response: true,
+      });
+    }
+  };
+
+  const handleStorySubmit = async () => {
+    if (!conversationId || storySubmitting) return;
+    setStorySubmitting(true);
+
+    try {
+      const content = storyData.content || "";
+      const wordCount = content.split(/\s+/).filter(Boolean).length;
+      const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
+      const tagsArray = storyData.tags
+        ? String(storyData.tags).split(",").map((t: string) => t.trim()).filter(Boolean)
+        : null;
+
+      const slug = (storyData.title || "story")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      const { error } = await supabase.from("blog_posts").insert({
+        title: storyData.title || "",
+        summary: storyData.summary || "",
+        content: content,
+        author_name: storyData.author_name || "",
+        author_school: storyData.author_school || "",
+        author_country: storyData.author_country || "South Africa",
+        author_province: storyData.author_province || "",
+        author_email: storyData.author_email || "",
+        author_phone: storyData.author_phone || null,
+        category: storyData.category || "Leadership",
+        reference_number: storyData.reference_number || null,
+        video_url: storyData.video_url || null,
+        featured_image_url: storyData.featured_image_url || null,
+        tags: tagsArray,
+        reading_time_minutes: readingTime,
+        slug: slug,
+        status: "pending",
+      });
+
+      if (error) throw error;
+
+      // Notify admins
+      try {
+        await supabase.functions.invoke("notify-blog-submission", {
+          body: {
+            title: storyData.title,
+            author_name: storyData.author_name,
+            author_school: storyData.author_school,
+            author_province: storyData.author_province,
+            author_email: storyData.author_email,
+            category: storyData.category,
+            summary: storyData.summary,
+          },
+        });
+      } catch (notifyErr) {
+        console.error("Notification error (non-blocking):", notifyErr);
+      }
+
+      // Notify author
+      try {
+        await supabase.functions.invoke("notify-author-submission", {
+          body: {
+            author_name: storyData.author_name,
+            author_email: storyData.author_email,
+            title: storyData.title,
+          },
+        });
+      } catch (notifyErr) {
+        console.error("Author notification error (non-blocking):", notifyErr);
+      }
+
+      await supabase.from("chat_messages").insert({
+        conversation_id: conversationId,
+        sender_type: "admin",
+        content: `🎉 **Your story has been submitted successfully!**\n\n📝 **"${storyData.title}"** is now under review by the edLEAD team.\n\nYou'll receive an email notification once it's approved. You can check your story status anytime at [edlead.co.za/blog](/blog) using the "Check My Stories" button.\n\nThank you for sharing your leadership journey! 🌟`,
+        is_ai_response: true,
+      });
+
+      setStoryMode(false);
+      setStoryComplete(false);
+      setStoryData({});
+      setShowStoryReview(false);
+
+      toast({
+        title: "Story Submitted!",
+        description: "Your Leader's Story has been submitted for review.",
+      });
+    } catch (error: any) {
+      console.error("Story submit error:", error);
+
+      await supabase.from("chat_messages").insert({
+        conversation_id: conversationId,
+        sender_type: "admin",
+        content: `❌ Story submission failed. Please try again or visit [edlead.co.za/blog](/blog) to submit using the story form.`,
+        is_ai_response: true,
+      });
+
+      toast({
+        title: "Submission Failed",
+        description: "Failed to submit your story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setStorySubmitting(false);
+    }
+  };
+
   const startChat = async (name: string, email: string, phone: string, province: string) => {
     if (!name.trim()) return;
     setVisitorName(name.trim());
@@ -513,6 +733,12 @@ export function ChatWidget() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       setAiLoading(false);
       await callApplyAi(conversationId, aiMessages);
+    } else if (storyMode) {
+      // In story mode — use chat-story-submit
+      setAiLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setAiLoading(false);
+      await callStoryAi(conversationId, aiMessages);
     } else if (isHumanAdminActive()) {
       clearTimeout(humanAdminResumeTimer.current);
       humanAdminResumeTimer.current = setTimeout(async () => {
@@ -582,12 +808,12 @@ export function ChatWidget() {
           <img src={edleadIcon} alt="edLEAD" className="h-8 w-8 rounded-full bg-primary-foreground/10 p-0.5" />
           <div>
             <h3 className="font-semibold text-sm">
-              {applyMode ? "edLEAD Application" : "edLEAD Chat"}
+              {applyMode ? "edLEAD Application" : storyMode ? "edLEAD Story Submission" : "edLEAD Chat"}
             </h3>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
               <p className="text-xs opacity-80">
-                {applyMode ? "Applying via chat" : "Online · We reply in minutes"}
+                {applyMode ? "Applying via chat" : storyMode ? "Submitting story via chat" : "Online · We reply in minutes"}
               </p>
             </div>
           </div>
@@ -607,7 +833,7 @@ export function ChatWidget() {
       ) : step === "topics" ? (
         <div className="flex-1 flex flex-col overflow-hidden">
           <ChatMessageList messages={messages} adminTyping={adminTyping} aiLoading={aiLoading} ref={scrollRef} />
-          <ChatTopicButtons onSelect={handleTopicSelect} onApply={startApplyMode} disabled={aiLoading} />
+          <ChatTopicButtons onSelect={handleTopicSelect} onApply={startApplyMode} onStory={startStoryMode} disabled={aiLoading} />
         </div>
       ) : (
         <>
@@ -637,11 +863,35 @@ export function ChatWidget() {
             />
           )}
 
+          {/* Story mode actions */}
+          {storyMode && !showStoryReview && (
+            <ChatStoryActions
+              storyData={storyData}
+              onPhotoUploaded={handleStoryPhotoUploaded}
+              onSubmit={() => setShowStoryReview(true)}
+              isComplete={storyComplete}
+              isSubmitting={storySubmitting}
+              collectedCount={storyCollectedCount}
+              totalRequired={storyTotalRequired}
+            />
+          )}
+
+          {/* Story review step */}
+          {storyMode && showStoryReview && (
+            <ChatStoryReview
+              storyData={storyData}
+              onSubmit={handleStorySubmit}
+              onEdit={() => setShowStoryReview(false)}
+              onFieldUpdate={(field, value) => setStoryData(prev => ({ ...prev, [field]: value }))}
+              isSubmitting={storySubmitting}
+            />
+          )}
+
           {/* Input */}
           <div className="p-3 border-t shrink-0">
             <div className="flex gap-2">
               <Input
-                placeholder={applyMode ? "Answer here..." : "Type a message..."}
+                placeholder={applyMode ? "Answer here..." : storyMode ? "Tell your story..." : "Type a message..."}
                 value={newMessage}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
