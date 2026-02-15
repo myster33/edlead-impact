@@ -1,4 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -71,109 +73,68 @@ interface AdminProfile {
   theme_preference: string | null;
 }
 
-// Module key to menu item mapping
-const allMenuItems = [
+// Grouped menu items
+const menuGroups = [
   {
-    title: "Dashboard",
-    url: "/admin/dashboard",
-    icon: LayoutDashboard,
-    moduleKey: "dashboard",
+    label: "Overview",
+    items: [
+      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard, moduleKey: "dashboard" },
+      { title: "Analytics", url: "/admin/analytics", icon: BarChart3, moduleKey: "analytics" },
+      { title: "Reports", url: "/admin/reports", icon: FileBarChart, moduleKey: "reports" },
+    ],
   },
   {
-    title: "Applications",
-    url: "/admin/applications",
-    icon: FileText,
-    moduleKey: "applications",
+    label: "Programme",
+    items: [
+      { title: "Applications", url: "/admin/applications", icon: FileText, moduleKey: "applications" },
+      { title: "Certificates", url: "/admin/certificates", icon: Award, moduleKey: "certificates" },
+      { title: "Stories", url: "/admin/blog", icon: BookOpen, moduleKey: "blog" },
+    ],
   },
   {
-    title: "Stories",
-    url: "/admin/blog",
-    icon: BookOpen,
-    moduleKey: "blog",
+    label: "Communication",
+    items: [
+      { title: "Live Chat", url: "/admin/chat", icon: MessageCircle, moduleKey: "chat" },
+      { title: "Message Center", url: "/admin/message-center", icon: Send, moduleKey: "message-center" },
+      { title: "Message Templates", url: "/admin/message-templates", icon: MessageSquare, moduleKey: "message-templates" },
+      { title: "Email Templates", url: "/admin/email-templates", icon: Mail, moduleKey: "email-templates" },
+    ],
   },
   {
-    title: "Analytics",
-    url: "/admin/analytics",
-    icon: BarChart3,
-    moduleKey: "analytics",
-  },
-  {
-    title: "Admin Users",
-    url: "/admin/users",
-    icon: Users,
-    moduleKey: "admin-users",
-  },
-  {
-    title: "Email Templates",
-    url: "/admin/email-templates",
-    icon: Mail,
-    moduleKey: "email-templates",
-  },
-  {
-    title: "Message Templates",
-    url: "/admin/message-templates",
-    icon: MessageSquare,
-    moduleKey: "message-templates",
-  },
-  {
-    title: "Message Center",
-    url: "/admin/message-center",
-    icon: Send,
-    moduleKey: "message-center",
-  },
-  {
-    title: "Audit Log",
-    url: "/admin/audit-log",
-    icon: History,
-    moduleKey: "audit-log",
-  },
-  {
-    title: "Permissions",
-    url: "/admin/permissions",
-    icon: Lock,
-    moduleKey: "permissions",
-  },
-  {
-    title: "Certificates",
-    url: "/admin/certificates",
-    icon: Award,
-    moduleKey: "certificates",
-  },
-  {
-    title: "Live Chat",
-    url: "/admin/chat",
-    icon: MessageCircle,
-    moduleKey: "chat",
-  },
-  {
-    title: "Reports",
-    url: "/admin/reports",
-    icon: FileBarChart,
-    moduleKey: "reports",
+    label: "Administration",
+    items: [
+      { title: "Admin Users", url: "/admin/users", icon: Users, moduleKey: "admin-users" },
+      { title: "Permissions", url: "/admin/permissions", icon: Lock, moduleKey: "permissions" },
+      { title: "Audit Log", url: "/admin/audit-log", icon: History, moduleKey: "audit-log" },
+    ],
   },
 ];
 
+type MenuItem = (typeof menuGroups)[number]["items"][number];
+
 // Filter menu items based on module permissions
-const getFilteredMenuItems = (
+const filterItem = (
+  item: MenuItem,
+  role: string,
+  permissions: ModulePermission[] | undefined
+): boolean => {
+  if (role === "admin") return true;
+  const permission = permissions?.find((p) => p.module_key === item.moduleKey);
+  if (!permission) return false;
+  return permission.allowed_roles.includes(role as "viewer" | "reviewer" | "admin");
+};
+
+const getFilteredGroups = (
   role: string | undefined,
   permissions: ModulePermission[] | undefined
 ) => {
   if (!role) return [];
-  
-  // Admins always have access to everything
-  if (role === "admin") {
-    return allMenuItems;
-  }
-  
-  // For non-admins, filter based on module permissions
-  return allMenuItems.filter((item) => {
-    const permission = permissions?.find((p) => p.module_key === item.moduleKey);
-    if (!permission) {
-      // If no permission record exists, deny access for non-admins
-      return false;
-    }
-    return permission.allowed_roles.includes(role as "viewer" | "reviewer" | "admin");
-  });
+  return menuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => filterItem(item, role, permissions)),
+    }))
+    .filter((group) => group.items.length > 0);
 };
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -270,10 +231,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
 
-  // Get filtered menu items based on role and permissions
-  const menuItems = useMemo(
-    () => getFilteredMenuItems(adminUser?.role, modulePermissions),
+  // Get filtered groups based on role and permissions
+  const filteredGroups = useMemo(
+    () => getFilteredGroups(adminUser?.role, modulePermissions),
     [adminUser?.role, modulePermissions]
+  );
+
+  // All filtered items flat (for header title lookup)
+  const allFilteredItems = useMemo(
+    () => filteredGroups.flatMap((g) => g.items),
+    [filteredGroups]
   );
 
   const displayName = profile?.full_name || adminUser?.email?.split("@")[0] || "Admin";
@@ -310,31 +277,44 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarHeader>
 
           <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => {
-                    const isActive = location.pathname === item.url;
-                    return (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={isActive}>
-                          <Link to={item.url} className="flex items-center gap-2">
-                            <item.icon className="h-4 w-4" />
-                            <span className="flex-1">{item.title}</span>
-                            {item.moduleKey === "chat" && unreadChats > 0 && (
-                              <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
-                                {unreadChats}
-                              </Badge>
-                            )}
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            {filteredGroups.map((group) => {
+                const groupHasActive = group.items.some((item) => location.pathname === item.url);
+                return (
+                  <Collapsible key={group.label} defaultOpen={groupHasActive}>
+                    <SidebarGroup>
+                      <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors [&[data-state=open]>svg]:rotate-180">
+                        {group.label}
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform duration-200" />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            {group.items.map((item) => {
+                              const isActive = location.pathname === item.url;
+                              return (
+                                <SidebarMenuItem key={item.title}>
+                                  <SidebarMenuButton asChild isActive={isActive}>
+                                    <Link to={item.url} className="flex items-center gap-2">
+                                      <item.icon className="h-4 w-4" />
+                                      <span className="flex-1">{item.title}</span>
+                                      {item.moduleKey === "chat" && unreadChats > 0 && (
+                                        <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
+                                          {unreadChats}
+                                        </Badge>
+                                      )}
+                                    </Link>
+                                  </SidebarMenuButton>
+                                </SidebarMenuItem>
+                              );
+                            })}
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </CollapsibleContent>
+                    </SidebarGroup>
+                  </Collapsible>
+                );
+              })
+            }
 
             <SidebarGroup>
               <SidebarGroupLabel>Account</SidebarGroupLabel>
@@ -442,7 +422,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <SidebarTrigger />
             <div className="ml-4 flex-1">
               <h1 className="text-lg font-semibold">
-                {menuItems.find(item => location.pathname === item.url)?.title || 
+                {allFilteredItems.find(item => location.pathname === item.url)?.title || 
                  (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
               </h1>
             </div>
