@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.chat-apply]
 verify_jwt = false
+
+[functions.chat-story-submit]
+verify_jwt = false
