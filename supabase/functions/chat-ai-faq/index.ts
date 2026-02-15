@@ -214,7 +214,7 @@ serve(async (req) => {
     }
 
     const systemContent = topic
-      ? `${EDLEAD_SYSTEM_PROMPT}\n\nThe visitor selected the topic: "${topic}". Focus your initial response on this topic.`
+      ? `${EDLEAD_SYSTEM_PROMPT}\n\nThe visitor selected the topic: "${topic}". Give a SHORT, punchy overview (2-3 sentences max) of this topic and invite them to ask a specific question. Do NOT list everything — keep it brief and conversational.`
       : EDLEAD_SYSTEM_PROMPT;
 
     // Convert messages: filter out system messages (Bedrock uses separate system param)
