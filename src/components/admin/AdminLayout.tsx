@@ -1,7 +1,7 @@
 import { useLocation, Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,10 @@ import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { UpdateNotificationBanner } from "./UpdateNotificationBanner";
 import { NotificationBell } from "./NotificationBell";
+import { CommandPalette } from "./CommandPalette";
+import { AdminBreadcrumb } from "./AdminBreadcrumb";
+import { KeyboardShortcuts } from "./KeyboardShortcuts";
+import { ShortcutsHelpDialog } from "./ShortcutsHelpDialog";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -154,6 +158,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { theme, setTheme } = useTheme();
   const { isElectron } = useElectron();
   const { playNotification } = useChatNotificationSound();
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  const handleOpenCommandPalette = useCallback(() => setCommandOpen(true), []);
+  const handleOpenHelp = useCallback(() => setShortcutsOpen(true), []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -306,10 +315,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                     <Link to={item.url} className="flex items-center gap-2">
                                       <item.icon className="h-4 w-4" />
                                       <span className="flex-1">{item.title}</span>
-                                      {item.moduleKey === "chat" && unreadChats > 0 && (
+                        {item.moduleKey === "chat" && unreadChats > 0 && (
                                         <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
                                           {unreadChats}
                                         </Badge>
+                                      )}
+                                      {item.moduleKey === "blog" && (
+                                        <PendingBlogBadge />
                                       )}
                                     </Link>
                                   </SidebarMenuButton>
@@ -430,10 +442,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <header className="sticky top-0 z-10 bg-background border-b h-14 flex items-center px-4">
             <SidebarTrigger />
             <div className="ml-4 flex-1">
-              <h1 className="text-lg font-semibold">
-                {allFilteredItems.find(item => location.pathname === item.url)?.title || 
-                 (location.pathname === "/admin/settings" ? "Settings" : "Admin Panel")}
-              </h1>
+              <AdminBreadcrumb filteredGroups={filteredGroups} />
             </div>
             <NotificationBell />
             <Link to="/admin/chat" className="relative mr-2">
@@ -483,6 +492,30 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </main>
       </div>
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+      <KeyboardShortcuts onOpenCommandPalette={handleOpenCommandPalette} onOpenHelp={handleOpenHelp} />
+      <ShortcutsHelpDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
     </SidebarProvider>
+  );
+}
+
+// Small helper component to show pending blog count in sidebar
+function PendingBlogBadge() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const fetch = async () => {
+      const { count: c } = await supabase
+        .from("blog_posts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      setCount(c || 0);
+    };
+    fetch();
+  }, []);
+  if (count === 0) return null;
+  return (
+    <Badge variant="secondary" className="text-xs h-5 min-w-5 flex items-center justify-center">
+      {count}
+    </Badge>
   );
 }

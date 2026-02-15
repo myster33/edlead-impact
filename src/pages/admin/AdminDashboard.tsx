@@ -52,6 +52,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useModulePermissions } from "@/hooks/use-module-permissions";
+import { ActivityFeed } from "@/components/admin/ActivityFeed";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
@@ -996,6 +997,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
+        {/* Real-Time Activity Feed */}
+        <ActivityFeed />
       </div>
     </AdminLayout>
   );
