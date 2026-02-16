@@ -1,82 +1,67 @@
 
 
-# Admin Panel Power Upgrades -- 5 Features
+# Session Activity and Login History + New Proposals
 
-## 1. Command Palette (Cmd+K / Ctrl+K)
+## Feature: Session Activity and Login History
 
-A searchable modal that lets admins quickly jump to any module, action, or page by typing.
+Add a new "Activity" tab to Admin Settings that shows login history with metadata (timestamp, IP, browser/device) and lets admins see their recent sign-in activity.
 
-- Create a new component `src/components/admin/CommandPalette.tsx` using the existing `cmdk` library (already installed)
-- Wraps in a Dialog triggered by Cmd+K (Mac) / Ctrl+K (Windows)
-- Populates with all menu items from the filtered groups (respects permissions)
-- Includes quick actions: "Sign Out", "Toggle Theme", "Open Settings"
-- Navigates on selection using `react-router-dom`'s `useNavigate`
-- Rendered inside `AdminLayout` alongside the sidebar
+### Database Changes
 
-## 2. Sidebar Group Unread Badges
+Create a new `admin_login_history` table:
 
-Show a combined unread count on collapsed sidebar group labels so admins can see at a glance which category needs attention.
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | Primary key, auto-generated |
+| admin_user_id | uuid | References admin_users(id) |
+| logged_in_at | timestamptz | Defaults to now() |
+| ip_address | text | Nullable, captured from request headers |
+| user_agent | text | Nullable, raw browser user-agent string |
+| device_label | text | Nullable, parsed summary like "Chrome on Windows" |
 
-- Extend the `menuGroups` data structure with an optional `badgeCount` computed value
-- For the "Communication" group: aggregate the existing `unreadChats` count onto the group label
-- Display a small `Badge` next to the group label text (only when the group is collapsed)
-- Uses existing `unreadChats` state -- no new database queries needed
+RLS policies will restrict each admin to viewing only their own login history.
 
-## 3. Breadcrumb Navigation in Header
+Realtime is not needed for this table.
 
-Replace the plain title in the header with a breadcrumb showing `Group > Module`.
+### Login Tracking
 
-- Create `src/components/admin/AdminBreadcrumb.tsx` using the existing `Breadcrumb` UI components
-- Derives the current group and item from `location.pathname` and `filteredGroups`
-- Shows: `Admin Panel / [Group Label] / [Module Title]`
-- Group label links to the first item in that group; module title is the current page
-- Integrated into the header section of `AdminLayout`, replacing the current `h1` title
+Modify `AdminAuthContext.tsx` to insert a row into `admin_login_history` after a successful `signIn` call, capturing:
+- `admin_user_id` from the matched admin_users record
+- `user_agent` from `navigator.userAgent`
+- `device_label` parsed from the user-agent string (a simple helper to extract browser + OS)
+- IP address will be left null on the client side (would require a server call to determine)
 
-## 4. Real-Time Activity Feed on Dashboard
+### New "Activity" Tab in Settings
 
-A live-updating feed widget showing recent events across the platform.
+Add a third tab to the Settings page called "Activity" (with a `History` icon). It will show:
+- A table of the last 50 login events for the current admin
+- Columns: Date/Time (formatted with `date-fns`), Device/Browser, IP Address (or "N/A")
+- Most recent logins at the top
+- A simple empty state if no history exists yet
 
-- Create `src/components/admin/ActivityFeed.tsx`
-- Queries the existing `admin_audit_log` table for the latest 20 events
-- Subscribes to realtime changes on `admin_audit_log` for live updates
-- Each entry shows: icon (based on action type), description, relative timestamp, and admin name
-- Also pulls recent `applications` (new submissions) and `blog_posts` (new pending stories)
-- Rendered as a Card on the Dashboard page below the existing stats
+### Files to Create
+| File | Purpose |
+|------|---------|
+| (migration) | Create `admin_login_history` table with RLS |
 
-## 5. Keyboard Shortcuts with Help Overlay
-
-Global keyboard shortcuts for fast navigation, with a `?` key overlay showing all available shortcuts.
-
-- Create `src/components/admin/KeyboardShortcuts.tsx` -- a global listener component
-- Create `src/components/admin/ShortcutsHelpDialog.tsx` -- a modal listing all shortcuts
-- Shortcuts:
-  - `G then D` -- Go to Dashboard
-  - `G then A` -- Go to Applications
-  - `G then C` -- Go to Chat
-  - `G then S` -- Go to Settings
-  - `?` -- Show shortcuts help
-  - `Cmd/Ctrl + K` -- Open command palette
-- Uses a two-key sequence listener (press G, then within 1 second press the second key)
-- Disabled when user is focused on an input/textarea to avoid conflicts
-- Both components rendered inside `AdminLayout`
+### Files to Modify
+| File | Changes |
+|------|---------|
+| `src/contexts/AdminAuthContext.tsx` | Insert login history row after successful sign-in; add user-agent parsing helper |
+| `src/pages/admin/AdminSettings.tsx` | Add "Activity" tab with login history table |
 
 ---
 
-## Files to Create
-| File | Purpose |
-|------|---------|
-| `src/components/admin/CommandPalette.tsx` | Cmd+K searchable command palette |
-| `src/components/admin/AdminBreadcrumb.tsx` | Header breadcrumb navigation |
-| `src/components/admin/ActivityFeed.tsx` | Real-time activity feed widget |
-| `src/components/admin/KeyboardShortcuts.tsx` | Global keyboard shortcut listener |
-| `src/components/admin/ShortcutsHelpDialog.tsx` | Shortcuts help overlay (? key) |
+## Other Upgrade Proposals
 
-## Files to Modify
-| File | Changes |
-|------|---------|
-| `src/components/admin/AdminLayout.tsx` | Add CommandPalette, KeyboardShortcuts, ShortcutsHelpDialog components; replace header title with AdminBreadcrumb; add unread badge to Communication group label |
-| `src/pages/admin/AdminDashboard.tsx` | Add ActivityFeed component below stats cards |
+Here are fresh ideas beyond the 5 already discussed:
 
-## No Database Changes
-All features use existing tables (`admin_audit_log`, `chat_messages`, `applications`, `blog_posts`). No migrations needed.
+1. **Global Search Across Data** -- A search bar in the header that searches across applications, blog posts, admin users, and audit logs, showing grouped results with direct links.
 
+2. **Admin Dashboard Announcements / Pinned Notes** -- Let admins pin a short announcement or note to the top of the dashboard visible to all admin users (useful for "cohort closes Friday" type notices).
+
+3. **Application Kanban Board View** -- An alternative drag-and-drop Kanban view for Applications (columns: Pending, Under Review, Approved, Rejected) alongside the existing table view.
+
+4. **Scheduled Reports / Auto-Export** -- Let admins schedule weekly or monthly CSV exports of application data or analytics to be emailed automatically.
+
+5. **Admin User Online Presence Indicators** -- Show green/grey dots next to admin names in the sidebar footer and chat to indicate who is currently online.
