@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText,
   CheckCircle,
@@ -42,9 +44,26 @@ const formatAction = (action: string, tableName: string) => {
   return readable.charAt(0).toUpperCase() + readable.slice(1);
 };
 
+const FILTER_OPTIONS = [
+  { value: "all", label: "All Events" },
+  { value: "application", label: "Applications" },
+  { value: "blog", label: "Stories" },
+  { value: "audit", label: "Audit Actions" },
+] as const;
+
+type FilterType = (typeof FILTER_OPTIONS)[number]["value"];
+
 export function ActivityFeed() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [search, setSearch] = useState("");
+
+  const filteredItems = feedItems.filter((item) => {
+    const matchesFilter = filter === "all" || item.type === filter;
+    const matchesSearch = search === "" || item.description.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   const fetchActivity = async () => {
     try {
@@ -141,20 +160,40 @@ export function ActivityFeed() {
         <CardDescription>Recent events across the platform, updated in real-time</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+          <Input
+            placeholder="Search events..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="sm:max-w-[220px]"
+          />
+          <Select value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
+            <SelectTrigger className="sm:max-w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-muted-foreground">
             <Activity className="h-5 w-5 animate-spin mr-2" />
             Loading activity...
           </div>
-        ) : feedItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No recent activity to display.</p>
+            <p>{feedItems.length === 0 ? "No recent activity to display." : "No events match your filter."}</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px]">
             <div className="space-y-3">
-              {feedItems.map((item) => {
+              {filteredItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <div
