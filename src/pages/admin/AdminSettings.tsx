@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone, History } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countryCodes } from "@/lib/country-codes";
 import {
@@ -107,6 +109,29 @@ export default function AdminSettings() {
   const [isSavingSupportNumber, setIsSavingSupportNumber] = useState(false);
   const [isLoadingSystemSettings, setIsLoadingSystemSettings] = useState(false);
   const [isSendingDigest, setIsSendingDigest] = useState(false);
+
+  // Login history state
+  const [loginHistory, setLoginHistory] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  const fetchLoginHistory = useCallback(async () => {
+    if (!adminUser?.id) return;
+    setIsLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from("admin_login_history")
+        .select("*")
+        .eq("admin_user_id", adminUser.id)
+        .order("logged_in_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      setLoginHistory(data || []);
+    } catch (err) {
+      console.error("Error fetching login history:", err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [adminUser?.id]);
 
   useEffect(() => {
     if (!authLoading && !adminUser) {
@@ -726,6 +751,10 @@ export default function AdminSettings() {
             <TabsTrigger value="security" className="gap-2">
               <Shield className="h-4 w-4" />
               Security
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2" onClick={() => fetchLoginHistory()}>
+              <History className="h-4 w-4" />
+              Activity
             </TabsTrigger>
           </TabsList>
 
@@ -1439,6 +1468,55 @@ export default function AdminSettings() {
                 </Card>
               </>
             )}
+          </TabsContent>
+
+          {/* Activity Tab */}
+          <TabsContent value="activity">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  Login History
+                </CardTitle>
+                <CardDescription>
+                  Your recent sign-in activity showing the last 50 logins.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingHistory ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : loginHistory.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <History className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p className="font-medium">No login history yet</p>
+                    <p className="text-sm">Your sign-in activity will appear here.</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date &amp; Time</TableHead>
+                        <TableHead>Device / Browser</TableHead>
+                        <TableHead>IP Address</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loginHistory.map((entry) => (
+                        <TableRow key={entry.id}>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(entry.logged_in_at), "dd MMM yyyy, HH:mm")}
+                          </TableCell>
+                          <TableCell>{entry.device_label || entry.user_agent || "Unknown"}</TableCell>
+                          <TableCell>{entry.ip_address || "N/A"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

@@ -79,6 +79,41 @@ export type Database = {
           },
         ]
       }
+      admin_login_history: {
+        Row: {
+          admin_user_id: string
+          device_label: string | null
+          id: string
+          ip_address: string | null
+          logged_in_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          device_label?: string | null
+          id?: string
+          ip_address?: string | null
+          logged_in_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          device_label?: string | null
+          id?: string
+          ip_address?: string | null
+          logged_in_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_login_history_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_notifications: {
         Row: {
           admin_user_id: string
