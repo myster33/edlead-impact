@@ -4,6 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSessionTimeout } from "@/hooks/use-session-timeout";
 import { useToast } from "@/hooks/use-toast";
 
+function parseDeviceLabel(ua: string): string {
+  let browser = "Unknown browser";
+  let os = "Unknown OS";
+  if (ua.includes("Firefox/")) browser = "Firefox";
+  else if (ua.includes("Edg/")) browser = "Edge";
+  else if (ua.includes("Chrome/") && !ua.includes("Edg/")) browser = "Chrome";
+  else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari";
+  else if (ua.includes("Opera") || ua.includes("OPR/")) browser = "Opera";
+
+  if (ua.includes("Windows")) os = "Windows";
+  else if (ua.includes("Mac OS")) os = "macOS";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+  else if (ua.includes("Linux")) os = "Linux";
+
+  return `${browser} on ${os}`;
+}
+
 interface AdminUser {
   id: string;
   user_id: string;
@@ -172,15 +190,42 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     mfaVerifiedInSession.current = verified;
   };
 
+  const recordLoginHistory = useCallback(async (adminId: string) => {
+    try {
+      const ua = navigator.userAgent;
+      await supabase.from("admin_login_history").insert({
+        admin_user_id: adminId,
+        user_agent: ua,
+        device_label: parseDeviceLabel(ua),
+      });
+    } catch (err) {
+      console.error("Error recording login history:", err);
+    }
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     // Reset MFA state before sign in
     mfaVerifiedInSession.current = false;
     setIsMfaVerified(false);
     
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // Record login history after successful sign-in
+    if (!error && data?.user) {
+      // Fetch admin user id to record history
+      const { data: adminData } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      if (adminData?.id) {
+        recordLoginHistory(adminData.id);
+      }
+    }
+
     return { error: error as Error | null };
   };
 
