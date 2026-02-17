@@ -58,6 +58,7 @@ import {
   GraduationCap,
   Radio,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -444,6 +445,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="ml-4 flex-1">
               <AdminBreadcrumb filteredGroups={filteredGroups} />
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mr-2 hidden sm:flex items-center gap-2 text-muted-foreground"
+              onClick={() => setCommandOpen(true)}
+            >
+              <Search className="h-4 w-4" />
+              <span className="text-xs">Search...</span>
+              <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                ⌘K
+              </kbd>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-2 sm:hidden h-9 w-9"
+              onClick={() => setCommandOpen(true)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
             <NotificationBell />
             <Link to="/admin/chat" className="relative mr-2">
               <Button variant="ghost" size="icon" className="h-9 w-9">
