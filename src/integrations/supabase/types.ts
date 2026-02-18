@@ -788,6 +788,47 @@ export type Database = {
         }
         Relationships: []
       }
+      dashboard_announcements: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_pinned: boolean
+          priority: string
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          priority?: string
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_pinned?: boolean
+          priority?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_template_history: {
         Row: {
           change_reason: string | null
