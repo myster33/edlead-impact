@@ -73,6 +73,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SocialBannerPreview } from "@/components/admin/SocialBannerPreview";
 import { ApplicationDetailView } from "@/components/admin/ApplicationDetailView";
+import { ApplicationKanban } from "@/components/admin/ApplicationKanban";
+import { LayoutList, Kanban } from "lucide-react";
 
 interface Application {
   id: string;
@@ -159,6 +161,7 @@ export default function AdminApplications() {
     applicantName: string;
   } | null>(null);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
   const regionInfo = getAdminRegionInfo(adminUser);
 
@@ -815,6 +818,27 @@ export default function AdminApplications() {
                 </CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
+                {/* View Toggle */}
+                <div className="flex border rounded-md overflow-hidden">
+                  <Button
+                    variant={viewMode === "table" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none border-0"
+                    onClick={() => setViewMode("table")}
+                    title="Table view"
+                  >
+                    <LayoutList className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "kanban" ? "default" : "ghost"}
+                    size="sm"
+                    className="rounded-none border-0"
+                    onClick={() => setViewMode("kanban")}
+                    title="Kanban board view"
+                  >
+                    <Kanban className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
                   <Download className="h-4 w-4 mr-2" />
                   CSV
@@ -1010,7 +1034,15 @@ export default function AdminApplications() {
           </Card>
         )}
 
-        {/* Applications Table */}
+        {/* Applications Table / Kanban */}
+        {viewMode === "kanban" ? (
+          <ApplicationKanban
+            applications={filteredApplications}
+            canEdit={adminUser?.role === "reviewer" || adminUser?.role === "admin"}
+            onStatusChange={handleStatusChange}
+            onView={(app) => setSelectedApplication(app as Application)}
+          />
+        ) : (
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
@@ -1197,6 +1229,7 @@ export default function AdminApplications() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Application Detail Dialog */}
         <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
