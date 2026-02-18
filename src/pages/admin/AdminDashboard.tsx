@@ -53,6 +53,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useModulePermissions } from "@/hooks/use-module-permissions";
 import { ActivityFeed } from "@/components/admin/ActivityFeed";
+import { DashboardAnnouncements } from "@/components/admin/DashboardAnnouncements";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
@@ -524,6 +525,9 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Dashboard Announcements */}
+        <DashboardAnnouncements />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
