@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useOnlinePresence } from "@/hooks/use-online-presence";
+
 import { useAuditLog } from "@/hooks/use-audit-log";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,12 +181,23 @@ export default function AdminManagement() {
 
   const isAdmin = adminUser?.role === "admin";
 
+  // Online presence — track self and observe who else is online
+  const presenceAdmin = useMemo(() => adminUser ? {
+    id: adminUser.id,
+    email: adminUser.email,
+    role: adminUser.role,
+    full_name: adminUser.full_name ?? null,
+  } : null, [adminUser]);
+  const { onlineAdmins } = useOnlinePresence(presenceAdmin);
+  const onlineIds = useMemo(() => new Set(onlineAdmins.map((a) => a.id)), [onlineAdmins]);
+
   useEffect(() => {
     fetchAdminUsers();
     if (isAdmin) {
       fetchPendingUsers();
     }
   }, [isAdmin]);
+
 
   const fetchAdminUsers = async () => {
     setIsLoading(true);
@@ -1410,14 +1423,23 @@ export default function AdminManagement() {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            {user.profile_picture_url && (
-                              <AvatarImage src={user.profile_picture_url} alt={user.full_name || user.email} />
+                          <div className="relative shrink-0">
+                            <Avatar className="h-8 w-8">
+                              {user.profile_picture_url && (
+                                <AvatarImage src={user.profile_picture_url} alt={user.full_name || user.email} />
+                              )}
+                              <AvatarFallback className="text-xs">
+                                {(user.full_name || user.email).slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {onlineIds.has(user.id) && (
+                              <span
+                                className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background"
+                                style={{ backgroundColor: "hsl(142 71% 45%)" }}
+                                title="Online now"
+                              />
                             )}
-                            <AvatarFallback className="text-xs">
-                              {(user.full_name || user.email).slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
+                          </div>
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{user.full_name || user.email}</span>
@@ -1434,6 +1456,7 @@ export default function AdminManagement() {
                           </div>
                         </div>
                       </TableCell>
+
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {user.role !== "admin" && (user.country || user.province) ? (
