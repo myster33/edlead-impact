@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { loadLogoBase64, addPDFLetterhead, addPDFFooter } from "@/lib/pdf-letterhead";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useAuditLog } from "@/hooks/use-audit-log";
+import { useApplicationViewers } from "@/hooks/use-application-viewers";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { OnlineAdminsPanel } from "@/components/admin/OnlineAdminsPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,6 +77,7 @@ import { SocialBannerPreview } from "@/components/admin/SocialBannerPreview";
 import { ApplicationDetailView } from "@/components/admin/ApplicationDetailView";
 import { ApplicationKanban } from "@/components/admin/ApplicationKanban";
 import { LayoutList, Kanban } from "lucide-react";
+
 
 interface Application {
   id: string;
@@ -163,7 +166,17 @@ export default function AdminApplications() {
   const [showBannerPreview, setShowBannerPreview] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
+  // Presence: who is viewing the currently open application
+  const presenceAdmin = useMemo(() => adminUser ? {
+    id: adminUser.id,
+    email: adminUser.email,
+    role: adminUser.role,
+    full_name: adminUser.full_name ?? null,
+  } : null, [adminUser]);
+  const { otherViewers } = useApplicationViewers(selectedApplication?.id ?? null, presenceAdmin);
+
   const regionInfo = getAdminRegionInfo(adminUser);
+
 
   const provinces = [
     "Eastern Cape", "Free State", "Gauteng", "KwaZulu-Natal",
@@ -1242,6 +1255,16 @@ export default function AdminApplications() {
             </DialogHeader>
             {selectedApplication && (
               <div className="space-y-6">
+                {/* Who else is viewing this application */}
+                {otherViewers.length > 0 && (
+                  <div className="no-print flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50 border border-border/60">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "hsl(142 71% 45%)" }} />
+                      <span className="text-xs text-muted-foreground font-medium">Also viewing:</span>
+                    </div>
+                    <OnlineAdminsPanel admins={otherViewers} variant="compact" />
+                  </div>
+                )}
                 <ApplicationDetailView
                   application={selectedApplication}
                   cohortName={getCohortName(selectedApplication.cohort_id)}
