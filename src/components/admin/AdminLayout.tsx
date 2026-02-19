@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useModulePermissions, ModulePermission } from "@/hooks/use-module-permissions";
 import { useElectron } from "@/hooks/use-electron";
 import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
+import { useOnlinePresence } from "@/hooks/use-online-presence";
+import { OnlineAdminsPanel } from "./OnlineAdminsPanel";
 import {
   Sidebar,
   SidebarContent,
@@ -161,6 +163,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { playNotification } = useChatNotificationSound();
   const [commandOpen, setCommandOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  const presenceUser = useMemo(() => adminUser ? {
+    id: adminUser.id,
+    email: adminUser.email,
+    role: adminUser.role,
+    full_name: adminUser.full_name ?? null,
+    profile_picture_url: profile?.profile_picture_url ?? null,
+  } : null, [adminUser, profile?.profile_picture_url]);
+
+  const { onlineAdmins } = useOnlinePresence(presenceUser);
 
   const handleOpenCommandPalette = useCallback(() => setCommandOpen(true), []);
   const handleOpenHelp = useCallback(() => setShortcutsOpen(true), []);
@@ -424,6 +436,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 )}
               </div>
             </div>
+            {onlineAdmins.length > 0 && (
+              <div className="mb-3 p-2 rounded-lg bg-muted/50 border border-border/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Online Now</span>
+                  <span className="text-[10px] text-muted-foreground">{onlineAdmins.length}</span>
+                </div>
+                <OnlineAdminsPanel admins={onlineAdmins} currentAdminId={adminUser?.id} variant="compact" />
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
