@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
+import { useOnlinePresence } from "@/hooks/use-online-presence";
+import { OnlineAdminsPanel } from "@/components/admin/OnlineAdminsPanel";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -9,8 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Phone } from "lucide-react";
+import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+
 
 interface Conversation {
   id: string;
@@ -49,6 +52,14 @@ export default function AdminChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const { playNotification } = useChatNotificationSound();
+
+  const presenceUser = adminUser ? {
+    id: adminUser.id,
+    email: adminUser.email,
+    role: adminUser.role,
+    full_name: adminUser.full_name ?? null,
+  } : null;
+  const { onlineAdmins } = useOnlinePresence(presenceUser);
 
   const isRegionRestricted = adminUser?.role !== "admin" && (adminUser?.country || adminUser?.province);
 
@@ -295,6 +306,17 @@ export default function AdminChat() {
                 <Badge variant="destructive" className="text-xs">{totalUnread}</Badge>
               )}
             </CardTitle>
+            {onlineAdmins.length > 0 && (
+              <div className="mt-2 p-2 rounded-md bg-muted/50 border border-border/50">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Users className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {onlineAdmins.length} online
+                  </span>
+                </div>
+                <OnlineAdminsPanel admins={onlineAdmins} currentAdminId={adminUser?.id} variant="full" />
+              </div>
+            )}
             <div className="flex gap-1 mt-2">
               {(["open", "closed", "all"] as const).map((f) => (
                 <Button
