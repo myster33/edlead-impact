@@ -126,6 +126,20 @@ const provincesByCountry: Record<string, { value: string; label: string }[]> = {
   ],
 };
 
+function formatLastSeen(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-ZA");
+}
+
 export default function AdminManagement() {
   const navigate = useNavigate();
   const { adminUser, signOut } = useAdminAuth();
@@ -133,6 +147,7 @@ export default function AdminManagement() {
   const { logAction } = useAuditLog();
   
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [lastSeenMap, setLastSeenMap] = useState<Record<string, string>>({});
   const [pendingUsers, setPendingUsers] = useState<{ id: string; email: string; created_at: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isPendingLoading, setIsPendingLoading] = useState(false);
@@ -193,6 +208,7 @@ export default function AdminManagement() {
 
   useEffect(() => {
     fetchAdminUsers();
+    fetchLastSeen();
     if (isAdmin) {
       fetchPendingUsers();
     }
@@ -234,6 +250,28 @@ export default function AdminManagement() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchLastSeen = async () => {
+    try {
+      // Get the most recent login for each admin user
+      const { data, error } = await supabase
+        .from("admin_login_history")
+        .select("admin_user_id, logged_in_at")
+        .order("logged_in_at", { ascending: false });
+
+      if (error) throw error;
+
+      const map: Record<string, string> = {};
+      for (const row of data || []) {
+        if (!map[row.admin_user_id]) {
+          map[row.admin_user_id] = row.logged_in_at;
+        }
+      }
+      setLastSeenMap(map);
+    } catch (error) {
+      console.error("Error fetching last seen:", error);
     }
   };
 
@@ -1414,7 +1452,7 @@ export default function AdminManagement() {
                     <TableHead>Role</TableHead>
                     <TableHead className="hidden md:table-cell">Region</TableHead>
                     <TableHead className="hidden lg:table-cell">Contact</TableHead>
-                    <TableHead className="hidden sm:table-cell">Added</TableHead>
+                    <TableHead className="hidden sm:table-cell">Last Seen</TableHead>
                     {isAdmin && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -1477,7 +1515,17 @@ export default function AdminManagement() {
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        {new Date(user.created_at).toLocaleDateString("en-ZA")}
+                        {onlineIds.has(user.id) ? (
+                          <Badge variant="secondary" className="text-xs">
+                            Online now
+                          </Badge>
+                        ) : lastSeenMap[user.id] ? (
+                          <span className="text-sm text-muted-foreground" title={new Date(lastSeenMap[user.id]).toLocaleString("en-ZA")}>
+                            {formatLastSeen(lastSeenMap[user.id])}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Never</span>
+                        )}
                       </TableCell>
                       {isAdmin && (
                         <TableCell className="text-right">
