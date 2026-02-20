@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useModulePermissions, ModulePermission } from "@/hooks/use-module-permissions";
-import { useElectron } from "@/hooks/use-electron";
+
 import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 import { useOnlinePresence } from "@/hooks/use-online-presence";
 import { OnlineAdminsPanel } from "./OnlineAdminsPanel";
@@ -53,8 +53,6 @@ import {
   Moon,
   Sun,
   Monitor,
-  Download,
-  Apple,
   FileBarChart,
   Eye,
   GraduationCap,
@@ -159,7 +157,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [unreadChats, setUnreadChats] = useState(0);
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
-  const { isElectron } = useElectron();
+  
   const { playNotification } = useChatNotificationSound();
   const [commandOpen, setCommandOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -368,44 +366,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarContent>
 
           <SidebarFooter className="p-4 border-t">
-            {/* Download Desktop App - Only show on web, not in Electron */}
-            {!isElectron && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full mb-3"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Desktop App
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <a 
-                      href="/downloads/edLEAD-Admin-Windows.zip"
-                      download="edLEAD-Admin-Windows.zip"
-                      className="flex items-center cursor-pointer"
-                    >
-                      <Monitor className="h-4 w-4 mr-2" />
-                      Windows (.zip)
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a 
-                      href="/downloads/edLEAD-Admin-macOS.zip"
-                      download="edLEAD-Admin-macOS.zip"
-                      className="flex items-center cursor-pointer"
-                    >
-                      <Apple className="h-4 w-4 mr-2" />
-                      macOS (.zip)
-                    </a>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-10 w-10">
                 {profile?.profile_picture_url && (
