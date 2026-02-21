@@ -1466,6 +1466,22 @@ export default function AdminSettings() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Scheduled Reports */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Scheduled Reports
+                    </CardTitle>
+                    <CardDescription>
+                      Automatically email CSV application reports to all admins with email digests enabled.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScheduledReportSettings />
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
@@ -1583,5 +1599,78 @@ export default function AdminSettings() {
         </DialogContent>
       </Dialog>
     </AdminLayout>
+  );
+}
+
+// ── Scheduled Report Settings sub-component ──
+function ScheduledReportSettings() {
+  const [frequency, setFrequency] = useState<string>("disabled");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const { adminUser } = useAdminAuth();
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("system_settings")
+        .select("setting_value")
+        .eq("setting_key", "scheduled_report_frequency")
+        .maybeSingle();
+      if (data?.setting_value) {
+        const val = typeof data.setting_value === "string" ? data.setting_value : String(data.setting_value);
+        setFrequency(val.replace(/"/g, ""));
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const handleSave = async (newFreq: string) => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert({
+          setting_key: "scheduled_report_frequency",
+          setting_value: newFreq,
+          description: "Frequency for automated report emails: disabled, weekly, or monthly",
+          updated_by: adminUser?.id,
+        }, { onConflict: "setting_key" });
+
+      if (error) throw error;
+      setFrequency(newFreq);
+      toast({
+        title: "Schedule updated",
+        description: newFreq === "disabled" ? "Scheduled reports have been disabled." : `Reports will be sent ${newFreq}.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />;
+
+  return (
+    <div className="space-y-3">
+      <RadioGroup value={frequency} onValueChange={handleSave} disabled={saving}>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="disabled" id="report-disabled" />
+          <Label htmlFor="report-disabled">Disabled</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="weekly" id="report-weekly" />
+          <Label htmlFor="report-weekly">Weekly (every Monday)</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="monthly" id="report-monthly" />
+          <Label htmlFor="report-monthly">Monthly (1st of each month)</Label>
+        </div>
+      </RadioGroup>
+      <p className="text-xs text-muted-foreground">
+        Reports include a CSV of all applications received during the period, sent to admins with email digest enabled.
+      </p>
+    </div>
   );
 }

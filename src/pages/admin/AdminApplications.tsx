@@ -71,11 +71,13 @@ import {
   MapPin,
   Users,
   Share2,
+  Clock,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SocialBannerPreview } from "@/components/admin/SocialBannerPreview";
 import { ApplicationDetailView } from "@/components/admin/ApplicationDetailView";
 import { ApplicationKanban } from "@/components/admin/ApplicationKanban";
+import { ApplicationTimeline } from "@/components/admin/ApplicationTimeline";
 import { LayoutList, Kanban } from "lucide-react";
 
 
@@ -1269,6 +1271,15 @@ export default function AdminApplications() {
                   application={selectedApplication}
                   cohortName={getCohortName(selectedApplication.cohort_id)}
                 />
+
+                {/* Communication Timeline */}
+                <div className="no-print border-t pt-4">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-primary mb-3 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Communication Timeline
+                  </h3>
+                  <ApplicationTimeline applicationId={selectedApplication.id} />
+                </div>
 
                 {/* Passport Photo & Banner Preview */}
                 {selectedApplication.learner_photo_url && (
