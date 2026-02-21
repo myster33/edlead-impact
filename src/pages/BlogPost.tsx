@@ -6,10 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { 
-  ArrowLeft, 
+  ArrowLeft,
   Calendar, 
   MapPin, 
   School,
@@ -254,14 +262,36 @@ const BlogPost = () => {
             ...(post.reading_time_minutes ? { "timeRequired": `PT${post.reading_time_minutes}M` } : {})
           })}
         </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://edlead.co.za/" },
+              { "@type": "ListItem", "position": 2, "name": "Leaders' Stories", "item": "https://edlead.co.za/blog" },
+              { "@type": "ListItem", "position": 3, "name": post.title }
+            ]
+          })}
+        </script>
       </Helmet>
 
       <article className="container py-12 max-w-4xl">
-        {/* Back button */}
-        <Link to="/blog" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-8 transition-colors">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Stories
-        </Link>
+        {/* Breadcrumb navigation */}
+        <Breadcrumb className="mb-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/">Home</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild><Link to="/blog">Leaders' Stories</Link></BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage className="line-clamp-1 max-w-[200px] md:max-w-xs">{post.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         {/* Header */}
         <header className="mb-8">
