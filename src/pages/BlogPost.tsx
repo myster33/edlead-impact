@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LikeButton } from "@/components/blog/LikeButton";
 import { CommentSection } from "@/components/blog/CommentSection";
+import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 interface BlogPostData {
   id: string;
@@ -208,6 +209,7 @@ const BlogPost = () => {
 
   return (
     <Layout>
+      <ReadingProgressBar />
       <Helmet>
         <title>{post.title} | edLEAD Leaders' Blogs</title>
         <meta name="description" content={post.meta_description || post.summary} />
@@ -224,6 +226,34 @@ const BlogPost = () => {
         {post.tags && post.tags.length > 0 && (
           <meta name="keywords" content={post.tags.join(', ')} />
         )}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": post.title,
+            "description": post.meta_description || post.summary,
+            "image": post.featured_image_url || undefined,
+            "datePublished": post.approved_at,
+            "author": {
+              "@type": "Person",
+              "name": post.author_name,
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "edLEAD",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://edlead.co.za/edlead-icon.png"
+              }
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": shareUrl
+            },
+            ...(post.tags && post.tags.length > 0 ? { "keywords": post.tags.join(", ") } : {}),
+            ...(post.reading_time_minutes ? { "timeRequired": `PT${post.reading_time_minutes}M` } : {})
+          })}
+        </script>
       </Helmet>
 
       <article className="container py-12 max-w-4xl">
