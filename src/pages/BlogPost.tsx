@@ -42,6 +42,7 @@ import {
 import { LikeButton } from "@/components/blog/LikeButton";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { BlogTableOfContents } from "@/components/blog/BlogTableOfContents";
 
 interface BlogPostData {
   id: string;
@@ -398,15 +399,30 @@ const BlogPost = () => {
           <p className="text-lg italic text-muted-foreground">{post.summary}</p>
         </div>
 
-        {/* Content */}
-        <div className="prose prose-lg max-w-none">
-          {post.content.split("\n").map((paragraph, index) => (
-            paragraph.trim() && (
-              <p key={index} className="mb-4 text-foreground leading-relaxed">
-                {paragraph}
-              </p>
-            )
-          ))}
+        {/* Content with TOC sidebar */}
+        <div className="flex gap-8">
+          <div className="prose prose-lg max-w-none flex-1 min-w-0">
+            {post.content.split("\n").map((paragraph, index) => {
+              const trimmed = paragraph.trim();
+              if (!trimmed) return null;
+              const isHeading = trimmed.length <= 60 && trimmed.length >= 3 && !/[.!?,;:]$/.test(trimmed) && trimmed.split(/\s+/).length <= 8;
+              if (isHeading) {
+                return (
+                  <h2 key={index} id={`section-${index}`} className="text-xl font-semibold text-foreground mt-8 mb-3 scroll-mt-16">
+                    {trimmed}
+                  </h2>
+                );
+              }
+              return (
+                <p key={index} className="mb-4 text-foreground leading-relaxed">
+                  {trimmed}
+                </p>
+              );
+            })}
+          </div>
+          <aside className="hidden lg:block w-56 shrink-0">
+            <BlogTableOfContents content={post.content} />
+          </aside>
         </div>
 
         {/* Video Embed */}
