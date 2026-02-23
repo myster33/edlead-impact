@@ -310,7 +310,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 return (
                   <Collapsible key={group.label} defaultOpen={groupHasActive}>
                     <SidebarGroup>
-                      <CollapsibleTrigger className="flex w-full items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors [&[data-state=open]>.chevron]:rotate-180">
+                      <CollapsibleTrigger className="flex w-full items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground tracking-wide hover:text-foreground transition-colors [&[data-state=open]>.chevron]:rotate-180">
                         <group.icon className="h-3.5 w-3.5 shrink-0" />
                         <span className="flex-1">{group.label}</span>
                         <ChevronDown className="chevron h-3.5 w-3.5 shrink-0 transition-transform duration-200" />
