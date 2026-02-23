@@ -12,6 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TeamDMPanel } from "@/components/admin/TeamDMPanel";
 import { Helmet } from "react-helmet-async";
 
 
@@ -295,207 +297,231 @@ export default function AdminChat() {
         </Alert>
       )}
 
-      <div className="flex gap-4 h-[calc(100vh-12rem)]">
-        {/* Conversation List */}
-        <Card className="w-80 shrink-0 flex flex-col">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Chats
-              {totalUnread > 0 && (
-                <Badge variant="destructive" className="text-xs">{totalUnread}</Badge>
-              )}
-            </CardTitle>
-            {onlineAdmins.length > 0 && (
-              <div className="mt-2 p-2 rounded-md bg-muted/50 border border-border/50">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Users className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                    {onlineAdmins.length} online
-                  </span>
-                </div>
-                <OnlineAdminsPanel admins={onlineAdmins} currentAdminId={adminUser?.id} variant="full" />
-              </div>
+      <Tabs defaultValue="visitors" className="h-[calc(100vh-12rem)]">
+        <TabsList className="mb-3">
+          <TabsTrigger value="visitors" className="gap-1.5">
+            <MessageCircle className="h-3.5 w-3.5" />
+            Visitor chats
+            {totalUnread > 0 && (
+              <Badge variant="destructive" className="text-[10px] h-4 min-w-4 ml-1">{totalUnread}</Badge>
             )}
-            <div className="flex gap-1 mt-2">
-              {(["open", "closed", "all"] as const).map((f) => (
-                <Button
-                  key={f}
-                  size="sm"
-                  variant={filter === f ? "default" : "outline"}
-                  onClick={() => setFilter(f)}
-                  className="text-xs capitalize"
-                >
-                  {f}
-                </Button>
-              ))}
-            </div>
-          </CardHeader>
-          <ScrollArea className="flex-1">
-            <div className="px-4 pb-4 space-y-2">
-              {conversations.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-8">No conversations</p>
-              )}
-              {conversations.map((conv) => (
-                <button
-                  key={conv.id}
-                  onClick={() => selectConversation(conv)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    selectedConv?.id === conv.id
-                      ? "bg-accent border-primary"
-                      : "hover:bg-accent/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm truncate">
-                      {conv.visitor_name || "Anonymous"}
-                    </span>
-                    {(conv.unread_count || 0) > 0 && (
-                      <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
-                        {conv.unread_count}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    {conv.visitor_province && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {conv.visitor_province}
-                      </span>
-                    )}
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {new Date(conv.last_message_at || conv.created_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
-        </Card>
+          </TabsTrigger>
+          <TabsTrigger value="team" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            Team
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Chat Area */}
-        <Card className="flex-1 flex flex-col">
-          {selectedConv ? (
-            <>
-              <CardHeader className="pb-3 border-b shrink-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary" />
+        <TabsContent value="visitors" className="h-[calc(100%-3rem)] mt-0">
+          <div className="flex gap-4 h-full">
+            {/* Conversation List */}
+            <Card className="w-80 shrink-0 flex flex-col">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  Chats
+                  {totalUnread > 0 && (
+                    <Badge variant="destructive" className="text-xs">{totalUnread}</Badge>
+                  )}
+                </CardTitle>
+                {onlineAdmins.length > 0 && (
+                  <div className="mt-2 p-2 rounded-md bg-muted/50 border border-border/50">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Users className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-[10px] font-medium text-muted-foreground tracking-wide">
+                        {onlineAdmins.length} online
+                      </span>
                     </div>
-                    <div>
-                      <CardTitle className="text-base">
-                        {selectedConv.visitor_name || "Anonymous"}
-                      </CardTitle>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {selectedConv.visitor_email && <span>{selectedConv.visitor_email}</span>}
-                        {selectedConv.visitor_province && (
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {selectedConv.visitor_province}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <OnlineAdminsPanel admins={onlineAdmins} currentAdminId={adminUser?.id} variant="full" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={selectedConv.status === "open" ? "default" : "secondary"}>
-                      {selectedConv.status}
-                    </Badge>
-                    {selectedConv.status === "open" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => closeConversation(selectedConv.id)}
-                      >
-                        <X className="h-3 w-3 mr-1" /> Close
-                      </Button>
-                    )}
-                  </div>
+                )}
+                <div className="flex gap-1 mt-2">
+                  {(["open", "closed", "all"] as const).map((f) => (
+                    <Button
+                      key={f}
+                      size="sm"
+                      variant={filter === f ? "default" : "outline"}
+                      onClick={() => setFilter(f)}
+                      className="text-xs capitalize"
+                    >
+                      {f}
+                    </Button>
+                  ))}
                 </div>
               </CardHeader>
-
-              <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-                <div className="space-y-3">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${msg.sender_type === "admin" ? "justify-end" : "justify-start"}`}
+              <ScrollArea className="flex-1">
+                <div className="px-4 pb-4 space-y-2">
+                  {conversations.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-8">No conversations</p>
+                  )}
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => selectConversation(conv)}
+                      className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        selectedConv?.id === conv.id
+                          ? "bg-accent border-primary"
+                          : "hover:bg-accent/50"
+                      }`}
                     >
-                      <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
-                          msg.sender_type === "admin"
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-muted text-foreground rounded-bl-sm"
-                        }`}
-                      >
-                        {msg.is_ai_response && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground rounded px-1.5 py-0.5 mb-1">
-                            <Bot className="h-2.5 w-2.5" /> edLEAD
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm truncate">
+                          {conv.visitor_name || "Anonymous"}
+                        </span>
+                        {(conv.unread_count || 0) > 0 && (
+                          <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
+                            {conv.unread_count}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {conv.visitor_province && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {conv.visitor_province}
                           </span>
                         )}
-                        <span className="block">{msg.content}</span>
-                        <p
-                          className={`text-[10px] mt-1 ${
-                            msg.sender_type === "admin"
-                              ? "text-primary-foreground/60"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {new Date(msg.created_at).toLocaleTimeString([], {
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(conv.last_message_at || conv.created_at).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
-                        </p>
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </Card>
+
+            {/* Chat Area */}
+            <Card className="flex-1 flex flex-col">
+              {selectedConv ? (
+                <>
+                  <CardHeader className="pb-3 border-b shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">
+                            {selectedConv.visitor_name || "Anonymous"}
+                          </CardTitle>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {selectedConv.visitor_email && <span>{selectedConv.visitor_email}</span>}
+                            {selectedConv.visitor_province && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {selectedConv.visitor_province}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={selectedConv.status === "open" ? "default" : "secondary"}>
+                          {selectedConv.status}
+                        </Badge>
+                        {selectedConv.status === "open" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => closeConversation(selectedConv.id)}
+                          >
+                            <X className="h-3 w-3 mr-1" /> Close
+                          </Button>
+                        )}
                       </div>
                     </div>
-                  ))}
-                  {visitorTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 text-sm">
-                        <div className="flex gap-1 items-center">
-                          <span className="text-xs text-muted-foreground mr-1">typing</span>
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </CardHeader>
+
+                  <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+                    <div className="space-y-3">
+                      {messages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${msg.sender_type === "admin" ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
+                              msg.sender_type === "admin"
+                                ? "bg-primary text-primary-foreground rounded-br-sm"
+                                : "bg-muted text-foreground rounded-bl-sm"
+                            }`}
+                          >
+                            {msg.is_ai_response && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-primary-foreground/20 text-primary-foreground rounded px-1.5 py-0.5 mb-1">
+                                <Bot className="h-2.5 w-2.5" /> edLEAD
+                              </span>
+                            )}
+                            <span className="block">{msg.content}</span>
+                            <p
+                              className={`text-[10px] mt-1 ${
+                                msg.sender_type === "admin"
+                                  ? "text-primary-foreground/60"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {new Date(msg.created_at).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
                         </div>
+                      ))}
+                      {visitorTyping && (
+                        <div className="flex justify-start">
+                          <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 text-sm">
+                            <div className="flex gap-1 items-center">
+                              <span className="text-xs text-muted-foreground mr-1">typing</span>
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
+                              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+
+                  {selectedConv.status === "open" && (
+                    <div className="p-3 border-t shrink-0">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Type a reply..."
+                          value={newMessage}
+                          onChange={handleInputChange}
+                          onKeyDown={handleKeyDown}
+                          disabled={sending}
+                        />
+                        <Button onClick={sendMessage} disabled={!newMessage.trim() || sending}>
+                          <Send className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   )}
-                </div>
-              </ScrollArea>
-
-              {selectedConv.status === "open" && (
-                <div className="p-3 border-t shrink-0">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Type a reply..."
-                      value={newMessage}
-                      onChange={handleInputChange}
-                      onKeyDown={handleKeyDown}
-                      disabled={sending}
-                    />
-                    <Button onClick={sendMessage} disabled={!newMessage.trim() || sending}>
-                      <Send className="h-4 w-4" />
-                    </Button>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Select a conversation to start replying</p>
                   </div>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">Select a conversation to start replying</p>
-              </div>
-            </div>
-          )}
-        </Card>
-      </div>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="team" className="h-[calc(100%-3rem)] mt-0">
+          <Card className="h-full">
+            <TeamDMPanel />
+          </Card>
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }
