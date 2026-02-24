@@ -46,7 +46,7 @@ export function TeamDMPanel() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { playNotification } = useChatNotificationSound();
+  const { playDMNotification } = useChatNotificationSound();
 
   const fetchThreads = useCallback(async () => {
     if (!adminUser?.id) return;
@@ -125,7 +125,7 @@ export function TeamDMPanel() {
           if (msg.sender_id === adminUser.id || msg.recipient_id === adminUser.id) {
             // Play sound for incoming messages from others
             if (msg.sender_id !== adminUser.id) {
-              playNotification();
+              playDMNotification();
             }
             fetchThreads();
             if (selectedThread) {
