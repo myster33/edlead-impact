@@ -155,6 +155,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { adminUser, signOut } = useAdminAuth();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [unreadChats, setUnreadChats] = useState(0);
+  const [unreadDMs, setUnreadDMs] = useState(0);
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
   
@@ -236,16 +237,49 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Fetch unread team DM count
+  useEffect(() => {
+    if (!adminUser?.id) return;
+
+    const fetchUnreadDMs = async () => {
+      const { data: adminRecord } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("user_id", adminUser.id)
+        .maybeSingle();
+      if (!adminRecord) return;
+
+      const { count } = await supabase
+        .from("admin_direct_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("recipient_id", adminRecord.id)
+        .eq("is_read", false);
+      setUnreadDMs(count || 0);
+    };
+    fetchUnreadDMs();
+
+    const dmChannel = supabase
+      .channel("admin-dm-badge")
+      .on("postgres_changes", { event: "*", schema: "public", table: "admin_direct_messages" }, () => {
+        fetchUnreadDMs();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(dmChannel); };
+  }, [adminUser?.id]);
+
+  const totalChatUnread = unreadChats + unreadDMs;
+
   // Update browser tab title with unread count
   useEffect(() => {
     const baseTitle = "edLEAD Admin";
-    if (unreadChats > 0) {
-      document.title = `(${unreadChats}) ${baseTitle}`;
+    if (totalChatUnread > 0) {
+      document.title = `(${totalChatUnread}) ${baseTitle}`;
     } else {
       document.title = baseTitle;
     }
     return () => { document.title = baseTitle; };
-  }, [unreadChats]);
+  }, [totalChatUnread]);
 
   // Save theme preference to database when it changes
   const handleThemeChange = async (newTheme: string) => {
@@ -326,9 +360,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                     <Link to={item.url} className="flex items-center gap-2">
                                       <item.icon className="h-4 w-4" />
                                       <span className="flex-1">{item.title}</span>
-                        {item.moduleKey === "chat" && unreadChats > 0 && (
+                        {item.moduleKey === "chat" && totalChatUnread > 0 && (
                                         <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
-                                          {unreadChats}
+                                          {totalChatUnread}
                                         </Badge>
                                       )}
                                       {item.moduleKey === "blog" && (
@@ -450,9 +484,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <Link to="/admin/chat" className="relative mr-2">
               <Button variant="ghost" size="icon" className="h-9 w-9">
                 <MessageCircle className="h-5 w-5" />
-                {unreadChats > 0 && (
+                {totalChatUnread > 0 && (
                   <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center px-1">
-                    {unreadChats}
+                    {totalChatUnread}
                   </span>
                 )}
               </Button>
