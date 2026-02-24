@@ -1,38 +1,54 @@
 import { useCallback, useRef } from "react";
 
-// Simple notification sound using Web Audio API - no external files needed
+// Simple notification sounds using Web Audio API - no external files needed
 export function useChatNotificationSound() {
   const audioCtxRef = useRef<AudioContext | null>(null);
 
+  const getCtx = useCallback(() => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  const playTone = useCallback((ctx: AudioContext, freq: number, startTime: number, duration: number, type: OscillatorType = "sine", volume = 0.15) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = type;
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  }, []);
+
+  // Visitor chat: bright ascending two-tone (A5 → D6)
   const playNotification = useCallback(() => {
     try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext();
-      }
-      const ctx = audioCtxRef.current;
-
-      // Create a pleasant two-tone notification
-      const playTone = (freq: number, startTime: number, duration: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = freq;
-        osc.type = "sine";
-        gain.gain.setValueAtTime(0, startTime);
-        gain.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      };
-
+      const ctx = getCtx();
       const now = ctx.currentTime;
-      playTone(880, now, 0.15);        // A5
-      playTone(1174.66, now + 0.12, 0.2); // D6
+      playTone(ctx, 880, now, 0.15);          // A5
+      playTone(ctx, 1174.66, now + 0.12, 0.2); // D6
     } catch {
       // Audio not available, silently ignore
     }
-  }, []);
+  }, [getCtx, playTone]);
 
-  return { playNotification };
+  // Team DM: softer descending three-tone (E5 → C5 → G4) with triangle wave
+  const playDMNotification = useCallback(() => {
+    try {
+      const ctx = getCtx();
+      const now = ctx.currentTime;
+      playTone(ctx, 659.25, now, 0.12, "triangle", 0.12);       // E5
+      playTone(ctx, 523.25, now + 0.1, 0.12, "triangle", 0.12); // C5
+      playTone(ctx, 392.0, now + 0.2, 0.18, "triangle", 0.1);   // G4
+    } catch {
+      // Audio not available, silently ignore
+    }
+  }, [getCtx, playTone]);
+
+  return { playNotification, playDMNotification };
 }

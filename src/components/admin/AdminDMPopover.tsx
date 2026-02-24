@@ -39,7 +39,7 @@ export function AdminDMPopover({ admin, children }: AdminDMPopoverProps) {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { playNotification } = useChatNotificationSound();
+  const { playDMNotification } = useChatNotificationSound();
 
   const fetchMessages = useCallback(async () => {
     if (!adminUser?.id || !admin.id) return;
@@ -93,7 +93,7 @@ export function AdminDMPopover({ admin, children }: AdminDMPopoverProps) {
             });
             // Play sound and mark as read if received
             if (msg.recipient_id === adminUser.id) {
-              playNotification();
+              playDMNotification();
               supabase
                 .from("admin_direct_messages")
                 .update({ is_read: true })

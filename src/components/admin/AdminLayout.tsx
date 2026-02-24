@@ -159,7 +159,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { data: modulePermissions } = useModulePermissions();
   const { theme, setTheme } = useTheme();
   
-  const { playNotification } = useChatNotificationSound();
+  const { playNotification, playDMNotification } = useChatNotificationSound();
   const [commandOpen, setCommandOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -262,12 +262,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       .channel("admin-dm-badge")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_direct_messages" }, (payload) => {
         fetchUnreadDMs();
+        const msg = payload.new as { content?: string; sender_id?: string };
+        if (msg?.sender_id !== adminUser?.id) {
+          playDMNotification();
 
-        // Browser push notification when tab not focused
-        if (document.hidden && "Notification" in window && Notification.permission === "granted") {
-          const msg = payload.new as { content?: string; sender_id?: string };
-          // Only notify for messages sent to this admin
-          if (msg?.sender_id !== adminUser?.id) {
+          // Browser push notification when tab not focused
+          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
             new Notification("New Team Message", {
               body: msg?.content?.slice(0, 100) || "You have a new team message",
               icon: "/edlead-icon.png",
