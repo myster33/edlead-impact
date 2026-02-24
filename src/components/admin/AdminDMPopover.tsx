@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { OnlineAdmin } from "@/hooks/use-online-presence";
+import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ export function AdminDMPopover({ admin, children }: AdminDMPopoverProps) {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { playNotification } = useChatNotificationSound();
 
   const fetchMessages = useCallback(async () => {
     if (!adminUser?.id || !admin.id) return;
@@ -89,8 +91,9 @@ export function AdminDMPopover({ admin, children }: AdminDMPopoverProps) {
               if (prev.find((m) => m.id === msg.id)) return prev;
               return [...prev, msg];
             });
-            // Mark as read if received
+            // Play sound and mark as read if received
             if (msg.recipient_id === adminUser.id) {
+              playNotification();
               supabase
                 .from("admin_direct_messages")
                 .update({ is_read: true })

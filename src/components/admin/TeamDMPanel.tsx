@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ export function TeamDMPanel() {
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { playNotification } = useChatNotificationSound();
 
   const fetchThreads = useCallback(async () => {
     if (!adminUser?.id) return;
@@ -121,6 +123,10 @@ export function TeamDMPanel() {
         (payload) => {
           const msg = payload.new as DMMessage;
           if (msg.sender_id === adminUser.id || msg.recipient_id === adminUser.id) {
+            // Play sound for incoming messages from others
+            if (msg.sender_id !== adminUser.id) {
+              playNotification();
+            }
             fetchThreads();
             if (selectedThread) {
               const partnerId = selectedThread.admin_id;
