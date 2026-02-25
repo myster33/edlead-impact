@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone, History } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone, History, Volume2, VolumeX } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countryCodes } from "@/lib/country-codes";
@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/input-otp";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
+import { getNotificationVolume, setNotificationVolume, useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 
 const countries = [
   "South Africa", "Nigeria", "Kenya", "Ghana", "Tanzania", "Uganda", 
@@ -58,6 +60,65 @@ const provincesByCountry: { [key: string]: string[] } = {
   "Egypt": ["Cairo", "Alexandria", "Giza", "Luxor", "Aswan"],
   "Morocco": ["Casablanca-Settat", "Rabat-Salé-Kénitra", "Marrakech-Safi", "Fès-Meknès", "Tanger-Tétouan-Al Hoceïma"],
 };
+
+function NotificationSoundCard() {
+  const [volume, setVolume] = useState(() => getNotificationVolume());
+  const { playNotification, playDMNotification } = useChatNotificationSound();
+  const isMuted = volume === 0;
+
+  const handleVolumeChange = (val: number[]) => {
+    const v = val[0];
+    setVolume(v);
+    setNotificationVolume(v);
+  };
+
+  const toggleMute = () => {
+    const newVal = isMuted ? 0.15 : 0;
+    setVolume(newVal);
+    setNotificationVolume(newVal);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+          Notification Sounds
+        </CardTitle>
+        <CardDescription>
+          Adjust the volume for chat and team message notification sounds, or mute them entirely.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggleMute}>
+            {isMuted ? <VolumeX className="h-5 w-5 text-muted-foreground" /> : <Volume2 className="h-5 w-5" />}
+          </Button>
+          <Slider
+            min={0}
+            max={0.3}
+            step={0.01}
+            value={[volume]}
+            onValueChange={handleVolumeChange}
+            className="flex-1"
+            disabled={false}
+          />
+          <span className="text-sm text-muted-foreground w-12 text-right">
+            {isMuted ? "Muted" : `${Math.round((volume / 0.3) * 100)}%`}
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => playNotification()}>
+            Test Chat Sound
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => playDMNotification()}>
+            Test DM Sound
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function AdminSettings() {
   const { user, adminUser, isLoading: authLoading } = useAdminAuth();
@@ -992,6 +1053,9 @@ export default function AdminSettings() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Notification Sound Volume */}
+            <NotificationSoundCard />
           </TabsContent>
 
           <TabsContent value="security" className="space-y-6">

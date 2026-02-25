@@ -14,7 +14,7 @@ const features = [
   {
     icon: Calendar,
     title: "Three-Month Programme",
-    description: "A comprehensive hybrid leadership journey",
+    description: "A comprehensive online leadership journey",
   },
   {
     icon: Monitor,
@@ -23,8 +23,8 @@ const features = [
   },
   {
     icon: Users,
-    title: "Monthly Meetups",
-    description: "Leadership gatherings and peer networking",
+    title: "Monthly Workshops",
+    description: "Virtual leadership workshops and peer networking",
   },
   {
     icon: FileText,
@@ -33,8 +33,8 @@ const features = [
   },
   {
     icon: Award,
-    title: "Recognition & Awards",
-    description: "Celebrating outstanding leadership",
+    title: "Final Awards Ceremony",
+    description: "Physical event with certificates, trophies & gifts",
   },
   {
     icon: Briefcase,
@@ -84,7 +84,7 @@ export const ProgrammeSnapshot = () => {
               Programme Snapshot
             </h2>
             <p className="text-secondary-foreground/80 text-lg mb-8 leading-relaxed">
-              edLEAD Captains participate in a structured, three-month programme combining mentorship, training, collaboration, and practical leadership experience.
+              edLEAD Captains participate in a structured, three-month online programme combining mentorship, training, collaboration, and practical leadership experience — culminating in a physical awards ceremony.
             </p>
             <Link to="/programme">
               <Button size="lg" className="gap-2">
