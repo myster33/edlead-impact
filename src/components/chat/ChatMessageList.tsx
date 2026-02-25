@@ -3,23 +3,63 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot } from "lucide-react";
 import edleadIcon from "@/assets/edlead-icon.png";
 
-const renderMessageContent = (content: string) => {
+const renderInlineMarkdown = (text: string, keyPrefix: string = "") => {
   // Parse markdown-style links [text](url) and **bold**
-  const parts = content.split(/(\[.*?\]\(.*?\)|\*\*.*?\*\*)/g);
+  const parts = text.split(/(\[.*?\]\(.*?\)|\*\*.*?\*\*)/g);
   return parts.map((part, i) => {
     const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
     if (linkMatch) {
       return (
-        <a key={i} href={linkMatch[2]} className="underline font-semibold hover:opacity-80" target={linkMatch[2].startsWith('/') ? '_self' : '_blank'} rel="noopener noreferrer">
+        <a key={`${keyPrefix}-${i}`} href={linkMatch[2]} className="underline font-semibold hover:opacity-80" target={linkMatch[2].startsWith('/') ? '_self' : '_blank'} rel="noopener noreferrer">
           {linkMatch[1]}
         </a>
       );
     }
     const boldMatch = part.match(/\*\*(.*?)\*\*/);
     if (boldMatch) {
-      return <strong key={i}>{boldMatch[1]}</strong>;
+      return <strong key={`${keyPrefix}-${i}`}>{boldMatch[1]}</strong>;
     }
     return part;
+  });
+};
+
+const renderMessageContent = (content: string) => {
+  // Split by newlines to preserve line breaks for lists and structured responses
+  const lines = content.split("\n");
+
+  return lines.map((line, lineIdx) => {
+    const trimmed = line.trim();
+    if (trimmed === "") {
+      return <br key={`br-${lineIdx}`} />;
+    }
+
+    // Detect bullet points (-, •, *) or numbered lists (1., 2., etc.)
+    const bulletMatch = trimmed.match(/^[-•*]\s+(.*)/);
+    const numberedMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/);
+
+    if (bulletMatch) {
+      return (
+        <span key={`line-${lineIdx}`} className="flex items-start gap-1.5 mt-0.5">
+          <span className="shrink-0 mt-[3px]">•</span>
+          <span>{renderInlineMarkdown(bulletMatch[1], `l${lineIdx}`)}</span>
+        </span>
+      );
+    }
+
+    if (numberedMatch) {
+      return (
+        <span key={`line-${lineIdx}`} className="flex items-start gap-1.5 mt-0.5">
+          <span className="shrink-0">{numberedMatch[1]}.</span>
+          <span>{renderInlineMarkdown(numberedMatch[2], `l${lineIdx}`)}</span>
+        </span>
+      );
+    }
+
+    return (
+      <span key={`line-${lineIdx}`} className="block">
+        {renderInlineMarkdown(line, `l${lineIdx}`)}
+      </span>
+    );
   });
 };
 
