@@ -1,5 +1,23 @@
 import { useCallback, useRef } from "react";
 
+const STORAGE_KEY = "edlead-notification-volume";
+
+/** Get the stored volume (0–1). Default 0.15. 0 = muted. */
+export function getNotificationVolume(): number {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) return Math.max(0, Math.min(1, Number(stored)));
+  } catch { /* ignore */ }
+  return 0.15;
+}
+
+/** Persist volume preference (0–1). */
+export function setNotificationVolume(v: number) {
+  try {
+    localStorage.setItem(STORAGE_KEY, String(Math.max(0, Math.min(1, v))));
+  } catch { /* ignore */ }
+}
+
 // Simple notification sounds using Web Audio API - no external files needed
 export function useChatNotificationSound() {
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -12,6 +30,10 @@ export function useChatNotificationSound() {
   }, []);
 
   const playTone = useCallback((ctx: AudioContext, freq: number, startTime: number, duration: number, type: OscillatorType = "sine", volume = 0.15) => {
+    const masterVolume = getNotificationVolume();
+    if (masterVolume === 0) return; // muted
+    const adjustedVolume = volume * (masterVolume / 0.15); // scale relative to default
+
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -19,7 +41,7 @@ export function useChatNotificationSound() {
     osc.frequency.value = freq;
     osc.type = type;
     gain.gain.setValueAtTime(0, startTime);
-    gain.gain.linearRampToValueAtTime(volume, startTime + 0.02);
+    gain.gain.linearRampToValueAtTime(adjustedVolume, startTime + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.start(startTime);
     osc.stop(startTime + duration);

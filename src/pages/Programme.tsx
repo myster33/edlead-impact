@@ -18,16 +18,16 @@ const programmeStructure = [
     description: "Virtual leadership workshops, peer discussions, and collaborative learning.",
   },
   {
-    icon: Users,
-    frequency: "Quarterly",
-    title: "In-Person Meetups",
-    description: "Physical gatherings, showcases, inspiration events, and networking opportunities.",
-  },
-  {
     icon: FileText,
     frequency: "Ongoing",
     title: "School Projects",
     description: "Learner-led initiatives focused on safety, discipline, cleanliness, peacebuilding, or positive behaviour.",
+  },
+  {
+    icon: Users,
+    frequency: "End of Programme",
+    title: "Final Awards Ceremony",
+    description: "A physical event celebrating accomplishments with certificates, recognition of best performers, trophies, and gifts.",
   },
 ];
 
@@ -44,7 +44,7 @@ const Programme = () => {
               {displayedText}<span className="animate-pulse">|</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 leading-relaxed">
-              A three-month journey of growth, mentorship, and impact for aspiring student leaders.
+              A three-month online journey of growth, mentorship, and impact — culminating in a physical awards ceremony celebrating your accomplishments.
             </p>
           </div>
         </div>

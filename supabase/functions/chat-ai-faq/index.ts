@@ -29,20 +29,20 @@ edLEAD aims to nurture a generation of student leaders who transform their schoo
 
 === PROGRAMME STRUCTURE ===
 
-edLEAD identifies promising learners nominated by their schools who show leadership potential. High school graduates may also self-nominate. Selected Captains participate in a year-long hybrid program combining:
+edLEAD identifies promising learners nominated by their schools who show leadership potential. High school graduates may also self-nominate. Selected Captains participate in a three-month online programme combining:
 
 - **Weekly**: Online mentorship & leadership development modules (via slides/resources)
 - **Monthly**: Virtual meetups with interactive workshops led by experienced mentors or facilitators
-- **Quarterly**: In-person meetups and events for collaboration, leadership showcases, and inspiration
 - **School Projects**: Each Captain conceptualises and leads a community impact project within their school, focusing on areas such as safety, cleanliness, peacebuilding, or positive behaviour
 - **Monthly Reporting**: Captains submit reports or presentations detailing project progress and outcomes
+- **Final Physical Event**: A culminating in-person ceremony at the end of the three months featuring the awarding of certificates of accomplishment, recognition of best performers (Student Leader of the Month, Student of the Year), and distribution of trophies, prizes, and gifts.
 
 **Recognition System:**
-- Certificates for completion
+- Certificates of accomplishment for all completers
 - Student Leader of the Month recognition
-- Student of the Year Award (trophies, prizes, scholarships, public recognition)
+- Student of the Year Award (trophies, prizes, scholarships, gifts, public recognition)
 
-**Duration**: 12 months (renewable annually)
+**Duration**: 3 months (with cohorts running throughout the year)
 
 **Target Beneficiaries**: Students (Grade 9–12) and Graduates from High School, nominated by schools for leadership potential.
 
