@@ -351,27 +351,34 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           <SidebarContent>
             <SidebarMenu className="px-2 py-1">
-              {filteredItems.map((item) => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link to={item.url} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span className="flex-1">{item.title}</span>
-                        {item.moduleKey === "chat" && totalChatUnread > 0 && (
-                          <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
-                            {totalChatUnread}
-                          </Badge>
-                        )}
-                        {item.moduleKey === "blog" && (
-                          <PendingBlogBadge />
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {filteredGroups.map((group, groupIndex) => (
+                <div key={group.label}>
+                  {groupIndex > 0 && (
+                    <div className="my-2 mx-2 border-t border-border/40" />
+                  )}
+                  {group.items.map((item) => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.url} className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            <span className="flex-1">{item.title}</span>
+                            {item.moduleKey === "chat" && totalChatUnread > 0 && (
+                              <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
+                                {totalChatUnread}
+                              </Badge>
+                            )}
+                            {item.moduleKey === "blog" && (
+                              <PendingBlogBadge />
+                            )}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </div>
+              ))}
             </SidebarMenu>
           </SidebarContent>
 
