@@ -1,6 +1,4 @@
 import { useLocation, Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -14,9 +12,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -31,6 +26,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -54,11 +50,8 @@ import {
   Sun,
   Monitor,
   FileBarChart,
-  Eye,
-  GraduationCap,
-  Radio,
-  ShieldCheck,
   Search,
+  ChevronDown,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -82,48 +75,25 @@ interface AdminProfile {
   theme_preference: string | null;
 }
 
-// Grouped menu items
-const menuGroups = [
-  {
-    label: "Overview",
-    icon: Eye,
-    items: [
-      { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard, moduleKey: "dashboard" },
-      { title: "Analytics", url: "/admin/analytics", icon: BarChart3, moduleKey: "analytics" },
-      { title: "Reports", url: "/admin/reports", icon: FileBarChart, moduleKey: "reports" },
-    ],
-  },
-  {
-    label: "Programme",
-    icon: GraduationCap,
-    items: [
-      { title: "Applications", url: "/admin/applications", icon: FileText, moduleKey: "applications" },
-      { title: "Certificates", url: "/admin/certificates", icon: Award, moduleKey: "certificates" },
-      { title: "Stories", url: "/admin/blog", icon: BookOpen, moduleKey: "blog" },
-    ],
-  },
-  {
-    label: "Communication",
-    icon: Radio,
-    items: [
-      { title: "Live Chat", url: "/admin/chat", icon: MessageCircle, moduleKey: "chat" },
-      { title: "Message Center", url: "/admin/message-center", icon: Send, moduleKey: "message-center" },
-      { title: "Message Templates", url: "/admin/message-templates", icon: MessageSquare, moduleKey: "message-templates" },
-      { title: "Email Templates", url: "/admin/email-templates", icon: Mail, moduleKey: "email-templates" },
-    ],
-  },
-  {
-    label: "Administration",
-    icon: ShieldCheck,
-    items: [
-      { title: "Admin Users", url: "/admin/users", icon: Users, moduleKey: "admin-users" },
-      { title: "Permissions", url: "/admin/permissions", icon: Lock, moduleKey: "permissions" },
-      { title: "Audit Log", url: "/admin/audit-log", icon: History, moduleKey: "audit-log" },
-    ],
-  },
+// Flat menu items (kept in original group order)
+const menuItems = [
+  { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard, moduleKey: "dashboard" },
+  { title: "Analytics", url: "/admin/analytics", icon: BarChart3, moduleKey: "analytics" },
+  { title: "Reports", url: "/admin/reports", icon: FileBarChart, moduleKey: "reports" },
+  { title: "Applications", url: "/admin/applications", icon: FileText, moduleKey: "applications" },
+  { title: "Certificates", url: "/admin/certificates", icon: Award, moduleKey: "certificates" },
+  { title: "Stories", url: "/admin/blog", icon: BookOpen, moduleKey: "blog" },
+  { title: "Live Chat", url: "/admin/chat", icon: MessageCircle, moduleKey: "chat" },
+  { title: "Message Center", url: "/admin/message-center", icon: Send, moduleKey: "message-center" },
+  { title: "Message Templates", url: "/admin/message-templates", icon: MessageSquare, moduleKey: "message-templates" },
+  { title: "Email Templates", url: "/admin/email-templates", icon: Mail, moduleKey: "email-templates" },
+  { title: "Admin Users", url: "/admin/users", icon: Users, moduleKey: "admin-users" },
+  { title: "Permissions", url: "/admin/permissions", icon: Lock, moduleKey: "permissions" },
+  { title: "Audit Log", url: "/admin/audit-log", icon: History, moduleKey: "audit-log" },
+  { title: "Settings", url: "/admin/settings", icon: Settings, moduleKey: "settings" },
 ];
 
-type MenuItem = (typeof menuGroups)[number]["items"][number];
+type MenuItem = (typeof menuItems)[number];
 
 // Filter menu items based on module permissions
 const filterItem = (
@@ -132,9 +102,28 @@ const filterItem = (
   permissions: ModulePermission[] | undefined
 ): boolean => {
   if (role === "admin") return true;
+  // Settings is always visible
+  if (item.moduleKey === "settings") return true;
   const permission = permissions?.find((p) => p.module_key === item.moduleKey);
   if (!permission) return false;
   return permission.allowed_roles.includes(role as "viewer" | "reviewer" | "admin");
+};
+
+// Keep grouped structure for breadcrumb compatibility
+const menuGroups = [
+  { label: "Overview", items: menuItems.slice(0, 3) },
+  { label: "Programme", items: menuItems.slice(3, 6) },
+  { label: "Communication", items: menuItems.slice(6, 10) },
+  { label: "Administration", items: menuItems.slice(10, 13) },
+  { label: "Account", items: menuItems.slice(13) },
+];
+
+const getFilteredItems = (
+  role: string | undefined,
+  permissions: ModulePermission[] | undefined
+) => {
+  if (!role) return [];
+  return menuItems.filter((item) => filterItem(item, role, permissions));
 };
 
 const getFilteredGroups = (
@@ -309,9 +298,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
 
-  // Get filtered groups based on role and permissions
+  // Get filtered groups based on role and permissions (for breadcrumb)
   const filteredGroups = useMemo(
     () => getFilteredGroups(adminUser?.role, modulePermissions),
+    [adminUser?.role, modulePermissions]
+  );
+
+  // Flat filtered items for sidebar
+  const filteredItems = useMemo(
+    () => getFilteredItems(adminUser?.role, modulePermissions),
     [adminUser?.role, modulePermissions]
   );
 
@@ -355,99 +350,34 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </SidebarHeader>
 
           <SidebarContent>
-            {filteredGroups.map((group) => {
-                const groupHasActive = group.items.some((item) => location.pathname === item.url);
+            <SidebarMenu className="px-2 py-1">
+              {filteredItems.map((item) => {
+                const isActive = location.pathname === item.url;
                 return (
-                  <Collapsible key={group.label} defaultOpen={groupHasActive}>
-                    <SidebarGroup>
-                      <CollapsibleTrigger className="flex w-full items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground tracking-wide hover:text-foreground transition-colors [&[data-state=open]>.chevron]:rotate-180">
-                        <group.icon className="h-3.5 w-3.5 shrink-0" />
-                        <span className="flex-1">{group.label}</span>
-                        <ChevronDown className="chevron h-3.5 w-3.5 shrink-0 transition-transform duration-200" />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarGroupContent>
-                          <SidebarMenu>
-                            {group.items.map((item) => {
-                              const isActive = location.pathname === item.url;
-                              return (
-                                <SidebarMenuItem key={item.title}>
-                                  <SidebarMenuButton asChild isActive={isActive}>
-                                    <Link to={item.url} className="flex items-center gap-2">
-                                      <item.icon className="h-4 w-4" />
-                                      <span className="flex-1">{item.title}</span>
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link to={item.url} className="flex items-center gap-2">
+                        <item.icon className="h-4 w-4" />
+                        <span className="flex-1">{item.title}</span>
                         {item.moduleKey === "chat" && totalChatUnread > 0 && (
-                                        <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
-                                          {totalChatUnread}
-                                        </Badge>
-                                      )}
-                                      {item.moduleKey === "blog" && (
-                                        <PendingBlogBadge />
-                                      )}
-                                    </Link>
-                                  </SidebarMenuButton>
-                                </SidebarMenuItem>
-                              );
-                            })}
-                          </SidebarMenu>
-                        </SidebarGroupContent>
-                      </CollapsibleContent>
-                    </SidebarGroup>
-                  </Collapsible>
-                );
-              })
-            }
-
-            <SidebarGroup>
-              <SidebarGroupLabel>Account</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={location.pathname === "/admin/settings"}>
-                      <Link to="/admin/settings">
-                        <Settings className="h-4 w-4" />
-                        <span>Settings</span>
+                          <Badge variant="destructive" className="text-xs h-5 min-w-5 flex items-center justify-center">
+                            {totalChatUnread}
+                          </Badge>
+                        )}
+                        {item.moduleKey === "blog" && (
+                          <PendingBlogBadge />
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+                );
+              })}
+            </SidebarMenu>
           </SidebarContent>
 
           <SidebarFooter className="p-4 border-t">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-10 w-10">
-                {profile?.profile_picture_url && (
-                  <AvatarImage src={profile.profile_picture_url} alt={displayName} />
-                )}
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate text-foreground">{displayName}</p>
-                {profile?.position && (
-                  <p className="text-xs text-muted-foreground truncate">{profile.position}</p>
-                )}
-                <div className="flex items-center gap-1">
-                  <Shield className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground capitalize">{adminUser?.role}</span>
-                </div>
-                {adminUser?.role !== "admin" && (profile?.country || profile?.province) && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <MapPin className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground truncate">
-                      {profile.province && profile.country 
-                        ? `${profile.province}, ${profile.country}`
-                        : profile.province || profile.country}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
             {onlineAdmins.length > 0 && (
-              <div className="mb-3 p-2 rounded-lg bg-muted/50 border border-border/50">
+              <div className="p-2 rounded-lg bg-muted/50 border border-border/50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Online Now</span>
                   <span className="text-[10px] text-muted-foreground">{onlineAdmins.length}</span>
@@ -455,15 +385,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <OnlineAdminsPanel admins={onlineAdmins} currentAdminId={adminUser?.id} variant="compact" />
               </div>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={handleSignOut}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
           </SidebarFooter>
         </Sidebar>
 
@@ -535,6 +456,57 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <DropdownMenuItem onClick={() => handleThemeChange("system")}>
                   <Monitor className="h-4 w-4 mr-2" />
                   System
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Profile dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-9 gap-2 px-2">
+                  <Avatar className="h-7 w-7">
+                    {profile?.profile_picture_url && (
+                      <AvatarImage src={profile.profile_picture_url} alt={displayName} />
+                    )}
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline text-sm font-medium">{displayName}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium">{displayName}</p>
+                  {profile?.position && (
+                    <p className="text-xs text-muted-foreground">{profile.position}</p>
+                  )}
+                  <div className="flex items-center gap-1 mt-1">
+                    <Shield className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground capitalize">{adminUser?.role}</span>
+                  </div>
+                  {(profile?.country || profile?.province) && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground truncate">
+                        {profile.province && profile.country
+                          ? `${profile.province}, ${profile.country}`
+                          : profile.province || profile.country}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

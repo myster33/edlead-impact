@@ -18,7 +18,7 @@ interface MenuItem {
 
 interface MenuGroup {
   label: string;
-  icon: React.ComponentType;
+  icon?: React.ComponentType;
   items: MenuItem[];
 }
 
