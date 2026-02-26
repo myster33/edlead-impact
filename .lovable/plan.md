@@ -1,67 +1,66 @@
 
 
-# Session Activity and Login History + New Proposals
+## Plan: Restructure Admin Sidebar Layout
 
-## Feature: Session Activity and Login History
+### What Changes
 
-Add a new "Activity" tab to Admin Settings that shows login history with metadata (timestamp, IP, browser/device) and lets admins see their recent sign-in activity.
+**1. Move account profile to the top-right header area**
+- Remove the profile picture, name, position, role, and location from the sidebar footer
+- Add a profile dropdown in the header (top-right), next to the theme toggle
+- The dropdown trigger will show the avatar and name
+- The dropdown menu will display full profile details (name, position, role, location), a link to Settings, and Sign Out
+- The Online Admins panel moves into the sidebar footer (kept minimal) or stays in the dropdown
 
-### Database Changes
+**2. Flatten the sidebar menu (remove collapsible groups)**
+- Remove the `Collapsible`/`CollapsibleTrigger`/`CollapsibleContent` wrappers
+- List all modules as a single flat list in their current order: Dashboard, Analytics, Reports, Applications, Certificates, Stories, Live Chat, Message Center, Message Templates, Email Templates, Admin Users, Permissions, Audit Log, Settings
+- Each item keeps its icon, active state styling, and badges (chat unread, pending blogs)
 
-Create a new `admin_login_history` table:
+**3. Sidebar footer simplification**
+- Footer will only contain the Online Admins panel (if any are online) and the Sign Out button
+- Or footer can be removed entirely if Sign Out moves to the header profile dropdown
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | Primary key, auto-generated |
-| admin_user_id | uuid | References admin_users(id) |
-| logged_in_at | timestamptz | Defaults to now() |
-| ip_address | text | Nullable, captured from request headers |
-| user_agent | text | Nullable, raw browser user-agent string |
-| device_label | text | Nullable, parsed summary like "Chrome on Windows" |
+### Technical Details
 
-RLS policies will restrict each admin to viewing only their own login history.
+**File: `src/components/admin/AdminLayout.tsx`**
 
-Realtime is not needed for this table.
+- Remove imports: `ChevronDown`, `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger`, `Eye`, `GraduationCap`, `Radio`, `ShieldCheck` (group icons no longer needed)
+- Create a flat `allFilteredItems` array from `filteredGroups.flatMap(g => g.items)` plus the Settings item
+- Replace the grouped sidebar content with a single `<SidebarMenu>` iterating over the flat list
+- Move the avatar + profile info + sign out into a `<DropdownMenu>` in the header, positioned after the theme toggle
+- Sidebar footer: keep only the Online Admins panel (compact) or remove entirely
+- The `AdminBreadcrumb` component still receives `filteredGroups` for breadcrumb path resolution (no change needed there)
 
-### Login Tracking
+### Layout After Change
 
-Modify `AdminAuthContext.tsx` to insert a row into `admin_login_history` after a successful `signIn` call, capturing:
-- `admin_user_id` from the matched admin_users record
-- `user_agent` from `navigator.userAgent`
-- `device_label` parsed from the user-agent string (a simple helper to extract browser + OS)
-- IP address will be left null on the client side (would require a server call to determine)
+```text
+HEADER: [☰] [Breadcrumb...] [Search] [🔔] [💬] [🌙] [👤 Name ▾]
+                                                        └─ Dropdown:
+                                                           Name / Position
+                                                           Role / Location
+                                                           ─────────────
+                                                           Settings
+                                                           Sign Out
 
-### New "Activity" Tab in Settings
+SIDEBAR:
+  [Logo + Admin badge]
+  ─────────────────────
+  Dashboard
+  Analytics
+  Reports
+  Applications
+  Certificates
+  Stories
+  Live Chat        (3)
+  Message Center
+  Message Templates
+  Email Templates
+  Admin Users
+  Permissions
+  Audit Log
+  Settings
+  ─────────────────────
+  Online Now (2)
+  [avatars...]
+```
 
-Add a third tab to the Settings page called "Activity" (with a `History` icon). It will show:
-- A table of the last 50 login events for the current admin
-- Columns: Date/Time (formatted with `date-fns`), Device/Browser, IP Address (or "N/A")
-- Most recent logins at the top
-- A simple empty state if no history exists yet
-
-### Files to Create
-| File | Purpose |
-|------|---------|
-| (migration) | Create `admin_login_history` table with RLS |
-
-### Files to Modify
-| File | Changes |
-|------|---------|
-| `src/contexts/AdminAuthContext.tsx` | Insert login history row after successful sign-in; add user-agent parsing helper |
-| `src/pages/admin/AdminSettings.tsx` | Add "Activity" tab with login history table |
-
----
-
-## Other Upgrade Proposals
-
-Here are fresh ideas beyond the 5 already discussed:
-
-1. **Global Search Across Data** -- A search bar in the header that searches across applications, blog posts, admin users, and audit logs, showing grouped results with direct links.
-
-2. **Admin Dashboard Announcements / Pinned Notes** -- Let admins pin a short announcement or note to the top of the dashboard visible to all admin users (useful for "cohort closes Friday" type notices).
-
-3. **Application Kanban Board View** -- An alternative drag-and-drop Kanban view for Applications (columns: Pending, Under Review, Approved, Rejected) alongside the existing table view.
-
-4. **Scheduled Reports / Auto-Export** -- Let admins schedule weekly or monthly CSV exports of application data or analytics to be emailed automatically.
-
-5. **Admin User Online Presence Indicators** -- Show green/grey dots next to admin names in the sidebar footer and chat to indicate who is currently online.
