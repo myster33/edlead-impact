@@ -76,6 +76,8 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SocialBannerPreview } from "@/components/admin/SocialBannerPreview";
 import { ApplicationDetailView } from "@/components/admin/ApplicationDetailView";
+import { TableSkeleton } from "@/components/admin/TableSkeleton";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import { ApplicationKanban } from "@/components/admin/ApplicationKanban";
 import { ApplicationTimeline } from "@/components/admin/ApplicationTimeline";
 import { LayoutList, Kanban } from "lucide-react";
@@ -1061,14 +1063,15 @@ export default function AdminApplications() {
         <Card>
           <CardContent className="p-0">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="p-4">
+                <TableSkeleton columns={7} rows={6} />
               </div>
             ) : filteredApplications.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No applications found</p>
-              </div>
+              <AdminEmptyState
+                icon={FileText}
+                title="No applications found"
+                description="There are no applications matching your current filters. Try adjusting your search or filters."
+              />
             ) : (
               <>
                 <div className="overflow-x-auto">
