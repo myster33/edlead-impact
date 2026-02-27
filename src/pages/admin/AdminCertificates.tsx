@@ -72,6 +72,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { TableSkeleton } from "@/components/admin/TableSkeleton";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 interface Cohort {
   id: string;
@@ -851,9 +853,7 @@ export default function AdminCertificates() {
             </div>
 
             {cohortsLoading ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
+              <TableSkeleton columns={5} rows={3} />
             ) : (
               <Card>
                 <Table>
@@ -982,9 +982,7 @@ export default function AdminCertificates() {
             </div>
 
             {templatesLoading ? (
-              <div className="flex justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
+              <TableSkeleton columns={4} rows={2} />
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {templates?.map((template) => (
@@ -1179,9 +1177,7 @@ export default function AdminCertificates() {
                     )}
 
                     {allApprovedLoading ? (
-                      <div className="flex justify-center p-4">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                      </div>
+                      <TableSkeleton columns={3} rows={4} />
                     ) : filteredAllApprovedApplications && filteredAllApprovedApplications.length > 0 ? (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between mb-2">
@@ -1353,9 +1349,7 @@ export default function AdminCertificates() {
                         Available Recipients from {cohorts?.find(c => c.id === selectedCohort)?.name}
                       </h3>
                       {applicationsLoading ? (
-                        <div className="flex justify-center p-4">
-                          <Loader2 className="h-6 w-6 animate-spin" />
-                        </div>
+                        <TableSkeleton columns={3} rows={4} />
                       ) : availableApplications && availableApplications.length > 0 ? (
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 mb-2">

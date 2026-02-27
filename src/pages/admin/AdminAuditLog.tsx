@@ -4,6 +4,7 @@ import { format, subDays, eachDayOfInterval, startOfDay } from "date-fns";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,8 @@ import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from "recharts";
+import { TableSkeleton } from "@/components/admin/TableSkeleton";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 interface AdminUser {
   id: string;
@@ -551,9 +554,17 @@ export default function AdminAuditLog() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <AdminLayout>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Skeleton className="h-8 w-40 mb-2" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+          <TableSkeleton columns={5} rows={8} showStats statsCount={4} />
+        </div>
+      </AdminLayout>
     );
   }
 
@@ -880,17 +891,15 @@ export default function AdminAuditLog() {
             <Card>
               <CardContent className="pt-6">
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin" />
+              <div className="p-4">
+                <TableSkeleton columns={5} rows={8} />
               </div>
             ) : filteredLogs.length === 0 ? (
-              <div className="text-center py-12">
-                <History className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No audit logs found</h3>
-                <p className="text-muted-foreground">
-                  Actions will appear here once admins start making changes.
-                </p>
-              </div>
+              <AdminEmptyState
+                icon={History}
+                title="No audit logs found"
+                description="Actions will appear here once admins start making changes. Try adjusting your filters if you expected results."
+              />
             ) : (
               <>
                 <Table>

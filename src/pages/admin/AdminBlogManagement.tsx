@@ -69,6 +69,8 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { TableSkeleton } from "@/components/admin/TableSkeleton";
+import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
@@ -750,9 +752,9 @@ const AdminBlogManagement = () => {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <AdminLayout>
+        <TableSkeleton columns={6} rows={5} showStats statsCount={3} />
+      </AdminLayout>
     );
   }
 
@@ -1102,13 +1104,13 @@ const AdminBlogManagement = () => {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
+          <TableSkeleton columns={6} rows={5} />
         ) : posts.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <p>No blog posts found.</p>
-          </div>
+          <AdminEmptyState
+            icon={Eye}
+            title="No stories found"
+            description="There are no stories matching your current filters. Stories submitted by learners will appear here."
+          />
         ) : (
           <div className="rounded-md border">
             <Table>
