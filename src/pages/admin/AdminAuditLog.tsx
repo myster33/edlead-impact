@@ -637,7 +637,7 @@ export default function AdminAuditLog() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -690,18 +690,18 @@ export default function AdminAuditLog() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col gap-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative sm:col-span-2 lg:col-span-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by action, table, admin, or record ID..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
                 <Select value={actionFilter} onValueChange={setActionFilter}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger>
                     <SelectValue placeholder="Filter by action" />
                   </SelectTrigger>
                   <SelectContent>
@@ -718,7 +718,7 @@ export default function AdminAuditLog() {
                   </SelectContent>
                 </Select>
                 <Select value={tableFilter} onValueChange={setTableFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger>
                     <SelectValue placeholder="Filter by table" />
                   </SelectTrigger>
                   <SelectContent>
@@ -729,7 +729,7 @@ export default function AdminAuditLog() {
                   </SelectContent>
                 </Select>
                 <Select value={adminFilter} onValueChange={setAdminFilter}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger>
                     <SelectValue placeholder="Filter by admin" />
                   </SelectTrigger>
                   <SelectContent>
@@ -902,31 +902,32 @@ export default function AdminAuditLog() {
               />
             ) : (
               <>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date & Time</TableHead>
-                      <TableHead>Admin</TableHead>
+                      <TableHead className="hidden sm:table-cell">Admin</TableHead>
                       <TableHead>Action</TableHead>
-                      <TableHead>Table</TableHead>
-                      <TableHead>Record ID</TableHead>
+                      <TableHead className="hidden md:table-cell">Table</TableHead>
+                      <TableHead className="hidden lg:table-cell">Record ID</TableHead>
                       <TableHead className="text-right">Details</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredLogs.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="whitespace-nowrap">
-                          {format(new Date(log.created_at), "MMM dd, yyyy HH:mm")}
+                        <TableCell className="whitespace-nowrap text-xs sm:text-sm">
+                          {format(new Date(log.created_at), "MMM dd, HH:mm")}
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
+                        <TableCell className="hidden sm:table-cell max-w-[200px] truncate">
                           {log.admin_email || "Unknown"}
                         </TableCell>
                         <TableCell>{getActionBadge(log.action)}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           <Badge variant="outline">{log.table_name}</Badge>
                         </TableCell>
-                        <TableCell className="font-mono text-xs max-w-[100px] truncate">
+                        <TableCell className="hidden lg:table-cell font-mono text-xs max-w-[100px] truncate">
                           {log.record_id?.slice(0, 8) || "—"}
                         </TableCell>
                         <TableCell className="text-right">
@@ -942,12 +943,12 @@ export default function AdminAuditLog() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-                    {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount} entries
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 pt-4 border-t">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} of {totalCount}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -957,10 +958,10 @@ export default function AdminAuditLog() {
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <span className="hidden sm:inline ml-1">Previous</span>
                     </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {currentPage} of {totalPages}
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      {currentPage}/{totalPages}
                     </span>
                     <Button
                       variant="outline"
@@ -968,7 +969,7 @@ export default function AdminAuditLog() {
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
-                      Next
+                      <span className="hidden sm:inline mr-1">Next</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
