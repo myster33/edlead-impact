@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Monitor, Calendar, Users, FileText, ArrowRight, CheckCircle } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
+import { Helmet } from "react-helmet-async";
 
 const programmeStructure = [
   {
@@ -36,6 +37,30 @@ const Programme = () => {
   
   return (
     <Layout>
+      <Helmet>
+        <title>The edLEAD Programme | Leadership Development for Students</title>
+        <meta name="description" content="Discover the edLEAD programme — a three-month journey of mentorship, leadership workshops, school projects, and a final awards ceremony for high school learners." />
+        <meta property="og:title" content="The edLEAD Programme | Leadership Development for Students" />
+        <meta property="og:description" content="A three-month online journey of growth, mentorship, and impact — culminating in a physical awards ceremony celebrating your accomplishments." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edlead.co.za/programme" />
+        <meta property="og:image" content="https://edlead.co.za/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="The edLEAD Programme | Leadership Development for Students" />
+        <meta name="twitter:description" content="A three-month online journey of growth, mentorship, and impact for high school learners across Africa." />
+        <link rel="canonical" href="https://edlead.co.za/programme" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Course",
+          "name": "edLEAD Leadership Programme",
+          "description": "A three-month youth leadership programme combining mentorship, training, collaboration, and practical leadership experience.",
+          "url": "https://edlead.co.za/programme",
+          "provider": { "@type": "EducationalOrganization", "name": "edLEAD", "url": "https://edlead.co.za" },
+          "educationalLevel": "High School",
+          "duration": "P3M",
+          "courseMode": "Online"
+        })}</script>
+      </Helmet>
       {/* Hero */}
       <section className="py-20 bg-secondary text-secondary-foreground">
         <div className="container">

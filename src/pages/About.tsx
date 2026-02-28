@@ -1,12 +1,40 @@
 import { Layout } from "@/components/layout/Layout";
 import { Target, Eye, Rocket, ShieldCheck, Award, Heart, TrendingUp } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
+import { Helmet } from "react-helmet-async";
 
 const About = () => {
   const { displayedText } = useTypingAnimation("About edLEAD", 50);
   
   return (
     <Layout>
+      <Helmet>
+        <title>About edLEAD | Transforming Student Leaders in Africa</title>
+        <meta name="description" content="Learn about edLEAD's mission to empower learners with leadership, academic, and social skills to positively influence school culture across Africa." />
+        <meta property="og:title" content="About edLEAD | Transforming Student Leaders in Africa" />
+        <meta property="og:description" content="edLEAD is a youth leadership development programme creating intelligent, well-managed, and positive learning environments across Africa." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edlead.co.za/about" />
+        <meta property="og:image" content="https://edlead.co.za/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="About edLEAD | Transforming Student Leaders in Africa" />
+        <meta name="twitter:description" content="edLEAD is a youth leadership development programme creating intelligent, well-managed, and positive learning environments across Africa." />
+        <link rel="canonical" href="https://edlead.co.za/about" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "name": "About edLEAD",
+          "description": "edLEAD is a youth leadership development programme creating intelligent, well-managed, and positive learning environments across Africa.",
+          "url": "https://edlead.co.za/about",
+          "mainEntity": {
+            "@type": "EducationalOrganization",
+            "name": "edLEAD",
+            "url": "https://edlead.co.za",
+            "foundingDate": "2020",
+            "description": "A national youth leadership programme equipping high school learners with leadership, academic, and social skills."
+          }
+        })}</script>
+      </Helmet>
       {/* Hero */}
       <section className="py-20 bg-secondary text-secondary-foreground">
         <div className="container">
