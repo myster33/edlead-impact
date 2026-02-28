@@ -1112,31 +1112,31 @@ const AdminBlogManagement = () => {
             description="There are no stories matching your current filters. Stories submitted by learners will appear here."
           />
         ) : (
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead className="hidden sm:table-cell">Author</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Featured</TableHead>
-                  <TableHead>Submitted</TableHead>
+                  <TableHead className="hidden lg:table-cell">Featured</TableHead>
+                  <TableHead className="hidden sm:table-cell">Submitted</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
                   <TableRow key={post.id}>
-                    <TableCell className="font-medium max-w-xs truncate">
+                    <TableCell className="font-medium max-w-[200px] sm:max-w-xs truncate">
                       {post.title}
                     </TableCell>
-                    <TableCell>{post.author_name}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">{post.author_name}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge variant="outline">{post.category}</Badge>
                     </TableCell>
                     <TableCell>{getStatusBadge(post.status)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {post.status === "approved" && (
                         <Button
                           variant="ghost"
@@ -1149,7 +1149,7 @@ const AdminBlogManagement = () => {
                         </Button>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {format(new Date(post.submitted_at), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell className="text-right">
