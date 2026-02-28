@@ -2,6 +2,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Target, Shield, TrendingUp, Users } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
+import { Helmet } from "react-helmet-async";
 const goals = [
   {
     icon: Users,
@@ -37,6 +38,27 @@ const Impact = () => {
   
   return (
     <Layout>
+      <Helmet>
+        <title>Our Impact | edLEAD — Measuring Change in African Schools</title>
+        <meta name="description" content="See how edLEAD is building student leadership capacity, promoting safer schools, and strengthening school culture across Africa." />
+        <meta property="og:title" content="Our Impact | edLEAD — Measuring Change in African Schools" />
+        <meta property="og:description" content="Measuring the change we create in schools and communities across Africa through student leadership development." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edlead.co.za/impact" />
+        <meta property="og:image" content="https://edlead.co.za/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Our Impact | edLEAD" />
+        <meta name="twitter:description" content="Measuring the change we create in schools and communities across Africa." />
+        <link rel="canonical" href="https://edlead.co.za/impact" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "Our Impact",
+          "description": "Measuring the change edLEAD creates in schools and communities across Africa.",
+          "url": "https://edlead.co.za/impact",
+          "isPartOf": { "@type": "WebSite", "name": "edLEAD", "url": "https://edlead.co.za" }
+        })}</script>
+      </Helmet>
       {/* Hero */}
       <section className="py-20 bg-secondary text-secondary-foreground">
         <div className="container">

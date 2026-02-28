@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Helmet } from "react-helmet-async";
 
 import { countryCodes } from "@/lib/country-codes";
 
@@ -119,6 +120,37 @@ const Contact = () => {
 
   return (
     <Layout>
+      <Helmet>
+        <title>Contact Us | edLEAD — Get in Touch</title>
+        <meta name="description" content="Contact edLEAD for questions about our youth leadership programme, partnership opportunities, or general inquiries. Email info@edlead.co.za." />
+        <meta property="og:title" content="Contact Us | edLEAD — Get in Touch" />
+        <meta property="og:description" content="Have questions or want to get involved with edLEAD? Reach out to us at info@edlead.co.za." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edlead.co.za/contact" />
+        <meta property="og:image" content="https://edlead.co.za/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Contact Us | edLEAD" />
+        <meta name="twitter:description" content="Have questions or want to get involved with edLEAD? Reach out to us." />
+        <link rel="canonical" href="https://edlead.co.za/contact" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          "name": "Contact edLEAD",
+          "description": "Contact edLEAD for questions about our youth leadership programme.",
+          "url": "https://edlead.co.za/contact",
+          "mainEntity": {
+            "@type": "EducationalOrganization",
+            "name": "edLEAD",
+            "email": "info@edlead.co.za",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "19 Ameshoff St, Braamfontein",
+              "addressLocality": "Johannesburg",
+              "addressCountry": "ZA"
+            }
+          }
+        })}</script>
+      </Helmet>
       {/* Hero */}
       <section className="py-20 bg-secondary text-secondary-foreground">
         <div className="container">

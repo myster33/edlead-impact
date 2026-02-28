@@ -22,6 +22,7 @@ import { School, Users, Calendar, BookOpen, Loader2 } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Helmet } from "react-helmet-async";
 
 // Partner logos
 import alxLogo from "@/assets/partners/alx.jpg";
@@ -98,6 +99,27 @@ const Partners = () => {
   
   return (
     <Layout>
+      <Helmet>
+        <title>Partners & Schools | edLEAD — Join the Movement</title>
+        <meta name="description" content="Partner with edLEAD to expand youth leadership development across Africa. Schools, NGOs, and corporate partners welcome." />
+        <meta property="og:title" content="Partners & Schools | edLEAD — Join the Movement" />
+        <meta property="og:description" content="Join edLEAD in building a generation of ethical, confident, and socially responsible student leaders across Africa." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://edlead.co.za/partners" />
+        <meta property="og:image" content="https://edlead.co.za/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Partners & Schools | edLEAD" />
+        <meta name="twitter:description" content="Partner with edLEAD to expand youth leadership development across Africa." />
+        <link rel="canonical" href="https://edlead.co.za/partners" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "Partners & Schools",
+          "description": "Partner with edLEAD to expand youth leadership development across Africa.",
+          "url": "https://edlead.co.za/partners",
+          "isPartOf": { "@type": "WebSite", "name": "edLEAD", "url": "https://edlead.co.za" }
+        })}</script>
+      </Helmet>
       {/* Hero */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container">
