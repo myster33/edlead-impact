@@ -5,6 +5,9 @@
  * Open Graph data, and JSON-LD structured data so that social media crawlers
  * and search engine bots can read them without executing JavaScript.
  * 
+ * Also fetches published blog posts from the database and generates
+ * per-post HTML files with dynamic meta tags.
+ * 
  * Run after `vite build` to create per-route HTML files in dist/.
  */
 
@@ -17,6 +20,21 @@ const distDir = path.resolve(__dirname, '../dist');
 
 const SITE_URL = 'https://edlead.co.za';
 const OG_IMAGE = `${SITE_URL}/og-image.png`;
+
+// Read Supabase config from env or .env file
+function loadEnv() {
+  const envPath = path.resolve(__dirname, '../.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    const vars = {};
+    for (const line of envContent.split('\n')) {
+      const match = line.match(/^(\w+)=["']?([^"'\n]+)["']?$/);
+      if (match) vars[match[1]] = match[2];
+    }
+    return vars;
+  }
+  return {};
+}
 
 // Define all public routes with their SEO metadata
 const routes = [
@@ -179,6 +197,7 @@ const routes = [
 ];
 
 function escapeHtml(str) {
+  if (!str) return '';
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -187,46 +206,136 @@ function escapeHtml(str) {
 }
 
 function generateHtml(route, templateHtml) {
-  // Build the meta tags to inject
+  const ogType = route.ogType || 'website';
+  const ogImage = route.ogImage || OG_IMAGE;
+
   const metaTags = [
     `<title>${escapeHtml(route.title)}</title>`,
     `<meta name="description" content="${escapeHtml(route.description)}" />`,
     `<meta property="og:title" content="${escapeHtml(route.ogTitle)}" />`,
     `<meta property="og:description" content="${escapeHtml(route.ogDescription)}" />`,
-    `<meta property="og:type" content="website" />`,
+    `<meta property="og:type" content="${ogType}" />`,
     `<meta property="og:url" content="${escapeHtml(route.canonical)}" />`,
-    `<meta property="og:image" content="${escapeHtml(OG_IMAGE)}" />`,
+    `<meta property="og:image" content="${escapeHtml(ogImage)}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="640" />`,
     `<meta property="og:site_name" content="edLEAD" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(route.ogTitle)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(route.ogDescription)}" />`,
-    `<meta name="twitter:image" content="${escapeHtml(OG_IMAGE)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(ogImage)}" />`,
     `<link rel="canonical" href="${escapeHtml(route.canonical)}" />`,
-  ].join('\n    ');
+  ];
 
-  const jsonLdScript = `<script type="application/ld+json">${JSON.stringify(route.jsonLd)}</script>`;
+  // Add keywords if present
+  if (route.keywords) {
+    metaTags.push(`<meta name="keywords" content="${escapeHtml(route.keywords)}" />`);
+  }
 
-  // Replace the default title and description in the template
+  const metaString = metaTags.join('\n    ');
+
+  // Build JSON-LD scripts
+  let jsonLdScripts = '';
+  if (route.jsonLd) {
+    const ldItems = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
+    jsonLdScripts = ldItems
+      .map(ld => `<script type="application/ld+json">${JSON.stringify(ld)}</script>`)
+      .join('\n    ');
+  }
+
   let html = templateHtml;
 
-  // Remove existing title tag and replace
+  // Remove existing tags that will be replaced
   html = html.replace(/<title>[^<]*<\/title>/, '');
-  // Remove existing meta description
   html = html.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, '');
-  // Remove existing OG tags (they'll be replaced with route-specific ones)
   html = html.replace(/<meta\s+property="og:[^"]*"\s+content="[^"]*"\s*\/?>\s*/gi, '');
-  // Remove existing Twitter tags
   html = html.replace(/<meta\s+name="twitter:[^"]*"\s+content="[^"]*"\s*\/?>\s*/gi, '');
 
-  // Inject route-specific meta tags right after <head> and charset/viewport
+  // Inject route-specific meta tags
   html = html.replace(
     /(<meta\s+name="viewport"[^>]*>)/i,
-    `$1\n    ${metaTags}\n    ${jsonLdScript}`
+    `$1\n    ${metaString}\n    ${jsonLdScripts}`
   );
 
   return html;
+}
+
+/**
+ * Fetch published blog posts from the database using the REST API.
+ * Uses the public anon key — only reads publicly visible approved posts.
+ */
+async function fetchBlogPosts(supabaseUrl, anonKey) {
+  const url = `${supabaseUrl}/rest/v1/blog_posts?status=eq.approved&select=id,title,slug,summary,meta_description,author_name,approved_at,featured_image_url,tags,reading_time_minutes,category&order=approved_at.desc`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'apikey': anonKey,
+        'Authorization': `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`⚠️  Failed to fetch blog posts (${response.status}). Skipping dynamic blog pages.`);
+      return [];
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.warn(`⚠️  Could not connect to database: ${err.message}. Skipping dynamic blog pages.`);
+    return [];
+  }
+}
+
+/**
+ * Convert a blog post into a route object for HTML generation.
+ */
+function blogPostToRoute(post) {
+  const slug = post.slug || post.id;
+  const postUrl = `${SITE_URL}/blog/${slug}`;
+  const description = post.meta_description || post.summary || '';
+  const ogImage = post.featured_image_url || OG_IMAGE;
+
+  return {
+    path: `/blog/${slug}`,
+    title: `${post.title} | edLEAD Leaders' Stories`,
+    description: description.substring(0, 160),
+    ogTitle: post.title,
+    ogDescription: description.substring(0, 200),
+    ogType: 'article',
+    ogImage,
+    canonical: postUrl,
+    keywords: post.tags ? post.tags.join(', ') : undefined,
+    jsonLd: [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: post.title,
+        description,
+        image: post.featured_image_url || undefined,
+        datePublished: post.approved_at,
+        author: { '@type': 'Person', name: post.author_name },
+        publisher: {
+          '@type': 'Organization',
+          name: 'edLEAD',
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/edlead-icon.png` },
+        },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+        ...(post.tags?.length ? { keywords: post.tags.join(', ') } : {}),
+        ...(post.reading_time_minutes ? { timeRequired: `PT${post.reading_time_minutes}M` } : {}),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: "Leaders' Stories", item: `${SITE_URL}/blog` },
+          { '@type': 'ListItem', position: 3, name: post.title },
+        ],
+      },
+    ],
+  };
 }
 
 async function main() {
@@ -240,22 +349,49 @@ async function main() {
   const templateHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
   let created = 0;
 
+  // 1. Generate static route pages
   for (const route of routes) {
     const routePath = route.path === '/' ? '' : route.path;
     const html = generateHtml(route, templateHtml);
 
     if (route.path === '/') {
-      // Overwrite the root index.html with proper meta (already has defaults, but let's ensure consistency)
       fs.writeFileSync(indexHtmlPath, html);
       console.log(`✅ Updated: /index.html`);
     } else {
-      // Create directory and index.html for each route
       const dir = path.join(distDir, routePath);
       fs.mkdirSync(dir, { recursive: true });
       fs.writeFileSync(path.join(dir, 'index.html'), html);
       console.log(`✅ Created: ${routePath}/index.html`);
     }
     created++;
+  }
+
+  // 2. Fetch and generate dynamic blog post pages
+  const env = loadEnv();
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  if (supabaseUrl && anonKey) {
+    console.log('\n📝 Fetching published blog posts...');
+    const posts = await fetchBlogPosts(supabaseUrl, anonKey);
+
+    if (posts.length > 0) {
+      console.log(`   Found ${posts.length} published post(s).`);
+
+      for (const post of posts) {
+        const route = blogPostToRoute(post);
+        const html = generateHtml(route, templateHtml);
+        const dir = path.join(distDir, route.path);
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, 'index.html'), html);
+        console.log(`✅ Created: ${route.path}/index.html`);
+        created++;
+      }
+    } else {
+      console.log('   No published blog posts found.');
+    }
+  } else {
+    console.warn('⚠️  Database credentials not found. Skipping dynamic blog post pages.');
   }
 
   console.log(`\n🎉 Generated ${created} pre-rendered SEO pages.`);
