@@ -116,6 +116,31 @@ async function main() {
 
   const totalUrls = STATIC_ROUTES.length + blogPosts.length;
   console.log(`🗺️  Generated sitemaps with ${totalUrls} URLs each (${STATIC_ROUTES.length} static + ${blogPosts.length} blog posts).`);
+
+  // Generate robots.txt
+  const robotsTxt = [
+    'User-agent: Googlebot',
+    'Allow: /',
+    '',
+    'User-agent: Bingbot',
+    'Allow: /',
+    '',
+    'User-agent: Twitterbot',
+    'Allow: /',
+    '',
+    'User-agent: facebookexternalhit',
+    'Allow: /',
+    '',
+    'User-agent: *',
+    'Allow: /',
+    '',
+    'Sitemap: https://edlead.co.za/sitemap.xml',
+    'Sitemap: https://edlead.co/sitemap-co.xml',
+    '',
+  ].join('\n');
+
+  fs.writeFileSync(path.join(distDir, 'robots.txt'), robotsTxt);
+  console.log('🤖 Generated robots.txt with sitemap references.');
 }
 
 main().catch(console.error);
