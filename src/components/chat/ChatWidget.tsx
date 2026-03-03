@@ -819,10 +819,10 @@ export function ChatWidget() {
           </div>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsMaximized(!isMaximized)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsMaximized(!isMaximized)} aria-label={isMaximized ? "Minimize chat" : "Maximize chat"}>
             {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsOpen(false)} aria-label="Close chat">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -897,7 +897,7 @@ export function ChatWidget() {
                 onKeyDown={handleKeyDown}
                 disabled={sending || aiLoading}
               />
-              <Button size="icon" onClick={sendMessage} disabled={!newMessage.trim() || sending || aiLoading}>
+              <Button size="icon" onClick={sendMessage} disabled={!newMessage.trim() || sending || aiLoading} aria-label="Send message">
                 <Send className="h-4 w-4" />
               </Button>
             </div>

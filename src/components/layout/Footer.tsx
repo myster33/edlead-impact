@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
-import { Mail, Facebook, Instagram, Linkedin } from "lucide-react";
+import { Mail, Facebook, Instagram, Linkedin, ArrowRight, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const TikTokIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -28,6 +33,38 @@ const footerLinks = {
 };
 
 export const Footer = () => {
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
+
+    setSubscribing(true);
+    try {
+      const { error } = await supabase.from("newsletter_subscribers").insert({ email: trimmed });
+      if (error) {
+        if (error.code === "23505") {
+          toast({ title: "Already subscribed", description: "This email is already on our mailing list." });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({ title: "Subscribed! 🎉", description: "You'll receive edLEAD updates in your inbox." });
+        setEmail("");
+      }
+    } catch {
+      toast({ title: "Something went wrong", description: "Please try again later.", variant: "destructive" });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   return (
     <footer className="bg-secondary text-secondary-foreground">
       <div className="container py-16">
@@ -39,16 +76,16 @@ export const Footer = () => {
               Transforming Young Leaders for Positive Impact. A youth leadership programme empowering learners.
             </p>
             <div className="flex gap-4 pt-2">
-              <a href="https://www.linkedin.com/company/edlead/" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors">
+              <a href="https://www.linkedin.com/company/edlead/" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="LinkedIn">
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="https://www.instagram.com/edlead.africa/" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors">
+              <a href="https://www.instagram.com/edlead.africa/" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://www.tiktok.com/@edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors">
+              <a href="https://www.tiktok.com/@edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="TikTok">
                 <TikTokIcon className="h-5 w-5" />
               </a>
-              <a href="https://www.facebook.com/edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors">
+              <a href="https://www.facebook.com/edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
             </div>
@@ -88,10 +125,10 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact & Newsletter */}
           <div>
             <h4 className="font-semibold text-lg mb-4">Get in Touch</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 mb-6">
               <li className="flex items-center gap-3 text-sm text-secondary-foreground/70">
                 <Mail className="h-4 w-4 text-primary" />
                 <a href="mailto:info@edlead.co.za" className="hover:text-primary transition-colors">
@@ -99,6 +136,24 @@ export const Footer = () => {
                 </a>
               </li>
             </ul>
+
+            {/* Newsletter */}
+            <div>
+              <h5 className="font-medium text-sm mb-3">Stay Updated</h5>
+              <form onSubmit={handleSubscribe} className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="Your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-secondary-foreground/10 border-secondary-foreground/20 text-secondary-foreground placeholder:text-secondary-foreground/40 h-9 text-sm"
+                  required
+                />
+                <Button type="submit" size="sm" disabled={subscribing} className="shrink-0 h-9">
+                  {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

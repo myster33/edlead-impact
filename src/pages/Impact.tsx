@@ -1,8 +1,19 @@
 import { Layout } from "@/components/layout/Layout";
-import { Target, Shield, TrendingUp, Users } from "lucide-react";
+import { Target, Shield, TrendingUp, Users, Quote } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
 import { Helmet } from "react-helmet-async";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+
 const goals = [
   {
     icon: Users,
@@ -33,8 +44,67 @@ const outcomes = [
   { metric: "A sustainable national student leadership network", icon: "🌍" },
 ];
 
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  school: string;
+  province: string;
+  quote: string;
+}
+
+const fallbackTestimonials: Testimonial[] = [
+  {
+    id: "f1",
+    name: "Thando Molefe",
+    role: "edLEAD Captain",
+    school: "Pretoria High School",
+    province: "Gauteng",
+    quote: "edLEAD gave me the confidence to stand up and lead. I started a peer mentoring programme that now helps over 30 learners at my school.",
+  },
+  {
+    id: "f2",
+    name: "Amahle Ndlovu",
+    role: "edLEAD Captain",
+    school: "Durban Girls' College",
+    province: "KwaZulu-Natal",
+    quote: "Before edLEAD, I was afraid to speak in front of my class. Now I've presented at two provincial youth conferences. This programme changed my life.",
+  },
+  {
+    id: "f3",
+    name: "Sipho Mahlangu",
+    role: "edLEAD Captain",
+    school: "Mbilwi Secondary School",
+    province: "Limpopo",
+    quote: "The mentorship and workshops taught me that leadership is about service. My community project brought clean water awareness to 5 surrounding villages.",
+  },
+  {
+    id: "f4",
+    name: "Naledi Khumalo",
+    role: "edLEAD Captain",
+    school: "Paarl Gimnasium",
+    province: "Western Cape",
+    quote: "edLEAD connected me with leaders from across the country. The friendships and skills I built will last a lifetime.",
+  },
+];
+
 const Impact = () => {
   const { displayedText } = useTypingAnimation("Our Impact", 50);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      const { data } = await supabase
+        .from("testimonials")
+        .select("id, name, role, school, province, quote")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false });
+      if (data && data.length > 0) {
+        setTestimonials(data);
+      }
+    };
+    fetchTestimonials();
+  }, []);
   
   return (
     <Layout>
@@ -104,6 +174,44 @@ const Impact = () => {
                 <p className="font-medium">{outcome.metric}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20">
+        <div className="container">
+          <h2 className="text-3xl font-bold text-foreground text-center mb-4">What Our Leaders Say</h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Hear from edLEAD Captains who are making a difference in their schools and communities.
+          </p>
+
+          <div className="max-w-5xl mx-auto px-8 md:px-12">
+            <Carousel
+              opts={{ align: "start", loop: true }}
+              plugins={[Autoplay({ delay: 5000 })]}
+              className="w-full"
+            >
+              <CarouselContent className="-ml-4">
+                {testimonials.map((t) => (
+                  <CarouselItem key={t.id} className="pl-4 md:basis-1/2">
+                    <div className="h-full p-6 rounded-2xl border border-border bg-muted flex flex-col">
+                      <Quote className="h-8 w-8 text-primary/30 mb-4 flex-shrink-0" />
+                      <blockquote className="text-foreground leading-relaxed mb-6 flex-1">
+                        "{t.quote}"
+                      </blockquote>
+                      <div className="border-t border-border pt-4">
+                        <p className="font-semibold text-foreground">{t.name}</p>
+                        <p className="text-sm text-muted-foreground">{t.role} · {t.school}</p>
+                        <p className="text-xs text-muted-foreground">{t.province}</p>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="hidden md:flex" />
+              <CarouselNext className="hidden md:flex" />
+            </Carousel>
           </div>
         </div>
       </section>
