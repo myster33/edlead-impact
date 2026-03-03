@@ -194,8 +194,23 @@ const routes = [
       publisher: { '@type': 'EducationalOrganization', name: 'edLEAD', url: SITE_URL },
     },
   },
+  {
+    path: '/faq',
+    title: 'FAQ | edLEAD — Frequently Asked Questions',
+    description: 'Find answers to common questions about the edLEAD youth leadership programme, eligibility, application process, and more.',
+    ogTitle: 'FAQ | edLEAD — Frequently Asked Questions',
+    ogDescription: 'Everything you need to know about applying to and participating in the edLEAD leadership programme.',
+    canonical: `${SITE_URL}/faq`,
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      name: 'Frequently Asked Questions',
+      description: 'Common questions about the edLEAD youth leadership programme.',
+      url: `${SITE_URL}/faq`,
+      isPartOf: { '@type': 'WebSite', name: 'edLEAD', url: SITE_URL },
+    },
+  },
 ];
-
 function escapeHtml(str) {
   if (!str) return '';
   return str

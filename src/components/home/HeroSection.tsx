@@ -48,7 +48,7 @@ export const HeroSection = () => {
       {/* Content */}
       <div className="container relative z-10">
         <div className="max-w-3xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6 font-montserrat text-shadow-hero">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6 font-montserrat text-shadow-hero" aria-live="polite" aria-label={fullHeadline}>
             {displayedText.includes("Positive") ? (
               <>
                 {displayedText.substring(0, displayedText.indexOf("Positive Impact"))}
