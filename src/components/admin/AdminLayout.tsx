@@ -46,6 +46,8 @@ import {
   MessageSquare,
   MessageCircle,
   Send,
+  Quote,
+  UserCheck,
   Moon,
   Sun,
   Monitor,
@@ -87,6 +89,8 @@ const menuItems = [
   { title: "Message Center", url: "/admin/message-center", icon: Send, moduleKey: "message-center" },
   { title: "Message Templates", url: "/admin/message-templates", icon: MessageSquare, moduleKey: "message-templates" },
   { title: "Email Templates", url: "/admin/email-templates", icon: Mail, moduleKey: "email-templates" },
+  { title: "Testimonials", url: "/admin/testimonials", icon: Quote, moduleKey: "testimonials" },
+  { title: "Subscribers", url: "/admin/subscribers", icon: UserCheck, moduleKey: "subscribers" },
   { title: "Admin Users", url: "/admin/users", icon: Users, moduleKey: "admin-users" },
   { title: "Permissions", url: "/admin/permissions", icon: Lock, moduleKey: "permissions" },
   { title: "Audit Log", url: "/admin/audit-log", icon: History, moduleKey: "audit-log" },
@@ -113,9 +117,9 @@ const filterItem = (
 const menuGroups = [
   { label: "Overview", items: menuItems.slice(0, 3) },
   { label: "Programme", items: menuItems.slice(3, 6) },
-  { label: "Communication", items: menuItems.slice(6, 10) },
-  { label: "Administration", items: menuItems.slice(10, 13) },
-  { label: "Account", items: menuItems.slice(13) },
+  { label: "Communication", items: menuItems.slice(6, 12) },
+  { label: "Administration", items: menuItems.slice(12, 15) },
+  { label: "Account", items: menuItems.slice(15) },
 ];
 
 const getFilteredItems = (
