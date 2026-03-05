@@ -38,10 +38,10 @@ const goals = [
 ];
 
 const outcomes = [
-  { metric: "Improved discipline and cooperation", icon: "📈" },
-  { metric: "Measurable learner-led initiatives", icon: "🎯" },
-  { metric: "Increased confidence and leadership skills", icon: "💪" },
-  { metric: "A sustainable national student leadership network", icon: "🌍" },
+  { metric: "Improved discipline and cooperation", icon: TrendingUp },
+  { metric: "Measurable learner-led initiatives", icon: Target },
+  { metric: "Increased confidence and leadership skills", icon: Shield },
+  { metric: "A sustainable national student leadership network", icon: Users },
 ];
 
 interface Testimonial {
@@ -170,7 +170,9 @@ const Impact = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {outcomes.map((outcome, index) => (
               <div key={index} className="bg-primary-foreground/10 rounded-xl p-6 text-center backdrop-blur">
-                <span className="text-4xl mb-4 block">{outcome.icon}</span>
+                <div className="w-14 h-14 rounded-full bg-primary-foreground/20 flex items-center justify-center mx-auto mb-4">
+                  <outcome.icon className="h-7 w-7 text-primary-foreground" />
+                </div>
                 <p className="font-medium">{outcome.metric}</p>
               </div>
             ))}
