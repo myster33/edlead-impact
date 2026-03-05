@@ -3,7 +3,7 @@ import { Target, Shield, TrendingUp, Users, Quote } from "lucide-react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { AnimatedCounter } from "@/components/shared/AnimatedCounter";
 import { Helmet } from "react-helmet-async";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Carousel,
@@ -91,6 +91,32 @@ const fallbackTestimonials: Testimonial[] = [
 const Impact = () => {
   const { displayedText } = useTypingAnimation("Our Impact", 50);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials);
+  const [visibleOutcomes, setVisibleOutcomes] = useState<boolean[]>(new Array(outcomes.length).fill(false));
+  const outcomesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            outcomes.forEach((_, i) => {
+              setTimeout(() => {
+                setVisibleOutcomes((prev) => {
+                  const next = [...prev];
+                  next[i] = true;
+                  return next;
+                });
+              }, i * 150);
+            });
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    if (outcomesRef.current) observer.observe(outcomesRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -164,12 +190,22 @@ const Impact = () => {
       </section>
 
       {/* Expected Outcomes */}
-      <section className="py-20 bg-primary text-primary-foreground">
+      <section className="py-20 bg-primary text-primary-foreground overflow-hidden">
         <div className="container">
           <h2 className="text-3xl font-bold text-center mb-12">Expected Outcomes</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div ref={outcomesRef} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {outcomes.map((outcome, index) => (
-              <div key={index} className="bg-primary-foreground/10 rounded-xl p-6 text-center backdrop-blur">
+              <div
+                key={index}
+                className="bg-primary-foreground/10 rounded-xl p-6 text-center backdrop-blur transition-all duration-700 ease-out hover:scale-105 hover:-translate-y-1 hover:bg-primary-foreground/20"
+                style={{
+                  opacity: visibleOutcomes[index] ? 1 : 0,
+                  transform: visibleOutcomes[index]
+                    ? "translateY(0) scale(1)"
+                    : "translateY(40px) scale(0.95)",
+                  transition: `opacity 0.6s ease-out, transform 0.6s ease-out`,
+                }}
+              >
                 <div className="w-14 h-14 rounded-full bg-primary-foreground/20 flex items-center justify-center mx-auto mb-4">
                   <outcome.icon className="h-7 w-7 text-primary-foreground" />
                 </div>
