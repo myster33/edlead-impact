@@ -23,6 +23,8 @@ import { useTypingAnimation } from "@/hooks/use-typing-animation";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
+import { cn } from "@/lib/utils";
+import { countryCodes } from "@/lib/country-codes";
 
 // Partner logos
 import alxLogo from "@/assets/partners/alx.jpg";
@@ -60,6 +62,8 @@ const partnershipOptions = [
   "Other",
 ];
 
+const getCodeFromValue = (val: string) => val.split("|")[0];
+
 const Partners = () => {
   const { displayedText } = useTypingAnimation("Partner With edLEAD", 50);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,6 +71,8 @@ const Partners = () => {
     name: "",
     email: "",
     organization: "",
+    countryCode: "+27|South Africa",
+    phone: "",
     partnershipType: "",
     message: "",
   });
@@ -76,10 +82,12 @@ const Partners = () => {
     setIsSubmitting(true);
 
     try {
+      const phoneFormatted = formData.phone ? `${getCodeFromValue(formData.countryCode)} ${formData.phone}` : "";
       const { error } = await supabase.functions.invoke('send-contact', {
         body: {
           name: formData.name,
           email: formData.email,
+          phone: phoneFormatted,
           subject: `Partnership Inquiry: ${formData.partnershipType} - ${formData.organization}`,
           message: `Organization: ${formData.organization}\nPartnership Type: ${formData.partnershipType}\n\nMessage:\n${formData.message}`,
         },
@@ -88,7 +96,7 @@ const Partners = () => {
       if (error) throw error;
 
       toast.success("Thank you for your interest! We'll be in touch soon.");
-      setFormData({ name: "", email: "", organization: "", partnershipType: "", message: "" });
+      setFormData({ name: "", email: "", organization: "", countryCode: "+27|South Africa", phone: "", partnershipType: "", message: "" });
     } catch (error: any) {
       console.error("Error sending inquiry:", error);
       toast.error(error.message || "Failed to send inquiry. Please try again.");
@@ -282,6 +290,38 @@ const Partners = () => {
                     required
                     disabled={isSubmitting}
                   />
+                </div>
+                <div>
+                  <label htmlFor="partner-phone" className="block text-sm font-medium text-foreground mb-2">
+                    Phone Number
+                  </label>
+                  <div className="flex">
+                    <Select
+                      value={formData.countryCode}
+                      onValueChange={(value) => setFormData({ ...formData, countryCode: value })}
+                      disabled={isSubmitting}
+                    >
+                      <SelectTrigger className="w-[120px] rounded-r-none border-r-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {countryCodes.map((c) => (
+                          <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                            {c.flag} {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="partner-phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      disabled={isSubmitting}
+                      placeholder="e.g. 0721234567"
+                      className="rounded-l-none"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="partnershipType" className="block text-sm font-medium text-foreground mb-2">
