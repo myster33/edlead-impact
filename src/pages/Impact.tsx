@@ -92,7 +92,9 @@ const Impact = () => {
   const { displayedText } = useTypingAnimation("Our Impact", 50);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(fallbackTestimonials);
   const [visibleOutcomes, setVisibleOutcomes] = useState<boolean[]>(new Array(outcomes.length).fill(false));
+  const [visibleGoals, setVisibleGoals] = useState<boolean[]>(new Array(goals.length).fill(false));
   const outcomesRef = useRef<HTMLDivElement>(null);
+  const goalsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -115,6 +117,30 @@ const Impact = () => {
       { threshold: 0.2 }
     );
     if (outcomesRef.current) observer.observe(outcomesRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            goals.forEach((_, i) => {
+              setTimeout(() => {
+                setVisibleGoals((prev) => {
+                  const next = [...prev];
+                  next[i] = true;
+                  return next;
+                });
+              }, i * 150);
+            });
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    if (goalsRef.current) observer.observe(goalsRef.current);
     return () => observer.disconnect();
   }, []);
 
@@ -170,12 +196,24 @@ const Impact = () => {
       </section>
 
       {/* Goals */}
-      <section className="py-20">
+      <section className="py-20 overflow-hidden">
         <div className="container">
           <h2 className="text-3xl font-bold text-foreground text-center mb-12">Our Goals</h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div ref={goalsRef} className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {goals.map((goal, index) => (
-              <div key={index} className="flex gap-4 p-6 rounded-xl bg-muted border border-border">
+              <div
+                key={index}
+                className="flex gap-4 p-6 rounded-xl bg-muted border border-border transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-md"
+                style={{
+                  opacity: visibleGoals[index] ? 1 : 0,
+                  transform: visibleGoals[index]
+                    ? "translateX(0) scale(1)"
+                    : index % 2 === 0
+                      ? "translateX(-40px) scale(0.95)"
+                      : "translateX(40px) scale(0.95)",
+                  transition: `opacity 0.6s ease-out, transform 0.6s ease-out`,
+                }}
+              >
                 <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center flex-shrink-0">
                   <goal.icon className="h-7 w-7 text-primary-foreground" />
                 </div>
