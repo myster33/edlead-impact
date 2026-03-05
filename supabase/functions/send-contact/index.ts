@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const FROM_EMAIL = "edLEAD <info@edlead.co.za>";
 const ADMIN_EMAIL = "info@edlead.co.za";
 const SITE_URL = "https://edlead.co.za";
@@ -14,6 +17,7 @@ const corsHeaders = {
 interface ContactRequest {
   name: string;
   email: string;
+  phone?: string;
   subject: string;
   message: string;
 }
@@ -67,6 +71,57 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
+// Format phone number to E.164 format
+function formatPhoneNumber(phone: string): string {
+  let cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    cleaned = "27" + cleaned.substring(1);
+  } else if (cleaned.length === 9 && !cleaned.startsWith("27")) {
+    cleaned = "27" + cleaned;
+  }
+  if (!cleaned.startsWith("+")) {
+    cleaned = "+" + cleaned;
+  }
+  return cleaned;
+}
+
+async function sendSms(to: string, body: string): Promise<void> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    console.warn("Twilio credentials not configured, skipping SMS");
+    return;
+  }
+
+  const formattedTo = formatPhoneNumber(to);
+  console.log(`Sending SMS to ${formattedTo}`);
+
+  try {
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
+        },
+        body: new URLSearchParams({
+          To: formattedTo,
+          From: TWILIO_PHONE_NUMBER,
+          Body: body,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json();
+      console.error("Twilio SMS error:", data);
+    } else {
+      console.log("SMS sent successfully");
+    }
+  } catch (error) {
+    console.error("Error sending SMS:", error);
+  }
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -74,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { name, email, subject, message }: ContactRequest = await req.json();
+    const { name, email, phone, subject, message }: ContactRequest = await req.json();
 
     // Validation
     if (!name || name.trim().length < 2) {
@@ -160,7 +215,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="content">
             <div class="highlight">
               <strong>From:</strong> ${sanitizedName}<br>
-              <strong>Email:</strong> ${sanitizedEmail}<br>
+              <strong>Email:</strong> ${sanitizedEmail}<br>${phone && phone.trim() ? `\n              <strong>Phone:</strong> ${sanitizeString(phone, 30)}<br>` : ''}
               <strong>Subject:</strong> ${sanitizedSubject}<br>
               <strong>Date:</strong> ${formattedDate}
             </div>
@@ -251,7 +306,17 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Confirmation email sent to sender");
     } catch (emailError) {
       console.error("Failed to send confirmation email:", emailError);
-      // Continue - admin was notified, that's the important part
+    }
+
+    // Send SMS confirmation if phone number provided
+    if (phone && phone.trim()) {
+      const smsMessage = `Hi ${sanitizedName}, thank you for contacting edLEAD! We've received your message regarding "${sanitizedSubject}" and will get back to you soon. - The edLEAD Team`;
+      try {
+        await sendSms(phone.trim(), smsMessage);
+        console.log("Confirmation SMS sent");
+      } catch (smsError) {
+        console.error("Failed to send confirmation SMS:", smsError);
+      }
     }
 
     return new Response(
