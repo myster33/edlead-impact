@@ -99,7 +99,7 @@ const Contact = () => {
         body: {
           name: formData.name,
           email: formData.email,
-          phone: formData.phone ? `${getCodeFromValue(formData.countryCode)} ${formData.phone}` : "",
+          phone: formData.phone ? `${getCodeFromValue(formData.countryCode)}${formData.phone.replace(/^0+/, '')}` : "",
           subject: formData.subject,
           message: formData.message,
         },

@@ -82,7 +82,7 @@ const Partners = () => {
     setIsSubmitting(true);
 
     try {
-      const phoneFormatted = formData.phone ? `${getCodeFromValue(formData.countryCode)} ${formData.phone}` : "";
+      const phoneFormatted = formData.phone ? `${getCodeFromValue(formData.countryCode)}${formData.phone.replace(/^0+/, '')}` : "";
       const { error } = await supabase.functions.invoke('send-contact', {
         body: {
           name: formData.name,
