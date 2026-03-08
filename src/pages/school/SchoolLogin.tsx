@@ -457,7 +457,9 @@ export default function SchoolLogin() {
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input id="reg-email" type="email" placeholder="admin@school.edu" value={regEmail} onChange={e => setRegEmail(e.target.value)} className="pl-10" disabled={isRegistering} />
                       </div>
-                      {regErrors.email && <p className="text-sm text-destructive">{regErrors.email}</p>}
+                      {regErrors.email ? <p className="text-sm text-destructive">{regErrors.email}</p> : (
+                        <p className="text-xs text-muted-foreground">It is recommended to use your official school email address</p>
+                      )}
                     </div>
 
                     <div className="space-y-1.5">
