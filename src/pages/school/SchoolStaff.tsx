@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { UserCheck, Plus, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
+import { UserCheck, Pencil, ToggleLeft, ToggleRight, UserMinus, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const staffRoles = [
   { value: "educator", label: "Educator" },
@@ -23,15 +25,16 @@ const staffRoles = [
 export default function SchoolStaff() {
   const { currentSchool, schoolUser } = useSchoolAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [staff, setStaff] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [unlinkTarget, setUnlinkTarget] = useState<any | null>(null);
 
   // Form fields
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<string>("educator");
 
@@ -49,68 +52,27 @@ export default function SchoolStaff() {
 
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
 
-  const openCreate = () => {
-    setEditing(null);
-    setFullName("");
-    setEmail("");
-    setPhone("");
-    setRole("educator");
-    setFormOpen(true);
-  };
-
   const openEdit = (s: any) => {
     setEditing(s);
     setFullName(s.full_name);
-    setEmail(s.email);
     setPhone(s.phone || "");
     setRole(s.role);
     setFormOpen(true);
   };
 
   const handleSave = async () => {
-    if (!currentSchool?.id || !fullName.trim() || !email.trim()) {
-      toast({ title: "Validation", description: "Name and email are required.", variant: "destructive" });
+    if (!fullName.trim()) {
+      toast({ title: "Validation", description: "Name is required.", variant: "destructive" });
       return;
     }
     setIsSaving(true);
-
-    if (editing) {
-      const { error } = await supabase.from("school_users").update({
-        full_name: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || null,
-        role: role as any,
-      }).eq("id", editing.id);
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-      else toast({ title: "Staff member updated" });
-    } else {
-      // Create auth user first, then school_users record
-      // For now we create the school_users record with a placeholder user_id
-      // In production, you'd use an edge function to create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: crypto.randomUUID().slice(0, 16) + "Aa1!", // Temporary password
-        options: { emailRedirectTo: `${window.location.origin}/portal/login` },
-      });
-
-      if (authError || !authData.user) {
-        toast({ title: "Error", description: authError?.message || "Could not create user account.", variant: "destructive" });
-        setIsSaving(false);
-        return;
-      }
-
-      const { error } = await supabase.from("school_users").insert({
-        user_id: authData.user.id,
-        school_id: currentSchool.id,
-        full_name: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || null,
-        role: role as any,
-      });
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-      else toast({ title: "Staff member added", description: "An invitation email has been sent." });
-    }
-
+    const { error } = await supabase.from("school_users").update({
+      full_name: fullName.trim(),
+      phone: phone.trim() || null,
+      role: role as any,
+    }).eq("id", editing.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else toast({ title: "Staff member updated" });
     setIsSaving(false);
     setFormOpen(false);
     fetchStaff();
@@ -125,15 +87,28 @@ export default function SchoolStaff() {
     }
   };
 
+  const handleUnlink = async () => {
+    if (!unlinkTarget) return;
+    const { error } = await (supabase as any).from("school_users").update({ school_id: null, is_active: false }).eq("id", unlinkTarget.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else {
+      toast({ title: "Staff member unlinked", description: `${unlinkTarget.full_name} has been removed from the school and can now link to another school.` });
+      fetchStaff();
+    }
+    setUnlinkTarget(null);
+  };
+
   return (
     <SchoolLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Staff</h1>
-            <p className="text-muted-foreground">Staff directory & registration</p>
+            <p className="text-muted-foreground">Staff directory — members join by submitting link requests</p>
           </div>
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Add Staff</Button>
+          <Button variant="outline" onClick={() => navigate("/school/requests")}>
+            <UserPlus className="h-4 w-4 mr-2" /> View Requests
+          </Button>
         </div>
 
         <Card>
@@ -144,7 +119,7 @@ export default function SchoolStaff() {
             {isLoading ? (
               <p className="text-muted-foreground text-center py-8">Loading...</p>
             ) : staff.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No staff registered. Click "Add Staff" to get started.</p>
+              <p className="text-muted-foreground text-center py-8">No staff linked yet. Staff members register on the portal and request to join your school. Approve their requests from the Requests page.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -173,6 +148,9 @@ export default function SchoolStaff() {
                           <Button variant="ghost" size="icon" onClick={() => toggleActive(s)} title={s.is_active ? "Deactivate" : "Activate"}>
                             {s.is_active ? <ToggleRight className="h-4 w-4 text-primary" /> : <ToggleLeft className="h-4 w-4 text-muted-foreground" />}
                           </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setUnlinkTarget(s)} title="Unlink from school">
+                            <UserMinus className="h-4 w-4 text-destructive" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -184,20 +162,17 @@ export default function SchoolStaff() {
         </Card>
       </div>
 
+      {/* Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Staff Member" : "Add Staff Member"}</DialogTitle>
-            <DialogDescription>{editing ? "Update staff details." : "Add a new staff member. They will receive a login invitation."}</DialogDescription>
+            <DialogTitle>Edit Staff Member</DialogTitle>
+            <DialogDescription>Update staff details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input placeholder="Full name" value={fullName} onChange={e => setFullName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} disabled={!!editing} />
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
@@ -215,10 +190,26 @@ export default function SchoolStaff() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : editing ? "Update" : "Add"}</Button>
+            <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : "Update"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Unlink Confirmation */}
+      <AlertDialog open={!!unlinkTarget} onOpenChange={(open) => !open && setUnlinkTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlink staff member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <strong>{unlinkTarget?.full_name}</strong> from your school. They will be able to link to another school after this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnlink}>Unlink</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SchoolLayout>
   );
 }

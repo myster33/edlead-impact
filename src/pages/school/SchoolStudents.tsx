@@ -10,25 +10,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Plus, Pencil, ToggleLeft, ToggleRight, Link2, UserMinus } from "lucide-react";
+import { Users, Pencil, ToggleLeft, ToggleRight, Link2, UserMinus, UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function SchoolStudents() {
   const { currentSchool } = useSchoolAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [students, setStudents] = useState<any[]>([]);
   const [parents, setParents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Student form
+  // Edit form
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [studentIdNumber, setStudentIdNumber] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Unlink
+  const [unlinkTarget, setUnlinkTarget] = useState<any | null>(null);
 
   // Parent linking
   const [linkOpen, setLinkOpen] = useState(false);
@@ -64,56 +68,27 @@ export default function SchoolStudents() {
 
   useEffect(() => { fetchStudents(); fetchParents(); }, [fetchStudents, fetchParents]);
 
-  const openCreate = () => {
-    setEditing(null);
-    setFullName(""); setEmail(""); setPhone(""); setStudentIdNumber("");
-    setFormOpen(true);
-  };
-
   const openEdit = (s: any) => {
     setEditing(s);
-    setFullName(s.full_name); setEmail(s.email); setPhone(s.phone || ""); setStudentIdNumber(s.student_id_number || "");
+    setFullName(s.full_name);
+    setPhone(s.phone || "");
+    setStudentIdNumber(s.student_id_number || "");
     setFormOpen(true);
   };
 
   const handleSave = async () => {
-    if (!currentSchool?.id || !fullName.trim() || !email.trim()) {
-      toast({ title: "Validation", description: "Name and email are required.", variant: "destructive" });
+    if (!fullName.trim()) {
+      toast({ title: "Validation", description: "Name is required.", variant: "destructive" });
       return;
     }
     setIsSaving(true);
-
-    if (editing) {
-      const { error } = await supabase.from("school_users").update({
-        full_name: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || null,
-        student_id_number: studentIdNumber.trim() || null,
-      }).eq("id", editing.id);
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-      else toast({ title: "Student updated" });
-    } else {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: crypto.randomUUID().slice(0, 16) + "Aa1!",
-        options: { emailRedirectTo: `${window.location.origin}/portal/login` },
-      });
-      if (authError || !authData.user) {
-        toast({ title: "Error", description: authError?.message || "Could not create user.", variant: "destructive" });
-        setIsSaving(false); return;
-      }
-      const { error } = await supabase.from("school_users").insert({
-        user_id: authData.user.id,
-        school_id: currentSchool.id,
-        full_name: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || null,
-        student_id_number: studentIdNumber.trim() || null,
-        role: "student" as any,
-      });
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-      else toast({ title: "Student added", description: "A login invitation has been sent." });
-    }
+    const { error } = await supabase.from("school_users").update({
+      full_name: fullName.trim(),
+      phone: phone.trim() || null,
+      student_id_number: studentIdNumber.trim() || null,
+    }).eq("id", editing.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else toast({ title: "Student updated" });
     setIsSaving(false);
     setFormOpen(false);
     fetchStudents();
@@ -123,6 +98,17 @@ export default function SchoolStudents() {
     const { error } = await supabase.from("school_users").update({ is_active: !s.is_active }).eq("id", s.id);
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
     else { toast({ title: s.is_active ? "Student deactivated" : "Student activated" }); fetchStudents(); }
+  };
+
+  const handleUnlink = async () => {
+    if (!unlinkTarget) return;
+    const { error } = await (supabase as any).from("school_users").update({ school_id: null, is_active: false }).eq("id", unlinkTarget.id);
+    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+    else {
+      toast({ title: "Student unlinked", description: `${unlinkTarget.full_name} has been removed from the school and can now link to another school.` });
+      fetchStudents();
+    }
+    setUnlinkTarget(null);
   };
 
   // Parent linking
@@ -165,9 +151,11 @@ export default function SchoolStudents() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Students</h1>
-            <p className="text-muted-foreground">Student directory, registration & parent linking</p>
+            <p className="text-muted-foreground">Student directory — members join by submitting link requests</p>
           </div>
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Add Student</Button>
+          <Button variant="outline" onClick={() => navigate("/school/requests")}>
+            <UserPlus className="h-4 w-4 mr-2" /> View Requests
+          </Button>
         </div>
 
         <Card>
@@ -178,7 +166,7 @@ export default function SchoolStudents() {
             {isLoading ? (
               <p className="text-muted-foreground text-center py-8">Loading...</p>
             ) : students.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No students registered. Click "Add Student" to get started.</p>
+              <p className="text-muted-foreground text-center py-8">No students linked yet. Students register on the portal and request to join your school. Approve their requests from the Requests page.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -210,6 +198,9 @@ export default function SchoolStudents() {
                           <Button variant="ghost" size="icon" onClick={() => toggleActive(s)} title={s.is_active ? "Deactivate" : "Activate"}>
                             {s.is_active ? <ToggleRight className="h-4 w-4 text-primary" /> : <ToggleLeft className="h-4 w-4 text-muted-foreground" />}
                           </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setUnlinkTarget(s)} title="Unlink from school">
+                            <UserMinus className="h-4 w-4 text-destructive" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -221,21 +212,17 @@ export default function SchoolStudents() {
         </Card>
       </div>
 
-      {/* Student Form Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit Student" : "Add Student"}</DialogTitle>
-            <DialogDescription>{editing ? "Update student details." : "Register a new student. They will receive a login invitation."}</DialogDescription>
+            <DialogTitle>Edit Student</DialogTitle>
+            <DialogDescription>Update student details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Full Name</Label>
               <Input placeholder="Full name" value={fullName} onChange={e => setFullName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} disabled={!!editing} />
             </div>
             <div className="space-y-2">
               <Label>Student ID Number</Label>
@@ -248,10 +235,26 @@ export default function SchoolStudents() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : editing ? "Update" : "Add"}</Button>
+            <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : "Update"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Unlink Confirmation */}
+      <AlertDialog open={!!unlinkTarget} onOpenChange={(open) => !open && setUnlinkTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unlink student?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove <strong>{unlinkTarget?.full_name}</strong> from your school. They will be able to link to another school after this.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnlink}>Unlink</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Parent Linking Dialog */}
       <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
@@ -265,7 +268,6 @@ export default function SchoolStudents() {
             <p className="text-muted-foreground text-center py-4">Loading...</p>
           ) : (
             <div className="space-y-6">
-              {/* Current links */}
               <div>
                 <h3 className="text-sm font-medium mb-2">Linked Parents ({linkedParents.length})</h3>
                 {linkedParents.length === 0 ? (
@@ -288,11 +290,10 @@ export default function SchoolStudents() {
                 )}
               </div>
 
-              {/* Add new link */}
               <div>
                 <h3 className="text-sm font-medium mb-2">Link a Parent</h3>
                 {availableParents.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No available parents to link. Register a parent first.</p>
+                  <p className="text-muted-foreground text-sm">No available parents to link.</p>
                 ) : (
                   <div className="flex items-end gap-2">
                     <div className="flex-1 space-y-1">
