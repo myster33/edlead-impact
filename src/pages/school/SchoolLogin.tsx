@@ -602,22 +602,23 @@ export default function SchoolLogin() {
                       {regErrors.province && <p className="text-sm text-destructive">{regErrors.province}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="reg-password">Password</Label>
-                        <div className="relative">
-                          <Input id="reg-password" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="pr-10" disabled={isRegistering} />
-                          <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowRegPassword(!showRegPassword)}>
-                            {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        {regErrors.password && <p className="text-sm text-destructive">{regErrors.password}</p>}
+                        <Button type="button" variant="link" className="px-0 h-auto text-xs" onClick={() => setShowRegPassword(!showRegPassword)}>
+                          {showRegPassword ? "Hide" : "Show"}
+                        </Button>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="reg-confirm">Confirm</Label>
-                        <Input id="reg-confirm" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} disabled={isRegistering} />
-                        {regErrors.confirmPassword && <p className="text-sm text-destructive">{regErrors.confirmPassword}</p>}
+                      <div className="relative">
+                        <Input id="reg-password" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="pr-10" disabled={isRegistering} />
                       </div>
+                      <PasswordStrengthIndicator password={regPassword} />
+                      {regErrors.password && <p className="text-sm text-destructive">{regErrors.password}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="reg-confirm">Confirm Password</Label>
+                      <Input id="reg-confirm" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} disabled={isRegistering} />
+                      {regErrors.confirmPassword && <p className="text-sm text-destructive">{regErrors.confirmPassword}</p>}
                     </div>
 
                     <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
