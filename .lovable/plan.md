@@ -1,66 +1,129 @@
 
 
-## Plan: Website Upgrades (7 items)
+# Plan: Schools Portal, General Portal & STATs (Attendance) Module
 
-This covers all approved upgrades: accessibility, lazy loading, FAQ page, enhanced 404, page transitions, newsletter subscription, and testimonials on the Impact page.
+## Overview
 
----
+Build two new portals reusing the existing admin layout pattern, plus the foundational database schema for schools, users, and the STATs attendance module.
 
-### 1. Accessibility Improvements
+```text
+┌──────────────────────────────────────────────────┐
+│              edLEAD Main Admin Portal            │
+│  (existing - manages all accounts & settings)    │
+│  /admin/*                                        │
+└──────────────┬───────────────────┬───────────────┘
+               │                   │
+    ┌──────────▼──────┐   ┌───────▼────────────┐
+    │  Schools Portal │   │  General Portal     │
+    │  /school/*      │   │  /portal/*          │
+    │  School Admin   │   │  Parent, Student,   │
+    │  HR             │   │  Educator           │
+    └─────────────────┘   └────────────────────┘
+```
 
-**Files to modify:**
-- `src/components/layout/Layout.tsx` — Add a skip-to-content link (`<a href="#main-content">`) and `id="main-content"` on `<main>`
-- `src/components/layout/Navbar.tsx` — Add `aria-label` to theme toggle button and mobile menu toggle
-- `src/components/chat/ChatWidget.tsx` — Add `aria-label` to open/close/minimize/send buttons, add `aria-live="polite"` on message list container
-- `src/components/home/HeroSection.tsx` — Add `aria-live="polite"` to the typing animation heading
-- `src/index.css` — Add visible focus ring utility (e.g., `focus-visible:ring-2 ring-primary ring-offset-2`) as a global style
+## Phase 1: Foundation (this implementation)
 
-### 2. Lazy Loading Routes + Images
+### 1. Database Tables (migrations)
 
-**Files to modify:**
-- `src/App.tsx` — Replace all eager imports with `React.lazy()` and wrap `<Routes>` children in `<Suspense>` with a loading fallback. Keep `Index` eager for fast first paint; lazy-load all other pages.
-- Image optimization across pages — Add `loading="lazy"` to below-the-fold images in `HeroSection` (images 2-5 only), programme, partners, and blog card components
+**schools** - Mother class for all school instances
+- `id`, `name`, `address`, `province`, `country`, `school_code` (unique), `email`, `phone`, `logo_url`, `is_verified` (main admin approves), `created_at`
 
-### 3. FAQ Page
+**school_users** - All portal users (parents, students, educators, school admins, HR)
+- `id`, `user_id` (auth.users), `school_id` (FK schools), `role` (enum: `school_admin`, `hr`, `educator`, `class_teacher`, `subject_teacher`, `parent`, `student`), `full_name`, `email`, `phone`, `student_id_number` (nullable, for students), `profile_picture_url`, `is_active`, `created_at`
+- A parent with learners at multiple schools = multiple rows, one per school
 
-**Files to create:**
-- `src/pages/FAQ.tsx` — New page using `Layout`, `Helmet` with SEO tags, and `@radix-ui/react-accordion` for Q&A sections covering: Programme Overview, Eligibility & Admissions, Application Process, Technical Support, and General. Include 4-5 questions per section.
+**student_parent_links** - Links parents to students
+- `id`, `parent_user_id` (FK school_users), `student_user_id` (FK school_users), `relationship` (e.g. mother, father, guardian), `is_primary`, `created_at`
 
-**Files to modify:**
-- `src/App.tsx` — Add `/faq` route (lazy-loaded)
-- `scripts/generate-seo-pages.mjs` — Add `/faq` to the static routes array for prerendering
+**classes** - For class teacher register
+- `id`, `school_id`, `name` (e.g. "Grade 10A"), `grade`, `class_teacher_id` (FK school_users), `created_at`
 
-### 4. Enhanced 404 Page
+**class_students** - Students assigned to classes
+- `id`, `class_id`, `student_id` (FK school_users), `created_at`
 
-**Files to modify:**
-- `src/pages/NotFound.tsx` — Wrap in `Layout`, add `Helmet` SEO tags, edLEAD branding, a friendly illustration (using Lucide icons), and navigation links to Home, About, Admissions, Contact, and Blog
+**attendance_events** - Core STATs tracking
+- `id`, `user_id` (FK school_users), `school_id`, `role`, `event_type` (check_in/check_out), `timestamp`, `method` (scan/manual/e-card), `status` (present/late/absent), `marked_by` (nullable, for manual), `created_at`
 
-### 5. Page Transition Animations
+**absence_requests** - Parent-submitted reasons
+- `id`, `student_id` (FK school_users), `parent_id` (FK school_users), `reason`, `start_date`, `end_date`, `attachment_url`, `status` (pending/approved/rejected), `reviewed_by`, `created_at`
 
-**Files to modify:**
-- `src/index.css` — Add a CSS `@keyframes` for fade-in-up animation
-- `src/components/layout/Layout.tsx` — Apply the animation class to the `<main>` element so each page fades in on mount
+RLS policies: School-scoped access (users can only see data for their linked school). Main admin bypasses via `is_admin()`.
 
-### 6. Newsletter Subscription
+### 2. Auth & Contexts
 
-**Database migration:** Create a `newsletter_subscribers` table with columns: `id` (uuid), `email` (text, unique), `subscribed_at` (timestamptz, default now()), `is_active` (boolean, default true). Enable RLS with a public INSERT policy (anyone can subscribe) and admin-only SELECT.
+**SchoolAuthContext** (`src/contexts/SchoolAuthContext.tsx`)
+- Similar to AdminAuthContext but queries `school_users` table
+- Tracks current school, user role, active school for parent switching
 
-**Files to modify:**
-- `src/components/layout/Footer.tsx` — Add a newsletter signup form (email input + subscribe button) in the "Get in Touch" column, using the database client to insert into `newsletter_subscribers`
+**PortalAuthContext** (`src/contexts/PortalAuthContext.tsx`)
+- For general portal (parent/student/educator)
+- Includes `switchSchool()` for parents with multi-school learners
 
-### 7. Testimonials Section on Impact Page
+### 3. Portal Layouts (copying admin pattern)
 
-**Database migration:** Create a `testimonials` table with columns: `id` (uuid), `name` (text), `role` (text), `school` (text), `province` (text), `quote` (text), `is_published` (boolean, default false), `created_at` (timestamptz). Enable RLS with public SELECT for published testimonials, admin-only INSERT/UPDATE/DELETE.
+**SchoolLayout** (`src/components/school/SchoolLayout.tsx`)
+- Sidebar with school-specific modules: Dashboard, Attendance (STATs), Classes, Students, Staff, Reports
+- Same sidebar/header pattern as AdminLayout with edLEAD branding + school name badge
+- Role-based menu filtering (school_admin sees all, educator sees limited)
 
-**Files to modify:**
-- `src/pages/Impact.tsx` — Add a "What Our Leaders Say" section between the Outcomes and Stats sections. Fetch published testimonials from the database and display them in a carousel (using the existing `embla-carousel-react` + autoplay). Each card shows the quote, name, role, and school. Include a static fallback with 3-4 hardcoded testimonials if the database returns empty.
+**PortalLayout** (`src/components/portal/PortalLayout.tsx`)
+- Sidebar modules vary by role:
+  - **Student**: Dashboard, My Attendance, E-Card, Reports
+  - **Parent**: Dashboard, My Children, Attendance, Absence Requests
+  - **Educator**: Dashboard, My Classes, Attendance, Reports
 
----
+### 4. Login Pages
 
-### Technical Notes
-- Lazy loading uses `React.lazy` + `Suspense` — no new dependencies needed
-- FAQ uses the already-installed `@radix-ui/react-accordion`
-- Newsletter and testimonials each need one new database table with RLS
-- Page transitions use pure CSS animation — no library needed
-- The testimonials carousel reuses the existing Embla carousel dependency
+**SchoolLogin** (`src/pages/school/SchoolLogin.tsx`) at `/school/login`
+- Login/signup tabs (same pattern as AdminLogin)
+- Signup creates auth user + pending school registration (main admin verifies)
+
+**PortalLogin** (`src/pages/portal/PortalLogin.tsx`) at `/portal/login`
+- Login/signup with role selection (Parent, Student, Educator)
+- After login, auto-detects role from `school_users` table and routes to correct dashboard
+
+### 5. STATs Module Pages
+
+**School Portal side:**
+- `/school/dashboard` - Overview with attendance stats
+- `/school/attendance` - Daily attendance dashboard, filters by class/grade
+- `/school/classes` - Manage classes, add students
+- `/school/students` - Student directory
+- `/school/staff` - Staff directory
+- `/school/absence-requests` - Review parent-submitted absence reasons
+
+**General Portal side:**
+- `/portal/dashboard` - Role-specific dashboard (student sees own stats, parent sees children)
+- `/portal/attendance` - View attendance records
+- `/portal/absence-request` - (Parent) Submit absence reason with optional attachment
+- `/portal/my-classes` - (Educator) View and mark attendance
+
+### 6. Main Admin Integration
+
+Add to existing admin sidebar:
+- **Schools** module - View/verify registered schools, manage school accounts
+- **Portal users** module - View all portal users across schools
+
+### 7. Routes (App.tsx)
+
+Add new route groups for `/school/*` and `/portal/*` with their respective protected route wrappers.
+
+## Technical Details
+
+- New enum type: `school_user_role` = `school_admin | hr | educator | class_teacher | subject_teacher | parent | student`
+- Protected routes use new contexts (SchoolProtectedRoute, PortalProtectedRoute)
+- Storage bucket `school-logos` for school branding
+- Enable realtime on `attendance_events` for live dashboard updates
+- Parent school switching: query `school_users` where `user_id = current` and `role = parent` to get all linked schools
+
+## Build Order
+
+1. Database migration (all tables + RLS + enum)
+2. Auth contexts (SchoolAuthContext, PortalAuthContext)
+3. Login pages (`/school/login`, `/portal/login`)
+4. Layouts (SchoolLayout, PortalLayout)
+5. School portal dashboard + attendance pages
+6. General portal dashboard + attendance views
+7. Main admin schools management page
+8. Wire up routes in App.tsx
 
