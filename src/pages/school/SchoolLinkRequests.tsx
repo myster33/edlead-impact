@@ -26,7 +26,7 @@ export default function SchoolLinkRequests() {
 
   const fetchRequests = useCallback(async () => {
     if (!currentSchool?.id) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("parent_link_requests")
       .select("*, school_users!parent_link_requests_parent_user_id_fkey(full_name, email)")
       .eq("school_id", currentSchool.id)
