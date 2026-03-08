@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
-  LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox,
+  LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
