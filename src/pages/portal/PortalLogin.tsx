@@ -77,22 +77,6 @@ export default function PortalLogin() {
     }
   }, [user, isAuthenticated, authLoading, navigate, from, showTwoFaVerify]);
 
-  // Fetch verified schools for dropdown
-  useEffect(() => {
-    const fetchSchools = async () => {
-      const { data } = await supabase
-        .from("schools")
-        .select("id, name")
-        .eq("is_verified", true)
-        .order("name");
-      setSchools(data || []);
-    };
-    fetchSchools();
-  }, []);
-
-  const filteredSchools = schools.filter(s =>
-    s.name.toLowerCase().includes(schoolSearch.toLowerCase())
-  );
 
   const getLoginPlaceholder = () => {
     switch (loginMethod) {
