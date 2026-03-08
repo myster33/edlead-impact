@@ -1758,8 +1758,10 @@ function ScheduledReportSettings() {
 
 // ── Data Cleanup sub-component ──
 function DataCleanupCard() {
+  const LAST_RUN_KEY = "edlead_cleanup_last_run";
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<Record<string, number> | null>(null);
+  const [lastRun, setLastRun] = useState<string | null>(() => localStorage.getItem(LAST_RUN_KEY));
 
   const handleRunCleanup = async () => {
     setIsRunning(true);
@@ -1768,6 +1770,9 @@ function DataCleanupCard() {
       const { data, error } = await supabase.functions.invoke("cleanup-stale-data");
       if (error) throw error;
       setResults(data?.results || {});
+      const now = new Date().toISOString();
+      localStorage.setItem(LAST_RUN_KEY, now);
+      setLastRun(now);
       toast({
         title: "Cleanup complete",
         description: "Stale data has been cleaned up successfully.",
@@ -1799,6 +1804,11 @@ function DataCleanupCard() {
           <p className="text-sm text-muted-foreground">
             Removes chat data older than 90 days, expired announcements, and stale rate-limit entries.
           </p>
+          {lastRun && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last run: {new Date(lastRun).toLocaleString()}
+            </p>
+          )}
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
