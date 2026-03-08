@@ -448,9 +448,20 @@ export default function PortalLogin() {
 
                 <div className="space-y-2">
                   <Label>Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="+27..." value={signupData.phone} onChange={e => setSignupData(d => ({ ...d, phone: e.target.value }))} className="pl-10" />
+                  <div className="flex gap-1">
+                    <Select value={signupData.countryCode} onValueChange={v => setSignupData(d => ({ ...d, countryCode: v }))}>
+                      <SelectTrigger className="w-[100px] shrink-0 text-xs px-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        {countryCodes.map((c) => (
+                          <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                            {c.flag} {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input placeholder="Phone number" type="tel" value={signupData.phone} onChange={e => setSignupData(d => ({ ...d, phone: e.target.value }))} className="flex-1" />
                   </div>
                 </div>
 
