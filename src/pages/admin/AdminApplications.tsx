@@ -80,7 +80,7 @@ import { TableSkeleton } from "@/components/admin/TableSkeleton";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import { ApplicationKanban } from "@/components/admin/ApplicationKanban";
 import { ApplicationTimeline } from "@/components/admin/ApplicationTimeline";
-import { LayoutList, Kanban } from "lucide-react";
+import { LayoutList, Kanban, Trash2, ArchiveRestore } from "lucide-react";
 
 
 interface Application {
@@ -169,6 +169,9 @@ export default function AdminApplications() {
   } | null>(null);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [showTrash, setShowTrash] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [purgeId, setPurgeId] = useState<string | null>(null);
 
   // Presence: who is viewing the currently open application
   const presenceAdmin = useMemo(() => adminUser ? {
@@ -190,7 +193,7 @@ export default function AdminApplications() {
   useEffect(() => {
     fetchApplications();
     fetchCohorts();
-  }, [adminUser]);
+  }, [adminUser, showTrash]);
 
   useEffect(() => {
     filterApplications();
@@ -218,6 +221,13 @@ export default function AdminApplications() {
         .from("applications")
         .select("*")
         .order("created_at", { ascending: false });
+
+      // Filter by trash view
+      if (showTrash) {
+        query = query.not("deleted_at", "is", null);
+      } else {
+        query = query.is("deleted_at", null);
+      }
 
       // Apply region restrictions for reviewers/viewers
       if (regionInfo.hasRestrictions) {
@@ -799,6 +809,82 @@ export default function AdminApplications() {
     });
   };
 
+  const softDeleteApplication = async (id: string) => {
+    if (!adminUser || adminUser.role !== "admin") {
+      toast({ title: "Permission Denied", description: "Only admins can move applications to trash.", variant: "destructive" });
+      return;
+    }
+    const application = applications.find(app => app.id === id);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) throw error;
+      logAction({
+        action: "application_trashed" as any,
+        table_name: "applications",
+        record_id: id,
+        new_values: { full_name: application?.full_name, reference_number: application?.reference_number },
+      });
+      toast({ title: "Moved to Trash", description: `Application from ${application?.full_name} moved to trash.` });
+      setDeleteId(null);
+      fetchApplications();
+    } catch (error) {
+      console.error("Error soft deleting:", error);
+      toast({ title: "Error", description: "Failed to move application to trash.", variant: "destructive" });
+    }
+  };
+
+  const restoreApplication = async (id: string) => {
+    const application = applications.find(app => app.id === id);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: null } as any)
+        .eq("id", id);
+      if (error) throw error;
+      logAction({
+        action: "application_restored" as any,
+        table_name: "applications",
+        record_id: id,
+        new_values: { full_name: application?.full_name, reference_number: application?.reference_number },
+      });
+      toast({ title: "Restored", description: `Application from ${application?.full_name} restored.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error restoring:", error);
+      toast({ title: "Error", description: "Failed to restore application.", variant: "destructive" });
+    }
+  };
+
+  const purgeApplication = async (id: string) => {
+    if (!adminUser || adminUser.role !== "admin") {
+      toast({ title: "Permission Denied", description: "Only admins can permanently delete applications.", variant: "destructive" });
+      return;
+    }
+    const application = applications.find(app => app.id === id);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      logAction({
+        action: "application_purged" as any,
+        table_name: "applications",
+        record_id: id,
+        old_values: { full_name: application?.full_name, reference_number: application?.reference_number },
+      });
+      toast({ title: "Permanently Deleted", description: "Application has been permanently removed." });
+      setPurgeId(null);
+      fetchApplications();
+    } catch (error) {
+      console.error("Error purging:", error);
+      toast({ title: "Error", description: "Failed to permanently delete application.", variant: "destructive" });
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -856,14 +942,24 @@ export default function AdminApplications() {
                     <Kanban className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
+                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0 || showTrash}>
                   <Download className="h-4 w-4 mr-2" />
                   CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={exportToPDF} disabled={filteredApplications.length === 0}>
+                <Button variant="outline" size="sm" onClick={exportToPDF} disabled={filteredApplications.length === 0 || showTrash}>
                   <FileText className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
+                {adminUser?.role === "admin" && (
+                  <Button
+                    variant={showTrash ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() => { setShowTrash(!showTrash); setSelectedIds(new Set()); }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {showTrash ? "Back to Active" : "Trash"}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={fetchApplications} disabled={isLoading}>
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
                   Refresh
@@ -1139,60 +1235,96 @@ export default function AdminApplications() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedApplication(app)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {app.status !== "approved" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={() => handleStatusChange(app.id, "approved")}
-                                  disabled={isUpdating}
-                                  title="Approve"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {app.status !== "rejected" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleStatusChange(app.id, "rejected")}
-                                  disabled={isUpdating}
-                                  title="Reject"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {app.status !== "pending" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                                  onClick={() => handleStatusChange(app.id, "pending")}
-                                  disabled={isUpdating}
-                                  title="Set Pending"
-                                >
-                                  <RefreshCw className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {app.status !== "cancelled" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-muted-foreground hover:text-muted-foreground hover:bg-muted"
-                                  onClick={() => handleStatusChange(app.id, "cancelled")}
-                                  disabled={isUpdating}
-                                  title="Cancel"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                              {showTrash ? (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    onClick={() => restoreApplication(app.id)}
+                                    title="Restore"
+                                  >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => setPurgeId(app.id)}
+                                    title="Permanently Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedApplication(app)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {app.status !== "approved" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      onClick={() => handleStatusChange(app.id, "approved")}
+                                      disabled={isUpdating}
+                                      title="Approve"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {app.status !== "rejected" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => handleStatusChange(app.id, "rejected")}
+                                      disabled={isUpdating}
+                                      title="Reject"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {app.status !== "pending" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                                      onClick={() => handleStatusChange(app.id, "pending")}
+                                      disabled={isUpdating}
+                                      title="Set Pending"
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {app.status !== "cancelled" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-muted-foreground hover:text-muted-foreground hover:bg-muted"
+                                      onClick={() => handleStatusChange(app.id, "cancelled")}
+                                      disabled={isUpdating}
+                                      title="Cancel"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {adminUser?.role === "admin" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => setDeleteId(app.id)}
+                                      title="Move to Trash"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </TableCell>
@@ -1401,6 +1533,45 @@ export default function AdminApplications() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={confirmStatusChange}>
                 Confirm Change
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Soft Delete Confirmation */}
+        <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Move to Trash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This application will be moved to trash. You can restore it later from the Trash view.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteId && softDeleteApplication(deleteId)}>
+                Move to Trash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Permanent Delete Confirmation */}
+        <AlertDialog open={!!purgeId} onOpenChange={() => setPurgeId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently Delete?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove the application. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => purgeId && purgeApplication(purgeId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Permanently
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

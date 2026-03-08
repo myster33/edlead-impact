@@ -192,8 +192,14 @@ const AdminBlogManagement = () => {
       .select("*")
       .order("submitted_at", { ascending: false });
 
-    if (statusFilter !== "all") {
-      query = query.eq("status", statusFilter);
+    // Handle trash view vs normal view
+    if (statusFilter === "trash") {
+      query = query.not("deleted_at", "is", null);
+    } else {
+      query = query.is("deleted_at", null);
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
     }
     
     // Apply additional filters
@@ -566,6 +572,40 @@ const AdminBlogManagement = () => {
     if (!selectedPost) return;
 
     setSaving(true);
+    // Soft delete: set deleted_at instead of hard delete
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("id", selectedPost.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to move the post to trash.",
+        variant: "destructive",
+      });
+    } else {
+      await logAction({
+        action: "blog_trashed" as any,
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        old_values: { title: selectedPost.title, author_name: selectedPost.author_name },
+      });
+
+      toast({
+        title: "Moved to Trash",
+        description: "The blog post has been moved to trash. You can restore it later.",
+      });
+      setDeleteDialogOpen(false);
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
+  const handlePurge = async () => {
+    if (!selectedPost) return;
+
+    setSaving(true);
     const { error } = await supabase
       .from("blog_posts")
       .delete()
@@ -574,23 +614,54 @@ const AdminBlogManagement = () => {
     if (error) {
       toast({
         title: "Error",
-        description: "Failed to delete the post.",
+        description: "Failed to permanently delete the post.",
         variant: "destructive",
       });
     } else {
-      // Log the deletion
       await logAction({
-        action: "blog_deleted",
+        action: "blog_purged" as any,
         table_name: "blog_posts",
         record_id: selectedPost.id,
         old_values: { title: selectedPost.title, author_name: selectedPost.author_name },
       });
 
       toast({
-        title: "Post Deleted",
-        description: "The blog post has been deleted.",
+        title: "Permanently Deleted",
+        description: "The blog post has been permanently removed.",
       });
       setDeleteDialogOpen(false);
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
+  const handleRestoreFromTrash = async () => {
+    if (!selectedPost) return;
+
+    setSaving(true);
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ deleted_at: null } as any)
+      .eq("id", selectedPost.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to restore the post.",
+        variant: "destructive",
+      });
+    } else {
+      await logAction({
+        action: "blog_restored" as any,
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        new_values: { title: selectedPost.title },
+      });
+
+      toast({
+        title: "Restored from Trash",
+        description: "The blog post has been restored and set to its previous status.",
+      });
       fetchPosts();
     }
     setSaving(false);
@@ -1046,6 +1117,11 @@ const AdminBlogManagement = () => {
                       <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                       <SelectItem value="archived">Archived ({activityStats.archived})</SelectItem>
+                      <SelectItem value="trash">
+                        <span className="flex items-center gap-1">
+                          <Trash2 className="h-3 w-3" /> Trash
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1154,101 +1230,142 @@ const AdminBlogManagement = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedPost(post);
-                            setViewDialogOpen(true);
-                          }}
-                          title="View"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {/* Edit - only for reviewers and admins */}
-                        {regionInfo.canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(post)}
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Approve/Reject - only for pending posts and reviewers/admins */}
-                        {post.status === "pending" && regionInfo.canEdit && (
+                        {statusFilter === "trash" ? (
                           <>
+                            {/* Trash view: Restore and Purge */}
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => openApproveDialog(post)}
+                              onClick={async () => {
+                                setSaving(true);
+                                const { error } = await supabase
+                                  .from("blog_posts")
+                                  .update({ deleted_at: null } as any)
+                                  .eq("id", post.id);
+                                if (error) {
+                                  toast({ title: "Error", description: "Failed to restore.", variant: "destructive" });
+                                } else {
+                                  await logAction({ action: "blog_restored" as any, table_name: "blog_posts", record_id: post.id, new_values: { title: post.title } });
+                                  toast({ title: "Restored", description: `"${post.title}" restored from trash.` });
+                                  fetchPosts();
+                                }
+                                setSaving(false);
+                              }}
+                              disabled={saving}
                               className="text-green-600 hover:text-green-700"
-                              title="Approve"
+                              title="Restore from Trash"
                             >
-                              <Check className="h-4 w-4" />
+                              <ArchiveRestore className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openRejectDialog(post)}
-                              className="text-destructive hover:text-destructive"
-                              title="Reject"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                            {adminUser?.role === "admin" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPost(post);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive hover:text-destructive"
+                                title="Permanently Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </>
-                        )}
-                        {post.status === "approved" && (
+                        ) : (
                           <>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
-                              title="View Live"
+                              onClick={() => {
+                                setSelectedPost(post);
+                                setViewDialogOpen(true);
+                              }}
+                              title="View"
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                            {/* Archive - only for reviewers/admins */}
                             {regionInfo.canEdit && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => openArchiveDialog(post)}
-                                className="text-amber-600 hover:text-amber-700"
-                                title="Archive"
+                                onClick={() => handleEdit(post)}
+                                title="Edit"
                               >
-                                <Archive className="h-4 w-4" />
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {post.status === "pending" && regionInfo.canEdit && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openApproveDialog(post)}
+                                  className="text-green-600 hover:text-green-700"
+                                  title="Approve"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openRejectDialog(post)}
+                                  className="text-destructive hover:text-destructive"
+                                  title="Reject"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            {post.status === "approved" && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
+                                  title="View Live"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                                {regionInfo.canEdit && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openArchiveDialog(post)}
+                                    className="text-amber-600 hover:text-amber-700"
+                                    title="Archive"
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                            {post.status === "archived" && regionInfo.canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openRestoreDialog(post)}
+                                className="text-green-600 hover:text-green-700"
+                                title="Restore"
+                              >
+                                <ArchiveRestore className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {adminUser?.role === "admin" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPost(post);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive hover:text-destructive"
+                                title="Move to Trash"
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
                           </>
-                        )}
-                        {/* Restore - only for archived posts and reviewers/admins */}
-                        {post.status === "archived" && regionInfo.canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openRestoreDialog(post)}
-                            className="text-green-600 hover:text-green-700"
-                            title="Restore"
-                          >
-                            <ArchiveRestore className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Delete - only for admins */}
-                        {adminUser?.role === "admin" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedPost(post);
-                              setDeleteDialogOpen(true);
-                            }}
-                            className="text-destructive hover:text-destructive"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         )}
                       </div>
                     </TableCell>
@@ -1582,18 +1699,24 @@ const AdminBlogManagement = () => {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Blog Post</DialogTitle>
+            <DialogTitle>{statusFilter === "trash" ? "Permanently Delete?" : "Move to Trash?"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedPost?.title}"? This action cannot be undone.
+              {statusFilter === "trash"
+                ? `Are you sure you want to permanently delete "${selectedPost?.title}"? This action cannot be undone.`
+                : `Are you sure you want to move "${selectedPost?.title}" to trash? You can restore it later.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={saving}>
+            <Button
+              variant="destructive"
+              onClick={statusFilter === "trash" ? handlePurge : handleDelete}
+              disabled={saving}
+            >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Delete
+              {statusFilter === "trash" ? "Delete Permanently" : "Move to Trash"}
             </Button>
           </DialogFooter>
         </DialogContent>
