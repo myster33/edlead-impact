@@ -149,9 +149,9 @@ export default function AdminSchools() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>School Name</TableHead>
+                    <TableHead>EMIS No.</TableHead>
                     <TableHead>Code</TableHead>
                     <TableHead>Province</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Users</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Registered</TableHead>
