@@ -370,7 +370,7 @@ export default function SchoolAttendance() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardCheck className="h-5 w-5" />
-                  {isTeacherRole ? "Class Attendance Records" : "Gate Attendance Records"} — {selectedDate}
+                  {isTeacherRole ? "Class Attendance Records" : "School Attendance Records"} — {selectedDate}
                 </CardTitle>
                 {isTeacherRole && teacherClasses.length > 0 && (
                   <CardDescription>
