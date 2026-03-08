@@ -134,6 +134,9 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="ml-2 flex items-center gap-2">
                   <Avatar className="h-8 w-8">
+                    {schoolUser?.profile_picture_url && (
+                      <AvatarImage src={schoolUser.profile_picture_url} alt={displayName} />
+                    )}
                     <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block text-left">
