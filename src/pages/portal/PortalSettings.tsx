@@ -154,6 +154,17 @@ export default function PortalSettings() {
             )}
           </CardContent>
         </Card>
+
+        {/* Subject selection for students */}
+        {portalUser?.role === "student" && portalUser?.school_id && (
+          <>
+            <Separator />
+            <StudentSubjectPicker
+              studentId={portalUser.id}
+              schoolId={portalUser.school_id}
+            />
+          </>
+        )}
       </div>
     </PortalLayout>
   );
