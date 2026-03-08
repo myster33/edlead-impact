@@ -1920,7 +1920,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           role: string
-          school_id: string
+          school_id: string | null
           status: string
           student_id_number: string | null
         }
@@ -1936,7 +1936,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           role: string
-          school_id: string
+          school_id?: string | null
           status?: string
           student_id_number?: string | null
         }
@@ -1952,7 +1952,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           role?: string
-          school_id?: string
+          school_id?: string | null
           status?: string
           student_id_number?: string | null
         }

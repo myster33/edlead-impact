@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
         if (twilioSid && twilioAuth && messagingSid) {
           const phone = schoolUser.phone.replace(/\s/g, "");
-          const body = `Welcome to edLEAD Portal, ${schoolUser.full_name}! Your User ID is: ${schoolUser.user_code}. You can use this ID, your email, or phone number to log in.`;
+          const body = `Welcome to edLEAD Portal, ${schoolUser.full_name}! Your edLEAD ID is: ${schoolUser.user_code}. You can use this ID, your email, or phone number to log in.`;
 
           const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
           const twilioResp = await fetch(twilioUrl, {
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "edLEAD <noreply@edlead.co.za>",
             to: [schoolUser.email],
-            subject: "Welcome to edLEAD Portal — Your User ID",
+            subject: "Welcome to edLEAD Portal — Your edLEAD ID",
             html: `
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <div style="text-align:center;margin-bottom:20px;">
@@ -103,14 +103,14 @@ Deno.serve(async (req) => {
                 <p>Dear ${schoolUser.full_name},</p>
                 <p>Your registration has been approved. Here are your login details:</p>
                 <div style="background:#f5f5f5;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
-                  <p style="margin:0 0 8px 0;color:#666;font-size:14px;">Your User ID</p>
+                  <p style="margin:0 0 8px 0;color:#666;font-size:14px;">Your edLEAD ID</p>
                   <p style="margin:0;font-size:28px;font-weight:bold;color:#ED7621;letter-spacing:2px;">${schoolUser.user_code}</p>
                 </div>
                 <p>You can log in using any of the following:</p>
                 <ul>
                   <li><strong>Email:</strong> ${schoolUser.email}</li>
                   ${schoolUser.phone ? `<li><strong>Phone:</strong> ${schoolUser.phone}</li>` : ""}
-                  <li><strong>User ID:</strong> ${schoolUser.user_code}</li>
+                  <li><strong>edLEAD ID:</strong> ${schoolUser.user_code}</li>
                 </ul>
                 <p>Visit <a href="https://edlead.lovable.app/portal/login" style="color:#ED7621;">edlead.lovable.app/portal/login</a> to sign in.</p>
                 <hr style="margin:20px 0;border:none;border-top:1px solid #eee;" />

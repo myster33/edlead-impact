@@ -29,7 +29,6 @@ const signupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   role: z.enum(["student", "parent", "educator"], { required_error: "Select a role" }),
-  schoolId: z.string().min(1, "Please select a school"),
   studentIdNumber: z.string().optional(),
 }).refine(d => d.password === d.confirmPassword, {
   message: "Passwords do not match",
@@ -47,12 +46,12 @@ export default function PortalLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [showTwoFaVerify, setShowTwoFaVerify] = useState(false);
   const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("email");
-  const [loginMethod, setLoginMethod] = useState<"email" | "phone" | "userid">("email");
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone" | "edleadid">("email");
 
   // Signup state
   const [signupData, setSignupData] = useState({
     fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "",
-    role: "" as string, schoolId: "", studentIdNumber: "",
+    role: "" as string, studentIdNumber: "",
   });
   const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -63,9 +62,6 @@ export default function PortalLogin() {
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
 
-  // Schools list
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
-  const [schoolSearch, setSchoolSearch] = useState("");
 
   const { signIn, user, isAuthenticated, isLoading: authLoading } = usePortalAuth();
   const navigate = useNavigate();
@@ -81,27 +77,11 @@ export default function PortalLogin() {
     }
   }, [user, isAuthenticated, authLoading, navigate, from, showTwoFaVerify]);
 
-  // Fetch verified schools for dropdown
-  useEffect(() => {
-    const fetchSchools = async () => {
-      const { data } = await supabase
-        .from("schools")
-        .select("id, name")
-        .eq("is_verified", true)
-        .order("name");
-      setSchools(data || []);
-    };
-    fetchSchools();
-  }, []);
-
-  const filteredSchools = schools.filter(s =>
-    s.name.toLowerCase().includes(schoolSearch.toLowerCase())
-  );
 
   const getLoginPlaceholder = () => {
     switch (loginMethod) {
       case "phone": return "+27 xxx xxx xxxx";
-      case "userid": return "EDL-XXXXXX";
+      case "edleadid": return "EDL-XXXXXX";
       default: return "you@example.com";
     }
   };
@@ -109,7 +89,7 @@ export default function PortalLogin() {
   const getLoginIcon = () => {
     switch (loginMethod) {
       case "phone": return <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
-      case "userid": return <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
+      case "edleadid": return <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
       default: return <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
     }
   };
@@ -117,7 +97,7 @@ export default function PortalLogin() {
   const getLoginLabel = () => {
     switch (loginMethod) {
       case "phone": return "Phone Number";
-      case "userid": return "User ID";
+      case "edleadid": return "edLEAD ID";
       default: return "Email";
     }
   };
@@ -207,7 +187,7 @@ export default function PortalLogin() {
           full_name: signupData.fullName,
           phone: signupData.phone || null,
           role: signupData.role,
-          school_id: signupData.schoolId,
+          school_id: null,
           student_id_number: signupData.studentIdNumber || null,
           id_passport_number: signupData.idPassportNumber,
           auth_user_id: authData.user?.id || null,
@@ -222,11 +202,11 @@ export default function PortalLogin() {
 
       toast({
         title: "Registration Submitted!",
-        description: "Please verify your email, then wait for your school to approve your account. Your User ID will be sent via email and SMS once approved.",
+        description: "Please verify your email. Your edLEAD ID will be sent via email and SMS once your account is set up.",
       });
 
       setTab("login");
-      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", schoolId: "", studentIdNumber: "" });
+      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", studentIdNumber: "" });
     } finally {
       setIsSigningUp(false);
     }
@@ -373,12 +353,12 @@ export default function PortalLogin() {
                   </Button>
                   <Button
                     type="button"
-                    variant={loginMethod === "userid" ? "default" : "ghost"}
+                    variant={loginMethod === "edleadid" ? "default" : "ghost"}
                     size="sm"
                     className="flex-1 text-xs"
-                    onClick={() => { setLoginMethod("userid"); setIdentifier(""); }}
+                    onClick={() => { setLoginMethod("edleadid"); setIdentifier(""); }}
                   >
-                    <Hash className="h-3 w-3 mr-1" />User ID
+                    <Hash className="h-3 w-3 mr-1" />edLEAD ID
                   </Button>
                 </div>
 
@@ -472,29 +452,6 @@ export default function PortalLogin() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>School</Label>
-                  <Select value={signupData.schoolId} onValueChange={v => setSignupData(d => ({ ...d, schoolId: v }))}>
-                    <SelectTrigger>
-                      <div className="flex items-center gap-2">
-                        <School className="h-4 w-4 text-muted-foreground" />
-                        <SelectValue placeholder="Select your school" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input placeholder="Search schools..." value={schoolSearch} onChange={e => setSchoolSearch(e.target.value)} className="mb-2" />
-                      </div>
-                      {filteredSchools.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                      {filteredSchools.length === 0 && (
-                        <p className="text-sm text-muted-foreground p-2 text-center">No schools found</p>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {signupErrors.schoolId && <p className="text-sm text-destructive">{signupErrors.schoolId}</p>}
-                </div>
 
                 {signupData.role === "student" && (
                   <div className="space-y-2">
@@ -529,7 +486,7 @@ export default function PortalLogin() {
                   {isSigningUp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Create Account"}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  Your school will need to approve your account. Once approved, your User ID will be sent via email and SMS.
+                  After verifying your email, your edLEAD ID will be sent via email and SMS. You can then link to a school from your portal.
                 </p>
               </form>
             </TabsContent>
