@@ -21,7 +21,7 @@ import {
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Settings,
-  CalendarDays, Clock, BookMarked, Bell,
+  CalendarDays, Clock, BookMarked, Bell, GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import edleadLogo from "@/assets/edlead-logo.png";
