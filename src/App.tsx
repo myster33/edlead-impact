@@ -134,6 +134,7 @@ const App = () => (
                     <Route path="/admin/subscribers" element={<ProtectedRoute moduleKey="subscribers"><AdminSubscribers /></ProtectedRoute>} />
                     <Route path="/admin/email-logs" element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>} />
                     <Route path="/admin/webhooks" element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>} />
+                    <Route path="/admin/schools" element={<ProtectedRoute moduleKey="schools"><AdminSchools /></ProtectedRoute>} />
 
                     {/* School Portal Routes */}
                     <Route path="/school/login" element={<SchoolLogin />} />
