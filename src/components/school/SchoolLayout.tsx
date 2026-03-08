@@ -30,23 +30,21 @@ import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 const menuGroups = [
   [
     { title: "Dashboard", url: "/school/dashboard", icon: LayoutDashboard },
-  ],
-  [
     { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
     { title: "Period attendance", url: "/school/period-attendance", icon: BookMarked, teacherOnly: true },
     { title: "Timetable", url: "/school/timetable", icon: Clock, teacherOnly: true },
-    { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Classes", url: "/school/classes", icon: BookOpen },
     { title: "Subjects", url: "/school/subjects", icon: GraduationCap },
+  ],
+  [
     { title: "Students", url: "/school/students", icon: Users },
     { title: "Staff", url: "/school/staff", icon: UserCheck },
+    { title: "edLEAD Chat", url: "/school/edlead-chat", icon: MessageCircle },
   ],
   [
+    { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
     { title: "Reports", url: "/school/reports", icon: FileText },
-  ],
-  [
-    { title: "edLEAD Chat", url: "/school/edlead-chat", icon: MessageCircle },
   ],
   [
     { title: "Settings", url: "/school/settings", icon: Settings },
