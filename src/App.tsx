@@ -45,6 +45,8 @@ const AdminChat = lazy(() => import("./pages/admin/AdminChat"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminTestimonials = lazy(() => import("./pages/admin/AdminTestimonials"));
 const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
+const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
+const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
 
 const queryClient = new QueryClient();
 
