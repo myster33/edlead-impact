@@ -329,7 +329,7 @@ export default function SchoolAttendance() {
               {attendanceContextIcon}
               {isTeacherRole
                 ? "Mark and view class attendance for your students"
-                : "Daily check-in & check-out tracking at the school gate (STATs)"
+                : "Daily check-in & check-out tracking (STATs)"
               }
             </p>
           </div>
