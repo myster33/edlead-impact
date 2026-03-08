@@ -37,6 +37,7 @@ const menuGroups = [
     { title: "Timetable", url: "/school/timetable", icon: Clock, teacherOnly: true },
     { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Classes", url: "/school/classes", icon: BookOpen },
+    { title: "Subjects", url: "/school/subjects", icon: GraduationCap },
     { title: "Students", url: "/school/students", icon: Users },
     { title: "Staff", url: "/school/staff", icon: UserCheck },
   ],
