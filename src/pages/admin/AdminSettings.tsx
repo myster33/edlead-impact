@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone, History, Volume2, VolumeX } from "lucide-react";
+import { Loader2, Shield, Key, User, Check, X, Save, Camera, Trash2, Mail, Bell, AlertTriangle, FileText, Users, UserCheck, Sun, Moon, Monitor, MessageSquare, Phone, History, Volume2, VolumeX, Eraser } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { countryCodes } from "@/lib/country-codes";
