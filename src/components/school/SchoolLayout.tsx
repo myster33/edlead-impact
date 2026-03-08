@@ -18,7 +18,7 @@ import { AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2, Settings,
-  CalendarDays,
+  CalendarDays, Clock, BookMarked,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
