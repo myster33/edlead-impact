@@ -162,6 +162,7 @@ export default function AdminSchools() {
                   {filtered.map(school => (
                     <TableRow key={school.id}>
                       <TableCell className="font-medium">{school.name}</TableCell>
+                      <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{school.emis_number || "—"}</code></TableCell>
                       <TableCell><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{school.school_code}</code></TableCell>
                       <TableCell>
                         <span className="flex items-center gap-1 text-sm">
@@ -169,7 +170,6 @@ export default function AdminSchools() {
                           {school.province || "—"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-sm">{school.email || "—"}</TableCell>
                       <TableCell>
                         <span className="flex items-center gap-1 text-sm">
                           <Users className="h-3 w-3 text-muted-foreground" />
