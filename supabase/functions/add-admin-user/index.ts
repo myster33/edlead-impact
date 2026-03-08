@@ -65,11 +65,19 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Validate role
-    const validRoles = ["viewer", "reviewer", "admin"];
+    const validRoles = ["viewer", "reviewer", "admin", "super_admin"];
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ success: false, error: "Invalid role" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Only super_admin can appoint admin or super_admin
+    if ((role === "admin" || role === "super_admin") && adminCheck.role !== "super_admin") {
+      return new Response(
+        JSON.stringify({ success: false, error: "Only Super Admins can appoint Admin or Super Admin roles" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
