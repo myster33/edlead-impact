@@ -89,10 +89,12 @@ const menuItems = [
   { title: "Message Center", url: "/admin/message-center", icon: Send, moduleKey: "message-center" },
   { title: "Message Templates", url: "/admin/message-templates", icon: MessageSquare, moduleKey: "message-templates" },
   { title: "Email Templates", url: "/admin/email-templates", icon: Mail, moduleKey: "email-templates" },
+  { title: "Email Logs", url: "/admin/email-logs", icon: Mail, moduleKey: "email-logs" },
   { title: "Testimonials", url: "/admin/testimonials", icon: Quote, moduleKey: "testimonials" },
   { title: "Subscribers", url: "/admin/subscribers", icon: UserCheck, moduleKey: "subscribers" },
   { title: "Admin Users", url: "/admin/users", icon: Users, moduleKey: "admin-users" },
   { title: "Permissions", url: "/admin/permissions", icon: Lock, moduleKey: "permissions" },
+  { title: "Webhooks", url: "/admin/webhooks", icon: Shield, moduleKey: "webhooks" },
   { title: "Audit Log", url: "/admin/audit-log", icon: History, moduleKey: "audit-log" },
   { title: "Settings", url: "/admin/settings", icon: Settings, moduleKey: "settings" },
 ];
