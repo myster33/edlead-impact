@@ -809,6 +809,82 @@ export default function AdminApplications() {
     });
   };
 
+  const softDeleteApplication = async (id: string) => {
+    if (!adminUser || adminUser.role !== "admin") {
+      toast({ title: "Permission Denied", description: "Only admins can move applications to trash.", variant: "destructive" });
+      return;
+    }
+    const application = applications.find(app => app.id === id);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) throw error;
+      logAction({
+        action: "application_trashed" as any,
+        table_name: "applications",
+        record_id: id,
+        new_values: { full_name: application?.full_name, reference_number: application?.reference_number },
+      });
+      toast({ title: "Moved to Trash", description: `Application from ${application?.full_name} moved to trash.` });
+      setDeleteId(null);
+      fetchApplications();
+    } catch (error) {
+      console.error("Error soft deleting:", error);
+      toast({ title: "Error", description: "Failed to move application to trash.", variant: "destructive" });
+    }
+  };
+
+  const restoreApplication = async (id: string) => {
+    const application = applications.find(app => app.id === id);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: null } as any)
+        .eq("id", id);
+      if (error) throw error;
+      logAction({
+        action: "application_restored" as any,
+        table_name: "applications",
+        record_id: id,
+        new_values: { full_name: application?.full_name, reference_number: application?.reference_number },
+      });
+      toast({ title: "Restored", description: `Application from ${application?.full_name} restored.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error restoring:", error);
+      toast({ title: "Error", description: "Failed to restore application.", variant: "destructive" });
+    }
+  };
+
+  const purgeApplication = async (id: string) => {
+    if (!adminUser || adminUser.role !== "admin") {
+      toast({ title: "Permission Denied", description: "Only admins can permanently delete applications.", variant: "destructive" });
+      return;
+    }
+    const application = applications.find(app => app.id === id);
+    try {
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      logAction({
+        action: "application_purged" as any,
+        table_name: "applications",
+        record_id: id,
+        old_values: { full_name: application?.full_name, reference_number: application?.reference_number },
+      });
+      toast({ title: "Permanently Deleted", description: "Application has been permanently removed." });
+      setPurgeId(null);
+      fetchApplications();
+    } catch (error) {
+      console.error("Error purging:", error);
+      toast({ title: "Error", description: "Failed to permanently delete application.", variant: "destructive" });
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
