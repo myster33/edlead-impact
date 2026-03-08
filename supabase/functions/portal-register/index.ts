@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
                   <li><strong>edLEAD ID:</strong> ${userCode}</li>
                 </ul>
                 <p>Once logged in, you can link your account to a school from your portal dashboard.</p>
-                <p>Visit <a href="https://edlead.lovable.app/portal/login" style="color:#ED7621;">edlead.lovable.app/portal/login</a> to sign in.</p>
+                <p>Visit <a href="https://edlead.co.za/portal/login" style="color:#ED7621;">edlead.co.za/portal/login</a> to sign in.</p>
                 <hr style="margin:20px 0;border:none;border-top:1px solid #eee;" />
                 <p style="color:#999;font-size:12px;">This is an automated message from edLEAD. Please do not reply.</p>
               </div>

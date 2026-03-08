@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
                   ${schoolUser.phone ? `<li><strong>Phone:</strong> ${schoolUser.phone}</li>` : ""}
                   <li><strong>edLEAD ID:</strong> ${schoolUser.user_code}</li>
                 </ul>
-                <p>Visit <a href="https://edlead.lovable.app/portal/login" style="color:#ED7621;">edlead.lovable.app/portal/login</a> to sign in.</p>
+                <p>Visit <a href="https://edlead.co.za/portal/login" style="color:#ED7621;">edlead.co.za/portal/login</a> to sign in.</p>
                 <hr style="margin:20px 0;border:none;border-top:1px solid #eee;" />
                 <p style="color:#999;font-size:12px;">This is an automated message from edLEAD. Please do not reply.</p>
               </div>
