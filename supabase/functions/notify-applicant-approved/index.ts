@@ -404,6 +404,7 @@ const handler = async (req: Request): Promise<Response> => {
     const learnerEmailResult = await sendEmail(applicantEmail, learnerSubject, learnerHtml);
     results.email.learner = learnerEmailResult.success;
     console.log("Learner email sent:", learnerEmailResult.success);
+    await logEmailSend(supabase, { recipientEmail: applicantEmail, subject: learnerSubject, success: learnerEmailResult.success, resendId: learnerEmailResult.resendId, errorMessage: learnerEmailResult.error, templateKey: "applicant-approved", relatedTable: "applications" });
 
     // Send parent email if enabled
     if (parentEmailsEnabled && parentEmail && parentEmail.trim() !== "" && parentEmail !== applicantEmail) {
