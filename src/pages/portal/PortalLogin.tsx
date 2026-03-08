@@ -336,6 +336,15 @@ export default function PortalLogin() {
                 <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/50">
                   <Button
                     type="button"
+                    variant={loginMethod === "edleadid" ? "default" : "ghost"}
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => { setLoginMethod("edleadid"); setIdentifier(""); }}
+                  >
+                    <img src={edleadIcon} alt="edLEAD" className="h-3 w-3 mr-1" />edLEAD ID
+                  </Button>
+                  <Button
+                    type="button"
                     variant={loginMethod === "email" ? "default" : "ghost"}
                     size="sm"
                     className="flex-1 text-xs"
@@ -351,15 +360,6 @@ export default function PortalLogin() {
                     onClick={() => { setLoginMethod("phone"); setIdentifier(""); }}
                   >
                     <Phone className="h-3 w-3 mr-1" />Phone
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={loginMethod === "edleadid" ? "default" : "ghost"}
-                    size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => { setLoginMethod("edleadid"); setIdentifier(""); }}
-                  >
-                    <img src={edleadIcon} alt="edLEAD" className="h-3 w-3 mr-1" />edLEAD ID
                   </Button>
                 </div>
 
