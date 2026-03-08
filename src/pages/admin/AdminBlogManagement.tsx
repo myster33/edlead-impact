@@ -1236,10 +1236,22 @@ const AdminBlogManagement = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => {
-                                setSelectedPost(post);
-                                handleRestoreFromTrash();
+                              onClick={async () => {
+                                setSaving(true);
+                                const { error } = await supabase
+                                  .from("blog_posts")
+                                  .update({ deleted_at: null } as any)
+                                  .eq("id", post.id);
+                                if (error) {
+                                  toast({ title: "Error", description: "Failed to restore.", variant: "destructive" });
+                                } else {
+                                  await logAction({ action: "blog_restored" as any, table_name: "blog_posts", record_id: post.id, new_values: { title: post.title } });
+                                  toast({ title: "Restored", description: `"${post.title}" restored from trash.` });
+                                  fetchPosts();
+                                }
+                                setSaving(false);
                               }}
+                              disabled={saving}
                               className="text-green-600 hover:text-green-700"
                               title="Restore from Trash"
                             >
