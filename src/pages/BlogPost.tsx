@@ -238,7 +238,7 @@ const BlogPost = () => {
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Article",
+            "@type": "BlogPosting",
             "headline": post.title,
             "description": post.meta_description || post.summary,
             "image": post.featured_image_url || undefined,
