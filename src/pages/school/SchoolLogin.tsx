@@ -25,6 +25,7 @@ interface SchoolDirectoryEntry {
 }
 
 const loginSchema = z.object({
+  emisNumber: z.string().min(1, "School EMIS Number is required"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
