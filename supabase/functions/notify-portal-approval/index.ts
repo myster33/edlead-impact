@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
             html: `
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <div style="text-align:center;margin-bottom:20px;">
-                  <img src="https://edlead.lovable.app/images/edlead-logo-email-header.png" alt="edLEAD" style="height:50px;" />
+                  <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="height:50px;" />
                 </div>
                 <h2 style="color:#ED7621;">Welcome to edLEAD Portal!</h2>
                 <p>Dear ${schoolUser.full_name},</p>
