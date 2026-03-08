@@ -147,13 +147,13 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
     setUnreadChatCount(count || 0);
   }, [currentSchool?.id]);
 
-  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
+  useEffect(() => { fetchNotifications(); fetchUnreadChats(); }, [fetchNotifications, fetchUnreadChats]);
 
   // Refresh every 30s
   useEffect(() => {
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => { fetchNotifications(); fetchUnreadChats(); }, 30000);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, fetchUnreadChats]);
 
   const pendingCount = notifications.length;
 
