@@ -902,7 +902,7 @@ export default function AdminManagement() {
                     </p>
                   </div>
                   
-                  {newUserRole !== "admin" && (
+                  {newUserRole !== "admin" && newUserRole !== "super_admin" && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="country">Assigned Country</Label>
