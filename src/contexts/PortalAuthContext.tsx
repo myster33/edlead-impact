@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface PortalUser {
   id: string;
   user_id: string;
-  school_id: string;
+  school_id: string | null;
   role: "educator" | "class_teacher" | "subject_teacher" | "parent" | "student";
   full_name: string;
   email: string;
