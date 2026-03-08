@@ -93,14 +93,14 @@ export default function SchoolSettings() {
     setUploadingAvatar(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `school-avatars/${schoolUser.id}.${ext}`;
+      const path = `avatars/${schoolUser.id}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from("admin-avatars")
+        .from("school-assets")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from("admin-avatars")
+        .from("school-assets")
         .getPublicUrl(path);
       
       setProfilePicUrl(publicUrl);
