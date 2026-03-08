@@ -623,7 +623,8 @@ export default function SchoolLogin() {
                       {regErrors.confirmPassword && <p className="text-sm text-destructive">{regErrors.confirmPassword}</p>}
                     </div>
 
-                    <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+                    <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
+                      <p>Your school account is tied to the EMIS number provided. The credentials and role used during registration are permanent defaults for this account.</p>
                       <p>After registration, your school will be reviewed and verified by the edLEAD administration team before you can access the portal.</p>
                     </div>
 
