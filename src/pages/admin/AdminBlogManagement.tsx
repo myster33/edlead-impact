@@ -1230,101 +1230,130 @@ const AdminBlogManagement = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedPost(post);
-                            setViewDialogOpen(true);
-                          }}
-                          title="View"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {/* Edit - only for reviewers and admins */}
-                        {regionInfo.canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(post)}
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Approve/Reject - only for pending posts and reviewers/admins */}
-                        {post.status === "pending" && regionInfo.canEdit && (
+                        {statusFilter === "trash" ? (
                           <>
+                            {/* Trash view: Restore and Purge */}
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => openApproveDialog(post)}
+                              onClick={() => {
+                                setSelectedPost(post);
+                                handleRestoreFromTrash();
+                              }}
                               className="text-green-600 hover:text-green-700"
-                              title="Approve"
+                              title="Restore from Trash"
                             >
-                              <Check className="h-4 w-4" />
+                              <ArchiveRestore className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openRejectDialog(post)}
-                              className="text-destructive hover:text-destructive"
-                              title="Reject"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                            {adminUser?.role === "admin" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPost(post);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive hover:text-destructive"
+                                title="Permanently Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </>
-                        )}
-                        {post.status === "approved" && (
+                        ) : (
                           <>
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
-                              title="View Live"
+                              onClick={() => {
+                                setSelectedPost(post);
+                                setViewDialogOpen(true);
+                              }}
+                              title="View"
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                            {/* Archive - only for reviewers/admins */}
                             {regionInfo.canEdit && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => openArchiveDialog(post)}
-                                className="text-amber-600 hover:text-amber-700"
-                                title="Archive"
+                                onClick={() => handleEdit(post)}
+                                title="Edit"
                               >
-                                <Archive className="h-4 w-4" />
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {post.status === "pending" && regionInfo.canEdit && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openApproveDialog(post)}
+                                  className="text-green-600 hover:text-green-700"
+                                  title="Approve"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openRejectDialog(post)}
+                                  className="text-destructive hover:text-destructive"
+                                  title="Reject"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            {post.status === "approved" && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
+                                  title="View Live"
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                                {regionInfo.canEdit && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openArchiveDialog(post)}
+                                    className="text-amber-600 hover:text-amber-700"
+                                    title="Archive"
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                            {post.status === "archived" && regionInfo.canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => openRestoreDialog(post)}
+                                className="text-green-600 hover:text-green-700"
+                                title="Restore"
+                              >
+                                <ArchiveRestore className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {adminUser?.role === "admin" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedPost(post);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive hover:text-destructive"
+                                title="Move to Trash"
+                              >
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
                           </>
-                        )}
-                        {/* Restore - only for archived posts and reviewers/admins */}
-                        {post.status === "archived" && regionInfo.canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openRestoreDialog(post)}
-                            className="text-green-600 hover:text-green-700"
-                            title="Restore"
-                          >
-                            <ArchiveRestore className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {/* Delete - only for admins */}
-                        {adminUser?.role === "admin" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setSelectedPost(post);
-                              setDeleteDialogOpen(true);
-                            }}
-                            className="text-destructive hover:text-destructive"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
                         )}
                       </div>
                     </TableCell>
