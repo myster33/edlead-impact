@@ -265,7 +265,9 @@ export default function SchoolLogin() {
     try {
       const { error } = await signUp(
         regEmail, regPassword, regSchoolName, regSchoolAddress, 
-        regProvince, regRole, regFullName, regPhone, regEmisNumber
+        regProvince, regRole, regFullName,
+        regPhone.trim() ? `${regCountryCode.split("|")[0]} ${regPhone.trim().replace(/^0+/, "")}` : regPhone,
+        regEmisNumber
       );
       if (error) {
         toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
