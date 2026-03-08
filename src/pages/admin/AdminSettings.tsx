@@ -1546,6 +1546,22 @@ export default function AdminSettings() {
                     <ScheduledReportSettings />
                   </CardContent>
                 </Card>
+
+                {/* Data Cleanup */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Eraser className="h-5 w-5" />
+                      Data Cleanup
+                    </CardTitle>
+                    <CardDescription>
+                      Remove stale chat conversations (&gt;90 days), expired announcements, and old rate-limit entries.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <DataCleanupCard />
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>
