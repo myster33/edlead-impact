@@ -1810,6 +1810,33 @@ export type Database = {
         }
         Relationships: []
       }
+      school_2fa_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       school_users: {
         Row: {
           created_at: string
@@ -1822,6 +1849,7 @@ export type Database = {
           role: Database["public"]["Enums"]["school_user_role"]
           school_id: string
           student_id_number: string | null
+          two_fa_enabled: boolean
           updated_at: string
           user_id: string
         }
@@ -1836,6 +1864,7 @@ export type Database = {
           role: Database["public"]["Enums"]["school_user_role"]
           school_id: string
           student_id_number?: string | null
+          two_fa_enabled?: boolean
           updated_at?: string
           user_id: string
         }
@@ -1850,6 +1879,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["school_user_role"]
           school_id?: string
           student_id_number?: string | null
+          two_fa_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
