@@ -81,10 +81,13 @@ export default function UserAccess() {
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
 
-        {/* Background gradient orbs */}
+        {/* Animated gradient orbs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-80 h-80 rounded-full bg-primary/10 blur-3xl animate-pulse" />
-          <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary/15 blur-[100px] animate-user-access-orb-drift" />
+          <div className="absolute top-1/2 -right-32 w-[400px] h-[400px] rounded-full bg-accent/30 blur-[80px] animate-user-access-orb-drift" style={{ animationDelay: "2s", animationDirection: "reverse" }} />
+          <div className="absolute -bottom-32 left-1/3 w-[350px] h-[350px] rounded-full bg-primary/8 blur-[90px] animate-user-access-orb-drift" style={{ animationDelay: "4s" }} />
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
         </div>
 
         <div className={`flex flex-col items-center w-full max-w-3xl z-10 transition-all duration-400 ${exiting ? "opacity-0 translate-y-6" : ""}`}>

@@ -150,3 +150,13 @@ All colors MUST be HSL.
 .animate-login-slide-up {
   animation: login-slide-up 0.5s ease-out both;
 }
+
+@keyframes user-access-orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(15px, 35px) scale(1.02); }
+}
+.animate-user-access-orb-drift {
+  animation: user-access-orb-drift 12s ease-in-out infinite;
+}
