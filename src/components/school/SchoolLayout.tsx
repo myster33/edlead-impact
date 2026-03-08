@@ -52,12 +52,15 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const displayName = schoolUser?.full_name || schoolUser?.email?.split("@")[0] || "User";
   const initials = displayName.split(/\s/).slice(0, 2).map(s => s.charAt(0).toUpperCase()).join("");
 
-  const filteredItems = useMemo(() => {
+  const filteredGroups = useMemo(() => {
     if (schoolUser?.role === "hr") {
-      return menuItems.filter(i => ["Dashboard", "Staff", "Reports"].includes(i.title));
+      const allowed = ["Dashboard", "Staff", "Reports"];
+      return menuGroups.map(g => g.filter(i => allowed.includes(i.title))).filter(g => g.length > 0);
     }
-    return menuItems;
+    return menuGroups;
   }, [schoolUser?.role]);
+
+  const filteredItems = filteredGroups.flat();
 
   return (
     <SidebarProvider>
@@ -73,7 +76,11 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
             </Link>
             {currentSchool && (
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <School className="h-3 w-3" />
+                {currentSchool.logo_url ? (
+                  <img src={currentSchool.logo_url} alt="" className="h-4 w-4 rounded object-cover" />
+                ) : (
+                  <School className="h-3 w-3" />
+                )}
                 <span className="truncate">{currentSchool.name}</span>
               </div>
             )}
@@ -81,19 +88,24 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
 
           <SidebarContent>
             <SidebarMenu className="px-2 py-1">
-              {filteredItems.map(item => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link to={item.url} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {filteredGroups.map((group, gi) => (
+                <div key={gi}>
+                  {gi > 0 && <Separator className="my-1.5" />}
+                  {group.map(item => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.url} className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </div>
+              ))}
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
