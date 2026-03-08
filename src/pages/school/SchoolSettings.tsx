@@ -134,7 +134,12 @@ export default function SchoolSettings() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setCodeSent(true);
-      toast({ title: "Code sent", description: "Check your email for the verification code." });
+      toast({ 
+        title: "Code sent", 
+        description: twoFaChannel === "sms" 
+          ? "Check your phone for the verification code." 
+          : "Check your email for the verification code." 
+      });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
