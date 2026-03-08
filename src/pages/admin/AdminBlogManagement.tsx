@@ -1117,6 +1117,11 @@ const AdminBlogManagement = () => {
                       <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                       <SelectItem value="archived">Archived ({activityStats.archived})</SelectItem>
+                      <SelectItem value="trash">
+                        <span className="flex items-center gap-1">
+                          <Trash2 className="h-3 w-3" /> Trash
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
