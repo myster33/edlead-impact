@@ -285,11 +285,11 @@ export default function SchoolCalendar() {
           </Button>
         </div>
 
-        <Tabs defaultValue="terms">
+        <Tabs defaultValue="calendar">
           <TabsList>
-            <TabsTrigger value="terms">School Terms</TabsTrigger>
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="list">Events List</TabsTrigger>
+            <TabsTrigger value="terms">School Terms</TabsTrigger>
           </TabsList>
 
           {/* ═══ TERMS TAB ═══ */}
