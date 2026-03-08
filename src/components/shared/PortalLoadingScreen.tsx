@@ -56,8 +56,7 @@ export function PortalLoadingScreen({ portalName = "Portal" }: PortalLoadingScre
         <img
           src={isDark ? edleadLogoDark : edleadLogo}
           alt="edLEAD"
-          className="h-12 w-auto animate-pulse"
-          style={{ animationDuration: "2s" }}
+          className="h-12 w-auto"
         />
 
         {/* Portal name */}
