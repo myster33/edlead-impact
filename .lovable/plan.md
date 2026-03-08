@@ -1,66 +1,105 @@
 
 
-## Plan: Website Upgrades (7 items)
+# Misconduct Reports Module
 
-This covers all approved upgrades: accessibility, lazy loading, FAQ page, enhanced 404, page transitions, newsletter subscription, and testimonials on the Impact page.
+## Overview
+Replace the placeholder "Reports" pages in both School Portal and General Portal with a full **Misconduct Reporting** system. Students, parents, and educators can submit reports (anonymously or identified). School admins review, assign, and escalate. Includes an emergency panic button and a trending reports feed.
 
----
+## Database Changes
 
-### 1. Accessibility Improvements
+### 1. New table: `misconduct_reports`
 
-**Files to modify:**
-- `src/components/layout/Layout.tsx` — Add a skip-to-content link (`<a href="#main-content">`) and `id="main-content"` on `<main>`
-- `src/components/layout/Navbar.tsx` — Add `aria-label` to theme toggle button and mobile menu toggle
-- `src/components/chat/ChatWidget.tsx` — Add `aria-label` to open/close/minimize/send buttons, add `aria-live="polite"` on message list container
-- `src/components/home/HeroSection.tsx` — Add `aria-live="polite"` to the typing animation heading
-- `src/index.css` — Add visible focus ring utility (e.g., `focus-visible:ring-2 ring-primary ring-offset-2`) as a global style
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| school_id | uuid | FK → schools, nullable (outside-school reports) |
+| reporter_user_id | uuid | nullable (anonymous) |
+| reporter_role | text | student/educator/parent/guest |
+| reporter_name | text | nullable |
+| is_anonymous | boolean | default false |
+| victim_names | text | comma-separated or free text |
+| report_type | text | bullying/harassment/violence/theft/substance/vandalism/emergency/other |
+| description | text | required |
+| attachment_urls | text[] | array of storage URLs |
+| location | text | nullable, free text or geo coords |
+| priority | text | low/medium/high/critical |
+| status | text | pending/under_review/resolved/escalated/dismissed |
+| assigned_to | uuid | FK → school_users, nullable |
+| resolved_at | timestamptz | nullable |
+| resolution_notes | text | nullable |
+| is_emergency | boolean | default false |
+| is_trending | boolean | default false (admin-published to feed) |
+| created_at | timestamptz | |
+| updated_at | timestamptz | |
 
-### 2. Lazy Loading Routes + Images
+RLS:
+- Anyone can INSERT (public submission including anonymous)
+- School staff can SELECT/UPDATE for their school_id
+- Reporter can SELECT own reports (by reporter_user_id)
+- Main admins can manage all
 
-**Files to modify:**
-- `src/App.tsx` — Replace all eager imports with `React.lazy()` and wrap `<Routes>` children in `<Suspense>` with a loading fallback. Keep `Index` eager for fast first paint; lazy-load all other pages.
-- Image optimization across pages — Add `loading="lazy"` to below-the-fold images in `HeroSection` (images 2-5 only), programme, partners, and blog card components
+### 2. New table: `misconduct_report_audit`
 
-### 3. FAQ Page
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| report_id | uuid | FK → misconduct_reports |
+| user_id | uuid | nullable |
+| action | text | created/assigned/status_changed/escalated/resolved/commented |
+| details | jsonb | |
+| created_at | timestamptz | |
 
-**Files to create:**
-- `src/pages/FAQ.tsx` — New page using `Layout`, `Helmet` with SEO tags, and `@radix-ui/react-accordion` for Q&A sections covering: Programme Overview, Eligibility & Admissions, Application Process, Technical Support, and General. Include 4-5 questions per section.
+RLS: School staff + main admins can SELECT. Insert via triggers/app.
 
-**Files to modify:**
-- `src/App.tsx` — Add `/faq` route (lazy-loaded)
-- `scripts/generate-seo-pages.mjs` — Add `/faq` to the static routes array for prerendering
+### Storage
+Use existing `school-assets` bucket for report attachments (max 10MB per file, max 3 files).
 
-### 4. Enhanced 404 Page
+## Implementation Plan
 
-**Files to modify:**
-- `src/pages/NotFound.tsx` — Wrap in `Layout`, add `Helmet` SEO tags, edLEAD branding, a friendly illustration (using Lucide icons), and navigation links to Home, About, Admissions, Contact, and Blog
+### Step 1: Database migration
+- Create `misconduct_reports` and `misconduct_report_audit` tables with RLS
+- Enable realtime on `misconduct_reports` for live status updates
 
-### 5. Page Transition Animations
+### Step 2: School Portal — SchoolReports.tsx (admin view)
+Rebuild as a tabbed interface:
+- **Reports tab**: Table of all misconduct reports for the school, filterable by status/priority/type. Click to expand detail view with timeline (audit log). Actions: assign, change status, add resolution notes, mark as trending.
+- **Trending tab**: Manage which resolved reports are published to the trending feed.
 
-**Files to modify:**
-- `src/index.css` — Add a CSS `@keyframes` for fade-in-up animation
-- `src/components/layout/Layout.tsx` — Apply the animation class to the `<main>` element so each page fades in on mount
+Rename sidebar item from "Reports" to "Misconduct reports" with `AlertTriangle` icon.
 
-### 6. Newsletter Subscription
+### Step 3: Portal — PortalReports.tsx (student/parent/educator view)
+Rebuild as:
+- **Submit report** form: report type, description, attachments, anonymous toggle, emergency/panic button
+- **My reports** tab: View own submitted reports and their status
+- **Trending feed** tab: View school-published trending reports (anonymized)
 
-**Database migration:** Create a `newsletter_subscribers` table with columns: `id` (uuid), `email` (text, unique), `subscribed_at` (timestamptz, default now()), `is_active` (boolean, default true). Enable RLS with a public INSERT policy (anyone can subscribe) and admin-only SELECT.
+Rename sidebar item from "Reports" to "Misconduct reports" in PortalLayout for all roles that have it. Add it to student and parent menus too (currently only educator/class_teacher have "Reports").
 
-**Files to modify:**
-- `src/components/layout/Footer.tsx` — Add a newsletter signup form (email input + subscribe button) in the "Get in Touch" column, using the database client to insert into `newsletter_subscribers`
+### Step 4: Emergency Panic Button
+- Prominent red button on the portal submission form
+- Sets `is_emergency = true`, `priority = 'critical'`
+- Attempts geolocation capture via browser API
+- Creates a notification entry for school admin (uses existing notification patterns)
 
-### 7. Testimonials Section on Impact Page
+### Step 5: Route and navigation updates
+- Update sidebar labels in SchoolLayout and PortalLayout
+- No route URL changes needed (keep `/school/reports` and `/portal/reports`)
 
-**Database migration:** Create a `testimonials` table with columns: `id` (uuid), `name` (text), `role` (text), `school` (text), `province` (text), `quote` (text), `is_published` (boolean, default false), `created_at` (timestamptz). Enable RLS with public SELECT for published testimonials, admin-only INSERT/UPDATE/DELETE.
+## Files to Create/Modify
 
-**Files to modify:**
-- `src/pages/Impact.tsx` — Add a "What Our Leaders Say" section between the Outcomes and Stats sections. Fetch published testimonials from the database and display them in a carousel (using the existing `embla-carousel-react` + autoplay). Each card shows the quote, name, role, and school. Include a static fallback with 3-4 hardcoded testimonials if the database returns empty.
+| File | Action |
+|------|--------|
+| `supabase/migrations/...` | New migration for 2 tables |
+| `src/pages/school/SchoolReports.tsx` | Full rebuild — admin misconduct dashboard |
+| `src/pages/portal/PortalReports.tsx` | Full rebuild — submit + my reports + trending |
+| `src/components/school/SchoolLayout.tsx` | Rename "Reports" → "Misconduct reports", change icon |
+| `src/components/portal/PortalLayout.tsx` | Rename "Reports" → "Misconduct reports", add to student/parent menus |
 
----
-
-### Technical Notes
-- Lazy loading uses `React.lazy` + `Suspense` — no new dependencies needed
-- FAQ uses the already-installed `@radix-ui/react-accordion`
-- Newsletter and testimonials each need one new database table with RLS
-- Page transitions use pure CSS animation — no library needed
-- The testimonials carousel reuses the existing Embla carousel dependency
+## Key Decisions
+- Anonymous reports have no `reporter_user_id` — can't be tracked back
+- Emergency panic button uses browser Geolocation API (optional, graceful fallback)
+- Trending feed shows anonymized resolved cases published by school admin
+- Attachments stored in existing `school-assets` bucket
+- Duplicate detection: simple check on description similarity + same reporter within 24h (client-side warning)
+- No offline sync in v1 (would require service worker — future enhancement)
 
