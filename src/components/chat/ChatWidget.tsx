@@ -1,4 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MessageCircle, X, Minimize2, Maximize2, Send, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -762,13 +772,13 @@ export function ChatWidget() {
     }
   };
 
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
   const handleClearChat = () => {
-    // Generate a new session ID so the old conversation stays untouched in the backend
     const newSessionId = crypto.randomUUID();
     localStorage.setItem("edlead-chat-session", newSessionId);
     sessionId.current = newSessionId;
 
-    // Reset all local UI state
     setMessages([]);
     setConversationId(null);
     setStep("intro");
@@ -778,7 +788,6 @@ export function ChatWidget() {
     setAdminTyping(false);
     setAiLoading(false);
 
-    // Reset apply mode
     setApplyMode(false);
     setApplicationData({});
     setApplyComplete(false);
@@ -786,7 +795,6 @@ export function ChatWidget() {
     setApplyCollectedCount(0);
     setShowReview(false);
 
-    // Reset story mode
     setStoryMode(false);
     setStoryData({});
     setStoryComplete(false);
@@ -794,12 +802,12 @@ export function ChatWidget() {
     setStoryCollectedCount(0);
     setShowStoryReview(false);
 
-    // Clear persisted mode data
     localStorage.removeItem("edlead-chat-apply-mode");
     localStorage.removeItem("edlead-chat-apply-data");
     localStorage.removeItem("edlead-chat-story-mode");
     localStorage.removeItem("edlead-chat-story-data");
 
+    setShowClearConfirm(false);
     toast({ title: "Chat cleared", description: "You can start a fresh conversation." });
   };
 
@@ -861,7 +869,7 @@ export function ChatWidget() {
         </div>
         <div className="flex gap-1">
           {step === "chat" && (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={handleClearChat} aria-label="Clear chat" title="Clear chat">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setShowClearConfirm(true)} aria-label="Clear chat" title="Clear chat">
               <RotateCcw className="h-4 w-4" />
             </Button>
           )}
@@ -950,6 +958,20 @@ export function ChatWidget() {
           </div>
         </>
       )}
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear this chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will start a fresh conversation. Your previous messages will still be saved on our end.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearChat}>Clear Chat</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
