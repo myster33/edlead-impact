@@ -414,6 +414,7 @@ const handler = async (req: Request): Promise<Response> => {
       const parentEmailResult = await sendEmail(parentEmail, parentSubject, parentHtml);
       results.email.parent = parentEmailResult.success;
       console.log("Parent email sent:", parentEmailResult.success);
+      await logEmailSend(supabase, { recipientEmail: parentEmail, subject: parentSubject, success: parentEmailResult.success, resendId: parentEmailResult.resendId, errorMessage: parentEmailResult.error, templateKey: "parent-approved", relatedTable: "applications" });
     }
 
     // Send SMS if enabled

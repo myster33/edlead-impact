@@ -669,6 +669,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending parent email to: ${parentEmail}`);
       const parentEmailResult = await sendEmail(parentEmail, parentSubject, parentHtmlContent);
       results.parent.email = parentEmailResult.success;
+      await logEmailSend(supabase, { recipientEmail: parentEmail, subject: parentSubject, success: parentEmailResult.success, resendId: parentEmailResult.resendId, errorMessage: parentEmailResult.error, templateKey: `parent-status-${newStatus}`, relatedTable: "applications" });
     }
 
     // SMS
