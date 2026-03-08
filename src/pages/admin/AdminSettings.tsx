@@ -35,6 +35,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { getNotificationVolume, setNotificationVolume, useChatNotificationSound } from "@/hooks/use-chat-notification-sound";
 
 const countries = [
@@ -1799,11 +1800,27 @@ function DataCleanupCard() {
             Removes chat data older than 90 days, expired announcements, and stale rate-limit entries.
           </p>
         </div>
-        <Button onClick={handleRunCleanup} disabled={isRunning}>
-          {isRunning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          <Eraser className="h-4 w-4 mr-1" />
-          Run Cleanup
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button disabled={isRunning}>
+              {isRunning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Eraser className="h-4 w-4 mr-1" />
+              Run Cleanup
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Run Data Cleanup?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete chat data older than 90 days, expired announcements, and stale rate-limit entries. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleRunCleanup}>Continue</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       {results && (
         <div className="rounded-md border p-4 space-y-2">
