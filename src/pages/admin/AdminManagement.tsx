@@ -860,7 +860,7 @@ export default function AdminManagement() {
                     <Label htmlFor="role">Role</Label>
                     <Select value={newUserRole} onValueChange={(v) => {
                       setNewUserRole(v as AppRole);
-                      if (v === "admin") {
+                      if (v === "admin" || v === "super_admin") {
                         setNewUserCountry("");
                         setNewUserProvince("");
                       }
@@ -887,6 +887,14 @@ export default function AdminManagement() {
                             Admin
                           </div>
                         </SelectItem>
+                        {isSuperAdmin && (
+                          <SelectItem value="super_admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-destructive" />
+                              Super Admin
+                            </div>
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
