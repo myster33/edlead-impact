@@ -457,7 +457,9 @@ export default function SchoolLogin() {
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input id="reg-email" type="email" placeholder="admin@school.edu" value={regEmail} onChange={e => setRegEmail(e.target.value)} className="pl-10" disabled={isRegistering} />
                       </div>
-                      {regErrors.email && <p className="text-sm text-destructive">{regErrors.email}</p>}
+                      {regErrors.email ? <p className="text-sm text-destructive">{regErrors.email}</p> : (
+                        <p className="text-xs text-muted-foreground">It is recommended to use your official school email address</p>
+                      )}
                     </div>
 
                     <div className="space-y-1.5">
@@ -491,6 +493,7 @@ export default function SchoolLogin() {
                           <SelectItem value="hr">HR Manager</SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">This role is permanently linked to your account and cannot be changed later</p>
                       {regErrors.role && <p className="text-sm text-destructive">{regErrors.role}</p>}
                     </div>
 
@@ -620,7 +623,8 @@ export default function SchoolLogin() {
                       {regErrors.confirmPassword && <p className="text-sm text-destructive">{regErrors.confirmPassword}</p>}
                     </div>
 
-                    <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+                    <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground space-y-1">
+                      <p>Your school account is tied to the EMIS number provided. The credentials and role used during registration are permanent defaults for this account.</p>
                       <p>After registration, your school will be reviewed and verified by the edLEAD administration team before you can access the portal.</p>
                     </div>
 
