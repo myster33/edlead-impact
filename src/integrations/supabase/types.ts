@@ -1907,6 +1907,71 @@ export type Database = {
           },
         ]
       }
+      period_attendance: {
+        Row: {
+          created_at: string
+          event_date: string
+          id: string
+          marked_by: string | null
+          notes: string | null
+          school_id: string
+          status: string
+          student_id: string
+          timetable_entry_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_date?: string
+          id?: string
+          marked_by?: string | null
+          notes?: string | null
+          school_id: string
+          status?: string
+          student_id: string
+          timetable_entry_id: string
+        }
+        Update: {
+          created_at?: string
+          event_date?: string
+          id?: string
+          marked_by?: string | null
+          notes?: string | null
+          school_id?: string
+          status?: string
+          student_id?: string
+          timetable_entry_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "period_attendance_marked_by_fkey"
+            columns: ["marked_by"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "period_attendance_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "period_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "period_attendance_timetable_entry_id_fkey"
+            columns: ["timetable_entry_id"]
+            isOneToOne: false
+            referencedRelation: "timetable_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_registration_requests: {
         Row: {
           auth_user_id: string | null
@@ -2338,6 +2403,77 @@ export type Database = {
           },
         ]
       }
+      student_subjects: {
+        Row: {
+          created_at: string
+          id: string
+          student_id: string
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          student_id: string
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          student_id?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subjects_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          school_id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          school_id: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_settings: {
         Row: {
           description: string | null
@@ -2405,6 +2541,77 @@ export type Database = {
           school?: string
         }
         Relationships: []
+      }
+      timetable_entries: {
+        Row: {
+          class_id: string
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          period_label: string | null
+          school_id: string
+          start_time: string
+          subject_id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          period_label?: string | null
+          school_id: string
+          start_time: string
+          subject_id: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          period_label?: string | null
+          school_id?: string
+          start_time?: string
+          subject_id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timetable_entries_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timetable_entries_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhooks: {
         Row: {
