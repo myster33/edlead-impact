@@ -2090,6 +2090,60 @@ export type Database = {
           },
         ]
       }
+      school_terms: {
+        Row: {
+          academic_year: number
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          name: string
+          school_id: string
+          start_date: string
+          term_number: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year?: number
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          name: string
+          school_id: string
+          start_date: string
+          term_number: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year?: number
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          school_id?: string
+          start_date?: string
+          term_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_terms_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_terms_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school_users: {
         Row: {
           created_at: string
