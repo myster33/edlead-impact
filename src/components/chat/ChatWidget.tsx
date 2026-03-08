@@ -762,6 +762,47 @@ export function ChatWidget() {
     }
   };
 
+  const handleClearChat = () => {
+    // Generate a new session ID so the old conversation stays untouched in the backend
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem("edlead-chat-session", newSessionId);
+    sessionId.current = newSessionId;
+
+    // Reset all local UI state
+    setMessages([]);
+    setConversationId(null);
+    setStep("intro");
+    setVisitorName("");
+    setVisitorEmail("");
+    setNewMessage("");
+    setAdminTyping(false);
+    setAiLoading(false);
+
+    // Reset apply mode
+    setApplyMode(false);
+    setApplicationData({});
+    setApplyComplete(false);
+    setApplySubmitting(false);
+    setApplyCollectedCount(0);
+    setShowReview(false);
+
+    // Reset story mode
+    setStoryMode(false);
+    setStoryData({});
+    setStoryComplete(false);
+    setStorySubmitting(false);
+    setStoryCollectedCount(0);
+    setShowStoryReview(false);
+
+    // Clear persisted mode data
+    localStorage.removeItem("edlead-chat-apply-mode");
+    localStorage.removeItem("edlead-chat-apply-data");
+    localStorage.removeItem("edlead-chat-story-mode");
+    localStorage.removeItem("edlead-chat-story-data");
+
+    toast({ title: "Chat cleared", description: "You can start a fresh conversation." });
+  };
+
   const handleOpen = () => {
     setIsOpen(true);
     setShowTooltip(false);
