@@ -68,7 +68,7 @@ const SchoolStudents = lazy(() => import("./pages/school/SchoolStudents"));
 const SchoolStaff = lazy(() => import("./pages/school/SchoolStaff"));
 const SchoolAbsenceRequests = lazy(() => import("./pages/school/SchoolAbsenceRequests"));
 const SchoolReports = lazy(() => import("./pages/school/SchoolReports"));
-const SchoolLinkRequests = lazy(() => import("./pages/school/SchoolLinkRequests"));
+// SchoolLinkRequests removed - merged into Staff and Students pages
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 const SchoolTimetable = lazy(() => import("./pages/school/SchoolTimetable"));
 const SchoolPeriodAttendance = lazy(() => import("./pages/school/SchoolPeriodAttendance"));
