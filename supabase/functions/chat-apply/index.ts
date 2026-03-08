@@ -141,12 +141,32 @@ const BEDROCK_TOOL = {
   },
 };
 
+function getClientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+         req.headers.get("x-real-ip") || "unknown";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Rate limiting: 20 requests per minute
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseRL = createClient(supabaseUrl, supabaseServiceKey);
+    const clientIp = getClientIp(req);
+    const { data: allowed } = await supabaseRL.rpc("check_rate_limit", {
+      _ip: clientIp, _endpoint: "chat-apply", _max_requests: 20, _window_minutes: 1,
+    });
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ reply: "You're sending messages too quickly. Please wait a moment.", extracted_data: {}, is_complete: false, missing_fields: [], total_required: 0, collected_count: 0 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { messages, collected_data, visitor_name } = await req.json();
 
     const collected = collected_data || {};

@@ -192,12 +192,32 @@ async function lookupStatus(referenceNumber: string) {
   return `I couldn't find an application or story with reference number **${cleanRef}**. Please double-check your reference number and try again. You can also check your status on our website at edlead.co.za/check-status or contact us at info@edlead.co.za for assistance.`;
 }
 
+function getClientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+         req.headers.get("x-real-ip") || "unknown";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Rate limiting: 30 requests per minute
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseRL = createClient(supabaseUrl, supabaseServiceKey);
+    const clientIp = getClientIp(req);
+    const { data: allowed } = await supabaseRL.rpc("check_rate_limit", {
+      _ip: clientIp, _endpoint: "chat-ai-faq", _max_requests: 30, _window_minutes: 1,
+    });
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ reply: "You're sending messages too quickly. Please wait a moment and try again.", handoff: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { messages, topic } = await req.json();
 
     // Check if the latest user message contains a reference number

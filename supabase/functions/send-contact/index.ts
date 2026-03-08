@@ -122,6 +122,11 @@ async function sendSms(to: string, body: string): Promise<void> {
   }
 }
 
+function getClientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+         req.headers.get("x-real-ip") || "unknown";
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -129,6 +134,22 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Rate limiting: 10 requests per hour
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabaseRL = createClient(supabaseUrl, supabaseKey);
+    const clientIp = getClientIp(req);
+    const { data: allowed } = await supabaseRL.rpc("check_rate_limit", {
+      _ip: clientIp, _endpoint: "send-contact", _max_requests: 10, _window_minutes: 60,
+    });
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many messages. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const { name, email, phone, subject, message }: ContactRequest = await req.json();
 
     // Validation
