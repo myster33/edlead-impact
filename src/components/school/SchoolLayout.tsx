@@ -136,6 +136,17 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
     setNotifications(notifs);
   }, [currentSchool?.id]);
 
+  // Fetch unread school chat messages
+  const fetchUnreadChats = useCallback(async () => {
+    if (!currentSchool?.id) return;
+    const { count } = await (supabase as any)
+      .from("school_chat_conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", currentSchool.id)
+      .eq("status", "open");
+    setUnreadChatCount(count || 0);
+  }, [currentSchool?.id]);
+
   useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
   // Refresh every 30s
