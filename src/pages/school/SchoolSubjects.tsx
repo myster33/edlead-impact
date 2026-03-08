@@ -64,7 +64,8 @@ export default function SchoolSubjects() {
     const { data } = await supabase.from("curricula").select("*").eq("is_active", true).order("name");
     setCurricula(data || []);
     if (data && data.length > 0 && !selectedCurriculum) {
-      setSelectedCurriculum(data[0].id);
+      const caps = data.find(c => c.code === "CAPS");
+      setSelectedCurriculum(caps ? caps.id : data[0].id);
     }
   }, [selectedCurriculum]);
 
