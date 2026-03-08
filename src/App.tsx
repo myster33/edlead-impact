@@ -6,7 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
+import { SchoolAuthProvider } from "./contexts/SchoolAuthContext";
+import { PortalAuthProvider } from "./contexts/PortalAuthContext";
 import { ProtectedRoute } from "./components/admin/ProtectedRoute";
+import { SchoolProtectedRoute } from "./components/school/SchoolProtectedRoute";
+import { PortalProtectedRoute } from "./components/portal/PortalProtectedRoute";
 import { lazy, Suspense } from "react";
 
 // Eagerly load the landing page for fast first paint
@@ -27,6 +31,8 @@ const Terms = lazy(() => import("./pages/Terms"));
 const CheckStatus = lazy(() => import("./pages/CheckStatus"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Admin pages
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminApplications = lazy(() => import("./pages/admin/AdminApplications"));
@@ -48,6 +54,26 @@ const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
 
+// School portal pages
+const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
+const SchoolDashboard = lazy(() => import("./pages/school/SchoolDashboard"));
+const SchoolAttendance = lazy(() => import("./pages/school/SchoolAttendance"));
+const SchoolClasses = lazy(() => import("./pages/school/SchoolClasses"));
+const SchoolStudents = lazy(() => import("./pages/school/SchoolStudents"));
+const SchoolStaff = lazy(() => import("./pages/school/SchoolStaff"));
+const SchoolAbsenceRequests = lazy(() => import("./pages/school/SchoolAbsenceRequests"));
+const SchoolReports = lazy(() => import("./pages/school/SchoolReports"));
+
+// General portal pages
+const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
+const PortalDashboard = lazy(() => import("./pages/portal/PortalDashboard"));
+const PortalAttendance = lazy(() => import("./pages/portal/PortalAttendance"));
+const PortalAbsenceRequest = lazy(() => import("./pages/portal/PortalAbsenceRequest"));
+const PortalMyChildren = lazy(() => import("./pages/portal/PortalMyChildren"));
+const PortalMyClasses = lazy(() => import("./pages/portal/PortalMyClasses"));
+const PortalECard = lazy(() => import("./pages/portal/PortalECard"));
+const PortalReports = lazy(() => import("./pages/portal/PortalReports"));
+
 const queryClient = new QueryClient();
 
 // Minimal loading fallback
@@ -65,108 +91,75 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AdminAuthProvider>
-            <ScrollToTop />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/programme" element={<Programme />} />
-                <Route path="/admissions" element={<Admissions />} />
-                <Route path="/apply" element={<ApplicationForm />} />
-                <Route path="/impact" element={<Impact />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/partners" element={<Partners />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/check-status" element={<CheckStatus />} />
-                <Route path="/faq" element={<FAQ />} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin/reset-password" element={<AdminResetPassword />} />
-                <Route
-                  path="/admin"
-                  element={<ProtectedRoute moduleKey="dashboard"><AdminDashboard /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/dashboard"
-                  element={<ProtectedRoute moduleKey="dashboard"><AdminDashboard /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/applications"
-                  element={<ProtectedRoute moduleKey="applications"><AdminApplications /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/users"
-                  element={<ProtectedRoute moduleKey="users"><AdminManagement /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/analytics"
-                  element={<ProtectedRoute moduleKey="analytics"><AdminAnalytics /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/blog"
-                  element={<ProtectedRoute moduleKey="blog"><AdminBlogManagement /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/settings"
-                  element={<ProtectedRoute moduleKey="settings"><AdminSettings /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/audit-log"
-                  element={<ProtectedRoute moduleKey="audit-log"><AdminAuditLog /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/email-templates"
-                  element={<ProtectedRoute moduleKey="email-templates"><AdminEmailTemplates /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/permissions"
-                  element={<ProtectedRoute moduleKey="permissions"><AdminPermissions /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/certificates"
-                  element={<ProtectedRoute moduleKey="certificates"><AdminCertificates /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/message-templates"
-                  element={<ProtectedRoute moduleKey="message-templates"><AdminMessageTemplates /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/message-center"
-                  element={<ProtectedRoute moduleKey="message-center"><AdminMessageCenter /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/chat"
-                  element={<ProtectedRoute moduleKey="chat"><AdminChat /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/reports"
-                  element={<ProtectedRoute moduleKey="reports"><AdminReports /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/testimonials"
-                  element={<ProtectedRoute moduleKey="testimonials"><AdminTestimonials /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/subscribers"
-                  element={<ProtectedRoute moduleKey="subscribers"><AdminSubscribers /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/email-logs"
-                  element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>}
-                />
-                <Route
-                  path="/admin/webhooks"
-                  element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>}
-                />
-                
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <SchoolAuthProvider>
+              <PortalAuthProvider>
+                <ScrollToTop />
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/programme" element={<Programme />} />
+                    <Route path="/admissions" element={<Admissions />} />
+                    <Route path="/apply" element={<ApplicationForm />} />
+                    <Route path="/impact" element={<Impact />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route path="/partners" element={<Partners />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/check-status" element={<CheckStatus />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    
+                    {/* Admin Routes */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route path="/admin/reset-password" element={<AdminResetPassword />} />
+                    <Route path="/admin" element={<ProtectedRoute moduleKey="dashboard"><AdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/dashboard" element={<ProtectedRoute moduleKey="dashboard"><AdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/applications" element={<ProtectedRoute moduleKey="applications"><AdminApplications /></ProtectedRoute>} />
+                    <Route path="/admin/users" element={<ProtectedRoute moduleKey="users"><AdminManagement /></ProtectedRoute>} />
+                    <Route path="/admin/analytics" element={<ProtectedRoute moduleKey="analytics"><AdminAnalytics /></ProtectedRoute>} />
+                    <Route path="/admin/blog" element={<ProtectedRoute moduleKey="blog"><AdminBlogManagement /></ProtectedRoute>} />
+                    <Route path="/admin/settings" element={<ProtectedRoute moduleKey="settings"><AdminSettings /></ProtectedRoute>} />
+                    <Route path="/admin/audit-log" element={<ProtectedRoute moduleKey="audit-log"><AdminAuditLog /></ProtectedRoute>} />
+                    <Route path="/admin/email-templates" element={<ProtectedRoute moduleKey="email-templates"><AdminEmailTemplates /></ProtectedRoute>} />
+                    <Route path="/admin/permissions" element={<ProtectedRoute moduleKey="permissions"><AdminPermissions /></ProtectedRoute>} />
+                    <Route path="/admin/certificates" element={<ProtectedRoute moduleKey="certificates"><AdminCertificates /></ProtectedRoute>} />
+                    <Route path="/admin/message-templates" element={<ProtectedRoute moduleKey="message-templates"><AdminMessageTemplates /></ProtectedRoute>} />
+                    <Route path="/admin/message-center" element={<ProtectedRoute moduleKey="message-center"><AdminMessageCenter /></ProtectedRoute>} />
+                    <Route path="/admin/chat" element={<ProtectedRoute moduleKey="chat"><AdminChat /></ProtectedRoute>} />
+                    <Route path="/admin/reports" element={<ProtectedRoute moduleKey="reports"><AdminReports /></ProtectedRoute>} />
+                    <Route path="/admin/testimonials" element={<ProtectedRoute moduleKey="testimonials"><AdminTestimonials /></ProtectedRoute>} />
+                    <Route path="/admin/subscribers" element={<ProtectedRoute moduleKey="subscribers"><AdminSubscribers /></ProtectedRoute>} />
+                    <Route path="/admin/email-logs" element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>} />
+                    <Route path="/admin/webhooks" element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>} />
+
+                    {/* School Portal Routes */}
+                    <Route path="/school/login" element={<SchoolLogin />} />
+                    <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
+                    <Route path="/school/attendance" element={<SchoolProtectedRoute><SchoolAttendance /></SchoolProtectedRoute>} />
+                    <Route path="/school/classes" element={<SchoolProtectedRoute><SchoolClasses /></SchoolProtectedRoute>} />
+                    <Route path="/school/students" element={<SchoolProtectedRoute><SchoolStudents /></SchoolProtectedRoute>} />
+                    <Route path="/school/staff" element={<SchoolProtectedRoute><SchoolStaff /></SchoolProtectedRoute>} />
+                    <Route path="/school/absence-requests" element={<SchoolProtectedRoute><SchoolAbsenceRequests /></SchoolProtectedRoute>} />
+                    <Route path="/school/reports" element={<SchoolProtectedRoute><SchoolReports /></SchoolProtectedRoute>} />
+
+                    {/* General Portal Routes */}
+                    <Route path="/portal/login" element={<PortalLogin />} />
+                    <Route path="/portal/dashboard" element={<PortalProtectedRoute><PortalDashboard /></PortalProtectedRoute>} />
+                    <Route path="/portal/attendance" element={<PortalProtectedRoute><PortalAttendance /></PortalProtectedRoute>} />
+                    <Route path="/portal/absence-request" element={<PortalProtectedRoute><PortalAbsenceRequest /></PortalProtectedRoute>} />
+                    <Route path="/portal/my-children" element={<PortalProtectedRoute><PortalMyChildren /></PortalProtectedRoute>} />
+                    <Route path="/portal/my-classes" element={<PortalProtectedRoute><PortalMyClasses /></PortalProtectedRoute>} />
+                    <Route path="/portal/e-card" element={<PortalProtectedRoute><PortalECard /></PortalProtectedRoute>} />
+                    <Route path="/portal/reports" element={<PortalProtectedRoute><PortalReports /></PortalProtectedRoute>} />
+                    
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </PortalAuthProvider>
+            </SchoolAuthProvider>
           </AdminAuthProvider>
         </BrowserRouter>
       </TooltipProvider>
