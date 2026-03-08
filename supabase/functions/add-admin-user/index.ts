@@ -55,7 +55,7 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, role, country, province } = await req.json();
+    const { email, role, country, province, region_scope } = await req.json();
 
     if (!email || !role) {
       return new Response(
