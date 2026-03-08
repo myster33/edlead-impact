@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  LayoutDashboard, ClipboardCheck, BookOpen, Users, FileText, Inbox,
+  LayoutDashboard, ClipboardCheck, BookOpen, Users, AlertTriangle, Inbox,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, CreditCard, ShoppingCart, Settings,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";

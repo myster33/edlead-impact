@@ -77,7 +77,7 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
 
   const filteredGroups = useMemo(() => {
     if (schoolUser?.role === "hr") {
-      const allowed = ["Dashboard", "Staff", "Reports"];
+      const allowed = ["Dashboard", "Staff", "Misconduct reports"];
       return menuGroups.map(g => g.filter(i => allowed.includes(i.title))).filter(g => g.length > 0);
     }
     return menuGroups.map(g => g.filter(i => {
