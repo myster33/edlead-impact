@@ -30,9 +30,8 @@ export default function SchoolSettings() {
   // 2FA state
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaLoading, setMfaLoading] = useState(true);
-  const [enrolling, setEnrolling] = useState(false);
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [factorId, setFactorId] = useState<string | null>(null);
+  const [sendingCode, setSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const [verifyCode, setVerifyCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [disabling, setDisabling] = useState(false);
@@ -42,28 +41,13 @@ export default function SchoolSettings() {
       setFullName(schoolUser.full_name || "");
       setPhone(schoolUser.phone || "");
       setProfilePicUrl(schoolUser.profile_picture_url || null);
+      setMfaEnabled(!!(schoolUser as any).two_fa_enabled);
+      setMfaLoading(false);
     }
     if (currentSchool) {
       setLogoUrl(currentSchool.logo_url || null);
     }
   }, [schoolUser, currentSchool]);
-
-  // Check MFA status
-  useEffect(() => {
-    const checkMfa = async () => {
-      try {
-        const { data } = await supabase.auth.mfa.listFactors();
-        const totp = data?.totp || [];
-        const verified = totp.find((f) => f.status === "verified");
-        setMfaEnabled(!!verified);
-      } catch {
-        // ignore
-      } finally {
-        setMfaLoading(false);
-      }
-    };
-    checkMfa();
-  }, []);
 
   const handleSaveProfile = async () => {
     if (!schoolUser) return;
@@ -139,38 +123,35 @@ export default function SchoolSettings() {
     }
   };
 
-  // MFA Enroll
-  const handleEnrollMfa = async () => {
-    setEnrolling(true);
+  // Email-based 2FA
+  const handleSendCode = async () => {
+    setSendingCode(true);
     try {
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "School Portal" });
+      const { data, error } = await supabase.functions.invoke("school-send-2fa-code", {
+        body: { action: "send" },
+      });
       if (error) throw error;
-      setQrCode(data.totp.qr_code);
-      setFactorId(data.id);
+      if (data?.error) throw new Error(data.error);
+      setCodeSent(true);
+      toast({ title: "Code sent", description: "Check your email for the verification code." });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
-      setEnrolling(false);
+      setSendingCode(false);
     }
   };
 
-  const handleVerifyMfa = async () => {
-    if (!factorId || !verifyCode) return;
+  const handleVerifyCode = async () => {
+    if (!verifyCode) return;
     setVerifying(true);
     try {
-      const challenge = await supabase.auth.mfa.challenge({ factorId });
-      if (challenge.error) throw challenge.error;
-
-      const verify = await supabase.auth.mfa.verify({
-        factorId,
-        challengeId: challenge.data.id,
-        code: verifyCode,
+      const { data, error } = await supabase.functions.invoke("school-send-2fa-code", {
+        body: { action: "verify", code: verifyCode },
       });
-      if (verify.error) throw verify.error;
-
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setMfaEnabled(true);
-      setQrCode(null);
-      setFactorId(null);
+      setCodeSent(false);
       setVerifyCode("");
       toast({ title: "2FA enabled", description: "Two-factor authentication is now active." });
     } catch (err: any) {
@@ -180,15 +161,14 @@ export default function SchoolSettings() {
     }
   };
 
-  const handleDisableMfa = async () => {
+  const handleDisable2fa = async () => {
     setDisabling(true);
     try {
-      const { data } = await supabase.auth.mfa.listFactors();
-      const verified = data?.totp?.find((f) => f.status === "verified");
-      if (verified) {
-        const { error } = await supabase.auth.mfa.unenroll({ factorId: verified.id });
-        if (error) throw error;
-      }
+      const { data, error } = await supabase.functions.invoke("school-send-2fa-code", {
+        body: { action: "disable" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setMfaEnabled(false);
       toast({ title: "2FA disabled" });
     } catch (err: any) {
