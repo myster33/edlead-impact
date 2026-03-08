@@ -1098,40 +1098,79 @@ export default function AdminApplications() {
                   <span className="font-medium">{selectedIds.size} selected</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => bulkUpdateStatus("approved")}
-                    disabled={isUpdating}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                    Approve Selected
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => bulkUpdateStatus("rejected")}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
-                    Reject Selected
-                  </Button>
-                  {adminUser?.role === "admin" && (
-                    <Select onValueChange={(value) => bulkAssignCohort(value === "unassigned" ? null : value)} disabled={isUpdating}>
-                      <SelectTrigger className="w-[180px] h-8">
-                        <Users className="h-4 w-4 mr-2" />
-                        <SelectValue placeholder="Assign Cohort" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassign Cohort</SelectItem>
-                        {cohorts.map((cohort) => (
-                          <SelectItem key={cohort.id} value={cohort.id}>
-                            {cohort.name} {cohort.is_active && "(Active)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {showTrash ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={bulkRestoreApplications}
+                        disabled={isUpdating}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
+                        Restore Selected
+                      </Button>
+                      {adminUser?.role === "admin" && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setBulkPurgeOpen(true)}
+                          disabled={isUpdating}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Purge Selected
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => bulkUpdateStatus("approved")}
+                        disabled={isUpdating}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                        Approve Selected
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => bulkUpdateStatus("rejected")}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
+                        Reject Selected
+                      </Button>
+                      {adminUser?.role === "admin" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setBulkTrashOpen(true)}
+                            disabled={isUpdating}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Trash Selected
+                          </Button>
+                          <Select onValueChange={(value) => bulkAssignCohort(value === "unassigned" ? null : value)} disabled={isUpdating}>
+                            <SelectTrigger className="w-[180px] h-8">
+                              <Users className="h-4 w-4 mr-2" />
+                              <SelectValue placeholder="Assign Cohort" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unassigned">Unassign Cohort</SelectItem>
+                              {cohorts.map((cohort) => (
+                                <SelectItem key={cohort.id} value={cohort.id}>
+                                  {cohort.name} {cohort.is_active && "(Active)"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </>
+                      )}
+                    </>
                   )}
                   <Button
                     size="sm"
