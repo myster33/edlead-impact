@@ -71,7 +71,7 @@ export default function SchoolLinkRequests() {
     }
 
     // Update request status
-    const { error } = await supabase.from("parent_link_requests").update({
+    const { error } = await (supabase as any).from("parent_link_requests").update({
       status: "approved",
       reviewed_by: schoolUser.id,
       reviewed_at: new Date().toISOString(),
