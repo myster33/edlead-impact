@@ -353,12 +353,12 @@ export default function PortalLogin() {
                   </Button>
                   <Button
                     type="button"
-                    variant={loginMethod === "userid" ? "default" : "ghost"}
+                    variant={loginMethod === "edleadid" ? "default" : "ghost"}
                     size="sm"
                     className="flex-1 text-xs"
-                    onClick={() => { setLoginMethod("userid"); setIdentifier(""); }}
+                    onClick={() => { setLoginMethod("edleadid"); setIdentifier(""); }}
                   >
-                    <Hash className="h-3 w-3 mr-1" />User ID
+                    <Hash className="h-3 w-3 mr-1" />edLEAD ID
                   </Button>
                 </div>
 
