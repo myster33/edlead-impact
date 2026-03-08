@@ -7,6 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const AI_RESUME_TIMEOUT_MS = 7000; // 7 seconds
+
 function getClientIp(req: Request): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") || "unknown";
@@ -62,13 +64,39 @@ serve(async (req) => {
       );
     }
 
-    const { school_id, messages, visitor_role } = await req.json();
+    const { school_id, messages, visitor_role, conversation_id } = await req.json();
 
     if (!school_id) {
       return new Response(
         JSON.stringify({ error: "school_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Check if AI is paused (admin is responding)
+    if (conversation_id) {
+      const { data: conv } = await supabase
+        .from("school_chat_conversations")
+        .select("ai_paused, admin_last_reply_at")
+        .eq("id", conversation_id)
+        .single();
+
+      if (conv?.ai_paused && conv?.admin_last_reply_at) {
+        const elapsed = Date.now() - new Date(conv.admin_last_reply_at).getTime();
+        if (elapsed < AI_RESUME_TIMEOUT_MS) {
+          // AI is still paused, admin is active
+          return new Response(
+            JSON.stringify({ reply: null, ai_paused: true }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } else {
+          // 7 seconds passed, resume AI
+          await supabase
+            .from("school_chat_conversations")
+            .update({ ai_paused: false })
+            .eq("id", conversation_id);
+        }
+      }
     }
 
     // Load school details
@@ -118,7 +146,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ reply }),
+      JSON.stringify({ reply, ai_paused: false }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
