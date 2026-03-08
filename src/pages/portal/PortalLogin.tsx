@@ -486,7 +486,7 @@ export default function PortalLogin() {
                   {isSigningUp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Create Account"}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  After verifying your email, your edLEAD ID will be sent via email and SMS. You can then link to a school from your portal.
+                  Your edLEAD ID will be sent via email and SMS immediately. After verifying your email, you can log in and link to a school.
                 </p>
               </form>
             </TabsContent>

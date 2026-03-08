@@ -196,13 +196,13 @@ export default function SchoolLinkRequests() {
           <TabsContent value="registrations">
             <Card>
               <CardHeader>
-                <CardTitle>Registration Requests</CardTitle>
+                <CardTitle>School Link Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <p className="text-muted-foreground text-center py-8">Loading...</p>
                 ) : regRequests.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No registration requests yet.</p>
+                  <p className="text-muted-foreground text-center py-8">No school link requests yet. Users create accounts instantly and can request to link to your school from their portal.</p>
                 ) : (
                   <Table>
                     <TableHeader>
