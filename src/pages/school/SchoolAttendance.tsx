@@ -92,8 +92,8 @@ export default function SchoolAttendance() {
       }
 
       const roleFilter = markingTarget === "students"
-        ? ["student"]
-        : ["educator", "class_teacher", "subject_teacher", "school_admin", "hr"];
+        ? ["student" as const]
+        : ["educator" as const, "class_teacher" as const, "subject_teacher" as const, "school_admin" as const, "hr" as const];
 
       let query = supabase
         .from("school_users")
