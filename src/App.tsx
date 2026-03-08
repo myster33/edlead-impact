@@ -54,6 +54,7 @@ const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
 const AdminSchools = lazy(() => import("./pages/admin/AdminSchools"));
+const AdminMarketplace = lazy(() => import("./pages/admin/AdminMarketplace"));
 
 // School portal pages
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
