@@ -566,6 +566,16 @@ export default function AdminManagement() {
       return;
     }
 
+    // Admin role can only appoint viewer/reviewer, not admin/super_admin
+    if (!isSuperAdmin && (newUserRole === "admin" || newUserRole === "super_admin")) {
+      toast({
+        title: "Insufficient Permissions",
+        description: "Only Super Admins can appoint Admin or Super Admin roles.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Check if already an admin
@@ -580,14 +590,19 @@ export default function AdminManagement() {
         return;
       }
 
-      // Try to insert - will fail if user_id doesn't exist
-      // We need to use an edge function for this since we can't access auth.users directly
+      // Determine region_scope
+      const regionScope = (newUserRole === "admin" || newUserRole === "super_admin") ? "all" 
+        : newUserProvince ? "region" 
+        : newUserCountry ? "country" 
+        : "all";
+
       const response = await supabase.functions.invoke("add-admin-user", {
         body: { 
           email: newUserEmail.toLowerCase().trim(), 
           role: newUserRole,
-          country: newUserRole !== "admin" ? newUserCountry : null,
-          province: newUserRole !== "admin" ? newUserProvince : null,
+          country: (newUserRole !== "admin" && newUserRole !== "super_admin") ? newUserCountry : null,
+          province: (newUserRole !== "admin" && newUserRole !== "super_admin") ? newUserProvince : null,
+          region_scope: regionScope,
         },
       });
 
