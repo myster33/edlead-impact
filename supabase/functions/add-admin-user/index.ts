@@ -113,19 +113,20 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Add admin user with optional country/province for non-admin roles
+    // Add admin user with optional country/province and region_scope
     const insertData: any = {
       user_id: targetUser.id,
       email: email.toLowerCase(),
       role: role,
       created_by: currentUser.id,
+      region_scope: region_scope || "all",
     };
     
-    // Only set country/province for reviewer and viewer roles
-    if (role !== "admin" && country) {
+    // Only set country/province for non-admin/super_admin roles
+    if (role !== "admin" && role !== "super_admin" && country) {
       insertData.country = country;
     }
-    if (role !== "admin" && province) {
+    if (role !== "admin" && role !== "super_admin" && province) {
       insertData.province = province;
     }
 
