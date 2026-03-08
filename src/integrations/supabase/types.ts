@@ -88,6 +88,33 @@ export type Database = {
           },
         ]
       }
+      admin_2fa_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -291,6 +318,8 @@ export type Database = {
           province: string | null
           role: Database["public"]["Enums"]["app_role"]
           theme_preference: string | null
+          two_fa_channel: string
+          two_fa_enabled: boolean
           user_id: string
         }
         Insert: {
@@ -312,6 +341,8 @@ export type Database = {
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           theme_preference?: string | null
+          two_fa_channel?: string
+          two_fa_enabled?: boolean
           user_id: string
         }
         Update: {
@@ -333,6 +364,8 @@ export type Database = {
           province?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           theme_preference?: string | null
+          two_fa_channel?: string
+          two_fa_enabled?: boolean
           user_id?: string
         }
         Relationships: []
@@ -1849,6 +1882,7 @@ export type Database = {
           role: Database["public"]["Enums"]["school_user_role"]
           school_id: string
           student_id_number: string | null
+          two_fa_channel: string
           two_fa_enabled: boolean
           updated_at: string
           user_id: string
@@ -1864,6 +1898,7 @@ export type Database = {
           role: Database["public"]["Enums"]["school_user_role"]
           school_id: string
           student_id_number?: string | null
+          two_fa_channel?: string
           two_fa_enabled?: boolean
           updated_at?: string
           user_id: string
@@ -1879,6 +1914,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["school_user_role"]
           school_id?: string
           student_id_number?: string | null
+          two_fa_channel?: string
           two_fa_enabled?: boolean
           updated_at?: string
           user_id?: string

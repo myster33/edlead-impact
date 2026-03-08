@@ -24,7 +24,6 @@ Deno.serve(async (req: Request) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Validate JWT
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -37,7 +36,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, code, channel, test_phone } = body;
+    const { action, code, channel } = body;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     if (action === "send") {
@@ -50,11 +49,11 @@ Deno.serve(async (req: Request) => {
       const codeHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 
       // Delete old codes for this user
-      await adminClient.from("school_2fa_codes").delete().eq("user_id", user.id);
+      await adminClient.from("admin_2fa_codes").delete().eq("user_id", user.id);
 
       // Store hashed code with 10 min expiry
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-      await adminClient.from("school_2fa_codes").insert({
+      await adminClient.from("admin_2fa_codes").insert({
         user_id: user.id,
         code_hash: codeHash,
         expires_at: expiresAt,
@@ -67,23 +66,23 @@ Deno.serve(async (req: Request) => {
         const twilioMsgSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
         if (!twilioSid || !twilioAuth || !twilioMsgSid) throw new Error("SMS service not configured");
 
-        // Get user's phone from school_users
-        const { data: schoolUser } = await adminClient
-          .from("school_users")
+        // Get admin's phone from admin_users
+        const { data: adminUser } = await adminClient
+          .from("admin_users")
           .select("phone")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        const recipientPhone = test_phone || schoolUser?.phone;
+        const recipientPhone = adminUser?.phone;
         if (!recipientPhone) throw new Error("No phone number on your profile. Please add one first.");
 
-        console.log("Sending 2FA SMS to:", recipientPhone);
+        console.log("Sending admin 2FA SMS to:", recipientPhone);
 
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
         const smsBody = new URLSearchParams({
           To: recipientPhone,
           MessagingServiceSid: twilioMsgSid,
-          Body: `Your edLEAD School Portal verification code is: ${otp}. This code expires in 10 minutes.`,
+          Body: `Your edLEAD Admin Portal verification code is: ${otp}. This code expires in 10 minutes.`,
         });
 
         const smsRes = await fetch(twilioUrl, {
@@ -95,11 +94,10 @@ Deno.serve(async (req: Request) => {
           body: smsBody.toString(),
         });
 
-        const smsResBody = await smsRes.text();
-        console.log("Twilio status:", smsRes.status, "body:", smsResBody);
         if (!smsRes.ok) {
+          const smsResBody = await smsRes.text();
           console.error("Twilio error:", smsResBody);
-          throw new Error("Failed to send SMS: " + smsResBody);
+          throw new Error("Failed to send SMS");
         }
       } else {
         // Send email via Resend (default)
@@ -107,7 +105,7 @@ Deno.serve(async (req: Request) => {
         if (!resendKey) throw new Error("Email service not configured");
 
         const recipientEmail = user.email;
-        console.log("Sending 2FA code to:", recipientEmail);
+        console.log("Sending admin 2FA code to:", recipientEmail);
 
         const emailRes = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -118,11 +116,11 @@ Deno.serve(async (req: Request) => {
           body: JSON.stringify({
             from: "edLEAD <noreply@edlead.co.za>",
             to: [recipientEmail],
-            subject: "Your edLEAD School Portal Verification Code",
+            subject: "Your edLEAD Admin Portal Verification Code",
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
                 <h2 style="color: #333;">Your Verification Code</h2>
-                <p style="color: #555;">Use this code to enable two-factor authentication on your School Portal account:</p>
+                <p style="color: #555;">Use this code to verify your identity on the Admin Portal:</p>
                 <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
                   <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #ED7621;">${otp}</span>
                 </div>
@@ -132,11 +130,10 @@ Deno.serve(async (req: Request) => {
           }),
         });
 
-        const emailResBody = await emailRes.text();
-        console.log("Resend status:", emailRes.status, "body:", emailResBody);
         if (!emailRes.ok) {
+          const emailResBody = await emailRes.text();
           console.error("Resend error:", emailResBody);
-          throw new Error("Failed to send verification email: " + emailResBody);
+          throw new Error("Failed to send verification email");
         }
       }
 
@@ -153,7 +150,7 @@ Deno.serve(async (req: Request) => {
       const codeHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 
       const { data: codeRecord } = await adminClient
-        .from("school_2fa_codes")
+        .from("admin_2fa_codes")
         .select("*")
         .eq("user_id", user.id)
         .eq("code_hash", codeHash)
@@ -168,8 +165,8 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      await adminClient.from("school_2fa_codes").update({ used: true }).eq("id", codeRecord.id);
-      await adminClient.from("school_users").update({ two_fa_enabled: true }).eq("user_id", user.id);
+      await adminClient.from("admin_2fa_codes").update({ used: true }).eq("id", codeRecord.id);
+      await adminClient.from("admin_users").update({ two_fa_enabled: true }).eq("user_id", user.id);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -185,7 +182,7 @@ Deno.serve(async (req: Request) => {
       const codeHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
 
       const { data: codeRecord } = await adminClient
-        .from("school_2fa_codes")
+        .from("admin_2fa_codes")
         .select("*")
         .eq("user_id", user.id)
         .eq("code_hash", codeHash)
@@ -200,7 +197,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      await adminClient.from("school_2fa_codes").update({ used: true }).eq("id", codeRecord.id);
+      await adminClient.from("admin_2fa_codes").update({ used: true }).eq("id", codeRecord.id);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -208,8 +205,8 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "disable") {
-      await adminClient.from("school_users").update({ two_fa_enabled: false, two_fa_channel: "email" }).eq("user_id", user.id);
-      await adminClient.from("school_2fa_codes").delete().eq("user_id", user.id);
+      await adminClient.from("admin_users").update({ two_fa_enabled: false, two_fa_channel: "email" }).eq("user_id", user.id);
+      await adminClient.from("admin_2fa_codes").delete().eq("user_id", user.id);
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -219,7 +216,7 @@ Deno.serve(async (req: Request) => {
     if (action === "set_channel") {
       const { channel: newChannel } = body;
       if (!["email", "sms"].includes(newChannel)) throw new Error("Invalid channel");
-      await adminClient.from("school_users").update({ two_fa_channel: newChannel }).eq("user_id", user.id);
+      await adminClient.from("admin_users").update({ two_fa_channel: newChannel }).eq("user_id", user.id);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -227,7 +224,7 @@ Deno.serve(async (req: Request) => {
 
     throw new Error("Invalid action");
   } catch (err) {
-    console.error("school-send-2fa-code error:", err);
+    console.error("admin-send-2fa-code error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

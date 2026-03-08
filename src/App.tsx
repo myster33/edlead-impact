@@ -79,6 +79,7 @@ const PortalMyClasses = lazy(() => import("./pages/portal/PortalMyClasses"));
 const PortalECard = lazy(() => import("./pages/portal/PortalECard"));
 const PortalReports = lazy(() => import("./pages/portal/PortalReports"));
 const PortalMarketplace = lazy(() => import("./pages/portal/PortalMarketplace"));
+const PortalSettings = lazy(() => import("./pages/portal/PortalSettings"));
 
 const queryClient = new QueryClient();
 
@@ -165,6 +166,7 @@ const App = () => (
                     <Route path="/portal/e-card" element={<PortalProtectedRoute><PortalECard /></PortalProtectedRoute>} />
                     <Route path="/portal/reports" element={<PortalProtectedRoute><PortalReports /></PortalProtectedRoute>} />
                     <Route path="/portal/marketplace" element={<PortalProtectedRoute><PortalMarketplace /></PortalProtectedRoute>} />
+                    <Route path="/portal/settings" element={<PortalProtectedRoute><PortalSettings /></PortalProtectedRoute>} />
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />

@@ -14,6 +14,7 @@ import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
 
 interface SchoolDirectoryEntry {
   id: string;
@@ -65,6 +66,10 @@ export default function SchoolLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
+  
+  // 2FA login state
+  const [showTwoFaVerify, setShowTwoFaVerify] = useState(false);
+  const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("email");
 
   // Register state
   const [regFullName, setRegFullName] = useState("");
@@ -211,6 +216,21 @@ export default function SchoolLogin() {
             toast({ title: "Login Failed", description: "The EMIS number does not match your registered school.", variant: "destructive" });
             return;
           }
+
+          // Check if user has 2FA enabled
+          const { data: schoolUserData } = await supabase
+            .from("school_users")
+            .select("two_fa_enabled, two_fa_channel")
+            .eq("user_id", userData.user.id)
+            .eq("is_active", true)
+            .in("role", ["school_admin", "hr"])
+            .maybeSingle();
+
+          if (schoolUserData && (schoolUserData as any).two_fa_enabled) {
+            setTwoFaChannel(((schoolUserData as any).two_fa_channel as "email" | "sms") || "email");
+            setShowTwoFaVerify(true);
+            return;
+          }
         }
       }
       // Navigation is handled by the useEffect watching isAuthenticated
@@ -282,6 +302,23 @@ export default function SchoolLogin() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  if (showTwoFaVerify) {
+    return (
+      <TwoFactorVerify
+        onVerified={() => {
+          setShowTwoFaVerify(false);
+          toast({ title: "Welcome!", description: "Successfully verified." });
+        }}
+        onCancel={async () => {
+          await supabase.auth.signOut();
+          setShowTwoFaVerify(false);
+        }}
+        portalType="school"
+        twoFaChannel={twoFaChannel}
+      />
     );
   }
 
