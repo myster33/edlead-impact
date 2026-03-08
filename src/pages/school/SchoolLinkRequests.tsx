@@ -6,33 +6,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { LinkIcon, Check, X } from "lucide-react";
+import { LinkIcon, Check, X, UserPlus } from "lucide-react";
 
 export default function SchoolLinkRequests() {
   const { currentSchool, schoolUser } = useSchoolAuth();
   const { toast } = useToast();
-  const [requests, setRequests] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Approve dialog
+  // Parent link requests
+  const [linkRequests, setLinkRequests] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [approveOpen, setApproveOpen] = useState(false);
   const [approvingReq, setApprovingReq] = useState<any>(null);
   const [selectedStudentId, setSelectedStudentId] = useState("");
 
-  const fetchRequests = useCallback(async () => {
+  // Registration requests
+  const [regRequests, setRegRequests] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchLinkRequests = useCallback(async () => {
     if (!currentSchool?.id) return;
     const { data } = await (supabase as any)
       .from("parent_link_requests")
       .select("*, school_users!parent_link_requests_parent_user_id_fkey(full_name, email)")
       .eq("school_id", currentSchool.id)
       .order("created_at", { ascending: false });
-    setRequests(data || []);
-    setIsLoading(false);
+    setLinkRequests(data || []);
+  }, [currentSchool?.id]);
+
+  const fetchRegRequests = useCallback(async () => {
+    if (!currentSchool?.id) return;
+    const { data } = await (supabase as any)
+      .from("portal_registration_requests")
+      .select("*")
+      .eq("school_id", currentSchool.id)
+      .order("created_at", { ascending: false });
+    setRegRequests(data || []);
   }, [currentSchool?.id]);
 
   const fetchStudents = useCallback(async () => {
@@ -47,55 +60,94 @@ export default function SchoolLinkRequests() {
     setStudents(data || []);
   }, [currentSchool?.id]);
 
-  useEffect(() => { fetchRequests(); fetchStudents(); }, [fetchRequests, fetchStudents]);
+  useEffect(() => {
+    Promise.all([fetchLinkRequests(), fetchRegRequests(), fetchStudents()]).then(() => setIsLoading(false));
+  }, [fetchLinkRequests, fetchRegRequests, fetchStudents]);
 
+  // --- Parent Link Handlers ---
   const openApprove = (req: any) => {
     setApprovingReq(req);
     setSelectedStudentId("");
     setApproveOpen(true);
   };
 
-  const handleApprove = async () => {
+  const handleApproveLink = async () => {
     if (!approvingReq || !selectedStudentId || !schoolUser) return;
-
-    // Create the parent-student link
     const { error: linkError } = await supabase.from("student_parent_links").insert({
       parent_user_id: approvingReq.parent_user_id,
       student_user_id: selectedStudentId,
       relationship: approvingReq.relationship,
     });
+    if (linkError) { toast({ title: "Error", description: linkError.message, variant: "destructive" }); return; }
 
-    if (linkError) {
-      toast({ title: "Error", description: linkError.message, variant: "destructive" });
+    await (supabase as any).from("parent_link_requests").update({
+      status: "approved",
+      reviewed_by: schoolUser.id,
+      reviewed_at: new Date().toISOString(),
+      matched_student_id: selectedStudentId,
+    }).eq("id", approvingReq.id);
+
+    toast({ title: "Link request approved" });
+    setApproveOpen(false);
+    fetchLinkRequests();
+  };
+
+  const handleRejectLink = async (req: any) => {
+    if (!schoolUser) return;
+    await (supabase as any).from("parent_link_requests").update({
+      status: "rejected", reviewed_by: schoolUser.id, reviewed_at: new Date().toISOString(),
+    }).eq("id", req.id);
+    toast({ title: "Link request rejected" });
+    fetchLinkRequests();
+  };
+
+  // --- Registration Handlers ---
+  const handleApproveReg = async (req: any) => {
+    if (!currentSchool || !schoolUser) return;
+
+    // Map signup role to school_user_role
+    const roleMap: Record<string, string> = {
+      student: "student",
+      parent: "parent",
+      educator: "educator",
+    };
+    const schoolRole = roleMap[req.role] || "student";
+
+    // Create the school_user entry
+    const { error: insertError } = await supabase.from("school_users").insert({
+      user_id: req.auth_user_id,
+      school_id: currentSchool.id,
+      role: schoolRole as any,
+      full_name: req.full_name,
+      email: req.email,
+      phone: req.phone || null,
+      student_id_number: req.student_id_number || null,
+      is_active: true,
+    });
+
+    if (insertError) {
+      toast({ title: "Error", description: insertError.message, variant: "destructive" });
       return;
     }
 
     // Update request status
-    const { error } = await (supabase as any).from("parent_link_requests").update({
+    await (supabase as any).from("portal_registration_requests").update({
       status: "approved",
-      reviewed_by: schoolUser.id,
-      reviewed_at: new Date().toISOString(),
-      linked_student_id: selectedStudentId,
-    }).eq("id", approvingReq.id);
-
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Link request approved", description: "Parent has been linked to the student." });
-
-    setApproveOpen(false);
-    fetchRequests();
-  };
-
-  const handleReject = async (req: any) => {
-    if (!schoolUser) return;
-    const { error } = await (supabase as any).from("parent_link_requests").update({
-      status: "rejected",
       reviewed_by: schoolUser.id,
       reviewed_at: new Date().toISOString(),
     }).eq("id", req.id);
 
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Link request rejected" });
-    fetchRequests();
+    toast({ title: "Registration approved", description: `${req.full_name} can now access the portal.` });
+    fetchRegRequests();
+  };
+
+  const handleRejectReg = async (req: any) => {
+    if (!schoolUser) return;
+    await (supabase as any).from("portal_registration_requests").update({
+      status: "rejected", reviewed_by: schoolUser.id, reviewed_at: new Date().toISOString(),
+    }).eq("id", req.id);
+    toast({ title: "Registration rejected" });
+    fetchRegRequests();
   };
 
   const statusColor = (s: string) => {
@@ -104,73 +156,138 @@ export default function SchoolLinkRequests() {
     return "secondary";
   };
 
-  const pendingCount = requests.filter(r => r.status === "pending").length;
+  const pendingLinkCount = linkRequests.filter(r => r.status === "pending").length;
+  const pendingRegCount = regRequests.filter(r => r.status === "pending").length;
 
   return (
     <SchoolLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Parent Link Requests</h1>
-          <p className="text-muted-foreground">Review requests from parents to link to students</p>
+          <h1 className="text-3xl font-bold text-foreground">Requests</h1>
+          <p className="text-muted-foreground">Review registration and parent link requests</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
-              All Requests
-              {pendingCount > 0 && <Badge>{pendingCount} pending</Badge>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground text-center py-8">Loading...</p>
-            ) : requests.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No link requests yet.</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Parent</TableHead>
-                    <TableHead>Student Name</TableHead>
-                    <TableHead>Student ID</TableHead>
-                    <TableHead>Relationship</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requests.map(r => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.school_users?.full_name || "—"}</TableCell>
-                      <TableCell>{r.student_name}</TableCell>
-                      <TableCell>{r.student_id_number || "—"}</TableCell>
-                      <TableCell className="capitalize">{r.relationship}</TableCell>
-                      <TableCell><Badge variant={statusColor(r.status) as any} className="capitalize">{r.status}</Badge></TableCell>
-                      <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right">
-                        {r.status === "pending" && (
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => openApprove(r)} title="Approve">
-                              <Check className="h-4 w-4 text-primary" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleReject(r)} title="Reject">
-                              <X className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="registrations">
+          <TabsList>
+            <TabsTrigger value="registrations" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Registrations {pendingRegCount > 0 && <Badge variant="secondary" className="ml-1">{pendingRegCount}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="links" className="gap-2">
+              <LinkIcon className="h-4 w-4" />
+              Parent Links {pendingLinkCount > 0 && <Badge variant="secondary" className="ml-1">{pendingLinkCount}</Badge>}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="registrations">
+            <Card>
+              <CardHeader>
+                <CardTitle>Registration Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <p className="text-muted-foreground text-center py-8">Loading...</p>
+                ) : regRequests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No registration requests yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Student ID</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {regRequests.map(r => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-medium">{r.full_name}</TableCell>
+                          <TableCell>{r.email}</TableCell>
+                          <TableCell className="capitalize">{r.role}</TableCell>
+                          <TableCell>{r.student_id_number || "—"}</TableCell>
+                          <TableCell><Badge variant={statusColor(r.status) as any} className="capitalize">{r.status}</Badge></TableCell>
+                          <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-right">
+                            {r.status === "pending" && (
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => handleApproveReg(r)} title="Approve">
+                                  <Check className="h-4 w-4 text-primary" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleRejectReg(r)} title="Reject">
+                                  <X className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="links">
+            <Card>
+              <CardHeader>
+                <CardTitle>Parent Link Requests</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <p className="text-muted-foreground text-center py-8">Loading...</p>
+                ) : linkRequests.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">No link requests yet.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Parent</TableHead>
+                        <TableHead>Student Name</TableHead>
+                        <TableHead>Student ID</TableHead>
+                        <TableHead>Relationship</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {linkRequests.map(r => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-medium">{r.school_users?.full_name || "—"}</TableCell>
+                          <TableCell>{r.student_name}</TableCell>
+                          <TableCell>{r.student_id_number || "—"}</TableCell>
+                          <TableCell className="capitalize">{r.relationship}</TableCell>
+                          <TableCell><Badge variant={statusColor(r.status) as any} className="capitalize">{r.status}</Badge></TableCell>
+                          <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-right">
+                            {r.status === "pending" && (
+                              <div className="flex items-center justify-end gap-1">
+                                <Button variant="ghost" size="icon" onClick={() => openApprove(r)} title="Approve">
+                                  <Check className="h-4 w-4 text-primary" />
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleRejectLink(r)} title="Reject">
+                                  <X className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
-      {/* Approve Dialog — match student */}
+      {/* Approve Link Dialog */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent>
           <DialogHeader>
@@ -196,7 +313,7 @@ export default function SchoolLinkRequests() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setApproveOpen(false)}>Cancel</Button>
-            <Button onClick={handleApprove} disabled={!selectedStudentId}>Approve & Link</Button>
+            <Button onClick={handleApproveLink} disabled={!selectedStudentId}>Approve & Link</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
