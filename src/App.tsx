@@ -58,6 +58,7 @@ const AdminMarketplace = lazy(() => import("./pages/admin/AdminMarketplace"));
 
 // School portal pages
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
+const SchoolResetPassword = lazy(() => import("./pages/school/SchoolResetPassword"));
 const SchoolDashboard = lazy(() => import("./pages/school/SchoolDashboard"));
 const SchoolAttendance = lazy(() => import("./pages/school/SchoolAttendance"));
 const SchoolClasses = lazy(() => import("./pages/school/SchoolClasses"));
@@ -142,6 +143,7 @@ const App = () => (
 
                     {/* School Portal Routes */}
                     <Route path="/school/login" element={<SchoolLogin />} />
+                    <Route path="/school/reset-password" element={<SchoolResetPassword />} />
                     <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
                     <Route path="/school/attendance" element={<SchoolProtectedRoute><SchoolAttendance /></SchoolProtectedRoute>} />
                     <Route path="/school/classes" element={<SchoolProtectedRoute><SchoolClasses /></SchoolProtectedRoute>} />

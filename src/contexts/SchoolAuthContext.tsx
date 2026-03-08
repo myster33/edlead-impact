@@ -31,7 +31,7 @@ interface SchoolAuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, schoolCode: string, role: "school_admin" | "hr", fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, schoolName: string, schoolAddress: string, province: string, role: "school_admin" | "hr", fullName: string, phone: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -111,23 +111,65 @@ export function SchoolAuthProvider({ children }: { children: React.ReactNode }) 
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, schoolCode: string, role: "school_admin" | "hr", fullName: string) => {
+  const signUp = async (
+    email: string, password: string,
+    schoolName: string, schoolAddress: string, province: string,
+    role: "school_admin" | "hr", fullName: string, phone: string
+  ) => {
+    // 1. Create auth user
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: `${window.location.origin}/school/login` },
     });
 
-    if (error) return { error: error as Error | null };
+    if (error) return { error: error as Error };
+    if (!data.user) return { error: new Error("Failed to create account") };
 
-    // Create school registration if school_admin
-    if (data.user && role === "school_admin") {
-      // School will be created by the user after verification
-      toast({
-        title: "Account created",
-        description: "Please verify your email. Once verified, you can register your school.",
-      });
+    // 2. Generate school code
+    const schoolCode = schoolName.substring(0, 3).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+    // 3. Create the school (unverified)
+    const { data: school, error: schoolError } = await supabase
+      .from("schools")
+      .insert({
+        name: schoolName,
+        school_code: schoolCode,
+        address: schoolAddress,
+        province,
+        is_verified: false,
+      })
+      .select("id")
+      .single();
+
+    if (schoolError) {
+      return { error: new Error("Failed to register school: " + schoolError.message) };
     }
+
+    // 4. Create school_user record
+    const { error: userError } = await supabase
+      .from("school_users")
+      .insert({
+        user_id: data.user.id,
+        school_id: school.id,
+        role,
+        full_name: fullName,
+        email,
+        phone,
+        is_active: true,
+      });
+
+    if (userError) {
+      return { error: new Error("Failed to create user profile: " + userError.message) };
+    }
+
+    // Sign out so user must verify email first
+    await supabase.auth.signOut();
+
+    toast({
+      title: "Registration submitted",
+      description: "Please verify your email. Your school will be reviewed by edLEAD administration.",
+    });
 
     return { error: null };
   };
