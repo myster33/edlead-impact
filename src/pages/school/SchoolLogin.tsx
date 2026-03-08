@@ -104,9 +104,10 @@ export default function SchoolLogin() {
 
   useEffect(() => {
     if (!authLoading && user && isAuthenticated) {
+      toast({ title: "Welcome!", description: "Successfully logged in." });
       navigate(from, { replace: true });
     }
-  }, [user, isAuthenticated, authLoading, navigate, from]);
+  }, [user, isAuthenticated, authLoading, navigate, from, toast]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -183,9 +184,8 @@ export default function SchoolLogin() {
       const { error } = await signIn(loginEmail, loginPassword);
       if (error) {
         toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
-      } else {
-        toast({ title: "Welcome!", description: "Successfully logged in." });
       }
+      // Navigation is handled by the useEffect watching isAuthenticated
     } finally {
       setIsLoading(false);
     }
