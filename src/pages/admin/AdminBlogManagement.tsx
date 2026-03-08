@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -67,7 +68,8 @@ import {
   Filter,
   Search,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckSquare,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/admin/TableSkeleton";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
@@ -144,7 +146,9 @@ const AdminBlogManagement = () => {
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [provinceFilter, setProvinceFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
-  
+  const [selectedBlogIds, setSelectedBlogIds] = useState<Set<string>>(new Set());
+  const [bulkTrashOpen, setBulkTrashOpen] = useState(false);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
   // Region info for filtering
   const regionInfo = getAdminRegionInfo(adminUser);
   
@@ -665,6 +669,108 @@ const AdminBlogManagement = () => {
       fetchPosts();
     }
     setSaving(false);
+  };
+
+  const toggleBlogSelect = (id: string) => {
+    const newSelected = new Set(selectedBlogIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedBlogIds(newSelected);
+  };
+
+  const bulkTrashBlogs = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedBlogIds.size === 0) return;
+    setSaving(true);
+    try {
+      const idsArray = Array.from(selectedBlogIds);
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const post = posts.find(p => p.id === id);
+        logAction({
+          action: "blog_trashed" as any,
+          table_name: "blog_posts",
+          record_id: id,
+          old_values: { title: post?.title, author_name: post?.author_name },
+        });
+      }
+      setSelectedBlogIds(new Set());
+      setBulkTrashOpen(false);
+      toast({ title: "Moved to Trash", description: `${idsArray.length} stories moved to trash.` });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error bulk trashing blogs:", error);
+      toast({ title: "Error", description: "Failed to move stories to trash.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const bulkRestoreBlogs = async () => {
+    if (selectedBlogIds.size === 0) return;
+    setSaving(true);
+    try {
+      const idsArray = Array.from(selectedBlogIds);
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ deleted_at: null } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const post = posts.find(p => p.id === id);
+        logAction({
+          action: "blog_restored" as any,
+          table_name: "blog_posts",
+          record_id: id,
+          new_values: { title: post?.title },
+        });
+      }
+      setSelectedBlogIds(new Set());
+      toast({ title: "Restored", description: `${idsArray.length} stories restored.` });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error bulk restoring blogs:", error);
+      toast({ title: "Error", description: "Failed to restore stories.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const bulkPurgeBlogs = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedBlogIds.size === 0) return;
+    setSaving(true);
+    try {
+      const idsArray = Array.from(selectedBlogIds);
+      for (const id of idsArray) {
+        const post = posts.find(p => p.id === id);
+        logAction({
+          action: "blog_purged" as any,
+          table_name: "blog_posts",
+          record_id: id,
+          old_values: { title: post?.title, author_name: post?.author_name },
+        });
+      }
+      const { error } = await supabase
+        .from("blog_posts")
+        .delete()
+        .in("id", idsArray);
+      if (error) throw error;
+      setSelectedBlogIds(new Set());
+      setBulkPurgeOpen(false);
+      toast({ title: "Permanently Deleted", description: `${idsArray.length} stories permanently removed.` });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error bulk purging blogs:", error);
+      toast({ title: "Error", description: "Failed to permanently delete stories.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const MAX_FEATURED_POSTS = 3;
@@ -1189,9 +1295,81 @@ const AdminBlogManagement = () => {
           />
         ) : (
           <div className="rounded-md border overflow-x-auto">
+            {/* Bulk Actions Bar */}
+            {selectedBlogIds.size > 0 && (
+              <div className="p-3 border-b bg-primary/5">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-primary" />
+                    <span className="font-medium">{selectedBlogIds.size} selected</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {statusFilter === "trash" ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={bulkRestoreBlogs}
+                          disabled={saving}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
+                          Restore Selected
+                        </Button>
+                        {adminUser?.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setBulkPurgeOpen(true)}
+                            disabled={saving}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Purge Selected
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {adminUser?.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setBulkTrashOpen(true)}
+                            disabled={saving}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Trash Selected
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedBlogIds(new Set())}
+                      disabled={saving}
+                    >
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedBlogIds.size === posts.length && posts.length > 0}
+                      onCheckedChange={() => {
+                        if (selectedBlogIds.size === posts.length) {
+                          setSelectedBlogIds(new Set());
+                        } else {
+                          setSelectedBlogIds(new Set(posts.map(p => p.id)));
+                        }
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead className="hidden sm:table-cell">Author</TableHead>
                   <TableHead className="hidden md:table-cell">Category</TableHead>
@@ -1203,7 +1381,13 @@ const AdminBlogManagement = () => {
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
-                  <TableRow key={post.id}>
+                  <TableRow key={post.id} className={selectedBlogIds.has(post.id) ? "bg-primary/5" : ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedBlogIds.has(post.id)}
+                        onCheckedChange={() => toggleBlogSelect(post.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium max-w-[200px] sm:max-w-xs truncate">
                       {post.title}
                     </TableCell>
@@ -1857,6 +2041,44 @@ const AdminBlogManagement = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove Image
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Bulk Trash Confirmation */}
+      <AlertDialog open={bulkTrashOpen} onOpenChange={setBulkTrashOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move {selectedBlogIds.size} Stories to Trash?</AlertDialogTitle>
+            <AlertDialogDescription>
+              These stories will be moved to trash. You can restore them later from the Trash filter.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={bulkTrashBlogs}>
+              Move to Trash
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Purge Confirmation */}
+      <AlertDialog open={bulkPurgeOpen} onOpenChange={setBulkPurgeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete {selectedBlogIds.size} Stories?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove {selectedBlogIds.size} stories. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkPurgeBlogs}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Permanently
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

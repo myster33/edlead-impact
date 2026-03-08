@@ -172,6 +172,8 @@ export default function AdminApplications() {
   const [showTrash, setShowTrash] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [purgeId, setPurgeId] = useState<string | null>(null);
+  const [bulkTrashOpen, setBulkTrashOpen] = useState(false);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
 
   // Presence: who is viewing the currently open application
   const presenceAdmin = useMemo(() => adminUser ? {
@@ -885,6 +887,98 @@ export default function AdminApplications() {
     }
   };
 
+  const bulkSoftDeleteApplications = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const app = applications.find(a => a.id === id);
+        logAction({
+          action: "application_trashed" as any,
+          table_name: "applications",
+          record_id: id,
+          new_values: { full_name: app?.full_name, reference_number: app?.reference_number },
+        });
+      }
+      setSelectedIds(new Set());
+      setBulkTrashOpen(false);
+      toast({ title: "Moved to Trash", description: `${idsArray.length} applications moved to trash.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error bulk trashing:", error);
+      toast({ title: "Error", description: "Failed to move applications to trash.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const bulkRestoreApplications = async () => {
+    if (selectedIds.size === 0) return;
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: null } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const app = applications.find(a => a.id === id);
+        logAction({
+          action: "application_restored" as any,
+          table_name: "applications",
+          record_id: id,
+          new_values: { full_name: app?.full_name, reference_number: app?.reference_number },
+        });
+      }
+      setSelectedIds(new Set());
+      toast({ title: "Restored", description: `${idsArray.length} applications restored.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error bulk restoring:", error);
+      toast({ title: "Error", description: "Failed to restore applications.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const bulkPurgeApplications = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      for (const id of idsArray) {
+        const app = applications.find(a => a.id === id);
+        logAction({
+          action: "application_purged" as any,
+          table_name: "applications",
+          record_id: id,
+          old_values: { full_name: app?.full_name, reference_number: app?.reference_number },
+        });
+      }
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .in("id", idsArray);
+      if (error) throw error;
+      setSelectedIds(new Set());
+      setBulkPurgeOpen(false);
+      toast({ title: "Permanently Deleted", description: `${idsArray.length} applications permanently removed.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error bulk purging:", error);
+      toast({ title: "Error", description: "Failed to permanently delete applications.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -1098,40 +1192,79 @@ export default function AdminApplications() {
                   <span className="font-medium">{selectedIds.size} selected</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={() => bulkUpdateStatus("approved")}
-                    disabled={isUpdating}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                    Approve Selected
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => bulkUpdateStatus("rejected")}
-                    disabled={isUpdating}
-                  >
-                    {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
-                    Reject Selected
-                  </Button>
-                  {adminUser?.role === "admin" && (
-                    <Select onValueChange={(value) => bulkAssignCohort(value === "unassigned" ? null : value)} disabled={isUpdating}>
-                      <SelectTrigger className="w-[180px] h-8">
-                        <Users className="h-4 w-4 mr-2" />
-                        <SelectValue placeholder="Assign Cohort" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassign Cohort</SelectItem>
-                        {cohorts.map((cohort) => (
-                          <SelectItem key={cohort.id} value={cohort.id}>
-                            {cohort.name} {cohort.is_active && "(Active)"}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {showTrash ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={bulkRestoreApplications}
+                        disabled={isUpdating}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
+                        Restore Selected
+                      </Button>
+                      {adminUser?.role === "admin" && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => setBulkPurgeOpen(true)}
+                          disabled={isUpdating}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Purge Selected
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => bulkUpdateStatus("approved")}
+                        disabled={isUpdating}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                        Approve Selected
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => bulkUpdateStatus("rejected")}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
+                        Reject Selected
+                      </Button>
+                      {adminUser?.role === "admin" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setBulkTrashOpen(true)}
+                            disabled={isUpdating}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Trash Selected
+                          </Button>
+                          <Select onValueChange={(value) => bulkAssignCohort(value === "unassigned" ? null : value)} disabled={isUpdating}>
+                            <SelectTrigger className="w-[180px] h-8">
+                              <Users className="h-4 w-4 mr-2" />
+                              <SelectValue placeholder="Assign Cohort" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unassigned">Unassign Cohort</SelectItem>
+                              {cohorts.map((cohort) => (
+                                <SelectItem key={cohort.id} value={cohort.id}>
+                                  {cohort.name} {cohort.is_active && "(Active)"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </>
+                      )}
+                    </>
                   )}
                   <Button
                     size="sm"
@@ -1569,6 +1702,45 @@ export default function AdminApplications() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => purgeId && purgeApplication(purgeId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Trash Confirmation */}
+        <AlertDialog open={bulkTrashOpen} onOpenChange={setBulkTrashOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Move {selectedIds.size} Applications to Trash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                These applications will be moved to trash. You can restore them later from the Trash view.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={bulkSoftDeleteApplications}>
+                Move to Trash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Purge Confirmation */}
+        <AlertDialog open={bulkPurgeOpen} onOpenChange={setBulkPurgeOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently Delete {selectedIds.size} Applications?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove {selectedIds.size} applications. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={bulkPurgeApplications}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete Permanently
