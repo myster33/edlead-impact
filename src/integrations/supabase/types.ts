@@ -1869,6 +1869,7 @@ export type Database = {
           country: string
           created_at: string
           email: string | null
+          emis_number: string | null
           id: string
           is_verified: boolean
           logo_url: string | null
@@ -1884,6 +1885,7 @@ export type Database = {
           country?: string
           created_at?: string
           email?: string | null
+          emis_number?: string | null
           id?: string
           is_verified?: boolean
           logo_url?: string | null
@@ -1899,6 +1901,7 @@ export type Database = {
           country?: string
           created_at?: string
           email?: string | null
+          emis_number?: string | null
           id?: string
           is_verified?: boolean
           logo_url?: string | null
@@ -1908,6 +1911,42 @@ export type Database = {
           school_code?: string
           updated_at?: string
           verified_by?: string | null
+        }
+        Relationships: []
+      }
+      schools_directory: {
+        Row: {
+          address: string | null
+          created_at: string
+          district: string | null
+          emis_number: string
+          id: string
+          level: string | null
+          name: string
+          province: string
+          sector: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          district?: string | null
+          emis_number: string
+          id?: string
+          level?: string | null
+          name: string
+          province?: string
+          sector?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          district?: string | null
+          emis_number?: string
+          id?: string
+          level?: string | null
+          name?: string
+          province?: string
+          sector?: string | null
         }
         Relationships: []
       }

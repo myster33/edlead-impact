@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSchoolAuth } from "@/contexts/SchoolAuthContext";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, School, User, Phone, Building2 } from "lucide-react";
+import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, School, User, Phone, Building2, Hash } from "lucide-react";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SchoolDirectoryEntry {
+  id: string;
+  emis_number: string;
+  name: string;
+  address: string | null;
+  province: string;
+  district: string | null;
+}
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -26,6 +36,7 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   schoolName: z.string().min(2, "School name must be at least 2 characters").max(200),
+  emisNumber: z.string().min(1, "EMIS Number is required"),
   schoolAddress: z.string().min(5, "School address is required").max(500),
   province: z.string().min(1, "Province is required"),
   role: z.enum(["school_admin", "hr"]),
@@ -60,6 +71,7 @@ export default function SchoolLogin() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regSchoolName, setRegSchoolName] = useState("");
+  const [regEmisNumber, setRegEmisNumber] = useState("");
   const [regSchoolAddress, setRegSchoolAddress] = useState("");
   const [regProvince, setRegProvince] = useState("");
   const [regRole, setRegRole] = useState<"school_admin" | "hr">("school_admin");
@@ -67,6 +79,14 @@ export default function SchoolLogin() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [regErrors, setRegErrors] = useState<Record<string, string>>({});
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [isFromDirectory, setIsFromDirectory] = useState(false);
+
+  // School autocomplete state
+  const [schoolSuggestions, setSchoolSuggestions] = useState<SchoolDirectoryEntry[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchingSchools, setSearchingSchools] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const schoolInputRef = useRef<HTMLInputElement>(null);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState("");
@@ -87,6 +107,62 @@ export default function SchoolLogin() {
       navigate(from, { replace: true });
     }
   }, [user, isAuthenticated, authLoading, navigate, from]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node) &&
+          schoolInputRef.current && !schoolInputRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const searchSchools = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setSchoolSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    setSearchingSchools(true);
+    try {
+      const { data, error } = await supabase
+        .from("schools_directory")
+        .select("id, emis_number, name, address, province, district")
+        .ilike("name", `%${query}%`)
+        .limit(10);
+
+      if (!error && data) {
+        setSchoolSuggestions(data as SchoolDirectoryEntry[]);
+        setShowSuggestions(data.length > 0);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSearchingSchools(false);
+    }
+  }, []);
+
+  // Debounced school search
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const handleSchoolNameChange = (value: string) => {
+    setRegSchoolName(value);
+    setIsFromDirectory(false);
+    // Clear auto-filled fields if user is typing a new name
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => searchSchools(value), 300);
+  };
+
+  const selectSchool = (school: SchoolDirectoryEntry) => {
+    setRegSchoolName(school.name);
+    setRegEmisNumber(school.emis_number);
+    setRegSchoolAddress(school.address || "");
+    setRegProvince(school.province || "");
+    setIsFromDirectory(true);
+    setShowSuggestions(false);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,8 +197,8 @@ export default function SchoolLogin() {
       registerSchema.parse({
         fullName: regFullName, email: regEmail, phone: regPhone,
         password: regPassword, confirmPassword: regConfirmPassword,
-        schoolName: regSchoolName, schoolAddress: regSchoolAddress,
-        province: regProvince, role: regRole,
+        schoolName: regSchoolName, emisNumber: regEmisNumber,
+        schoolAddress: regSchoolAddress, province: regProvince, role: regRole,
       });
       setRegErrors({});
     } catch (err) {
@@ -136,7 +212,10 @@ export default function SchoolLogin() {
 
     setIsRegistering(true);
     try {
-      const { error } = await signUp(regEmail, regPassword, regSchoolName, regSchoolAddress, regProvince, regRole, regFullName, regPhone);
+      const { error } = await signUp(
+        regEmail, regPassword, regSchoolName, regSchoolAddress, 
+        regProvince, regRole, regFullName, regPhone, regEmisNumber
+      );
       if (error) {
         toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
       } else {
@@ -157,7 +236,6 @@ export default function SchoolLogin() {
 
     setIsSendingReset(true);
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
         redirectTo: `${window.location.origin}/school/reset-password`,
       });
@@ -336,21 +414,95 @@ export default function SchoolLogin() {
                       </p>
                     </div>
 
-                    <div className="space-y-1.5">
+                    {/* School Name with Autocomplete */}
+                    <div className="space-y-1.5 relative">
                       <Label htmlFor="reg-school">School Name</Label>
-                      <Input id="reg-school" placeholder="Springfield High School" value={regSchoolName} onChange={e => setRegSchoolName(e.target.value)} disabled={isRegistering} />
+                      <div className="relative">
+                        <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          ref={schoolInputRef}
+                          id="reg-school"
+                          placeholder="Start typing school name..."
+                          value={regSchoolName}
+                          onChange={e => handleSchoolNameChange(e.target.value)}
+                          onFocus={() => { if (schoolSuggestions.length > 0) setShowSuggestions(true); }}
+                          className="pl-10"
+                          disabled={isRegistering}
+                          autoComplete="off"
+                        />
+                        {searchingSchools && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      {showSuggestions && schoolSuggestions.length > 0 && (
+                        <div
+                          ref={suggestionsRef}
+                          className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto"
+                        >
+                          {schoolSuggestions.map((school) => (
+                            <button
+                              key={school.id}
+                              type="button"
+                              className="w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground text-sm transition-colors border-b border-border/50 last:border-0"
+                              onClick={() => selectSchool(school)}
+                            >
+                              <div className="font-medium text-foreground">{school.name}</div>
+                              <div className="text-xs text-muted-foreground flex items-center gap-2 mt-0.5">
+                                <span>EMIS: {school.emis_number}</span>
+                                {school.district && <span>• {school.district}</span>}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {isFromDirectory && (
+                        <p className="text-xs text-primary flex items-center gap-1">
+                          ✓ School found in directory
+                        </p>
+                      )}
+                      {regSchoolName.length >= 2 && !isFromDirectory && !searchingSchools && schoolSuggestions.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          School not found in directory. You can register a new school.
+                        </p>
+                      )}
                       {regErrors.schoolName && <p className="text-sm text-destructive">{regErrors.schoolName}</p>}
+                    </div>
+
+                    {/* EMIS Number */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="reg-emis">School EMIS Number</Label>
+                      <div className="relative">
+                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="reg-emis"
+                          placeholder="e.g. 700401166"
+                          value={regEmisNumber}
+                          onChange={e => setRegEmisNumber(e.target.value)}
+                          className="pl-10"
+                          disabled={isRegistering || isFromDirectory}
+                        />
+                      </div>
+                      {isFromDirectory && (
+                        <p className="text-xs text-muted-foreground">Auto-filled from school directory</p>
+                      )}
+                      {regErrors.emisNumber && <p className="text-sm text-destructive">{regErrors.emisNumber}</p>}
                     </div>
 
                     <div className="space-y-1.5">
                       <Label htmlFor="reg-address">School Address</Label>
-                      <Input id="reg-address" placeholder="123 Main Street, City" value={regSchoolAddress} onChange={e => setRegSchoolAddress(e.target.value)} disabled={isRegistering} />
+                      <Input
+                        id="reg-address"
+                        placeholder="123 Main Street, City"
+                        value={regSchoolAddress}
+                        onChange={e => setRegSchoolAddress(e.target.value)}
+                        disabled={isRegistering || isFromDirectory}
+                      />
                       {regErrors.schoolAddress && <p className="text-sm text-destructive">{regErrors.schoolAddress}</p>}
                     </div>
 
                     <div className="space-y-1.5">
                       <Label htmlFor="reg-province">Province</Label>
-                      <Select value={regProvince} onValueChange={setRegProvince}>
+                      <Select value={regProvince} onValueChange={setRegProvince} disabled={isFromDirectory}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select province" />
                         </SelectTrigger>
