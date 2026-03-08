@@ -25,6 +25,7 @@ interface SchoolDirectoryEntry {
 }
 
 const loginSchema = z.object({
+  emisNumber: z.string().min(1, "School EMIS Number is required"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
@@ -169,7 +170,7 @@ export default function SchoolLogin() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      loginSchema.parse({ email: loginEmail, password: loginPassword });
+      loginSchema.parse({ emisNumber: loginEmisNumber, email: loginEmail, password: loginPassword });
       setLoginErrors({});
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -185,6 +186,32 @@ export default function SchoolLogin() {
       const { error } = await signIn(loginEmail, loginPassword);
       if (error) {
         toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+        return;
+      }
+
+      // Verify EMIS number matches the user's school
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: schoolUser } = await supabase
+          .from("school_users")
+          .select("school_id")
+          .eq("user_id", userData.user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (schoolUser) {
+          const { data: school } = await supabase
+            .from("schools")
+            .select("emis_number")
+            .eq("id", schoolUser.school_id)
+            .single();
+
+          if (!school || school.emis_number !== loginEmisNumber) {
+            await supabase.auth.signOut();
+            toast({ title: "Login Failed", description: "The EMIS number does not match your registered school.", variant: "destructive" });
+            return;
+          }
+        }
       }
       // Navigation is handled by the useEffect watching isAuthenticated
     } finally {
@@ -330,7 +357,7 @@ export default function SchoolLogin() {
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input id="login-emis" placeholder="e.g. 700210001" value={loginEmisNumber} onChange={e => setLoginEmisNumber(e.target.value)} className="pl-10" disabled={isLoading} />
                     </div>
-                    <p className="text-xs text-muted-foreground">Your school's EMIS number used during registration</p>
+                    {loginErrors.emisNumber ? <p className="text-sm text-destructive">{loginErrors.emisNumber}</p> : <p className="text-xs text-muted-foreground">Your school's EMIS number used during registration</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
