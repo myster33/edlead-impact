@@ -34,7 +34,7 @@ async function sendEmail(
   html: string,
   pdfContent: string,
   recipientName: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; resendId?: string }> {
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -62,7 +62,8 @@ async function sendEmail(
       return { success: false, error: errorData.message || "Failed to send email" };
     }
 
-    return { success: true };
+    const data = await response.json();
+    return { success: true, resendId: data.id };
   } catch (error: any) {
     console.error("Error sending email:", error);
     return { success: false, error: error.message };
