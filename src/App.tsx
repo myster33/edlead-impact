@@ -143,6 +143,7 @@ const App = () => (
 
                     {/* School Portal Routes */}
                     <Route path="/school/login" element={<SchoolLogin />} />
+                    <Route path="/school/reset-password" element={<SchoolResetPassword />} />
                     <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
                     <Route path="/school/attendance" element={<SchoolProtectedRoute><SchoolAttendance /></SchoolProtectedRoute>} />
                     <Route path="/school/classes" element={<SchoolProtectedRoute><SchoolClasses /></SchoolProtectedRoute>} />
