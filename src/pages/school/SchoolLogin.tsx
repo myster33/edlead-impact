@@ -104,9 +104,10 @@ export default function SchoolLogin() {
 
   useEffect(() => {
     if (!authLoading && user && isAuthenticated) {
+      toast({ title: "Welcome!", description: "Successfully logged in." });
       navigate(from, { replace: true });
     }
-  }, [user, isAuthenticated, authLoading, navigate, from]);
+  }, [user, isAuthenticated, authLoading, navigate, from, toast]);
 
   // Close suggestions on outside click
   useEffect(() => {
