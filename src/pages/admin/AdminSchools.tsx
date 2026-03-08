@@ -31,6 +31,8 @@ export default function AdminSchools() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
+  const [editSchool, setEditSchool] = useState<SchoolRecord | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const { toast } = useToast();
   const { adminUser } = useAdminAuth();
 
