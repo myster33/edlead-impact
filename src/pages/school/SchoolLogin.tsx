@@ -463,9 +463,20 @@ export default function SchoolLogin() {
 
                     <div className="space-y-1.5">
                       <Label htmlFor="reg-phone">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="reg-phone" placeholder="+27 12 345 6789" value={regPhone} onChange={e => setRegPhone(e.target.value)} className="pl-10" disabled={isRegistering} />
+                      <div className="flex gap-1">
+                        <Select value={regCountryCode} onValueChange={setRegCountryCode}>
+                          <SelectTrigger className="w-[100px] shrink-0 text-xs px-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            {countryCodes.map((c) => (
+                              <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                                {c.flag} {c.code}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input id="reg-phone" placeholder="Phone number" type="tel" value={regPhone} onChange={e => setRegPhone(e.target.value)} className="flex-1" disabled={isRegistering} />
                       </div>
                       {regErrors.phone && <p className="text-sm text-destructive">{regErrors.phone}</p>}
                     </div>
