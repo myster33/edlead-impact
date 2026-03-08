@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { School, CheckCircle, XCircle, Search, Users, MapPin } from "lucide-react";
+import { School, CheckCircle, XCircle, Search, Users, MapPin, Pencil } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { SchoolEditDialog } from "@/components/admin/SchoolEditDialog";
 
 interface SchoolRecord {
   id: string;
@@ -30,6 +31,8 @@ export default function AdminSchools() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [userCounts, setUserCounts] = useState<Record<string, number>>({});
+  const [editSchool, setEditSchool] = useState<SchoolRecord | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const { toast } = useToast();
   const { adminUser } = useAdminAuth();
 
@@ -185,15 +188,20 @@ export default function AdminSchools() {
                         {new Date(school.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        {school.is_verified ? (
-                          <Button size="sm" variant="outline" onClick={() => handleVerify(school.id, false)}>
-                            <XCircle className="h-3 w-3 mr-1" />Revoke
+                        <div className="flex items-center gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => { setEditSchool(school); setEditOpen(true); }}>
+                            <Pencil className="h-3 w-3 mr-1" />Edit
                           </Button>
-                        ) : (
-                          <Button size="sm" variant="default" onClick={() => handleVerify(school.id, true)}>
-                            <CheckCircle className="h-3 w-3 mr-1" />Verify
-                          </Button>
-                        )}
+                          {school.is_verified ? (
+                            <Button size="sm" variant="outline" onClick={() => handleVerify(school.id, false)}>
+                              <XCircle className="h-3 w-3 mr-1" />Revoke
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="default" onClick={() => handleVerify(school.id, true)}>
+                              <CheckCircle className="h-3 w-3 mr-1" />Verify
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -203,6 +211,13 @@ export default function AdminSchools() {
           </CardContent>
         </Card>
       </div>
+
+      <SchoolEditDialog
+        school={editSchool}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={fetchSchools}
+      />
     </AdminLayout>
   );
 }
