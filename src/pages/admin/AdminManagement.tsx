@@ -792,6 +792,8 @@ export default function AdminManagement() {
 
   const getRoleBadge = (role: AppRole) => {
     switch (role) {
+      case "super_admin":
+        return <Badge className="bg-red-500/10 text-red-600">Super Admin</Badge>;
       case "admin":
         return <Badge className="bg-primary/10 text-primary">Admin</Badge>;
       case "reviewer":
@@ -803,12 +805,14 @@ export default function AdminManagement() {
 
   const getRoleDescription = (role: AppRole) => {
     switch (role) {
+      case "super_admin":
+        return "Full unrestricted access: can manage all roles including other super admins, no region limits";
       case "admin":
-        return "Full access: can manage admins, approve/reject applications, and delete data";
+        return "Full access: can appoint viewers and reviewers, manage modules and data";
       case "reviewer":
-        return "Can view and approve/reject applications";
+        return "Can view and make changes within assigned modules and region";
       default:
-        return "Can only view applications";
+        return "Read-only access within assigned modules and region";
     }
   };
 
