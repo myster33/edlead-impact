@@ -772,13 +772,13 @@ export function ChatWidget() {
     }
   };
 
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
   const handleClearChat = () => {
-    // Generate a new session ID so the old conversation stays untouched in the backend
     const newSessionId = crypto.randomUUID();
     localStorage.setItem("edlead-chat-session", newSessionId);
     sessionId.current = newSessionId;
 
-    // Reset all local UI state
     setMessages([]);
     setConversationId(null);
     setStep("intro");
@@ -788,7 +788,6 @@ export function ChatWidget() {
     setAdminTyping(false);
     setAiLoading(false);
 
-    // Reset apply mode
     setApplyMode(false);
     setApplicationData({});
     setApplyComplete(false);
@@ -796,7 +795,6 @@ export function ChatWidget() {
     setApplyCollectedCount(0);
     setShowReview(false);
 
-    // Reset story mode
     setStoryMode(false);
     setStoryData({});
     setStoryComplete(false);
@@ -804,12 +802,12 @@ export function ChatWidget() {
     setStoryCollectedCount(0);
     setShowStoryReview(false);
 
-    // Clear persisted mode data
     localStorage.removeItem("edlead-chat-apply-mode");
     localStorage.removeItem("edlead-chat-apply-data");
     localStorage.removeItem("edlead-chat-story-mode");
     localStorage.removeItem("edlead-chat-story-data");
 
+    setShowClearConfirm(false);
     toast({ title: "Chat cleared", description: "You can start a fresh conversation." });
   };
 
