@@ -301,12 +301,18 @@ export default function AdminManagement() {
     
     setApprovingUserId(approvingPendingUser.id);
     try {
+      const regionScope = (approveRole === "admin" || approveRole === "super_admin") ? "all" 
+        : approveProvince ? "region" 
+        : approveCountry ? "country" 
+        : "all";
+      
       const response = await supabase.functions.invoke("add-admin-user", {
         body: { 
           email: approvingPendingUser.email, 
           role: approveRole,
-          country: approveRole !== "admin" ? approveCountry : null,
-          province: approveRole !== "admin" ? approveProvince : null,
+          country: (approveRole !== "admin" && approveRole !== "super_admin") ? approveCountry : null,
+          province: (approveRole !== "admin" && approveRole !== "super_admin") ? approveProvince : null,
+          region_scope: regionScope,
         },
       });
 
