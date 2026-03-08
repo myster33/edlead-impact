@@ -206,7 +206,7 @@ export default function PortalLogin() {
       });
 
       setTab("login");
-      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", schoolId: "", studentIdNumber: "" });
+      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", studentIdNumber: "" });
     } finally {
       setIsSigningUp(false);
     }
