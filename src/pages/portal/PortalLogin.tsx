@@ -11,6 +11,8 @@ import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { useTheme } from "next-themes";
+import { supabase } from "@/integrations/supabase/client";
+import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -23,6 +25,8 @@ export default function PortalLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showTwoFaVerify, setShowTwoFaVerify] = useState(false);
+  const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("email");
 
   const { signIn, user, isAuthenticated, isLoading: authLoading } = usePortalAuth();
   const navigate = useNavigate();
@@ -33,10 +37,10 @@ export default function PortalLogin() {
   const from = (location.state as { from?: Location })?.from?.pathname || "/portal/dashboard";
 
   useEffect(() => {
-    if (!authLoading && user && isAuthenticated) {
+    if (!authLoading && user && isAuthenticated && !showTwoFaVerify) {
       navigate(from, { replace: true });
     }
-  }, [user, isAuthenticated, authLoading, navigate, from]);
+  }, [user, isAuthenticated, authLoading, navigate, from, showTwoFaVerify]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +61,29 @@ export default function PortalLogin() {
       const { error } = await signIn(email, password);
       if (error) {
         toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
-      } else {
-        toast({ title: "Welcome!", description: "Successfully logged in." });
+        return;
       }
+
+      // Check if user has 2FA enabled
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: portalUser } = await supabase
+          .from("school_users")
+          .select("two_fa_enabled, two_fa_channel")
+          .eq("user_id", userData.user.id)
+          .eq("is_active", true)
+          .in("role", ["educator", "class_teacher", "subject_teacher", "parent", "student"])
+          .limit(1)
+          .maybeSingle();
+
+        if (portalUser && (portalUser as any).two_fa_enabled) {
+          setTwoFaChannel(((portalUser as any).two_fa_channel as "email" | "sms") || "email");
+          setShowTwoFaVerify(true);
+          return;
+        }
+      }
+
+      toast({ title: "Welcome!", description: "Successfully logged in." });
     } finally {
       setIsLoading(false);
     }
@@ -70,6 +94,24 @@ export default function PortalLogin() {
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+
+  if (showTwoFaVerify) {
+    return (
+      <TwoFactorVerify
+        onVerified={() => {
+          setShowTwoFaVerify(false);
+          toast({ title: "Welcome!", description: "Successfully verified." });
+          navigate(from, { replace: true });
+        }}
+        onCancel={async () => {
+          await supabase.auth.signOut();
+          setShowTwoFaVerify(false);
+        }}
+        portalType="portal"
+        twoFaChannel={twoFaChannel}
+      />
     );
   }
 
