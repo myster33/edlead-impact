@@ -1520,12 +1520,17 @@ export default function AdminManagement() {
 
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {user.role !== "admin" && (user.country || user.province) ? (
+                        {(user.role !== "admin" && user.role !== "super_admin") && (user.country || user.province) ? (
                           <div className="text-sm">
+                            <Badge variant="outline" className="text-xs mr-1">
+                              {(user as any).region_scope === "region" ? "Region" : (user as any).region_scope === "country" ? "Country" : "All"}
+                            </Badge>
                             {user.province && <span>{user.province}</span>}
                             {user.province && user.country && <span>, </span>}
                             {user.country && <span className="text-muted-foreground">{user.country}</span>}
                           </div>
+                        ) : (user.role === "admin" || user.role === "super_admin") ? (
+                          <Badge variant="outline" className="text-xs">All Regions</Badge>
                         ) : (
                           <span className="text-muted-foreground text-sm">-</span>
                         )}
