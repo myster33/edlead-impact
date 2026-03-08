@@ -536,7 +536,7 @@ export default function AdminDashboard() {
               <CardDescription>Total Applications</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
                 {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <Skeleton className="h-8 w-16" />
                 ) : (
                   <>
                     <Users className="h-6 w-6 text-primary" />
@@ -551,7 +551,7 @@ export default function AdminDashboard() {
               <CardDescription>Pending Review</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
                 {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-yellow-500" />
+                  <Skeleton className="h-8 w-16" />
                 ) : (
                   <>
                     <Clock className="h-6 w-6 text-yellow-500" />
@@ -566,7 +566,7 @@ export default function AdminDashboard() {
               <CardDescription>Approved</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
                 {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+                  <Skeleton className="h-8 w-16" />
                 ) : (
                   <>
                     <CheckCircle className="h-6 w-6 text-green-500" />
@@ -581,7 +581,7 @@ export default function AdminDashboard() {
               <CardDescription>Rejected</CardDescription>
               <CardTitle className="text-3xl flex items-center gap-2">
                 {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-destructive" />
+                  <Skeleton className="h-8 w-16" />
                 ) : (
                   <>
                     <XCircle className="h-6 w-6 text-destructive" />
