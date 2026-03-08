@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, School, User, Phone, Building2, Hash } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -75,6 +77,7 @@ export default function SchoolLogin() {
   const [regFullName, setRegFullName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPhone, setRegPhone] = useState("");
+  const [regCountryCode, setRegCountryCode] = useState("+27|South Africa");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regSchoolName, setRegSchoolName] = useState("");
@@ -262,7 +265,9 @@ export default function SchoolLogin() {
     try {
       const { error } = await signUp(
         regEmail, regPassword, regSchoolName, regSchoolAddress, 
-        regProvince, regRole, regFullName, regPhone, regEmisNumber
+        regProvince, regRole, regFullName,
+        regPhone.trim() ? `${regCountryCode.split("|")[0]} ${regPhone.trim().replace(/^0+/, "")}` : regPhone,
+        regEmisNumber
       );
       if (error) {
         toast({ title: "Registration Failed", description: error.message, variant: "destructive" });
@@ -460,9 +465,20 @@ export default function SchoolLogin() {
 
                     <div className="space-y-1.5">
                       <Label htmlFor="reg-phone">Phone Number</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="reg-phone" placeholder="+27 12 345 6789" value={regPhone} onChange={e => setRegPhone(e.target.value)} className="pl-10" disabled={isRegistering} />
+                      <div className="flex gap-1">
+                        <Select value={regCountryCode} onValueChange={setRegCountryCode}>
+                          <SelectTrigger className="w-[100px] shrink-0 text-xs px-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px]">
+                            {countryCodes.map((c) => (
+                              <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                                {c.flag} {c.code}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input id="reg-phone" placeholder="Phone number" type="tel" value={regPhone} onChange={e => setRegPhone(e.target.value)} className="flex-1" disabled={isRegistering} />
                       </div>
                       {regErrors.phone && <p className="text-sm text-destructive">{regErrors.phone}</p>}
                     </div>
@@ -588,22 +604,23 @@ export default function SchoolLogin() {
                       {regErrors.province && <p className="text-sm text-destructive">{regErrors.province}</p>}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
                         <Label htmlFor="reg-password">Password</Label>
-                        <div className="relative">
-                          <Input id="reg-password" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="pr-10" disabled={isRegistering} />
-                          <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowRegPassword(!showRegPassword)}>
-                            {showRegPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        {regErrors.password && <p className="text-sm text-destructive">{regErrors.password}</p>}
+                        <Button type="button" variant="link" className="px-0 h-auto text-xs" onClick={() => setShowRegPassword(!showRegPassword)}>
+                          {showRegPassword ? "Hide" : "Show"}
+                        </Button>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="reg-confirm">Confirm</Label>
-                        <Input id="reg-confirm" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} disabled={isRegistering} />
-                        {regErrors.confirmPassword && <p className="text-sm text-destructive">{regErrors.confirmPassword}</p>}
+                      <div className="relative">
+                        <Input id="reg-password" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="pr-10" disabled={isRegistering} />
                       </div>
+                      <PasswordStrengthIndicator password={regPassword} />
+                      {regErrors.password && <p className="text-sm text-destructive">{regErrors.password}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="reg-confirm">Confirm Password</Label>
+                      <Input id="reg-confirm" type={showRegPassword ? "text" : "password"} placeholder="••••••••" value={regConfirmPassword} onChange={e => setRegConfirmPassword(e.target.value)} disabled={isRegistering} />
+                      {regErrors.confirmPassword && <p className="text-sm text-destructive">{regErrors.confirmPassword}</p>}
                     </div>
 
                     <div className="p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">

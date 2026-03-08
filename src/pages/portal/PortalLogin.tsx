@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, CreditCard } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -52,7 +54,7 @@ export default function PortalLogin() {
   // Signup state
   const [signupData, setSignupData] = useState({
     fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "",
-    role: "" as string, studentIdNumber: "",
+    role: "" as string, studentIdNumber: "", countryCode: "+27|South Africa",
   });
   const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -186,7 +188,7 @@ export default function PortalLogin() {
           auth_user_id: authData.user?.id,
           full_name: signupData.fullName,
           email: signupData.email,
-          phone: signupData.phone || null,
+          phone: signupData.phone?.trim() ? `${signupData.countryCode.split("|")[0]} ${signupData.phone.trim().replace(/^0+/, "")}` : null,
           role: signupData.role,
           student_id_number: signupData.studentIdNumber || null,
           id_passport_number: signupData.idPassportNumber,
@@ -206,7 +208,7 @@ export default function PortalLogin() {
       });
 
       setTab("login");
-      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", studentIdNumber: "" });
+      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", studentIdNumber: "", countryCode: "+27|South Africa" });
     } finally {
       setIsSigningUp(false);
     }
@@ -446,9 +448,20 @@ export default function PortalLogin() {
 
                 <div className="space-y-2">
                   <Label>Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="+27..." value={signupData.phone} onChange={e => setSignupData(d => ({ ...d, phone: e.target.value }))} className="pl-10" />
+                  <div className="flex gap-1">
+                    <Select value={signupData.countryCode} onValueChange={v => setSignupData(d => ({ ...d, countryCode: v }))}>
+                      <SelectTrigger className="w-[100px] shrink-0 text-xs px-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        {countryCodes.map((c) => (
+                          <SelectItem key={`${c.country}-${c.code}`} value={`${c.code}|${c.country}`}>
+                            {c.flag} {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input placeholder="Phone number" type="tel" value={signupData.phone} onChange={e => setSignupData(d => ({ ...d, phone: e.target.value }))} className="flex-1" />
                   </div>
                 </div>
 
@@ -460,27 +473,28 @@ export default function PortalLogin() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
                     <Label>Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} className="pl-10" />
-                    </div>
-                    {signupErrors.password && <p className="text-sm text-destructive">{signupErrors.password}</p>}
+                    <Button type="button" variant="link" className="px-0 h-auto text-xs" onClick={() => setShowSignupPassword(!showSignupPassword)}>
+                      {showSignupPassword ? "Hide" : "Show"}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Confirm</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.confirmPassword} onChange={e => setSignupData(d => ({ ...d, confirmPassword: e.target.value }))} className="pl-10" />
-                    </div>
-                    {signupErrors.confirmPassword && <p className="text-sm text-destructive">{signupErrors.confirmPassword}</p>}
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} className="pl-10" />
                   </div>
+                  <PasswordStrengthIndicator password={signupData.password} />
+                  {signupErrors.password && <p className="text-sm text-destructive">{signupErrors.password}</p>}
                 </div>
-                <Button type="button" variant="link" className="px-0 h-auto text-xs" onClick={() => setShowSignupPassword(!showSignupPassword)}>
-                  {showSignupPassword ? "Hide" : "Show"} passwords
-                </Button>
+                <div className="space-y-2">
+                  <Label>Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.confirmPassword} onChange={e => setSignupData(d => ({ ...d, confirmPassword: e.target.value }))} className="pl-10" />
+                  </div>
+                  {signupErrors.confirmPassword && <p className="text-sm text-destructive">{signupErrors.confirmPassword}</p>}
+                </div>
 
                 <Button type="submit" className="w-full" disabled={isSigningUp}>
                   {isSigningUp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Create Account"}
