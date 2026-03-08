@@ -79,6 +79,7 @@ const PortalMyClasses = lazy(() => import("./pages/portal/PortalMyClasses"));
 const PortalECard = lazy(() => import("./pages/portal/PortalECard"));
 const PortalReports = lazy(() => import("./pages/portal/PortalReports"));
 const PortalMarketplace = lazy(() => import("./pages/portal/PortalMarketplace"));
+const PortalSettings = lazy(() => import("./pages/portal/PortalSettings"));
 
 const queryClient = new QueryClient();
 
