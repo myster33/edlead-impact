@@ -97,7 +97,7 @@ export default function PortalLogin() {
   const getLoginLabel = () => {
     switch (loginMethod) {
       case "phone": return "Phone Number";
-      case "userid": return "User ID";
+      case "edleadid": return "edLEAD ID";
       default: return "Email";
     }
   };
