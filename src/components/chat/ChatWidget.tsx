@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, X, Minimize2, Maximize2, Send } from "lucide-react";
+import { MessageCircle, X, Minimize2, Maximize2, Send, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -762,6 +762,47 @@ export function ChatWidget() {
     }
   };
 
+  const handleClearChat = () => {
+    // Generate a new session ID so the old conversation stays untouched in the backend
+    const newSessionId = crypto.randomUUID();
+    localStorage.setItem("edlead-chat-session", newSessionId);
+    sessionId.current = newSessionId;
+
+    // Reset all local UI state
+    setMessages([]);
+    setConversationId(null);
+    setStep("intro");
+    setVisitorName("");
+    setVisitorEmail("");
+    setNewMessage("");
+    setAdminTyping(false);
+    setAiLoading(false);
+
+    // Reset apply mode
+    setApplyMode(false);
+    setApplicationData({});
+    setApplyComplete(false);
+    setApplySubmitting(false);
+    setApplyCollectedCount(0);
+    setShowReview(false);
+
+    // Reset story mode
+    setStoryMode(false);
+    setStoryData({});
+    setStoryComplete(false);
+    setStorySubmitting(false);
+    setStoryCollectedCount(0);
+    setShowStoryReview(false);
+
+    // Clear persisted mode data
+    localStorage.removeItem("edlead-chat-apply-mode");
+    localStorage.removeItem("edlead-chat-apply-data");
+    localStorage.removeItem("edlead-chat-story-mode");
+    localStorage.removeItem("edlead-chat-story-data");
+
+    toast({ title: "Chat cleared", description: "You can start a fresh conversation." });
+  };
+
   const handleOpen = () => {
     setIsOpen(true);
     setShowTooltip(false);
@@ -819,6 +860,11 @@ export function ChatWidget() {
           </div>
         </div>
         <div className="flex gap-1">
+          {step === "chat" && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={handleClearChat} aria-label="Clear chat" title="Clear chat">
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setIsMaximized(!isMaximized)} aria-label={isMaximized ? "Minimize chat" : "Maximize chat"}>
             {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
