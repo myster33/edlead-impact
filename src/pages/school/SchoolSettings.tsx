@@ -313,6 +313,11 @@ export default function SchoolSettings() {
             </Card>
           </TabsContent>
 
+          {/* AI Chat Tab */}
+          <TabsContent value="ai-chat">
+            <SchoolChatKnowledgeTab />
+          </TabsContent>
+
           {/* Security Tab */}
           <TabsContent value="security">
             <Card>
