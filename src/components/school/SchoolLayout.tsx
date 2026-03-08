@@ -19,7 +19,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
+  LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, AlertTriangle,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Settings,
   CalendarDays, Clock, BookMarked, Bell, GraduationCap, MessageCircle,
 } from "lucide-react";
@@ -44,7 +44,7 @@ const menuGroups = [
   [
     { title: "School Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
-    { title: "Reports", url: "/school/reports", icon: FileText },
+    { title: "Misconduct reports", url: "/school/reports", icon: AlertTriangle },
   ],
   [
     { title: "Settings", url: "/school/settings", icon: Settings },
@@ -77,7 +77,7 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
 
   const filteredGroups = useMemo(() => {
     if (schoolUser?.role === "hr") {
-      const allowed = ["Dashboard", "Staff", "Reports"];
+      const allowed = ["Dashboard", "Staff", "Misconduct reports"];
       return menuGroups.map(g => g.filter(i => allowed.includes(i.title))).filter(g => g.length > 0);
     }
     return menuGroups.map(g => g.filter(i => {

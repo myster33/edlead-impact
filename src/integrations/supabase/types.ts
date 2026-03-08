@@ -1809,6 +1809,125 @@ export type Database = {
         }
         Relationships: []
       }
+      misconduct_report_audit: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          report_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          report_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          report_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "misconduct_report_audit_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "misconduct_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      misconduct_reports: {
+        Row: {
+          assigned_to: string | null
+          attachment_urls: string[] | null
+          created_at: string
+          description: string
+          id: string
+          is_anonymous: boolean
+          is_emergency: boolean
+          is_trending: boolean
+          location: string | null
+          priority: string
+          report_type: string
+          reporter_name: string | null
+          reporter_role: string
+          reporter_user_id: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          school_id: string | null
+          status: string
+          updated_at: string
+          victim_names: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachment_urls?: string[] | null
+          created_at?: string
+          description: string
+          id?: string
+          is_anonymous?: boolean
+          is_emergency?: boolean
+          is_trending?: boolean
+          location?: string | null
+          priority?: string
+          report_type?: string
+          reporter_name?: string | null
+          reporter_role?: string
+          reporter_user_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          victim_names?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          attachment_urls?: string[] | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_anonymous?: boolean
+          is_emergency?: boolean
+          is_trending?: boolean
+          location?: string | null
+          priority?: string
+          report_type?: string
+          reporter_name?: string | null
+          reporter_role?: string
+          reporter_user_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          victim_names?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "misconduct_reports_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "misconduct_reports_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_permissions: {
         Row: {
           allowed_roles: Database["public"]["Enums"]["app_role"][]

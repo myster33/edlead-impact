@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  LayoutDashboard, ClipboardCheck, BookOpen, Users, FileText, Inbox,
+  LayoutDashboard, ClipboardCheck, BookOpen, Users, AlertTriangle, Inbox,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, CreditCard, ShoppingCart, Settings,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
@@ -25,6 +25,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
   student: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My attendance", url: "/portal/attendance", icon: ClipboardCheck },
+    { title: "Misconduct reports", url: "/portal/reports", icon: AlertTriangle },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "E-Card", url: "/portal/e-card", icon: CreditCard },
     { title: "Settings", url: "/portal/settings", icon: Settings },
@@ -34,6 +35,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "My children", url: "/portal/my-children", icon: Users },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Absence request", url: "/portal/absence-request", icon: Inbox },
+    { title: "Misconduct reports", url: "/portal/reports", icon: AlertTriangle },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
@@ -41,7 +43,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
-    { title: "Reports", url: "/portal/reports", icon: FileText },
+    { title: "Misconduct reports", url: "/portal/reports", icon: AlertTriangle },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
@@ -49,7 +51,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
-    { title: "Reports", url: "/portal/reports", icon: FileText },
+    { title: "Misconduct reports", url: "/portal/reports", icon: AlertTriangle },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
@@ -57,6 +59,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
+    { title: "Misconduct reports", url: "/portal/reports", icon: AlertTriangle },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
