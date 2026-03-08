@@ -698,8 +698,8 @@ export default function AdminManagement() {
         u.id === editingUser.id ? { 
           ...u, 
           role: editRole, 
-          country: editRole !== "admin" ? editCountry : null,
-          province: editRole !== "admin" ? editProvince : null 
+          country: (editRole !== "admin" && editRole !== "super_admin") ? editCountry : null,
+          province: (editRole !== "admin" && editRole !== "super_admin") ? editProvince : null 
         } : u
       ));
 
