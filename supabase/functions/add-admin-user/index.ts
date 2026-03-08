@@ -41,14 +41,14 @@ serve(async (req: Request): Promise<Response> => {
     // Use service role client to check admin status and add user
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if current user is an admin
+    // Check if current user is an admin or super_admin
     const { data: adminCheck } = await adminClient
       .from("admin_users")
       .select("role")
       .eq("user_id", currentUser.id)
       .single();
 
-    if (!adminCheck || adminCheck.role !== "admin") {
+    if (!adminCheck || !["admin", "super_admin"].includes(adminCheck.role)) {
       return new Response(
         JSON.stringify({ success: false, error: "Only admins can add new admin users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
