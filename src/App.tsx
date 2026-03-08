@@ -166,6 +166,7 @@ const App = () => (
                     <Route path="/portal/e-card" element={<PortalProtectedRoute><PortalECard /></PortalProtectedRoute>} />
                     <Route path="/portal/reports" element={<PortalProtectedRoute><PortalReports /></PortalProtectedRoute>} />
                     <Route path="/portal/marketplace" element={<PortalProtectedRoute><PortalMarketplace /></PortalProtectedRoute>} />
+                    <Route path="/portal/settings" element={<PortalProtectedRoute><PortalSettings /></PortalProtectedRoute>} />
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
