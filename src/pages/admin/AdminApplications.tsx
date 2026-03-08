@@ -1235,60 +1235,96 @@ export default function AdminApplications() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedApplication(app)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {app.status !== "approved" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={() => handleStatusChange(app.id, "approved")}
-                                  disabled={isUpdating}
-                                  title="Approve"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {app.status !== "rejected" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleStatusChange(app.id, "rejected")}
-                                  disabled={isUpdating}
-                                  title="Reject"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {app.status !== "pending" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
-                                  onClick={() => handleStatusChange(app.id, "pending")}
-                                  disabled={isUpdating}
-                                  title="Set Pending"
-                                >
-                                  <RefreshCw className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {app.status !== "cancelled" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-muted-foreground hover:text-muted-foreground hover:bg-muted"
-                                  onClick={() => handleStatusChange(app.id, "cancelled")}
-                                  disabled={isUpdating}
-                                  title="Cancel"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                              {showTrash ? (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    onClick={() => restoreApplication(app.id)}
+                                    title="Restore"
+                                  >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => setPurgeId(app.id)}
+                                    title="Permanently Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedApplication(app)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  {app.status !== "approved" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      onClick={() => handleStatusChange(app.id, "approved")}
+                                      disabled={isUpdating}
+                                      title="Approve"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {app.status !== "rejected" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => handleStatusChange(app.id, "rejected")}
+                                      disabled={isUpdating}
+                                      title="Reject"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {app.status !== "pending" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                                      onClick={() => handleStatusChange(app.id, "pending")}
+                                      disabled={isUpdating}
+                                      title="Set Pending"
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {app.status !== "cancelled" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-muted-foreground hover:text-muted-foreground hover:bg-muted"
+                                      onClick={() => handleStatusChange(app.id, "cancelled")}
+                                      disabled={isUpdating}
+                                      title="Cancel"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                  {adminUser?.role === "admin" && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => setDeleteId(app.id)}
+                                      title="Move to Trash"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </TableCell>
