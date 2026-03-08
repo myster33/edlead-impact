@@ -216,6 +216,21 @@ export default function SchoolLogin() {
             toast({ title: "Login Failed", description: "The EMIS number does not match your registered school.", variant: "destructive" });
             return;
           }
+
+          // Check if user has 2FA enabled
+          const { data: schoolUserData } = await supabase
+            .from("school_users")
+            .select("two_fa_enabled, two_fa_channel")
+            .eq("user_id", userData.user.id)
+            .eq("is_active", true)
+            .in("role", ["school_admin", "hr"])
+            .maybeSingle();
+
+          if (schoolUserData && (schoolUserData as any).two_fa_enabled) {
+            setTwoFaChannel(((schoolUserData as any).two_fa_channel as "email" | "sms") || "email");
+            setShowTwoFaVerify(true);
+            return;
+          }
         }
       }
       // Navigation is handled by the useEffect watching isAuthenticated
