@@ -47,7 +47,7 @@ export default function PortalLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [showTwoFaVerify, setShowTwoFaVerify] = useState(false);
   const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("email");
-  const [loginMethod, setLoginMethod] = useState<"email" | "phone" | "userid">("email");
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone" | "edleadid">("email");
 
   // Signup state
   const [signupData, setSignupData] = useState({
