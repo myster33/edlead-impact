@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "edLEAD <noreply@edlead.co.za>",
             to: [schoolUser.email],
-            subject: "Welcome to edLEAD Portal — Your User ID",
+            subject: "Welcome to edLEAD Portal — Your edLEAD ID",
             html: `
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <div style="text-align:center;margin-bottom:20px;">
