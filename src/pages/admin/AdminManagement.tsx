@@ -725,7 +725,7 @@ export default function AdminManagement() {
       );
 
       // Send region assignment notification if region changed for non-admin roles
-      const regionChanged = editRole !== "admin" && (
+      const regionChanged = (editRole !== "admin" && editRole !== "super_admin") && (
         editCountry !== editingUser.country || 
         editProvince !== editingUser.province
       );
