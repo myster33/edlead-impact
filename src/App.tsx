@@ -160,7 +160,7 @@ const App = () => (
                     <Route path="/school/staff" element={<SchoolProtectedRoute><SchoolStaff /></SchoolProtectedRoute>} />
                     <Route path="/school/absence-requests" element={<SchoolProtectedRoute><SchoolAbsenceRequests /></SchoolProtectedRoute>} />
                     <Route path="/school/reports" element={<SchoolProtectedRoute><SchoolReports /></SchoolProtectedRoute>} />
-                    <Route path="/school/link-requests" element={<SchoolProtectedRoute><SchoolLinkRequests /></SchoolProtectedRoute>} />
+                    {/* Link requests route removed - merged into Staff and Students */}
                     <Route path="/school/settings" element={<SchoolProtectedRoute><SchoolSettings /></SchoolProtectedRoute>} />
                     <Route path="/school/timetable" element={<SchoolProtectedRoute><SchoolTimetable /></SchoolProtectedRoute>} />
                     <Route path="/school/period-attendance" element={<SchoolProtectedRoute><SchoolPeriodAttendance /></SchoolProtectedRoute>} />
