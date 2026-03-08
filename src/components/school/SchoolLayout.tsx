@@ -192,7 +192,17 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
                 </div>
               ))}
             </SidebarMenu>
-          </SidebarContent>
+        </SidebarContent>
+
+          <div className="mt-auto border-t p-4">
+            <Link to="/school/dashboard" className="flex items-center gap-2">
+              <div className="relative h-8 transition-transform duration-200 hover:scale-105">
+                <img src={edleadLogo} alt="edLEAD" className={`h-8 absolute transition-opacity duration-300 ${theme === "dark" ? "opacity-0" : "opacity-100"}`} />
+                <img src={edleadLogoDark} alt="edLEAD" className={`h-8 transition-opacity duration-300 ${theme === "dark" ? "opacity-100" : "opacity-0"}`} />
+              </div>
+              <Badge variant="secondary" className="text-xs">School</Badge>
+            </Link>
+          </div>
         </Sidebar>
 
         <main className="flex-1 overflow-auto flex flex-col">
