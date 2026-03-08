@@ -193,7 +193,7 @@ export default function AdminApplications() {
   useEffect(() => {
     fetchApplications();
     fetchCohorts();
-  }, [adminUser]);
+  }, [adminUser, showTrash]);
 
   useEffect(() => {
     filterApplications();
