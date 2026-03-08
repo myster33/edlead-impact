@@ -70,6 +70,7 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const displayName = schoolUser?.full_name || schoolUser?.email?.split("@")[0] || "User";
   const initials = displayName.split(/\s/).slice(0, 2).map(s => s.charAt(0).toUpperCase()).join("");
