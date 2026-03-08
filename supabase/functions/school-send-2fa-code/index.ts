@@ -87,10 +87,11 @@ Deno.serve(async (req: Request) => {
         }),
       });
 
+      const emailResBody = await emailRes.text();
+      console.log("Resend status:", emailRes.status, "body:", emailResBody);
       if (!emailRes.ok) {
-        const errBody = await emailRes.text();
-        console.error("Resend error:", errBody);
-        throw new Error("Failed to send verification email");
+        console.error("Resend error:", emailResBody);
+        throw new Error("Failed to send verification email: " + emailResBody);
       }
 
       return new Response(JSON.stringify({ success: true }), {
