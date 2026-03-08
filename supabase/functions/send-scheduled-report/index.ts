@@ -100,8 +100,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const emailPromises = admins.map((admin) =>
-      fetch("https://api.resend.com/emails", {
+    const reportSubject = `edLEAD ${periodLabel} Applications Report — ${dateRange}`;
+    const emailPromises = admins.map(async (admin) => {
+      const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${resendKey}`,
@@ -110,7 +111,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: "edLEAD <noreply@edlead.co.za>",
           to: [admin.email],
-          subject: `edLEAD ${periodLabel} Applications Report — ${dateRange}`,
+          subject: reportSubject,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #ED7621;">edLEAD ${periodLabel} Report</h2>
@@ -146,8 +147,22 @@ Deno.serve(async (req) => {
             },
           ],
         }),
-      })
-    );
+      });
+
+      // Log email
+      const resData = await res.json().catch(() => ({}));
+      try {
+        await supabase.from("email_logs").insert({
+          recipient_email: admin.email, subject: reportSubject,
+          status: res.ok ? "sent" : "failed",
+          resend_id: resData.id || null,
+          error_message: res.ok ? null : (resData.message || "Failed"),
+          template_key: "scheduled-report", related_table: "applications",
+        });
+      } catch (logErr) { console.error("Failed to log email:", logErr); }
+
+      return res;
+    });
 
     await Promise.all(emailPromises);
 

@@ -180,6 +180,15 @@ serve(async (req: Request): Promise<Response> => {
 
     if (emailError) {
       console.error("Error sending email:", emailError);
+
+      // Log failed email
+      try {
+        await supabase.from("email_logs").insert({
+          recipient_email: reviewer_email, subject, status: "failed",
+          error_message: emailError.message, template_key: "reviewer-assignment", related_table: "admin_users",
+        });
+      } catch (logErr) { console.error("Failed to log email:", logErr); }
+
       return new Response(
         JSON.stringify({ success: false, error: emailError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -187,6 +196,14 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     console.log("Region assignment notification sent to:", reviewer_email);
+
+    // Log successful email
+    try {
+      await supabase.from("email_logs").insert({
+        recipient_email: reviewer_email, subject, status: "sent",
+        resend_id: (emailData as any)?.id || null, template_key: "reviewer-assignment", related_table: "admin_users",
+      });
+    } catch (logErr) { console.error("Failed to log email:", logErr); }
 
     return new Response(
       JSON.stringify({ success: true, data: emailData }),

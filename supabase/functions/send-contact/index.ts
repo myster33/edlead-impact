@@ -338,6 +338,19 @@ const handler = async (req: Request): Promise<Response> => {
         confirmationEmailHtml
       );
       console.log("Confirmation email sent to sender");
+
+      // Log confirmation email
+      try {
+        await supabaseRL.from("email_logs").insert({
+          recipient_email: sanitizedEmail,
+          subject: "We received your message - edLEAD",
+          status: "sent",
+          template_key: "contact-confirmation",
+          related_table: "contact_submissions",
+        });
+      } catch (logErr) {
+        console.error("Failed to log confirmation email:", logErr);
+      }
     } catch (emailError) {
       console.error("Failed to send confirmation email:", emailError);
     }

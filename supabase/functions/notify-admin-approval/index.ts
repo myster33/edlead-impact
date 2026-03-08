@@ -153,6 +153,23 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const data = await emailResponse.json();
+    const emailSuccess = emailResponse.ok;
+
+    // Log email
+    try {
+      await supabase.from("email_logs").insert({
+        recipient_email: email,
+        subject,
+        status: emailSuccess ? "sent" : "failed",
+        resend_id: data.id || null,
+        error_message: emailSuccess ? null : (data.message || "Failed"),
+        template_key: "admin-approved",
+        related_table: "admin_users",
+      });
+    } catch (logErr) {
+      console.error("Failed to log email:", logErr);
+    }
+
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

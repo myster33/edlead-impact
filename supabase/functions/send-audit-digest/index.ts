@@ -331,20 +331,37 @@ const handler = async (req: Request): Promise<Response> => {
     // Send email to each subscribed admin
     const emailPromises = admins.map(async (admin) => {
       console.log(`Sending digest to ${admin.email}...`);
+      const digestSubject = `Weekly Audit Log Digest - ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
       
       try {
         const result = await resend.emails.send({
           from: "edLEAD Admin <noreply@edlead.co.za>",
           to: [admin.email],
-          subject: `Weekly Audit Log Digest - ${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+          subject: digestSubject,
           html: htmlContent,
         });
         
         console.log(`Email sent to ${admin.email}:`, result);
+
+        try {
+          await supabase.from("email_logs").insert({
+            recipient_email: admin.email, subject: digestSubject, status: "sent",
+            resend_id: (result as any)?.data?.id || null, template_key: "audit-digest", related_table: "admin_audit_log",
+          });
+        } catch (logErr) { console.error("Failed to log email:", logErr); }
+
         return { email: admin.email, success: true, result };
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`Failed to send email to ${admin.email}:`, error);
+
+        try {
+          await supabase.from("email_logs").insert({
+            recipient_email: admin.email, subject: digestSubject, status: "failed",
+            error_message: errorMessage, template_key: "audit-digest", related_table: "admin_audit_log",
+          });
+        } catch (logErr) { console.error("Failed to log email:", logErr); }
+
         return { email: admin.email, success: false, error: errorMessage };
       }
     });
