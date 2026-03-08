@@ -493,6 +493,7 @@ export default function SchoolLogin() {
                           <SelectItem value="hr">HR Manager</SelectItem>
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">This role is permanently linked to your account and cannot be changed later</p>
                       {regErrors.role && <p className="text-sm text-destructive">{regErrors.role}</p>}
                     </div>
 
