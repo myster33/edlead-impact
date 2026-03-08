@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap, Pencil } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap, Pencil, CheckSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const GRADES = [
@@ -19,21 +20,102 @@ const GRADES = [
   "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12",
 ];
 
-// CAPS subjects by phase
-const CAPS_SUBJECTS: Record<string, string[]> = {
-  "Grade R": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 1": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 2": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 3": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 4": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences and Technology", "Social Sciences", "Life Skills", "Creative Arts", "Technology"],
-  "Grade 5": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences and Technology", "Social Sciences", "Life Skills", "Creative Arts", "Technology"],
-  "Grade 6": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences and Technology", "Social Sciences", "Life Skills", "Creative Arts", "Technology"],
-  "Grade 7": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences", "Social Sciences", "Life Orientation", "Economic and Management Sciences", "Technology", "Creative Arts"],
-  "Grade 8": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences", "Social Sciences", "Life Orientation", "Economic and Management Sciences", "Technology", "Creative Arts"],
-  "Grade 9": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences", "Social Sciences", "Life Orientation", "Economic and Management Sciences", "Technology", "Creative Arts"],
-  "Grade 10": ["Home Language", "First Additional Language", "Mathematics", "Mathematical Literacy", "Life Orientation", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "History", "Computer Applications Technology", "Information Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Visual Arts", "Dramatic Arts", "Music", "Consumer Studies"],
-  "Grade 11": ["Home Language", "First Additional Language", "Mathematics", "Mathematical Literacy", "Life Orientation", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "History", "Computer Applications Technology", "Information Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Visual Arts", "Dramatic Arts", "Music", "Consumer Studies"],
-  "Grade 12": ["Home Language", "First Additional Language", "Mathematics", "Mathematical Literacy", "Life Orientation", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "History", "Computer Applications Technology", "Information Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Visual Arts", "Dramatic Arts", "Music", "Consumer Studies"],
+// CAPS subjects by phase with default codes
+const CAPS_SUBJECTS: Record<string, { name: string; code: string }[]> = {
+  "Grade R": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 1": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 2": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 3": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 4": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences and Technology", code: "NST" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Skills", code: "LS" },
+    { name: "Creative Arts", code: "CA" }, { name: "Technology", code: "TECH" },
+  ],
+  "Grade 5": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences and Technology", code: "NST" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Skills", code: "LS" },
+    { name: "Creative Arts", code: "CA" }, { name: "Technology", code: "TECH" },
+  ],
+  "Grade 6": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences and Technology", code: "NST" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Skills", code: "LS" },
+    { name: "Creative Arts", code: "CA" }, { name: "Technology", code: "TECH" },
+  ],
+  "Grade 7": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences", code: "NS" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Orientation", code: "LO" },
+    { name: "Economic and Management Sciences", code: "EMS" }, { name: "Technology", code: "TECH" },
+    { name: "Creative Arts", code: "CA" },
+  ],
+  "Grade 8": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences", code: "NS" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Orientation", code: "LO" },
+    { name: "Economic and Management Sciences", code: "EMS" }, { name: "Technology", code: "TECH" },
+    { name: "Creative Arts", code: "CA" },
+  ],
+  "Grade 9": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences", code: "NS" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Orientation", code: "LO" },
+    { name: "Economic and Management Sciences", code: "EMS" }, { name: "Technology", code: "TECH" },
+    { name: "Creative Arts", code: "CA" },
+  ],
+  "Grade 10": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Mathematical Literacy", code: "ML" },
+    { name: "Life Orientation", code: "LO" }, { name: "Physical Sciences", code: "PHY" },
+    { name: "Life Sciences", code: "LFS" }, { name: "Accounting", code: "ACC" },
+    { name: "Business Studies", code: "BS" }, { name: "Economics", code: "ECO" },
+    { name: "Geography", code: "GEO" }, { name: "History", code: "HIS" },
+    { name: "Computer Applications Technology", code: "CAT" }, { name: "Information Technology", code: "IT" },
+    { name: "Engineering Graphics and Design", code: "EGD" }, { name: "Agricultural Sciences", code: "AGS" },
+    { name: "Tourism", code: "TOU" }, { name: "Visual Arts", code: "VA" },
+    { name: "Dramatic Arts", code: "DA" }, { name: "Music", code: "MUS" },
+    { name: "Consumer Studies", code: "CS" },
+  ],
+  "Grade 11": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Mathematical Literacy", code: "ML" },
+    { name: "Life Orientation", code: "LO" }, { name: "Physical Sciences", code: "PHY" },
+    { name: "Life Sciences", code: "LFS" }, { name: "Accounting", code: "ACC" },
+    { name: "Business Studies", code: "BS" }, { name: "Economics", code: "ECO" },
+    { name: "Geography", code: "GEO" }, { name: "History", code: "HIS" },
+    { name: "Computer Applications Technology", code: "CAT" }, { name: "Information Technology", code: "IT" },
+    { name: "Engineering Graphics and Design", code: "EGD" }, { name: "Agricultural Sciences", code: "AGS" },
+    { name: "Tourism", code: "TOU" }, { name: "Visual Arts", code: "VA" },
+    { name: "Dramatic Arts", code: "DA" }, { name: "Music", code: "MUS" },
+    { name: "Consumer Studies", code: "CS" },
+  ],
+  "Grade 12": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Mathematical Literacy", code: "ML" },
+    { name: "Life Orientation", code: "LO" }, { name: "Physical Sciences", code: "PHY" },
+    { name: "Life Sciences", code: "LFS" }, { name: "Accounting", code: "ACC" },
+    { name: "Business Studies", code: "BS" }, { name: "Economics", code: "ECO" },
+    { name: "Geography", code: "GEO" }, { name: "History", code: "HIS" },
+    { name: "Computer Applications Technology", code: "CAT" }, { name: "Information Technology", code: "IT" },
+    { name: "Engineering Graphics and Design", code: "EGD" }, { name: "Agricultural Sciences", code: "AGS" },
+    { name: "Tourism", code: "TOU" }, { name: "Visual Arts", code: "VA" },
+    { name: "Dramatic Arts", code: "DA" }, { name: "Music", code: "MUS" },
+    { name: "Consumer Studies", code: "CS" },
+  ],
 };
 
 export default function SchoolSubjects() {
@@ -57,6 +139,8 @@ export default function SchoolSubjects() {
   const [editSubjectCode, setEditSubjectCode] = useState("");
   const [editSubjectGrade, setEditSubjectGrade] = useState("");
   const [editSubjectCurriculum, setEditSubjectCurriculum] = useState("");
+  const [bulkSelectedSubjects, setBulkSelectedSubjects] = useState<Set<string>>(new Set());
+  const [bulkSearchQuery, setBulkSearchQuery] = useState("");
 
   const isStaff = schoolUser?.role === "school_admin" || schoolUser?.role === "hr";
 
@@ -78,7 +162,6 @@ export default function SchoolSubjects() {
     const { data } = await query;
     setSubjects(data || []);
 
-    // Fetch enrollment counts
     if (data && data.length > 0) {
       const subjectIds = data.map((s: any) => s.id);
       const { data: enrollments } = await supabase
@@ -97,6 +180,15 @@ export default function SchoolSubjects() {
 
   useEffect(() => { fetchCurricula(); }, [fetchCurricula]);
   useEffect(() => { fetchSubjects(); }, [fetchSubjects]);
+
+  // Initialize bulk selection when dialog opens or grade changes
+  useEffect(() => {
+    if (bulkDialogOpen && selectedGrade) {
+      const allNames = (CAPS_SUBJECTS[selectedGrade] || []).map(s => s.name);
+      setBulkSelectedSubjects(new Set(allNames));
+      setBulkSearchQuery("");
+    }
+  }, [bulkDialogOpen, selectedGrade]);
 
   const handleAddSubject = async () => {
     if (!newSubjectName.trim() || !currentSchool?.id || !selectedCurriculum) return;
@@ -126,10 +218,13 @@ export default function SchoolSubjects() {
     if (!capsId) { toast({ title: "CAPS curriculum not found", variant: "destructive" }); return; }
 
     const capsSubjects = CAPS_SUBJECTS[selectedGrade] || [];
-    if (capsSubjects.length === 0) return;
+    const selectedSubjects = capsSubjects.filter(s => bulkSelectedSubjects.has(s.name));
+    if (selectedSubjects.length === 0) {
+      toast({ title: "No subjects selected", variant: "destructive" });
+      return;
+    }
 
     setIsSaving(true);
-    // Get existing subject names for this grade/curriculum to avoid duplicates
     const { data: existing } = await supabase
       .from("subjects")
       .select("name")
@@ -138,17 +233,18 @@ export default function SchoolSubjects() {
       .eq("grade", selectedGrade);
     const existingNames = new Set((existing || []).map((s: any) => s.name));
 
-    const toInsert = capsSubjects
-      .filter(name => !existingNames.has(name))
-      .map(name => ({
+    const toInsert = selectedSubjects
+      .filter(s => !existingNames.has(s.name))
+      .map(s => ({
         school_id: currentSchool.id!,
-        name,
+        name: s.name,
+        code: s.code,
         curriculum_id: capsId,
         grade: selectedGrade,
       }));
 
     if (toInsert.length === 0) {
-      toast({ title: "All CAPS subjects already exist for this grade" });
+      toast({ title: "All selected subjects already exist for this grade" });
       setIsSaving(false);
       setBulkDialogOpen(false);
       return;
@@ -210,6 +306,27 @@ export default function SchoolSubjects() {
 
   const selectedCurriculumName = curricula.find(c => c.id === selectedCurriculum)?.code || "";
 
+  const bulkCapsSubjects = CAPS_SUBJECTS[selectedGrade] || [];
+  const filteredBulkSubjects = bulkCapsSubjects.filter(s =>
+    !bulkSearchQuery || s.name.toLowerCase().includes(bulkSearchQuery.toLowerCase()) || s.code.toLowerCase().includes(bulkSearchQuery.toLowerCase())
+  );
+
+  const toggleBulkSelect = (name: string) => {
+    setBulkSelectedSubjects(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (bulkSelectedSubjects.size === bulkCapsSubjects.length) {
+      setBulkSelectedSubjects(new Set());
+    } else {
+      setBulkSelectedSubjects(new Set(bulkCapsSubjects.map(s => s.name)));
+    }
+  };
+
   return (
     <SchoolLayout>
       <div className="space-y-6">
@@ -226,23 +343,50 @@ export default function SchoolSubjects() {
                     <GraduationCap className="mr-2 h-4 w-4" />Add CAPS Subjects
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-lg">
                   <DialogHeader>
                     <DialogTitle>Add CAPS Subjects for {selectedGrade}</DialogTitle>
                   </DialogHeader>
                   <p className="text-sm text-muted-foreground">
-                    This will add all standard CAPS subjects for {selectedGrade}. Existing subjects won't be duplicated.
+                    Select the subjects you want to add. Existing subjects won't be duplicated.
                   </p>
-                  <div className="text-sm space-y-1 max-h-48 overflow-y-auto">
-                    {(CAPS_SUBJECTS[selectedGrade] || []).map(s => (
-                      <Badge key={s} variant="outline" className="mr-1 mb-1">{s}</Badge>
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input className="pl-9" placeholder="Search subjects..." value={bulkSearchQuery} onChange={e => setBulkSearchQuery(e.target.value)} />
+                  </div>
+                  {/* Select all */}
+                  <div className="flex items-center gap-2 border-b pb-2">
+                    <Checkbox
+                      id="select-all"
+                      checked={bulkSelectedSubjects.size === bulkCapsSubjects.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                    <Label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+                      Select All ({bulkSelectedSubjects.size}/{bulkCapsSubjects.length})
+                    </Label>
+                  </div>
+                  {/* Subject list */}
+                  <div className="max-h-64 overflow-y-auto space-y-1">
+                    {filteredBulkSubjects.map(s => (
+                      <div key={s.name} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50">
+                        <Checkbox
+                          id={`bulk-${s.name}`}
+                          checked={bulkSelectedSubjects.has(s.name)}
+                          onCheckedChange={() => toggleBulkSelect(s.name)}
+                        />
+                        <Label htmlFor={`bulk-${s.name}`} className="flex-1 cursor-pointer text-sm">
+                          {s.name}
+                        </Label>
+                        <Badge variant="outline" className="text-xs">{s.code}</Badge>
+                      </div>
                     ))}
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setBulkDialogOpen(false)}>Cancel</Button>
-                    <Button onClick={handleBulkAddCAPS} disabled={isSaving}>
+                    <Button onClick={handleBulkAddCAPS} disabled={isSaving || bulkSelectedSubjects.size === 0}>
                       {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      Add All
+                      Add {bulkSelectedSubjects.size} Subject{bulkSelectedSubjects.size !== 1 ? "s" : ""}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
