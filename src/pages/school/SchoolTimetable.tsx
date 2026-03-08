@@ -65,22 +65,7 @@ export default function SchoolTimetable() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleAddSubject = async () => {
-    if (!newSubjectName.trim() || !currentSchool?.id) return;
-    setAddingSubject(true);
-    const { error } = await supabase.from("subjects").insert({
-      school_id: currentSchool.id,
-      name: newSubjectName.trim(),
-    });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      setNewSubjectName("");
-      toast({ title: "Subject added" });
-      fetchData();
-    }
-    setAddingSubject(false);
-  };
+
 
   const handleAddEntry = async () => {
     if (!formSubjectId || !formClassId || !currentSchool?.id || !schoolUser?.id) return;
