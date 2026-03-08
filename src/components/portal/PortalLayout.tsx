@@ -16,7 +16,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   LayoutDashboard, ClipboardCheck, BookOpen, Users, FileText, Inbox,
-  LogOut, Moon, Sun, Monitor, School, ChevronDown, CreditCard, ShoppingCart,
+  LogOut, Moon, Sun, Monitor, School, ChevronDown, CreditCard, ShoppingCart, Settings,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -27,6 +27,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "My attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "E-Card", url: "/portal/e-card", icon: CreditCard },
+    { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
   parent: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
@@ -34,6 +35,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Absence request", url: "/portal/absence-request", icon: Inbox },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
+    { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
   educator: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
@@ -41,6 +43,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Reports", url: "/portal/reports", icon: FileText },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
+    { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
   class_teacher: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
@@ -48,12 +51,14 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Reports", url: "/portal/reports", icon: FileText },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
+    { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
   subject_teacher: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
+    { title: "Settings", url: "/portal/settings", icon: Settings },
   ],
 };
 
