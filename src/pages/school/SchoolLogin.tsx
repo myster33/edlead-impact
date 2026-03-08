@@ -170,7 +170,7 @@ export default function SchoolLogin() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      loginSchema.parse({ email: loginEmail, password: loginPassword });
+      loginSchema.parse({ emisNumber: loginEmisNumber, email: loginEmail, password: loginPassword });
       setLoginErrors({});
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -186,6 +186,32 @@ export default function SchoolLogin() {
       const { error } = await signIn(loginEmail, loginPassword);
       if (error) {
         toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+        return;
+      }
+
+      // Verify EMIS number matches the user's school
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: schoolUser } = await supabase
+          .from("school_users")
+          .select("school_id")
+          .eq("user_id", userData.user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (schoolUser) {
+          const { data: school } = await supabase
+            .from("schools")
+            .select("emis_number")
+            .eq("id", schoolUser.school_id)
+            .single();
+
+          if (!school || school.emis_number !== loginEmisNumber) {
+            await supabase.auth.signOut();
+            toast({ title: "Login Failed", description: "The EMIS number does not match your registered school.", variant: "destructive" });
+            return;
+          }
+        }
       }
       // Navigation is handled by the useEffect watching isAuthenticated
     } finally {
