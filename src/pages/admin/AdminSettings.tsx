@@ -1105,6 +1105,8 @@ export default function AdminSettings() {
             {/* Two-Factor Authentication */}
             <TwoFactorSetup 
               adminUserId={adminUser?.id}
+              adminEmail={adminUser?.email}
+              adminPhone={phone}
               onStatusChange={(enabled) => {
                 setMfaEnabled(enabled);
                 if (enabled) {

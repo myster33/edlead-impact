@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Shield, ShieldCheck, ShieldOff, Copy, Check, Key, RefreshCw, Download } from "lucide-react";
+import { Loader2, Shield, ShieldCheck, ShieldOff, Copy, Check, Key, RefreshCw, Download, Mail, Phone, Smartphone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,8 @@ import {
 interface TwoFactorSetupProps {
   onStatusChange?: (enabled: boolean) => void;
   adminUserId?: string;
+  adminEmail?: string;
+  adminPhone?: string;
 }
 
 // Generate a random backup code
@@ -42,7 +45,7 @@ const hashCode = async (code: string): Promise<string> => {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 };
 
-export function TwoFactorSetup({ onStatusChange, adminUserId }: TwoFactorSetupProps) {
+export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminPhone }: TwoFactorSetupProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -62,10 +65,19 @@ export function TwoFactorSetup({ onStatusChange, adminUserId }: TwoFactorSetupPr
   const [backupCodesCount, setBackupCodesCount] = useState(0);
   const [isRegeneratingCodes, setIsRegeneratingCodes] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  // Alternative channel-based 2FA
+  const [channelMfaEnabled, setChannelMfaEnabled] = useState(false);
+  const [channelMfaChannel, setChannelMfaChannel] = useState<"email" | "sms">("email");
+  const [channelCodeSent, setChannelCodeSent] = useState(false);
+  const [channelVerifyCode, setChannelVerifyCode] = useState("");
+  const [channelSending, setChannelSending] = useState(false);
+  const [channelVerifying, setChannelVerifying] = useState(false);
+  const [channelDisabling, setChannelDisabling] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     checkMfaStatus();
+    checkChannelMfaStatus();
   }, []);
 
   useEffect(() => {
@@ -86,6 +98,80 @@ export function TwoFactorSetup({ onStatusChange, adminUserId }: TwoFactorSetupPr
       console.error("Error checking MFA status:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const checkChannelMfaStatus = async () => {
+    if (!adminUserId) return;
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("two_fa_enabled, two_fa_channel")
+        .eq("id", adminUserId)
+        .maybeSingle();
+      if (!error && data) {
+        setChannelMfaEnabled(!!data.two_fa_enabled);
+        setChannelMfaChannel((data.two_fa_channel as "email" | "sms") || "email");
+      }
+    } catch (err) {
+      console.error("Error checking channel MFA:", err);
+    }
+  };
+
+  const handleChannelSendCode = async () => {
+    setChannelSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-2fa-code", {
+        body: { action: "send", channel: channelMfaChannel },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChannelCodeSent(true);
+      toast({
+        title: "Code sent",
+        description: channelMfaChannel === "sms" ? "Check your phone." : "Check your email.",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setChannelSending(false);
+    }
+  };
+
+  const handleChannelVerifyCode = async () => {
+    if (!channelVerifyCode) return;
+    setChannelVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-2fa-code", {
+        body: { action: "verify", code: channelVerifyCode },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChannelMfaEnabled(true);
+      setChannelCodeSent(false);
+      setChannelVerifyCode("");
+      toast({ title: "Channel 2FA enabled", description: `${channelMfaChannel === "sms" ? "SMS" : "Email"} verification is now active as an alternative.` });
+    } catch (err: any) {
+      toast({ title: "Verification failed", description: err.message, variant: "destructive" });
+    } finally {
+      setChannelVerifying(false);
+    }
+  };
+
+  const handleChannelDisable = async () => {
+    setChannelDisabling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-2fa-code", {
+        body: { action: "disable" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChannelMfaEnabled(false);
+      toast({ title: "Channel 2FA disabled" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setChannelDisabling(false);
     }
   };
 
@@ -467,6 +553,87 @@ export function TwoFactorSetup({ onStatusChange, adminUserId }: TwoFactorSetupPr
                     Enable 2FA
                   </>
                 )}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Alternative Channel 2FA (Email/SMS) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Alternative 2FA (Email / SMS)</CardTitle>
+          </div>
+          <CardDescription>
+            Receive a verification code via email or SMS as an alternative to the authenticator app.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {channelMfaEnabled ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">
+                  {channelMfaChannel === "sms" ? "SMS" : "Email"} 2FA is enabled
+                </span>
+              </div>
+              <Button variant="destructive" onClick={handleChannelDisable} disabled={channelDisabling}>
+                {channelDisabling && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                Disable {channelMfaChannel === "sms" ? "SMS" : "Email"} 2FA
+              </Button>
+            </div>
+          ) : channelCodeSent ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                A 6-digit code has been sent to{" "}
+                {channelMfaChannel === "sms" ? <strong>your phone</strong> : <strong>your email</strong>}.
+              </p>
+              <div className="flex gap-2 max-w-xs">
+                <Input
+                  placeholder="Enter 6-digit code"
+                  value={channelVerifyCode}
+                  onChange={(e) => setChannelVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  maxLength={6}
+                />
+                <Button onClick={handleChannelVerifyCode} disabled={channelVerifying || channelVerifyCode.length !== 6}>
+                  {channelVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
+                </Button>
+              </div>
+              <Button variant="link" size="sm" onClick={handleChannelSendCode} disabled={channelSending}>
+                Resend code
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button
+                  variant={channelMfaChannel === "sms" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setChannelMfaChannel("sms")}
+                >
+                  <Phone className="h-4 w-4 mr-1" /> SMS
+                </Button>
+                <Button
+                  variant={channelMfaChannel === "email" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setChannelMfaChannel("email")}
+                >
+                  <Mail className="h-4 w-4 mr-1" /> Email
+                </Button>
+              </div>
+              {channelMfaChannel === "sms" && !adminPhone && (
+                <p className="text-sm text-destructive">
+                  Please add a phone number to your profile first.
+                </p>
+              )}
+              <Button
+                onClick={handleChannelSendCode}
+                disabled={channelSending || (channelMfaChannel === "sms" && !adminPhone)}
+              >
+                {channelSending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                <Shield className="h-4 w-4 mr-1" /> Enable {channelMfaChannel === "sms" ? "SMS" : "Email"} 2FA
               </Button>
             </div>
           )}
