@@ -230,7 +230,8 @@ export default function SchoolSubjects() {
       .select("name")
       .eq("school_id", currentSchool.id)
       .eq("curriculum_id", capsId)
-      .eq("grade", selectedGrade);
+      .eq("grade", selectedGrade)
+      .eq("is_active", true);
     const existingNames = new Set((existing || []).map((s: any) => s.name));
 
     const toInsert = selectedSubjects
