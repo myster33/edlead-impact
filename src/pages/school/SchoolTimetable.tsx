@@ -156,23 +156,15 @@ export default function SchoolTimetable() {
                   <Select value={formSubjectId} onValueChange={setFormSubjectId}>
                     <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
                     <SelectContent>
-                      {subjects.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
+                      {subjects
+                        .filter(s => !formClassId || !s.grade || s.grade === classes.find(c => c.id === formClassId)?.grade)
+                        .map(s => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name} {s.curricula?.code ? `(${s.curricula.code})` : ""} {s.grade ? `– ${s.grade}` : ""}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
-                  {/* Inline add subject */}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="New subject name..."
-                      value={newSubjectName}
-                      onChange={e => setNewSubjectName(e.target.value)}
-                      className="text-sm"
-                    />
-                    <Button size="sm" variant="outline" onClick={handleAddSubject} disabled={addingSubject || !newSubjectName.trim()}>
-                      {addingSubject ? <Loader2 className="h-3 w-3 animate-spin" /> : "Add"}
-                    </Button>
-                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Class</Label>
