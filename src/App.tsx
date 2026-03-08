@@ -62,6 +62,7 @@ const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
 const SchoolResetPassword = lazy(() => import("./pages/school/SchoolResetPassword"));
 const SchoolDashboard = lazy(() => import("./pages/school/SchoolDashboard"));
 const SchoolAttendance = lazy(() => import("./pages/school/SchoolAttendance"));
+const SchoolCalendar = lazy(() => import("./pages/school/SchoolCalendar"));
 const SchoolClasses = lazy(() => import("./pages/school/SchoolClasses"));
 const SchoolStudents = lazy(() => import("./pages/school/SchoolStudents"));
 const SchoolStaff = lazy(() => import("./pages/school/SchoolStaff"));
