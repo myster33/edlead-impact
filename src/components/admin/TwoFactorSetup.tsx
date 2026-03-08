@@ -45,7 +45,7 @@ const hashCode = async (code: string): Promise<string> => {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 };
 
-export function TwoFactorSetup({ onStatusChange, adminUserId }: TwoFactorSetupProps) {
+export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminPhone }: TwoFactorSetupProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
