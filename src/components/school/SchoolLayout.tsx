@@ -44,7 +44,7 @@ const menuGroups = [
   [
     { title: "School Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
-    { title: "Reports", url: "/school/reports", icon: FileText },
+    { title: "Misconduct reports", url: "/school/reports", icon: AlertTriangle },
   ],
   [
     { title: "Settings", url: "/school/settings", icon: Settings },
