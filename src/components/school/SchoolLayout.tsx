@@ -42,7 +42,7 @@ const menuGroups = [
     { title: "edLEAD Chat", url: "/school/edlead-chat", icon: MessageCircle },
   ],
   [
-    { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
+    { title: "School Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
     { title: "Reports", url: "/school/reports", icon: FileText },
   ],
