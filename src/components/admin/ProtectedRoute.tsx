@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
+import { PortalLoadingScreen } from "@/components/shared/PortalLoadingScreen";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -31,11 +31,7 @@ export function ProtectedRoute({ children, moduleKey }: ProtectedRouteProps) {
   });
 
   if (isLoading || (moduleKey && permissionLoading && user && isAdmin)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PortalLoadingScreen portalName="Admin Portal" />;
   }
 
   // Not logged in
