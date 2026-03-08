@@ -1605,7 +1605,7 @@ export default function AdminManagement() {
               <Label htmlFor="edit-role">Role</Label>
               <Select value={editRole} onValueChange={(v) => {
                 setEditRole(v as AppRole);
-                if (v === "admin") {
+                if (v === "admin" || v === "super_admin") {
                   setEditCountry("");
                   setEditProvince("");
                 }
@@ -1617,6 +1617,9 @@ export default function AdminManagement() {
                   <SelectItem value="viewer">Viewer</SelectItem>
                   <SelectItem value="reviewer">Reviewer</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  {isSuperAdmin && (
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
@@ -1624,7 +1627,7 @@ export default function AdminManagement() {
               </p>
             </div>
             
-            {editRole !== "admin" && (
+            {editRole !== "admin" && editRole !== "super_admin" && (
               <>
                 <div className="space-y-2">
                   <Label>Assigned Country</Label>
