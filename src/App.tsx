@@ -159,6 +159,7 @@ const App = () => (
 
                     {/* General Portal Routes */}
                     <Route path="/portal/login" element={<PortalLogin />} />
+                    <Route path="/portal/reset-password" element={<PortalResetPassword />} />
                     <Route path="/portal/dashboard" element={<PortalProtectedRoute><PortalDashboard /></PortalProtectedRoute>} />
                     <Route path="/portal/attendance" element={<PortalProtectedRoute><PortalAttendance /></PortalProtectedRoute>} />
                     <Route path="/portal/absence-request" element={<PortalProtectedRoute><PortalAbsenceRequest /></PortalProtectedRoute>} />
