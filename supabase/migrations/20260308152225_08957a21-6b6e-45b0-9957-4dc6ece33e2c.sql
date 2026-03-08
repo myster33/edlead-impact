@@ -1,0 +1,1 @@
+ALTER TABLE public.school_users ALTER COLUMN school_id DROP NOT NULL;

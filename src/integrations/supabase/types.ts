@@ -2035,7 +2035,7 @@ export type Database = {
           phone: string | null
           profile_picture_url: string | null
           role: Database["public"]["Enums"]["school_user_role"]
-          school_id: string
+          school_id: string | null
           student_id_number: string | null
           two_fa_channel: string
           two_fa_enabled: boolean
@@ -2053,7 +2053,7 @@ export type Database = {
           phone?: string | null
           profile_picture_url?: string | null
           role: Database["public"]["Enums"]["school_user_role"]
-          school_id: string
+          school_id?: string | null
           student_id_number?: string | null
           two_fa_channel?: string
           two_fa_enabled?: boolean
@@ -2071,7 +2071,7 @@ export type Database = {
           phone?: string | null
           profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["school_user_role"]
-          school_id?: string
+          school_id?: string | null
           student_id_number?: string | null
           two_fa_channel?: string
           two_fa_enabled?: boolean
