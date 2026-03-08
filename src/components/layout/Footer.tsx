@@ -79,14 +79,11 @@ export const Footer = () => {
               <a href="https://www.linkedin.com/company/edlead/" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="LinkedIn">
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a href="https://www.instagram.com/edlead.africa/" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
               <a href="https://www.tiktok.com/@edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="TikTok">
                 <TikTokIcon className="h-5 w-5" />
-              </a>
-              <a href="https://www.facebook.com/edleadafrica" target="_blank" rel="noopener noreferrer" className="text-secondary-foreground/60 hover:text-primary transition-colors" aria-label="Facebook">
-                <Facebook className="h-5 w-5" />
               </a>
             </div>
           </div>
