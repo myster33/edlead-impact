@@ -1762,6 +1762,8 @@ function DataCleanupCard() {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<Record<string, number> | null>(null);
   const [lastRun, setLastRun] = useState<string | null>(null);
+  const [lastRunBy, setLastRunBy] = useState<string | null>(null);
+  const { adminUser } = useAdminAuth();
 
   useEffect(() => {
     supabase
@@ -1771,8 +1773,9 @@ function DataCleanupCard() {
       .maybeSingle()
       .then(({ data }) => {
         if (data?.setting_value) {
-          const val = data.setting_value as { timestamp?: string };
+          const val = data.setting_value as { timestamp?: string; ran_by?: string };
           if (val.timestamp) setLastRun(val.timestamp);
+          if (val.ran_by) setLastRunBy(val.ran_by);
         }
       });
   }, []);
@@ -1785,14 +1788,16 @@ function DataCleanupCard() {
       if (error) throw error;
       setResults(data?.results || {});
       const now = new Date().toISOString();
-      // Upsert last-run timestamp into system_settings
+      const ranByName = adminUser?.full_name || adminUser?.email || "Unknown";
+      // Upsert last-run timestamp and admin name into system_settings
       await supabase
         .from("system_settings")
         .upsert(
-          { setting_key: SETTING_KEY, setting_value: { timestamp: now } as any, updated_at: now },
+          { setting_key: SETTING_KEY, setting_value: { timestamp: now, ran_by: ranByName } as any, updated_at: now },
           { onConflict: "setting_key" }
         );
       setLastRun(now);
+      setLastRunBy(ranByName);
       toast({
         title: "Cleanup complete",
         description: "Stale data has been cleaned up successfully.",
@@ -1827,6 +1832,7 @@ function DataCleanupCard() {
           {lastRun && (
             <p className="text-xs text-muted-foreground mt-1">
               Last run: {new Date(lastRun).toLocaleString()}
+              {lastRunBy && <span> by {lastRunBy}</span>}
             </p>
           )}
         </div>
