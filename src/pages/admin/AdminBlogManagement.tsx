@@ -146,7 +146,9 @@ const AdminBlogManagement = () => {
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [provinceFilter, setProvinceFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
-  
+  const [selectedBlogIds, setSelectedBlogIds] = useState<Set<string>>(new Set());
+  const [bulkTrashOpen, setBulkTrashOpen] = useState(false);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
   // Region info for filtering
   const regionInfo = getAdminRegionInfo(adminUser);
   
