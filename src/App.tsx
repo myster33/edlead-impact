@@ -31,6 +31,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const CheckStatus = lazy(() => import("./pages/CheckStatus"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const UserAccess = lazy(() => import("./pages/UserAccess"));
+const SchoolChat = lazy(() => import("./pages/SchoolChat"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin pages
@@ -124,6 +125,7 @@ const App = () => (
                     <Route path="/check-status" element={<CheckStatus />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/user-access" element={<UserAccess />} />
+                    <Route path="/school-chat" element={<SchoolChat />} />
                     
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />

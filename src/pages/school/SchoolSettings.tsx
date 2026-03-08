@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, User, Shield, ShieldCheck, ShieldOff, School, Camera, Phone, Mail } from "lucide-react";
+import { Loader2, Upload, User, Shield, ShieldCheck, ShieldOff, School, Camera, Phone, Mail, Bot } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import SchoolChatKnowledgeTab from "@/components/school/SchoolChatKnowledgeTab";
 
 export default function SchoolSettings() {
   const { schoolUser, currentSchool, user } = useSchoolAuth();
@@ -198,6 +199,7 @@ export default function SchoolSettings() {
           <TabsList>
             <TabsTrigger value="profile"><User className="h-4 w-4 mr-1" />Profile</TabsTrigger>
             <TabsTrigger value="school"><School className="h-4 w-4 mr-1" />School</TabsTrigger>
+            <TabsTrigger value="ai-chat"><Bot className="h-4 w-4 mr-1" />AI Chat</TabsTrigger>
             <TabsTrigger value="security"><Shield className="h-4 w-4 mr-1" />Security</TabsTrigger>
           </TabsList>
 
@@ -309,6 +311,11 @@ export default function SchoolSettings() {
                 <p className="text-xs text-muted-foreground">School details can only be changed by edLEAD administration.</p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* AI Chat Tab */}
+          <TabsContent value="ai-chat">
+            <SchoolChatKnowledgeTab />
           </TabsContent>
 
           {/* Security Tab */}
