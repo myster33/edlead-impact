@@ -219,6 +219,17 @@ export default function SchoolAttendance() {
       }
     });
 
+    // Apply default 5PM checkout for students with check-in but no check-out
+    const today = new Date().toISOString().split("T")[0];
+    const applyDefault = selectedDate < today || (selectedDate === today && new Date().getHours() >= 17);
+    if (applyDefault) {
+      map.forEach((entry) => {
+        if (entry.checkIn && !entry.checkOut) {
+          entry.checkOut = { status: "present", event_type: "check_out", timestamp: `${selectedDate}T17:00:00`, isDefault: true };
+        }
+      });
+    }
+
     setClassAttendanceRecords(Array.from(map.values()));
     setClassAttendanceLoading(false);
   }, [currentSchool?.id, isStaffRole, classViewClassId, classViewGrade, classesForSelectedGrade, classes, selectedDate]);
