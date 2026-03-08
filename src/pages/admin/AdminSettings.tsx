@@ -1773,8 +1773,9 @@ function DataCleanupCard() {
       .maybeSingle()
       .then(({ data }) => {
         if (data?.setting_value) {
-          const val = data.setting_value as { timestamp?: string };
+          const val = data.setting_value as { timestamp?: string; ran_by?: string };
           if (val.timestamp) setLastRun(val.timestamp);
+          if (val.ran_by) setLastRunBy(val.ran_by);
         }
       });
   }, []);
