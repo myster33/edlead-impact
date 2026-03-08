@@ -359,7 +359,7 @@ export default function PortalLogin() {
                     className="flex-1 text-xs"
                     onClick={() => { setLoginMethod("edleadid"); setIdentifier(""); }}
                   >
-                    <Hash className="h-3 w-3 mr-1" />edLEAD ID
+                    <img src={edleadIcon} alt="edLEAD" className="h-3 w-3 mr-1" />edLEAD ID
                   </Button>
                 </div>
 
