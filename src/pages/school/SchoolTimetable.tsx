@@ -51,7 +51,7 @@ export default function SchoolTimetable() {
     setIsLoading(true);
 
     const [subjectsRes, classesRes, entriesRes] = await Promise.all([
-      supabase.from("subjects").select("*").eq("school_id", currentSchool.id).eq("is_active", true).order("name"),
+      supabase.from("subjects").select("*, curricula(code)").eq("school_id", currentSchool.id).eq("is_active", true).order("name"),
       supabase.from("classes").select("id, name, grade").eq("school_id", currentSchool.id).order("grade"),
       supabase.from("timetable_entries")
         .select("*, subjects(name, code), classes(name, grade)")
