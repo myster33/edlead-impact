@@ -1762,6 +1762,8 @@ function DataCleanupCard() {
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<Record<string, number> | null>(null);
   const [lastRun, setLastRun] = useState<string | null>(null);
+  const [lastRunBy, setLastRunBy] = useState<string | null>(null);
+  const { adminUser } = useAdminAuth();
 
   useEffect(() => {
     supabase
