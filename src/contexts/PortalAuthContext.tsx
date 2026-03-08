@@ -11,6 +11,7 @@ interface PortalUser {
   email: string;
   phone?: string | null;
   profile_picture_url?: string | null;
+  student_id_number?: string | null;
   is_active: boolean;
 }
 
