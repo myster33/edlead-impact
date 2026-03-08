@@ -28,6 +28,7 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  senderName?: string;
 }
 
 type Step = "select-school" | "select-role" | "chat";
