@@ -18,6 +18,7 @@ interface SchoolRecord {
   province: string | null;
   country: string;
   school_code: string;
+  emis_number: string | null;
   email: string | null;
   phone: string | null;
   is_verified: boolean;
