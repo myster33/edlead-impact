@@ -77,7 +77,7 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
             {currentSchool && (
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                 {currentSchool.logo_url ? (
-                  <img src={currentSchool.logo_url} alt="" className="h-4 w-4 rounded object-cover" />
+                  <img src={currentSchool.logo_url} alt="" className="h-12 w-12 rounded object-cover" />
                 ) : (
                   <School className="h-3 w-3" />
                 )}
