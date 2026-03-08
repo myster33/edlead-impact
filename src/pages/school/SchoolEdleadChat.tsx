@@ -8,7 +8,7 @@ export default function SchoolEdleadChat() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">edLEAD Chat</h1>
           <p className="text-muted-foreground">
-            Manage your school's AI chat assistant. Add knowledge articles to train it for your school.
+            Manage your school's AI chat assistant. Add text articles or upload documents to train it for your school.
           </p>
         </div>
         <SchoolChatKnowledgeTab />
