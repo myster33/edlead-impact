@@ -473,27 +473,28 @@ export default function PortalLogin() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
                     <Label>Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} className="pl-10" />
-                    </div>
-                    {signupErrors.password && <p className="text-sm text-destructive">{signupErrors.password}</p>}
+                    <Button type="button" variant="link" className="px-0 h-auto text-xs" onClick={() => setShowSignupPassword(!showSignupPassword)}>
+                      {showSignupPassword ? "Hide" : "Show"}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Confirm</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.confirmPassword} onChange={e => setSignupData(d => ({ ...d, confirmPassword: e.target.value }))} className="pl-10" />
-                    </div>
-                    {signupErrors.confirmPassword && <p className="text-sm text-destructive">{signupErrors.confirmPassword}</p>}
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.password} onChange={e => setSignupData(d => ({ ...d, password: e.target.value }))} className="pl-10" />
                   </div>
+                  <PasswordStrengthIndicator password={signupData.password} />
+                  {signupErrors.password && <p className="text-sm text-destructive">{signupErrors.password}</p>}
                 </div>
-                <Button type="button" variant="link" className="px-0 h-auto text-xs" onClick={() => setShowSignupPassword(!showSignupPassword)}>
-                  {showSignupPassword ? "Hide" : "Show"} passwords
-                </Button>
+                <div className="space-y-2">
+                  <Label>Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type={showSignupPassword ? "text" : "password"} placeholder="••••••••" value={signupData.confirmPassword} onChange={e => setSignupData(d => ({ ...d, confirmPassword: e.target.value }))} className="pl-10" />
+                  </div>
+                  {signupErrors.confirmPassword && <p className="text-sm text-destructive">{signupErrors.confirmPassword}</p>}
+                </div>
 
                 <Button type="submit" className="w-full" disabled={isSigningUp}>
                   {isSigningUp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Create Account"}
