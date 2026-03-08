@@ -676,10 +676,15 @@ export default function AdminManagement() {
     try {
       const updateData: any = { role: editRole };
       
-      // Only set country/province for non-admin roles
-      if (editRole !== "admin") {
+      // Determine region_scope
+      if (editRole === "admin" || editRole === "super_admin") {
+        updateData.region_scope = "all";
+        updateData.country = null;
+        updateData.province = null;
+      } else {
         updateData.country = editCountry || null;
         updateData.province = editProvince || null;
+        updateData.region_scope = editProvince ? "region" : editCountry ? "country" : "all";
       }
 
       const { error } = await supabase
