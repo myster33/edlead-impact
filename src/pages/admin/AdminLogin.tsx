@@ -62,6 +62,8 @@ export default function AdminLogin() {
   const [showMfaVerify, setShowMfaVerify] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailSmsTwoFa, setEmailSmsTwoFa] = useState(false);
+  const [emailSmsTwoFaChannel, setEmailSmsTwoFaChannel] = useState<"email" | "sms">("email");
   
   const { signIn, signUp, user, isAdmin, isLoading: authLoading, isMfaVerified, requiresMfa, setMfaVerified } = useAdminAuth();
   const navigate = useNavigate();
