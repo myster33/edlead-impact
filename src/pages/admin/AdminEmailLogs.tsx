@@ -110,7 +110,7 @@ const AdminEmailLogs = () => {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <TableSkeleton rows={10} cols={5} />
+              <TableSkeleton rows={10} />
             ) : logs.length === 0 ? (
               <AdminEmptyState
                 icon={Mail}

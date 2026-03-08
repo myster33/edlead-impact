@@ -154,6 +154,14 @@ const App = () => (
                   path="/admin/subscribers"
                   element={<ProtectedRoute moduleKey="subscribers"><AdminSubscribers /></ProtectedRoute>}
                 />
+                <Route
+                  path="/admin/email-logs"
+                  element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>}
+                />
+                <Route
+                  path="/admin/webhooks"
+                  element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>}
+                />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

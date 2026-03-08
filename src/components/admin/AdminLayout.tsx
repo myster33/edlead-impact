@@ -119,9 +119,9 @@ const filterItem = (
 const menuGroups = [
   { label: "Overview", items: menuItems.slice(0, 3) },
   { label: "Programme", items: menuItems.slice(3, 6) },
-  { label: "Communication", items: menuItems.slice(6, 12) },
-  { label: "Administration", items: menuItems.slice(12, 15) },
-  { label: "Account", items: menuItems.slice(15) },
+  { label: "Communication", items: menuItems.slice(6, 14) },
+  { label: "Administration", items: menuItems.slice(14, 17) },
+  { label: "Account", items: menuItems.slice(17) },
 ];
 
 const getFilteredItems = (
