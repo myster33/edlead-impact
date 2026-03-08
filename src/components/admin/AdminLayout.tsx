@@ -111,7 +111,7 @@ const filterItem = (
   role: string,
   permissions: ModulePermission[] | undefined
 ): boolean => {
-  if (role === "admin") return true;
+  if (role === "super_admin" || role === "admin") return true;
   // Settings is always visible
   if (item.moduleKey === "settings") return true;
   const permission = permissions?.find((p) => p.module_key === item.moduleKey);

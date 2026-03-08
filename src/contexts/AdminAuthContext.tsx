@@ -26,11 +26,12 @@ interface AdminUser {
   id: string;
   user_id: string;
   email: string;
-  role: "viewer" | "reviewer" | "admin";
+  role: "viewer" | "reviewer" | "admin" | "super_admin";
   created_at: string;
   full_name?: string | null;
   country?: string | null;
   province?: string | null;
+  region_scope?: string | null;
 }
 
 interface AdminAuthContextType {
