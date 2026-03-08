@@ -462,12 +462,17 @@ export default function AdminManagement() {
 
     for (const user of usersToApprove) {
       try {
+        const bulkRegionScope = (bulkApproveRole === "admin" || bulkApproveRole === "super_admin") ? "all"
+          : bulkApproveProvince ? "region"
+          : bulkApproveCountry ? "country"
+          : "all";
         const response = await supabase.functions.invoke("add-admin-user", {
           body: { 
             email: user.email, 
             role: bulkApproveRole,
-            country: bulkApproveRole !== "admin" ? bulkApproveCountry : null,
-            province: bulkApproveRole !== "admin" ? bulkApproveProvince : null,
+            country: (bulkApproveRole !== "admin" && bulkApproveRole !== "super_admin") ? bulkApproveCountry : null,
+            province: (bulkApproveRole !== "admin" && bulkApproveRole !== "super_admin") ? bulkApproveProvince : null,
+            region_scope: bulkRegionScope,
           },
         });
 
