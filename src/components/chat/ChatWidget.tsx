@@ -869,7 +869,7 @@ export function ChatWidget() {
         </div>
         <div className="flex gap-1">
           {step === "chat" && (
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={handleClearChat} aria-label="Clear chat" title="Clear chat">
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20" onClick={() => setShowClearConfirm(true)} aria-label="Clear chat" title="Clear chat">
               <RotateCcw className="h-4 w-4" />
             </Button>
           )}
