@@ -2227,8 +2227,12 @@ export type Database = {
         Row: {
           category: string
           content: string
+          content_type: string
           created_at: string
           created_by: string | null
+          document_name: string | null
+          document_size: number | null
+          document_url: string | null
           id: string
           is_active: boolean
           school_id: string
@@ -2238,8 +2242,12 @@ export type Database = {
         Insert: {
           category?: string
           content: string
+          content_type?: string
           created_at?: string
           created_by?: string | null
+          document_name?: string | null
+          document_size?: number | null
+          document_url?: string | null
           id?: string
           is_active?: boolean
           school_id: string
@@ -2249,8 +2257,12 @@ export type Database = {
         Update: {
           category?: string
           content?: string
+          content_type?: string
           created_at?: string
           created_by?: string | null
+          document_name?: string | null
+          document_size?: number | null
+          document_url?: string | null
           id?: string
           is_active?: boolean
           school_id?: string
