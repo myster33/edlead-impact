@@ -118,6 +118,37 @@ export default function SchoolChat() {
     setConversationId(null);
   };
 
+  // Listen for admin replies via realtime
+  useEffect(() => {
+    if (!conversationId) return;
+    const channel = supabase
+      .channel("school-chat-visitor-" + conversationId)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "school_chat_messages",
+        filter: `conversation_id=eq.${conversationId}`,
+      }, (payload: any) => {
+        const newMsg = payload.new;
+        // Only add admin (non-AI) messages that we didn't send
+        if (newMsg.sender_type === "assistant" && !newMsg.is_ai_response) {
+          const adminMsg: ChatMessage = {
+            id: newMsg.id,
+            role: "assistant",
+            content: newMsg.content,
+            senderName: newMsg.sender_name || "School Admin",
+          };
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, adminMsg];
+          });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [conversationId]);
+
   const sendMessage = async () => {
     if (!input.trim() || sending || !selectedSchool) return;
 
@@ -171,8 +202,16 @@ export default function SchoolChat() {
           school_id: selectedSchool.id,
           messages: aiMessages,
           visitor_role: visitorRole,
+          conversation_id: convId,
         },
       });
+
+      // If AI is paused (admin is responding), don't show AI reply
+      if (data?.ai_paused) {
+        // AI is paused, admin is handling it
+        setSending(false);
+        return;
+      }
 
       const reply = data?.reply || "Sorry, I couldn't process that. Please try again.";
       const aiMsg: ChatMessage = {
