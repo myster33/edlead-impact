@@ -74,6 +74,7 @@ const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 const SchoolTimetable = lazy(() => import("./pages/school/SchoolTimetable"));
 const SchoolPeriodAttendance = lazy(() => import("./pages/school/SchoolPeriodAttendance"));
 const SchoolSubjects = lazy(() => import("./pages/school/SchoolSubjects"));
+const SchoolEdleadChat = lazy(() => import("./pages/school/SchoolEdleadChat"));
 
 // User portal pages
 const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
@@ -168,6 +169,7 @@ const App = () => (
                     <Route path="/school/timetable" element={<SchoolProtectedRoute><SchoolTimetable /></SchoolProtectedRoute>} />
                     <Route path="/school/period-attendance" element={<SchoolProtectedRoute><SchoolPeriodAttendance /></SchoolProtectedRoute>} />
                     <Route path="/school/subjects" element={<SchoolProtectedRoute><SchoolSubjects /></SchoolProtectedRoute>} />
+                    <Route path="/school/edlead-chat" element={<SchoolProtectedRoute><SchoolEdleadChat /></SchoolProtectedRoute>} />
 
                     {/* User Portal Routes */}
                     <Route path="/portal/login" element={<PortalLogin />} />

@@ -21,7 +21,7 @@ import {
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Settings,
-  CalendarDays, Clock, BookMarked, Bell, GraduationCap,
+  CalendarDays, Clock, BookMarked, Bell, GraduationCap, MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import edleadLogo from "@/assets/edlead-logo.png";
@@ -46,6 +46,9 @@ const menuGroups = [
     { title: "Reports", url: "/school/reports", icon: FileText },
   ],
   [
+    { title: "edLEAD Chat", url: "/school/edlead-chat", icon: MessageCircle },
+  ],
+  [
     { title: "Settings", url: "/school/settings", icon: Settings },
   ],
 ];
@@ -67,6 +70,7 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
 
   const displayName = schoolUser?.full_name || schoolUser?.email?.split("@")[0] || "User";
   const initials = displayName.split(/\s/).slice(0, 2).map(s => s.charAt(0).toUpperCase()).join("");
@@ -132,13 +136,24 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
     setNotifications(notifs);
   }, [currentSchool?.id]);
 
-  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
+  // Fetch unread school chat messages
+  const fetchUnreadChats = useCallback(async () => {
+    if (!currentSchool?.id) return;
+    const { count } = await (supabase as any)
+      .from("school_chat_conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", currentSchool.id)
+      .eq("status", "open");
+    setUnreadChatCount(count || 0);
+  }, [currentSchool?.id]);
+
+  useEffect(() => { fetchNotifications(); fetchUnreadChats(); }, [fetchNotifications, fetchUnreadChats]);
 
   // Refresh every 30s
   useEffect(() => {
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(() => { fetchNotifications(); fetchUnreadChats(); }, 30000);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, fetchUnreadChats]);
 
   const pendingCount = notifications.length;
 
@@ -207,6 +222,18 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
                 {filteredItems.find(i => i.url === location.pathname)?.title || "School Portal"}
               </h2>
             </div>
+
+            {/* Chat Messages Icon */}
+            <Link to="/school/edlead-chat" className="relative">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <MessageCircle className="h-5 w-5" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                    {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
 
             {/* Notification Bell */}
             <Popover open={notifOpen} onOpenChange={setNotifOpen}>
