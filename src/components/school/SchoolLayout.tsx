@@ -223,6 +223,18 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
               </h2>
             </div>
 
+            {/* Chat Messages Icon */}
+            <Link to="/school/edlead-chat" className="relative">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <MessageCircle className="h-5 w-5" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                    {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
+
             {/* Notification Bell */}
             <Popover open={notifOpen} onOpenChange={setNotifOpen}>
               <PopoverTrigger asChild>
