@@ -2182,6 +2182,133 @@ export type Database = {
           },
         ]
       }
+      school_chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          school_id: string
+          session_id: string
+          status: string
+          visitor_name: string | null
+          visitor_role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          school_id: string
+          session_id: string
+          status?: string
+          visitor_name?: string | null
+          visitor_role?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          school_id?: string
+          session_id?: string
+          status?: string
+          visitor_name?: string | null
+          visitor_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_chat_conversations_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_chat_knowledge: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          school_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          school_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          school_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_chat_knowledge_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_chat_knowledge_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_ai_response: boolean
+          sender_type: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_ai_response?: boolean
+          sender_type?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_ai_response?: boolean
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "school_chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school_terms: {
         Row: {
           academic_year: number
