@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap } from "lucide-react";
+import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const GRADES = [
@@ -51,6 +51,12 @@ export default function SchoolSubjects() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [enrolledStudents, setEnrolledStudents] = useState<Record<string, number>>({});
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<any>(null);
+  const [editSubjectName, setEditSubjectName] = useState("");
+  const [editSubjectCode, setEditSubjectCode] = useState("");
+  const [editSubjectGrade, setEditSubjectGrade] = useState("");
+  const [editSubjectCurriculum, setEditSubjectCurriculum] = useState("");
 
   const isStaff = schoolUser?.role === "school_admin" || schoolUser?.role === "hr";
 
@@ -166,6 +172,35 @@ export default function SchoolSubjects() {
       toast({ title: "Subject removed" });
       fetchSubjects();
     }
+  };
+
+  const openEditDialog = (subject: any) => {
+    setEditingSubject(subject);
+    setEditSubjectName(subject.name);
+    setEditSubjectCode(subject.code || "");
+    setEditSubjectGrade(subject.grade || "");
+    setEditSubjectCurriculum(subject.curriculum_id || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubject = async () => {
+    if (!editingSubject || !editSubjectName.trim()) return;
+    setIsSaving(true);
+    const { error } = await supabase.from("subjects").update({
+      name: editSubjectName.trim(),
+      code: editSubjectCode.trim() || null,
+      grade: editSubjectGrade || null,
+      curriculum_id: editSubjectCurriculum || null,
+    }).eq("id", editingSubject.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Subject updated" });
+      setEditDialogOpen(false);
+      setEditingSubject(null);
+      fetchSubjects();
+    }
+    setIsSaving(false);
   };
 
   const filteredSubjects = subjects.filter(s =>
@@ -330,7 +365,7 @@ export default function SchoolSubjects() {
                         <Users className="h-3 w-3" />Enrolled
                       </div>
                     </TableHead>
-                    {isStaff && <TableHead className="w-10"></TableHead>}
+                    {isStaff && <TableHead className="w-20"></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -349,9 +384,14 @@ export default function SchoolSubjects() {
                       </TableCell>
                       {isStaff && (
                         <TableCell>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteSubject(subject.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditDialog(subject)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleDeleteSubject(subject.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
@@ -361,6 +401,54 @@ export default function SchoolSubjects() {
             </CardContent>
           </Card>
         )}
+
+        {/* Edit Subject Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Subject</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Curriculum</Label>
+                <Select value={editSubjectCurriculum} onValueChange={setEditSubjectCurriculum}>
+                  <SelectTrigger><SelectValue placeholder="Select curriculum" /></SelectTrigger>
+                  <SelectContent>
+                    {curricula.map(c => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Grade</Label>
+                <Select value={editSubjectGrade} onValueChange={setEditSubjectGrade}>
+                  <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
+                  <SelectContent>
+                    {GRADES.map(g => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Subject Name</Label>
+                <Input value={editSubjectName} onChange={e => setEditSubjectName(e.target.value)} placeholder="e.g. Physical Sciences" />
+              </div>
+              <div className="space-y-2">
+                <Label>Subject Code (optional)</Label>
+                <Input value={editSubjectCode} onChange={e => setEditSubjectCode(e.target.value)} placeholder="e.g. PHY" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleEditSubject} disabled={isSaving || !editSubjectName.trim()}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </SchoolLayout>
   );
