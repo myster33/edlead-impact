@@ -126,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const regionText = country && province ? `${province}, ${country}` : country || province || "All regions";
     const roleDisplayName = role === "admin" ? "Administrator" : role === "reviewer" ? "Reviewer" : "Viewer";
-    const dashboardUrl = Deno.env.get("SITE_URL") || "https://edlead.lovable.app";
+    const dashboardUrl = Deno.env.get("SITE_URL") || "https://edlead.co.za";
 
     // Replace variables
     const variables = {

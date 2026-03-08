@@ -65,7 +65,7 @@ const defaultTemplate = {
       <p style="margin-bottom: 20px;">{{role_description}}</p>
       
       <div style="text-align: center; margin-top: 30px;">
-        <a href="https://edlead.lovable.app/admin/dashboard" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+        <a href="https://edlead.co.za/admin/dashboard" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
           Go to Dashboard
         </a>
       </div>

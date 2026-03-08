@@ -200,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get template from database
     const template = await getEmailTemplate(supabase, "blog-approved");
 
-    const blogUrl = `https://edlead.lovable.app/blog/${data.slug}`;
+    const blogUrl = `https://edlead.co.za/blog/${data.slug}`;
 
     const variables = {
       author_name: data.author_name,

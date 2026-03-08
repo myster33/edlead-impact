@@ -599,7 +599,7 @@ const handler = async (req: Request): Promise<Response> => {
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <tr>
       <td style="background-color: #4A4A4A; padding: 30px 40px; text-align: center;">
-        <img src="https://edlead.lovable.app/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto;">
+        <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="max-width: 196px; height: auto;">
       </td>
     </tr>
     <tr>
