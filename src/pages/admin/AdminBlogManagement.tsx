@@ -192,8 +192,14 @@ const AdminBlogManagement = () => {
       .select("*")
       .order("submitted_at", { ascending: false });
 
-    if (statusFilter !== "all") {
-      query = query.eq("status", statusFilter);
+    // Handle trash view vs normal view
+    if (statusFilter === "trash") {
+      query = query.not("deleted_at", "is", null);
+    } else {
+      query = query.is("deleted_at", null);
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
     }
     
     // Apply additional filters
