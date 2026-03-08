@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Facebook, Instagram, Linkedin, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Instagram, Linkedin, ArrowRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
