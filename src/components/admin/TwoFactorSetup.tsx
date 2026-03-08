@@ -101,6 +101,80 @@ export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminP
     }
   };
 
+  const checkChannelMfaStatus = async () => {
+    if (!adminUserId) return;
+    try {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("two_fa_enabled, two_fa_channel")
+        .eq("id", adminUserId)
+        .maybeSingle();
+      if (!error && data) {
+        setChannelMfaEnabled(!!data.two_fa_enabled);
+        setChannelMfaChannel((data.two_fa_channel as "email" | "sms") || "email");
+      }
+    } catch (err) {
+      console.error("Error checking channel MFA:", err);
+    }
+  };
+
+  const handleChannelSendCode = async () => {
+    setChannelSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-2fa-code", {
+        body: { action: "send", channel: channelMfaChannel },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChannelCodeSent(true);
+      toast({
+        title: "Code sent",
+        description: channelMfaChannel === "sms" ? "Check your phone." : "Check your email.",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setChannelSending(false);
+    }
+  };
+
+  const handleChannelVerifyCode = async () => {
+    if (!channelVerifyCode) return;
+    setChannelVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-2fa-code", {
+        body: { action: "verify", code: channelVerifyCode },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChannelMfaEnabled(true);
+      setChannelCodeSent(false);
+      setChannelVerifyCode("");
+      toast({ title: "Channel 2FA enabled", description: `${channelMfaChannel === "sms" ? "SMS" : "Email"} verification is now active as an alternative.` });
+    } catch (err: any) {
+      toast({ title: "Verification failed", description: err.message, variant: "destructive" });
+    } finally {
+      setChannelVerifying(false);
+    }
+  };
+
+  const handleChannelDisable = async () => {
+    setChannelDisabling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-send-2fa-code", {
+        body: { action: "disable" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChannelMfaEnabled(false);
+      toast({ title: "Channel 2FA disabled" });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setChannelDisabling(false);
+    }
+  };
+
   const fetchBackupCodesCount = async () => {
     if (!adminUserId) return;
     
