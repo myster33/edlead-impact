@@ -5,7 +5,7 @@ export type ModulePermission = {
   id: string;
   module_key: string;
   module_name: string;
-  allowed_roles: ("viewer" | "reviewer" | "admin")[];
+  allowed_roles: ("viewer" | "reviewer" | "admin" | "super_admin")[];
   created_at: string;
   updated_at: string;
 };
