@@ -70,6 +70,8 @@ const SchoolAbsenceRequests = lazy(() => import("./pages/school/SchoolAbsenceReq
 const SchoolReports = lazy(() => import("./pages/school/SchoolReports"));
 const SchoolLinkRequests = lazy(() => import("./pages/school/SchoolLinkRequests"));
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
+const SchoolTimetable = lazy(() => import("./pages/school/SchoolTimetable"));
+const SchoolPeriodAttendance = lazy(() => import("./pages/school/SchoolPeriodAttendance"));
 
 // User portal pages
 const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
