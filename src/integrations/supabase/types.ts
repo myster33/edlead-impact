@@ -2184,6 +2184,8 @@ export type Database = {
       }
       school_chat_conversations: {
         Row: {
+          admin_last_reply_at: string | null
+          ai_paused: boolean
           created_at: string
           id: string
           last_message_at: string | null
@@ -2194,6 +2196,8 @@ export type Database = {
           visitor_role: string
         }
         Insert: {
+          admin_last_reply_at?: string | null
+          ai_paused?: boolean
           created_at?: string
           id?: string
           last_message_at?: string | null
@@ -2204,6 +2208,8 @@ export type Database = {
           visitor_role?: string
         }
         Update: {
+          admin_last_reply_at?: string | null
+          ai_paused?: boolean
           created_at?: string
           id?: string
           last_message_at?: string | null
@@ -2293,6 +2299,7 @@ export type Database = {
           created_at: string
           id: string
           is_ai_response: boolean
+          sender_name: string | null
           sender_type: string
         }
         Insert: {
@@ -2301,6 +2308,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_ai_response?: boolean
+          sender_name?: string | null
           sender_type?: string
         }
         Update: {
@@ -2309,6 +2317,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_ai_response?: boolean
+          sender_name?: string | null
           sender_type?: string
         }
         Relationships: [
