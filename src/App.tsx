@@ -58,6 +58,7 @@ const AdminMarketplace = lazy(() => import("./pages/admin/AdminMarketplace"));
 
 // School portal pages
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
+const SchoolResetPassword = lazy(() => import("./pages/school/SchoolResetPassword"));
 const SchoolDashboard = lazy(() => import("./pages/school/SchoolDashboard"));
 const SchoolAttendance = lazy(() => import("./pages/school/SchoolAttendance"));
 const SchoolClasses = lazy(() => import("./pages/school/SchoolClasses"));
