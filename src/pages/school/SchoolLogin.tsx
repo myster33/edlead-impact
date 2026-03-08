@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { PortalLoadingScreen } from "@/components/shared/PortalLoadingScreen";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSchoolAuth } from "@/contexts/SchoolAuthContext";
 import { Button } from "@/components/ui/button";
