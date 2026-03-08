@@ -1832,6 +1832,7 @@ function DataCleanupCard() {
           {lastRun && (
             <p className="text-xs text-muted-foreground mt-1">
               Last run: {new Date(lastRun).toLocaleString()}
+              {lastRunBy && <span> by {lastRunBy}</span>}
             </p>
           )}
         </div>
