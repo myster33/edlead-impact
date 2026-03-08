@@ -65,6 +65,14 @@ export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminP
   const [backupCodesCount, setBackupCodesCount] = useState(0);
   const [isRegeneratingCodes, setIsRegeneratingCodes] = useState(false);
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  // Alternative channel-based 2FA
+  const [channelMfaEnabled, setChannelMfaEnabled] = useState(false);
+  const [channelMfaChannel, setChannelMfaChannel] = useState<"email" | "sms">("email");
+  const [channelCodeSent, setChannelCodeSent] = useState(false);
+  const [channelVerifyCode, setChannelVerifyCode] = useState("");
+  const [channelSending, setChannelSending] = useState(false);
+  const [channelVerifying, setChannelVerifying] = useState(false);
+  const [channelDisabling, setChannelDisabling] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
