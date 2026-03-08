@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap, Pencil } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap, Pencil, CheckSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const GRADES = [
@@ -19,21 +20,102 @@ const GRADES = [
   "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12",
 ];
 
-// CAPS subjects by phase
-const CAPS_SUBJECTS: Record<string, string[]> = {
-  "Grade R": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 1": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 2": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 3": ["Home Language", "First Additional Language", "Mathematics", "Life Skills"],
-  "Grade 4": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences and Technology", "Social Sciences", "Life Skills", "Creative Arts", "Technology"],
-  "Grade 5": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences and Technology", "Social Sciences", "Life Skills", "Creative Arts", "Technology"],
-  "Grade 6": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences and Technology", "Social Sciences", "Life Skills", "Creative Arts", "Technology"],
-  "Grade 7": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences", "Social Sciences", "Life Orientation", "Economic and Management Sciences", "Technology", "Creative Arts"],
-  "Grade 8": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences", "Social Sciences", "Life Orientation", "Economic and Management Sciences", "Technology", "Creative Arts"],
-  "Grade 9": ["Home Language", "First Additional Language", "Mathematics", "Natural Sciences", "Social Sciences", "Life Orientation", "Economic and Management Sciences", "Technology", "Creative Arts"],
-  "Grade 10": ["Home Language", "First Additional Language", "Mathematics", "Mathematical Literacy", "Life Orientation", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "History", "Computer Applications Technology", "Information Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Visual Arts", "Dramatic Arts", "Music", "Consumer Studies"],
-  "Grade 11": ["Home Language", "First Additional Language", "Mathematics", "Mathematical Literacy", "Life Orientation", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "History", "Computer Applications Technology", "Information Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Visual Arts", "Dramatic Arts", "Music", "Consumer Studies"],
-  "Grade 12": ["Home Language", "First Additional Language", "Mathematics", "Mathematical Literacy", "Life Orientation", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "History", "Computer Applications Technology", "Information Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Visual Arts", "Dramatic Arts", "Music", "Consumer Studies"],
+// CAPS subjects by phase with default codes
+const CAPS_SUBJECTS: Record<string, { name: string; code: string }[]> = {
+  "Grade R": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 1": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 2": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 3": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Life Skills", code: "LS" },
+  ],
+  "Grade 4": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences and Technology", code: "NST" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Skills", code: "LS" },
+    { name: "Creative Arts", code: "CA" }, { name: "Technology", code: "TECH" },
+  ],
+  "Grade 5": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences and Technology", code: "NST" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Skills", code: "LS" },
+    { name: "Creative Arts", code: "CA" }, { name: "Technology", code: "TECH" },
+  ],
+  "Grade 6": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences and Technology", code: "NST" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Skills", code: "LS" },
+    { name: "Creative Arts", code: "CA" }, { name: "Technology", code: "TECH" },
+  ],
+  "Grade 7": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences", code: "NS" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Orientation", code: "LO" },
+    { name: "Economic and Management Sciences", code: "EMS" }, { name: "Technology", code: "TECH" },
+    { name: "Creative Arts", code: "CA" },
+  ],
+  "Grade 8": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences", code: "NS" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Orientation", code: "LO" },
+    { name: "Economic and Management Sciences", code: "EMS" }, { name: "Technology", code: "TECH" },
+    { name: "Creative Arts", code: "CA" },
+  ],
+  "Grade 9": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Natural Sciences", code: "NS" },
+    { name: "Social Sciences", code: "SS" }, { name: "Life Orientation", code: "LO" },
+    { name: "Economic and Management Sciences", code: "EMS" }, { name: "Technology", code: "TECH" },
+    { name: "Creative Arts", code: "CA" },
+  ],
+  "Grade 10": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Mathematical Literacy", code: "ML" },
+    { name: "Life Orientation", code: "LO" }, { name: "Physical Sciences", code: "PHY" },
+    { name: "Life Sciences", code: "LFS" }, { name: "Accounting", code: "ACC" },
+    { name: "Business Studies", code: "BS" }, { name: "Economics", code: "ECO" },
+    { name: "Geography", code: "GEO" }, { name: "History", code: "HIS" },
+    { name: "Computer Applications Technology", code: "CAT" }, { name: "Information Technology", code: "IT" },
+    { name: "Engineering Graphics and Design", code: "EGD" }, { name: "Agricultural Sciences", code: "AGS" },
+    { name: "Tourism", code: "TOU" }, { name: "Visual Arts", code: "VA" },
+    { name: "Dramatic Arts", code: "DA" }, { name: "Music", code: "MUS" },
+    { name: "Consumer Studies", code: "CS" },
+  ],
+  "Grade 11": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Mathematical Literacy", code: "ML" },
+    { name: "Life Orientation", code: "LO" }, { name: "Physical Sciences", code: "PHY" },
+    { name: "Life Sciences", code: "LFS" }, { name: "Accounting", code: "ACC" },
+    { name: "Business Studies", code: "BS" }, { name: "Economics", code: "ECO" },
+    { name: "Geography", code: "GEO" }, { name: "History", code: "HIS" },
+    { name: "Computer Applications Technology", code: "CAT" }, { name: "Information Technology", code: "IT" },
+    { name: "Engineering Graphics and Design", code: "EGD" }, { name: "Agricultural Sciences", code: "AGS" },
+    { name: "Tourism", code: "TOU" }, { name: "Visual Arts", code: "VA" },
+    { name: "Dramatic Arts", code: "DA" }, { name: "Music", code: "MUS" },
+    { name: "Consumer Studies", code: "CS" },
+  ],
+  "Grade 12": [
+    { name: "Home Language", code: "HL" }, { name: "First Additional Language", code: "FAL" },
+    { name: "Mathematics", code: "MATH" }, { name: "Mathematical Literacy", code: "ML" },
+    { name: "Life Orientation", code: "LO" }, { name: "Physical Sciences", code: "PHY" },
+    { name: "Life Sciences", code: "LFS" }, { name: "Accounting", code: "ACC" },
+    { name: "Business Studies", code: "BS" }, { name: "Economics", code: "ECO" },
+    { name: "Geography", code: "GEO" }, { name: "History", code: "HIS" },
+    { name: "Computer Applications Technology", code: "CAT" }, { name: "Information Technology", code: "IT" },
+    { name: "Engineering Graphics and Design", code: "EGD" }, { name: "Agricultural Sciences", code: "AGS" },
+    { name: "Tourism", code: "TOU" }, { name: "Visual Arts", code: "VA" },
+    { name: "Dramatic Arts", code: "DA" }, { name: "Music", code: "MUS" },
+    { name: "Consumer Studies", code: "CS" },
+  ],
 };
 
 export default function SchoolSubjects() {
