@@ -188,15 +188,20 @@ export default function AdminSchools() {
                         {new Date(school.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        {school.is_verified ? (
-                          <Button size="sm" variant="outline" onClick={() => handleVerify(school.id, false)}>
-                            <XCircle className="h-3 w-3 mr-1" />Revoke
+                        <div className="flex items-center gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => { setEditSchool(school); setEditOpen(true); }}>
+                            <Pencil className="h-3 w-3 mr-1" />Edit
                           </Button>
-                        ) : (
-                          <Button size="sm" variant="default" onClick={() => handleVerify(school.id, true)}>
-                            <CheckCircle className="h-3 w-3 mr-1" />Verify
-                          </Button>
-                        )}
+                          {school.is_verified ? (
+                            <Button size="sm" variant="outline" onClick={() => handleVerify(school.id, false)}>
+                              <XCircle className="h-3 w-3 mr-1" />Revoke
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="default" onClick={() => handleVerify(school.id, true)}>
+                              <CheckCircle className="h-3 w-3 mr-1" />Verify
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
