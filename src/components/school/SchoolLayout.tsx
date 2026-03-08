@@ -56,13 +56,19 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const displayName = schoolUser?.full_name || schoolUser?.email?.split("@")[0] || "User";
   const initials = displayName.split(/\s/).slice(0, 2).map(s => s.charAt(0).toUpperCase()).join("");
 
+  const isTeacherRole = ["class_teacher", "subject_teacher", "educator"].includes(schoolUser?.role || "");
+
   const filteredGroups = useMemo(() => {
     if (schoolUser?.role === "hr") {
       const allowed = ["Dashboard", "Staff", "Reports"];
       return menuGroups.map(g => g.filter(i => allowed.includes(i.title))).filter(g => g.length > 0);
     }
-    return menuGroups;
-  }, [schoolUser?.role]);
+    // Filter teacherOnly items for non-teacher roles
+    return menuGroups.map(g => g.filter(i => {
+      if ((i as any).teacherOnly && !isTeacherRole) return false;
+      return true;
+    })).filter(g => g.length > 0);
+  }, [schoolUser?.role, isTeacherRole]);
 
   const filteredItems = filteredGroups.flat();
 
