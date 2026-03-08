@@ -570,6 +570,12 @@ export default function SchoolAttendance() {
                 Class Attendance
               </TabsTrigger>
             )}
+            {isStaffRole && (
+              <TabsTrigger value="period-view" className="gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" />
+                Period Attendance
+              </TabsTrigger>
+            )}
             <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
           </TabsList>
 
