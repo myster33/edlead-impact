@@ -671,6 +671,108 @@ const AdminBlogManagement = () => {
     setSaving(false);
   };
 
+  const toggleBlogSelect = (id: string) => {
+    const newSelected = new Set(selectedBlogIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedBlogIds(newSelected);
+  };
+
+  const bulkTrashBlogs = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedBlogIds.size === 0) return;
+    setSaving(true);
+    try {
+      const idsArray = Array.from(selectedBlogIds);
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const post = posts.find(p => p.id === id);
+        logAction({
+          action: "blog_trashed" as any,
+          table_name: "blog_posts",
+          record_id: id,
+          old_values: { title: post?.title, author_name: post?.author_name },
+        });
+      }
+      setSelectedBlogIds(new Set());
+      setBulkTrashOpen(false);
+      toast({ title: "Moved to Trash", description: `${idsArray.length} stories moved to trash.` });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error bulk trashing blogs:", error);
+      toast({ title: "Error", description: "Failed to move stories to trash.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const bulkRestoreBlogs = async () => {
+    if (selectedBlogIds.size === 0) return;
+    setSaving(true);
+    try {
+      const idsArray = Array.from(selectedBlogIds);
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({ deleted_at: null } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const post = posts.find(p => p.id === id);
+        logAction({
+          action: "blog_restored" as any,
+          table_name: "blog_posts",
+          record_id: id,
+          new_values: { title: post?.title },
+        });
+      }
+      setSelectedBlogIds(new Set());
+      toast({ title: "Restored", description: `${idsArray.length} stories restored.` });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error bulk restoring blogs:", error);
+      toast({ title: "Error", description: "Failed to restore stories.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const bulkPurgeBlogs = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedBlogIds.size === 0) return;
+    setSaving(true);
+    try {
+      const idsArray = Array.from(selectedBlogIds);
+      for (const id of idsArray) {
+        const post = posts.find(p => p.id === id);
+        logAction({
+          action: "blog_purged" as any,
+          table_name: "blog_posts",
+          record_id: id,
+          old_values: { title: post?.title, author_name: post?.author_name },
+        });
+      }
+      const { error } = await supabase
+        .from("blog_posts")
+        .delete()
+        .in("id", idsArray);
+      if (error) throw error;
+      setSelectedBlogIds(new Set());
+      setBulkPurgeOpen(false);
+      toast({ title: "Permanently Deleted", description: `${idsArray.length} stories permanently removed.` });
+      fetchPosts();
+    } catch (error) {
+      console.error("Error bulk purging blogs:", error);
+      toast({ title: "Error", description: "Failed to permanently delete stories.", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const MAX_FEATURED_POSTS = 3;
 
   const handleToggleFeatured = async (post: BlogPost) => {
