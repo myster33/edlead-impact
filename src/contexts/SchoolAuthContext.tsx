@@ -131,39 +131,24 @@ export function SchoolAuthProvider({ children }: { children: React.ReactNode }) 
     // 2. Use EMIS number as school code, or generate one
     const schoolCode = emisNumber || (schoolName.substring(0, 3).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase());
 
-    // 3. Create the school (unverified)
-    const { data: school, error: schoolError } = await supabase
-      .from("schools")
-      .insert({
-        name: schoolName,
+    // 3. Call edge function to create school + school_user (bypasses RLS)
+    const { data: result, error: fnError } = await supabase.functions.invoke("register-school", {
+      body: {
+        user_id: data.user.id,
+        school_name: schoolName,
         school_code: schoolCode,
         emis_number: emisNumber || null,
         address: schoolAddress,
         province,
-        is_verified: false,
-      })
-      .select("id")
-      .single();
-
-    if (schoolError) {
-      return { error: new Error("Failed to register school: " + schoolError.message) };
-    }
-
-    // 4. Create school_user record
-    const { error: userError } = await supabase
-      .from("school_users")
-      .insert({
-        user_id: data.user.id,
-        school_id: school.id,
         role,
         full_name: fullName,
         email,
         phone,
-        is_active: true,
-      });
+      },
+    });
 
-    if (userError) {
-      return { error: new Error("Failed to create user profile: " + userError.message) };
+    if (fnError || (result && result.error)) {
+      return { error: new Error(result?.error || fnError?.message || "Failed to register school") };
     }
 
     // Sign out so user must verify email first
