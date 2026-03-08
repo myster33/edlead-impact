@@ -84,6 +84,7 @@ interface AdminUser {
   country: string | null;
   province: string | null;
   profile_picture_url: string | null;
+  region_scope: string | null;
 }
 
 const countries = [
