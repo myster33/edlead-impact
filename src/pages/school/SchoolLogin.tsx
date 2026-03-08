@@ -357,7 +357,7 @@ export default function SchoolLogin() {
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input id="login-emis" placeholder="e.g. 700210001" value={loginEmisNumber} onChange={e => setLoginEmisNumber(e.target.value)} className="pl-10" disabled={isLoading} />
                     </div>
-                    <p className="text-xs text-muted-foreground">Your school's EMIS number used during registration</p>
+                    {loginErrors.emisNumber ? <p className="text-sm text-destructive">{loginErrors.emisNumber}</p> : <p className="text-xs text-muted-foreground">Your school's EMIS number used during registration</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
