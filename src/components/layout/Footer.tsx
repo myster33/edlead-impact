@@ -23,7 +23,7 @@ const footerLinks = {
   community: [
     { name: "Student Blog", path: "/blog" },
     { name: "Partner With Us", path: "/partners" },
-    { name: "Student/Parent Portal", path: "/portal/login" },
+    { name: "Educator/Student/Parent Portal", path: "/portal/login" },
     { name: "School Portal", path: "/school/login" },
     { name: "Admin Portal", path: "/admin/login" },
   ],
