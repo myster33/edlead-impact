@@ -333,7 +333,7 @@ export default function SchoolLogin() {
         {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
       </Button>
 
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md animate-login-slide-up">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
