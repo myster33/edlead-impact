@@ -316,6 +316,7 @@ export type Database = {
           position: string | null
           profile_picture_url: string | null
           province: string | null
+          region_scope: string
           role: Database["public"]["Enums"]["app_role"]
           theme_preference: string | null
           two_fa_channel: string
@@ -339,6 +340,7 @@ export type Database = {
           position?: string | null
           profile_picture_url?: string | null
           province?: string | null
+          region_scope?: string
           role?: Database["public"]["Enums"]["app_role"]
           theme_preference?: string | null
           two_fa_channel?: string
@@ -362,6 +364,7 @@ export type Database = {
           position?: string | null
           profile_picture_url?: string | null
           province?: string | null
+          region_scope?: string
           role?: Database["public"]["Enums"]["app_role"]
           theme_preference?: string | null
           two_fa_channel?: string
