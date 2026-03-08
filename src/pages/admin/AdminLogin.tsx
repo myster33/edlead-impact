@@ -25,7 +25,7 @@ const ALLOWED_DOMAINS = ["edlead.co.za", "edlead.co", "eduschools.co.za"];
 const signupSchema = z.object({
   email: z.string().email("Please enter a valid email address").refine(
     (email) => ALLOWED_DOMAINS.some((domain) => email.toLowerCase().endsWith(`@${domain}`)),
-    { message: "Only edLEAD company email addresses (@edlead.co.za or @edlead.co) are allowed." }
+    { message: "Only edLEAD company email addresses (@edlead.co.za, @edlead.co, or @eduschools.co.za) are allowed." }
   ),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
