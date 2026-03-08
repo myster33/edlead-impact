@@ -160,3 +160,23 @@ All colors MUST be HSL.
 .animate-user-access-orb-drift {
   animation: user-access-orb-drift 12s ease-in-out infinite;
 }
+
+/* Portal loading screen animations */
+@keyframes portal-loading-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes portal-loading-fade-text {
+  0% { opacity: 0; transform: translateY(4px); }
+  15% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+.animate-portal-loading-shimmer {
+  background-image: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary) / 0.5) 50%, hsl(var(--primary)) 100%);
+  background-size: 200% 100%;
+  animation: portal-loading-shimmer 2s ease-in-out infinite;
+}
+.animate-portal-loading-fade-text {
+  animation: portal-loading-fade-text 2s ease-in-out;
+}
