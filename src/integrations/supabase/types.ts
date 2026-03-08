@@ -1143,6 +1143,33 @@ export type Database = {
         }
         Relationships: []
       }
+      curricula: {
+        Row: {
+          code: string
+          country: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          code: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          code?: string
+          country?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       dashboard_announcements: {
         Row: {
           content: string
@@ -2443,6 +2470,8 @@ export type Database = {
         Row: {
           code: string | null
           created_at: string
+          curriculum_id: string | null
+          grade: string | null
           id: string
           is_active: boolean
           name: string
@@ -2451,6 +2480,8 @@ export type Database = {
         Insert: {
           code?: string | null
           created_at?: string
+          curriculum_id?: string | null
+          grade?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -2459,12 +2490,21 @@ export type Database = {
         Update: {
           code?: string | null
           created_at?: string
+          curriculum_id?: string | null
+          grade?: string | null
           id?: string
           is_active?: boolean
           name?: string
           school_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subjects_curriculum_id_fkey"
+            columns: ["curriculum_id"]
+            isOneToOne: false
+            referencedRelation: "curricula"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subjects_school_id_fkey"
             columns: ["school_id"]

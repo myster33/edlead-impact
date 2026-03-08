@@ -21,7 +21,7 @@ import {
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Settings,
-  CalendarDays, Clock, BookMarked, Bell,
+  CalendarDays, Clock, BookMarked, Bell, GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import edleadLogo from "@/assets/edlead-logo.png";
@@ -37,6 +37,7 @@ const menuGroups = [
     { title: "Timetable", url: "/school/timetable", icon: Clock, teacherOnly: true },
     { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Classes", url: "/school/classes", icon: BookOpen },
+    { title: "Subjects", url: "/school/subjects", icon: GraduationCap },
     { title: "Students", url: "/school/students", icon: Users },
     { title: "Staff", url: "/school/staff", icon: UserCheck },
   ],

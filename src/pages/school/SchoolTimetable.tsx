@@ -39,10 +39,6 @@ export default function SchoolTimetable() {
   const [formEndTime, setFormEndTime] = useState("08:45");
   const [formPeriodLabel, setFormPeriodLabel] = useState("");
 
-  // Subject management
-  const [newSubjectName, setNewSubjectName] = useState("");
-  const [addingSubject, setAddingSubject] = useState(false);
-
   const isStaffRole = schoolUser?.role === "school_admin" || schoolUser?.role === "hr";
   const isTeacherRole = ["class_teacher", "subject_teacher", "educator"].includes(schoolUser?.role || "");
 
@@ -51,7 +47,7 @@ export default function SchoolTimetable() {
     setIsLoading(true);
 
     const [subjectsRes, classesRes, entriesRes] = await Promise.all([
-      supabase.from("subjects").select("*").eq("school_id", currentSchool.id).eq("is_active", true).order("name"),
+      supabase.from("subjects").select("*, curricula(code)").eq("school_id", currentSchool.id).eq("is_active", true).order("name"),
       supabase.from("classes").select("id, name, grade").eq("school_id", currentSchool.id).order("grade"),
       supabase.from("timetable_entries")
         .select("*, subjects(name, code), classes(name, grade)")
@@ -69,22 +65,7 @@ export default function SchoolTimetable() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleAddSubject = async () => {
-    if (!newSubjectName.trim() || !currentSchool?.id) return;
-    setAddingSubject(true);
-    const { error } = await supabase.from("subjects").insert({
-      school_id: currentSchool.id,
-      name: newSubjectName.trim(),
-    });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      setNewSubjectName("");
-      toast({ title: "Subject added" });
-      fetchData();
-    }
-    setAddingSubject(false);
-  };
+
 
   const handleAddEntry = async () => {
     if (!formSubjectId || !formClassId || !currentSchool?.id || !schoolUser?.id) return;
@@ -156,23 +137,15 @@ export default function SchoolTimetable() {
                   <Select value={formSubjectId} onValueChange={setFormSubjectId}>
                     <SelectTrigger><SelectValue placeholder="Select subject" /></SelectTrigger>
                     <SelectContent>
-                      {subjects.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
+                      {subjects
+                        .filter(s => !formClassId || !s.grade || s.grade === classes.find(c => c.id === formClassId)?.grade)
+                        .map(s => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name} {s.curricula?.code ? `(${s.curricula.code})` : ""} {s.grade ? `– ${s.grade}` : ""}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
-                  {/* Inline add subject */}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="New subject name..."
-                      value={newSubjectName}
-                      onChange={e => setNewSubjectName(e.target.value)}
-                      className="text-sm"
-                    />
-                    <Button size="sm" variant="outline" onClick={handleAddSubject} disabled={addingSubject || !newSubjectName.trim()}>
-                      {addingSubject ? <Loader2 className="h-3 w-3 animate-spin" /> : "Add"}
-                    </Button>
-                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Class</Label>
