@@ -1710,6 +1710,45 @@ export default function AdminApplications() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Bulk Trash Confirmation */}
+        <AlertDialog open={bulkTrashOpen} onOpenChange={setBulkTrashOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Move {selectedIds.size} Applications to Trash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                These applications will be moved to trash. You can restore them later from the Trash view.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={bulkSoftDeleteApplications}>
+                Move to Trash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Bulk Purge Confirmation */}
+        <AlertDialog open={bulkPurgeOpen} onOpenChange={setBulkPurgeOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently Delete {selectedIds.size} Applications?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove {selectedIds.size} applications. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={bulkPurgeApplications}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Social Banner Preview Dialog */}
         {selectedApplication && (
           <SocialBannerPreview
