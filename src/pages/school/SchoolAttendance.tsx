@@ -245,12 +245,59 @@ export default function SchoolAttendance() {
       .then(({ data }) => setClasses(data || []));
   }, [currentSchool?.id]);
 
+  // Fetch subjects for period attendance filter
+  useEffect(() => {
+    if (!currentSchool?.id || !isStaffRole) return;
+    supabase
+      .from("subjects")
+      .select("id, name")
+      .eq("school_id", currentSchool.id)
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => setAllSubjects(data || []));
+  }, [currentSchool?.id, isStaffRole]);
+
   // Fetch class attendance when tab or filters change
   useEffect(() => {
     if (activeTab === "class-view" && isStaffRole && classes.length > 0) {
       fetchClassAttendance();
     }
   }, [activeTab, fetchClassAttendance, isStaffRole, classes]);
+
+  // Fetch period attendance for admin view
+  const fetchPeriodAttendance = useCallback(async () => {
+    if (!currentSchool?.id || !isStaffRole) return;
+    setPeriodLoading(true);
+
+    const { data } = await supabase
+      .from("period_attendance")
+      .select("*, school_users!period_attendance_student_id_fkey(full_name), timetable_entries(*, subjects(name), classes(name, grade))")
+      .eq("school_id", currentSchool.id)
+      .eq("event_date", selectedDate)
+      .order("created_at", { ascending: false });
+
+    let filtered = data || [];
+    if (periodViewGrade !== "all") {
+      filtered = filtered.filter((r: any) => r.timetable_entries?.classes?.grade === periodViewGrade);
+    }
+    if (periodViewClassId !== "all") {
+      filtered = filtered.filter((r: any) => r.timetable_entries?.class_id === periodViewClassId);
+    }
+    if (periodViewSubjectId !== "all") {
+      filtered = filtered.filter((r: any) => r.timetable_entries?.subject_id === periodViewSubjectId);
+    }
+
+    setPeriodRecords(filtered);
+    setPeriodLoading(false);
+  }, [currentSchool?.id, isStaffRole, selectedDate, periodViewGrade, periodViewClassId, periodViewSubjectId]);
+
+  useEffect(() => {
+    if (activeTab === "period-view" && isStaffRole) {
+      fetchPeriodAttendance();
+    }
+  }, [activeTab, fetchPeriodAttendance, isStaffRole]);
+
+  useEffect(() => { setPeriodViewClassId("all"); }, [periodViewGrade]);
 
   // Reset class filter when grade changes
   useEffect(() => {
