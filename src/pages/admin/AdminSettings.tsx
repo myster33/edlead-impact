@@ -1758,10 +1758,24 @@ function ScheduledReportSettings() {
 
 // ── Data Cleanup sub-component ──
 function DataCleanupCard() {
-  const LAST_RUN_KEY = "edlead_cleanup_last_run";
+  const SETTING_KEY = "cleanup_last_run";
   const [isRunning, setIsRunning] = useState(false);
   const [results, setResults] = useState<Record<string, number> | null>(null);
-  const [lastRun, setLastRun] = useState<string | null>(() => localStorage.getItem(LAST_RUN_KEY));
+  const [lastRun, setLastRun] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("system_settings")
+      .select("setting_value")
+      .eq("setting_key", SETTING_KEY)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.setting_value) {
+          const val = data.setting_value as { timestamp?: string };
+          if (val.timestamp) setLastRun(val.timestamp);
+        }
+      });
+  }, []);
 
   const handleRunCleanup = async () => {
     setIsRunning(true);
@@ -1771,7 +1785,13 @@ function DataCleanupCard() {
       if (error) throw error;
       setResults(data?.results || {});
       const now = new Date().toISOString();
-      localStorage.setItem(LAST_RUN_KEY, now);
+      // Upsert last-run timestamp into system_settings
+      await supabase
+        .from("system_settings")
+        .upsert(
+          { setting_key: SETTING_KEY, setting_value: { timestamp: now } as any, updated_at: now },
+          { onConflict: "setting_key" }
+        );
       setLastRun(now);
       toast({
         title: "Cleanup complete",

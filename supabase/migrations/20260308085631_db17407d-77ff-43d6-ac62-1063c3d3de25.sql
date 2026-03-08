@@ -1,0 +1,1 @@
+ALTER TABLE public.system_settings ADD CONSTRAINT system_settings_setting_key_unique UNIQUE (setting_key);
