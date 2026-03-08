@@ -1830,6 +1830,140 @@ export type Database = {
         }
         Relationships: []
       }
+      parent_link_requests: {
+        Row: {
+          created_at: string
+          id: string
+          matched_student_id: string | null
+          parent_user_id: string
+          relationship: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          school_id: string
+          status: string
+          student_id_number: string | null
+          student_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          matched_student_id?: string | null
+          parent_user_id: string
+          relationship?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id: string
+          status?: string
+          student_id_number?: string | null
+          student_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          matched_student_id?: string | null
+          parent_user_id?: string
+          relationship?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          school_id?: string
+          status?: string
+          student_id_number?: string | null
+          student_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_link_requests_matched_student_id_fkey"
+            columns: ["matched_student_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_link_requests_parent_user_id_fkey"
+            columns: ["parent_user_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_link_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parent_link_requests_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_registration_requests: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role: string
+          school_id: string
+          status: string
+          student_id_number: string | null
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role: string
+          school_id: string
+          status?: string
+          student_id_number?: string | null
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role?: string
+          school_id?: string
+          status?: string
+          student_id_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_registration_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_registration_requests_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           endpoint: string
