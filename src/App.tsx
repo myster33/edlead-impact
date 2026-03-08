@@ -74,6 +74,7 @@ const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 const SchoolTimetable = lazy(() => import("./pages/school/SchoolTimetable"));
 const SchoolPeriodAttendance = lazy(() => import("./pages/school/SchoolPeriodAttendance"));
 const SchoolSubjects = lazy(() => import("./pages/school/SchoolSubjects"));
+const SchoolEdleadChat = lazy(() => import("./pages/school/SchoolEdleadChat"));
 
 // User portal pages
 const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
