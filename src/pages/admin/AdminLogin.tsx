@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PortalLoadingScreen } from "@/components/shared/PortalLoadingScreen";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { Button } from "@/components/ui/button";
@@ -339,11 +340,7 @@ export default function AdminLogin() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PortalLoadingScreen portalName="Admin Portal" />;
   }
 
   // Show 2FA verification screen if needed

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { PortalLoadingScreen } from "@/components/shared/PortalLoadingScreen";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSchoolAuth } from "@/contexts/SchoolAuthContext";
 import { Button } from "@/components/ui/button";
@@ -303,11 +304,7 @@ export default function SchoolLogin() {
   };
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PortalLoadingScreen portalName="Schools Portal" />;
   }
 
   if (showTwoFaVerify) {
