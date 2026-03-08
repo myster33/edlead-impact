@@ -1295,9 +1295,81 @@ const AdminBlogManagement = () => {
           />
         ) : (
           <div className="rounded-md border overflow-x-auto">
+            {/* Bulk Actions Bar */}
+            {selectedBlogIds.size > 0 && (
+              <div className="p-3 border-b bg-primary/5">
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-primary" />
+                    <span className="font-medium">{selectedBlogIds.size} selected</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {statusFilter === "trash" ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={bulkRestoreBlogs}
+                          disabled={saving}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
+                          Restore Selected
+                        </Button>
+                        {adminUser?.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setBulkPurgeOpen(true)}
+                            disabled={saving}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Purge Selected
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {adminUser?.role === "admin" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setBulkTrashOpen(true)}
+                            disabled={saving}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Trash Selected
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedBlogIds(new Set())}
+                      disabled={saving}
+                    >
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedBlogIds.size === posts.length && posts.length > 0}
+                      onCheckedChange={() => {
+                        if (selectedBlogIds.size === posts.length) {
+                          setSelectedBlogIds(new Set());
+                        } else {
+                          setSelectedBlogIds(new Set(posts.map(p => p.id)));
+                        }
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead className="hidden sm:table-cell">Author</TableHead>
                   <TableHead className="hidden md:table-cell">Category</TableHead>
