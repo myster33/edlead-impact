@@ -263,6 +263,44 @@ export type Database = {
         }
         Relationships: []
       }
+      application_status_history: {
+        Row: {
+          application_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string
+          old_status: string
+          reason: string | null
+        }
+        Insert: {
+          application_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status: string
+          old_status: string
+          reason?: string | null
+        }
+        Update: {
+          application_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string
+          old_status?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_status_history_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applications: {
         Row: {
           academic_importance: string
@@ -270,6 +308,7 @@ export type Database = {
           country: string
           created_at: string
           date_of_birth: string
+          deleted_at: string | null
           formally_nominated: boolean
           full_name: string
           gender: string | null
@@ -319,6 +358,7 @@ export type Database = {
           country?: string
           created_at?: string
           date_of_birth: string
+          deleted_at?: string | null
           formally_nominated?: boolean
           full_name: string
           gender?: string | null
@@ -368,6 +408,7 @@ export type Database = {
           country?: string
           created_at?: string
           date_of_birth?: string
+          deleted_at?: string | null
           formally_nominated?: boolean
           full_name?: string
           gender?: string | null
@@ -498,6 +539,7 @@ export type Database = {
           category: string
           content: string
           created_at: string
+          deleted_at: string | null
           featured_image_url: string | null
           id: string
           is_featured: boolean
@@ -525,6 +567,7 @@ export type Database = {
           category?: string
           content: string
           created_at?: string
+          deleted_at?: string | null
           featured_image_url?: string | null
           id?: string
           is_featured?: boolean
@@ -552,6 +595,7 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string
+          deleted_at?: string | null
           featured_image_url?: string | null
           id?: string
           is_featured?: boolean
@@ -871,6 +915,45 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          error_message: string | null
+          id: string
+          recipient_email: string
+          related_record_id: string | null
+          related_table: string | null
+          resend_id: string | null
+          sent_at: string
+          status: string
+          subject: string
+          template_key: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          related_record_id?: string | null
+          related_table?: string | null
+          resend_id?: string | null
+          sent_at?: string
+          status?: string
+          subject: string
+          template_key?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          related_record_id?: string | null
+          related_table?: string | null
+          resend_id?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string
+          template_key?: string | null
+        }
+        Relationships: []
+      }
       email_template_history: {
         Row: {
           change_reason: string | null
@@ -1129,6 +1212,30 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          endpoint: string
+          id: string
+          ip_address: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          endpoint: string
+          id?: string
+          ip_address: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          endpoint?: string
+          id?: string
+          ip_address?: string
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           description: string | null
@@ -1197,11 +1304,53 @@ export type Database = {
         }
         Relationships: []
       }
+      webhooks: {
+        Row: {
+          created_at: string
+          events: string[]
+          failure_count: number
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          secret: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          events?: string[]
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          secret: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          events?: string[]
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          secret?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          _endpoint: string
+          _ip: string
+          _max_requests: number
+          _window_minutes: number
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

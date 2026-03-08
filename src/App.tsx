@@ -45,6 +45,8 @@ const AdminChat = lazy(() => import("./pages/admin/AdminChat"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminTestimonials = lazy(() => import("./pages/admin/AdminTestimonials"));
 const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
+const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
+const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
 
 const queryClient = new QueryClient();
 
@@ -151,6 +153,14 @@ const App = () => (
                 <Route
                   path="/admin/subscribers"
                   element={<ProtectedRoute moduleKey="subscribers"><AdminSubscribers /></ProtectedRoute>}
+                />
+                <Route
+                  path="/admin/email-logs"
+                  element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>}
+                />
+                <Route
+                  path="/admin/webhooks"
+                  element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>}
                 />
                 
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

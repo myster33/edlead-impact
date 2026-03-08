@@ -296,6 +296,11 @@ async function sendEmail(to: string, subject: string, html: string) {
   return response.json();
 }
 
+function getClientIp(req: Request): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+         req.headers.get("x-real-ip") || "unknown";
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -303,6 +308,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Rate limiting: 5 requests per hour
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseRL = createClient(supabaseUrl, supabaseKey);
+    const clientIp = getClientIp(req);
+    const { data: allowed } = await supabaseRL.rpc("check_rate_limit", {
+      _ip: clientIp, _endpoint: "submit-application", _max_requests: 5, _window_minutes: 60,
+    });
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: "Too many submissions. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // Check request size (max 100KB)
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength) > 100000) {

@@ -101,3 +101,9 @@ verify_jwt = false
 
 [functions.chat-story-submit]
 verify_jwt = false
+
+[functions.cleanup-stale-data]
+verify_jwt = false
+
+[functions.fire-webhook]
+verify_jwt = false

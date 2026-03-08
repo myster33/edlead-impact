@@ -1,126 +1,66 @@
 
 
-## Plan: Backend Upgrades (7 items)
+## Plan: Website Upgrades (7 items)
 
-Implementing rate limiting, database indexes, soft deletes, application status history, automated cleanup, email delivery tracking, and external webhooks.
-
----
-
-### 1. Rate Limiting on Public Endpoints
-
-**Database migration:** Create a `rate_limits` table with columns: `id` (uuid), `ip_address` (text), `endpoint` (text), `request_count` (int), `window_start` (timestamptz). Add a `check_rate_limit` security definer function that increments/resets counts per IP+endpoint within a time window. No RLS needed (accessed only via security definer function).
-
-**Edge functions to modify:** Add rate limit checks at the top of:
-- `submit-application/index.ts` — 5 requests/hour
-- `send-contact/index.ts` — 10 requests/hour
-- `chat-ai-faq/index.ts` — 30 requests/minute
-- `chat-apply/index.ts` — 20 requests/minute
-- `chat-story-submit/index.ts` — 10 requests/hour
-
-Each function extracts the client IP from headers and calls the rate limit check before proceeding.
+This covers all approved upgrades: accessibility, lazy loading, FAQ page, enhanced 404, page transitions, newsletter subscription, and testimonials on the Impact page.
 
 ---
 
-### 2. Database Indexes for Performance
-
-**Database migration:** Add indexes on:
-- `applications(status, created_at)`
-- `blog_posts(status, created_at)`
-- `chat_conversations(session_id)`
-- `chat_messages(conversation_id, created_at)`
-- `admin_audit_log(admin_user_id, created_at)`
-- `newsletter_subscribers(email)`
-- `blog_likes(blog_post_id)`
-- `blog_comments(blog_post_id)`
-- `admin_notifications(admin_user_id, is_read)`
-
----
-
-### 3. Soft Delete for Applications and Blog Posts
-
-**Database migration:**
-- Add `deleted_at` (timestamptz, nullable, default null) column to `applications` and `blog_posts`
-- Update existing RLS SELECT policies to add `AND deleted_at IS NULL` for non-admin users
-- Add admin-only policies that can see soft-deleted records
+### 1. Accessibility Improvements
 
 **Files to modify:**
-- `src/pages/admin/AdminApplications.tsx` — Add "Trash" tab showing soft-deleted applications, with restore/permanent-delete actions
-- `src/pages/admin/AdminBlogManagement.tsx` — Add "Trash" tab with restore/purge actions
-- `src/hooks/use-audit-log.ts` — Add `application_restored`, `application_purged`, `blog_restored`, `blog_purged` audit actions
+- `src/components/layout/Layout.tsx` — Add a skip-to-content link (`<a href="#main-content">`) and `id="main-content"` on `<main>`
+- `src/components/layout/Navbar.tsx` — Add `aria-label` to theme toggle button and mobile menu toggle
+- `src/components/chat/ChatWidget.tsx` — Add `aria-label` to open/close/minimize/send buttons, add `aria-live="polite"` on message list container
+- `src/components/home/HeroSection.tsx` — Add `aria-live="polite"` to the typing animation heading
+- `src/index.css` — Add visible focus ring utility (e.g., `focus-visible:ring-2 ring-primary ring-offset-2`) as a global style
 
----
-
-### 4. Application Status Change History
-
-**Database migration:**
-- Create `application_status_history` table: `id` (uuid), `application_id` (uuid), `old_status` (text), `new_status` (text), `changed_by` (uuid, nullable), `reason` (text, nullable), `changed_at` (timestamptz, default now())
-- Create a trigger function `track_application_status_change()` on `applications` that fires BEFORE UPDATE when `OLD.status != NEW.status`, inserting a row into the history table
-- RLS: admin-only SELECT and INSERT
+### 2. Lazy Loading Routes + Images
 
 **Files to modify:**
-- `src/components/admin/ApplicationDetailView.tsx` — Add a "Status History" section showing the timeline of status changes
-- `src/components/admin/ApplicationTimeline.tsx` — Enhance to pull from the new history table
+- `src/App.tsx` — Replace all eager imports with `React.lazy()` and wrap `<Routes>` children in `<Suspense>` with a loading fallback. Keep `Index` eager for fast first paint; lazy-load all other pages.
+- Image optimization across pages — Add `loading="lazy"` to below-the-fold images in `HeroSection` (images 2-5 only), programme, partners, and blog card components
 
----
-
-### 5. Automated Data Cleanup
-
-**Edge function to create:** `cleanup-stale-data/index.ts`
-- Archive/delete chat conversations older than 90 days
-- Remove expired dashboard announcements (where `expires_at < now()`)
-- Compress audit log entries older than 1 year (aggregate into summary rows)
-- Returns a summary of what was cleaned
-
-**Files to modify:**
-- `src/pages/admin/AdminSettings.tsx` — Add a "Run Cleanup" button in settings that invokes the function manually
-- `supabase/config.toml` — Add the function config with `verify_jwt = false`
-
----
-
-### 6. Email Delivery Tracking
-
-**Database migration:** Create `email_logs` table: `id` (uuid), `recipient_email` (text), `template_key` (text, nullable), `subject` (text), `status` (text, default 'sent'), `sent_at` (timestamptz, default now()), `resend_id` (text, nullable), `error_message` (text, nullable), `related_record_id` (uuid, nullable), `related_table` (text, nullable). RLS: admin-only SELECT and INSERT.
-
-**Edge functions to modify:** Update all notification functions that use Resend to log sends into `email_logs`:
-- `notify-applicant-approved`, `notify-applicant-rejected`, `notify-applicant-status-change`
-- `notify-author-approval`, `notify-author-rejection`, `notify-author-submission`
-- `notify-blog-submission`, `notify-admin-approval`, `notify-reviewer-assignment`
-- `send-certificate`, `send-contact`, `send-critical-alert`
-- `send-audit-digest`, `send-performance-report`, `send-scheduled-report`
+### 3. FAQ Page
 
 **Files to create:**
-- `src/pages/admin/AdminEmailLogs.tsx` — New admin page showing email delivery history with filtering by status, template, and date range
+- `src/pages/FAQ.tsx` — New page using `Layout`, `Helmet` with SEO tags, and `@radix-ui/react-accordion` for Q&A sections covering: Programme Overview, Eligibility & Admissions, Application Process, Technical Support, and General. Include 4-5 questions per section.
 
 **Files to modify:**
-- `src/components/admin/AdminLayout.tsx` — Add "Email Logs" navigation item
-- `src/App.tsx` — Add route for the email logs page
+- `src/App.tsx` — Add `/faq` route (lazy-loaded)
+- `scripts/generate-seo-pages.mjs` — Add `/faq` to the static routes array for prerendering
 
----
-
-### 7. External Webhooks
-
-**Database migration:** Create `webhooks` table: `id` (uuid), `url` (text), `events` (text array), `secret` (text), `is_active` (boolean, default true), `created_at` (timestamptz), `last_triggered_at` (timestamptz, nullable), `failure_count` (int, default 0). RLS: admin-only all operations.
-
-**Edge function to create:** `fire-webhook/index.ts` — Accepts event type and payload, queries active webhooks subscribed to that event, sends POST with HMAC-signed payload, updates `last_triggered_at`. Includes retry logic.
-
-**Edge functions to modify:** Add webhook firing after key events in:
-- `submit-application/index.ts` — `application.created` event
-- Application status change trigger — `application.status_changed` event
-
-**Files to create:**
-- `src/pages/admin/AdminWebhooks.tsx` — Admin page to manage webhook endpoints (add, edit, delete, test)
+### 4. Enhanced 404 Page
 
 **Files to modify:**
-- `src/components/admin/AdminLayout.tsx` — Add "Webhooks" navigation item
-- `src/App.tsx` — Add route for webhooks page
+- `src/pages/NotFound.tsx` — Wrap in `Layout`, add `Helmet` SEO tags, edLEAD branding, a friendly illustration (using Lucide icons), and navigation links to Home, About, Admissions, Contact, and Blog
+
+### 5. Page Transition Animations
+
+**Files to modify:**
+- `src/index.css` — Add a CSS `@keyframes` for fade-in-up animation
+- `src/components/layout/Layout.tsx` — Apply the animation class to the `<main>` element so each page fades in on mount
+
+### 6. Newsletter Subscription
+
+**Database migration:** Create a `newsletter_subscribers` table with columns: `id` (uuid), `email` (text, unique), `subscribed_at` (timestamptz, default now()), `is_active` (boolean, default true). Enable RLS with a public INSERT policy (anyone can subscribe) and admin-only SELECT.
+
+**Files to modify:**
+- `src/components/layout/Footer.tsx` — Add a newsletter signup form (email input + subscribe button) in the "Get in Touch" column, using the database client to insert into `newsletter_subscribers`
+
+### 7. Testimonials Section on Impact Page
+
+**Database migration:** Create a `testimonials` table with columns: `id` (uuid), `name` (text), `role` (text), `school` (text), `province` (text), `quote` (text), `is_published` (boolean, default false), `created_at` (timestamptz). Enable RLS with public SELECT for published testimonials, admin-only INSERT/UPDATE/DELETE.
+
+**Files to modify:**
+- `src/pages/Impact.tsx` — Add a "What Our Leaders Say" section between the Outcomes and Stats sections. Fetch published testimonials from the database and display them in a carousel (using the existing `embla-carousel-react` + autoplay). Each card shows the quote, name, role, and school. Include a static fallback with 3-4 hardcoded testimonials if the database returns empty.
 
 ---
 
 ### Technical Notes
-- Rate limiting uses a database function (security definer) to avoid RLS complexity
-- Soft delete modifies existing RLS policies — careful migration ordering required
-- Status history trigger runs as security definer to bypass RLS on insert
-- Email logging is added alongside existing Resend calls, not replacing them
-- Webhook secrets are generated server-side and used for HMAC-SHA256 signature verification
-- All new admin pages follow existing patterns: `AdminLayout` wrapper, table with filters, permission checks via `ProtectedRoute`
+- Lazy loading uses `React.lazy` + `Suspense` — no new dependencies needed
+- FAQ uses the already-installed `@radix-ui/react-accordion`
+- Newsletter and testimonials each need one new database table with RLS
+- Page transitions use pure CSS animation — no library needed
+- The testimonials carousel reuses the existing Embla carousel dependency
 
