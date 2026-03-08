@@ -187,7 +187,7 @@ export default function PortalLogin() {
           full_name: signupData.fullName,
           phone: signupData.phone || null,
           role: signupData.role,
-          school_id: signupData.schoolId,
+          school_id: null,
           student_id_number: signupData.studentIdNumber || null,
           id_passport_number: signupData.idPassportNumber,
           auth_user_id: authData.user?.id || null,
