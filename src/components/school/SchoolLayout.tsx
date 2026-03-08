@@ -18,7 +18,7 @@ import { AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2, Settings,
-  CalendarDays,
+  CalendarDays, Clock, BookMarked,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -29,6 +29,8 @@ const menuGroups = [
   ],
   [
     { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
+    { title: "Period Attendance", url: "/school/period-attendance", icon: BookMarked },
+    { title: "Timetable", url: "/school/timetable", icon: Clock },
     { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Classes", url: "/school/classes", icon: BookOpen },
     { title: "Students", url: "/school/students", icon: Users },
