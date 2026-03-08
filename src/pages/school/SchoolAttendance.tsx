@@ -451,7 +451,7 @@ export default function SchoolAttendance() {
                     </Select>
                   </div>
 
-                  {/* Staff/Student toggle — only for admin/HR (gate attendance) */}
+                  {/* Staff/Student toggle — only for admin/HR (school attendance) */}
                   {isStaffRole && (
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-foreground">Marking</label>
