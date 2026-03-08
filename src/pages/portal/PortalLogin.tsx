@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, Hash, CreditCard } from "lucide-react";
+import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, CreditCard } from "lucide-react";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
+import edleadIcon from "@/assets/edlead-icon.png";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
@@ -89,7 +90,7 @@ export default function PortalLogin() {
   const getLoginIcon = () => {
     switch (loginMethod) {
       case "phone": return <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
-      case "edleadid": return <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
+      case "edleadid": return <img src={edleadIcon} alt="edLEAD" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" />;
       default: return <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
     }
   };
@@ -358,7 +359,7 @@ export default function PortalLogin() {
                     className="flex-1 text-xs"
                     onClick={() => { setLoginMethod("edleadid"); setIdentifier(""); }}
                   >
-                    <Hash className="h-3 w-3 mr-1" />edLEAD ID
+                    <img src={edleadIcon} alt="edLEAD" className="h-3 w-3 mr-1" />edLEAD ID
                   </Button>
                 </div>
 
