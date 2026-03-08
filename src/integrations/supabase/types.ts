@@ -1259,6 +1259,355 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      marketplace_claims: {
+        Row: {
+          claimed_at: string
+          id: string
+          product_id: string
+          school_user_id: string | null
+          status: string
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          product_id: string
+          school_user_id?: string | null
+          status?: string
+          user_email: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          product_id?: string
+          school_user_id?: string | null
+          status?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_claims_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_claims_school_user_id_fkey"
+            columns: ["school_user_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_orders: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          payment_status: string
+          product_id: string
+          quantity: number
+          school_user_id: string | null
+          stripe_checkout_session_id: string | null
+          stripe_payment_intent_id: string | null
+          total_amount: number
+          unit_price: number
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string
+          variant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_status?: string
+          product_id: string
+          quantity?: number
+          school_user_id?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          total_amount: number
+          unit_price: number
+          updated_at?: string
+          user_email: string
+          user_id: string
+          user_name: string
+          variant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          payment_status?: string
+          product_id?: string
+          quantity?: number
+          school_user_id?: string | null
+          stripe_checkout_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          total_amount?: number
+          unit_price?: number
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_school_user_id_fkey"
+            columns: ["school_user_id"]
+            isOneToOne: false
+            referencedRelation: "school_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_orders_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_products: {
+        Row: {
+          category_id: string | null
+          coupon_code: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string
+          discount_percentage: number | null
+          discounted_price: number | null
+          eligibility: string[] | null
+          expires_at: string | null
+          external_url: string | null
+          gallery_urls: string[] | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_featured: boolean
+          original_price: number
+          product_type: string
+          quantity_claimed: number
+          quantity_limit: number | null
+          seller_logo_url: string | null
+          seller_name: string | null
+          short_description: string | null
+          starts_at: string | null
+          tags: string[] | null
+          terms_conditions: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description: string
+          discount_percentage?: number | null
+          discounted_price?: number | null
+          eligibility?: string[] | null
+          expires_at?: string | null
+          external_url?: string | null
+          gallery_urls?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          original_price: number
+          product_type?: string
+          quantity_claimed?: number
+          quantity_limit?: number | null
+          seller_logo_url?: string | null
+          seller_name?: string | null
+          short_description?: string | null
+          starts_at?: string | null
+          tags?: string[] | null
+          terms_conditions?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string
+          discount_percentage?: number | null
+          discounted_price?: number | null
+          eligibility?: string[] | null
+          expires_at?: string | null
+          external_url?: string | null
+          gallery_urls?: string[] | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_featured?: boolean
+          original_price?: number
+          product_type?: string
+          quantity_claimed?: number
+          quantity_limit?: number | null
+          seller_logo_url?: string | null
+          seller_name?: string | null
+          short_description?: string | null
+          starts_at?: string | null
+          tags?: string[] | null
+          terms_conditions?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          is_approved: boolean
+          product_id: string
+          rating: number
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          product_id: string
+          rating: number
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          is_approved?: boolean
+          product_id?: string
+          rating?: number
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_variants: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          name: string
+          price_adjustment: number | null
+          product_id: string
+          stock_quantity: number | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          name: string
+          price_adjustment?: number | null
+          product_id: string
+          stock_quantity?: number | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          name?: string
+          price_adjustment?: number | null
+          product_id?: string
+          stock_quantity?: number | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_logs: {
         Row: {
           application_id: string | null
