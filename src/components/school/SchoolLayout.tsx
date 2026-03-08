@@ -29,6 +29,7 @@ const menuItems = [
   { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
   { title: "Link requests", url: "/school/link-requests", icon: Link2 },
   { title: "Reports", url: "/school/reports", icon: FileText },
+  { title: "Settings", url: "/school/settings", icon: Settings },
 ];
 
 export function SchoolLayout({ children }: { children: React.ReactNode }) {
