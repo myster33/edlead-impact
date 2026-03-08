@@ -202,7 +202,7 @@ export default function PortalLogin() {
 
       toast({
         title: "Registration Submitted!",
-        description: "Please verify your email, then wait for your school to approve your account. Your User ID will be sent via email and SMS once approved.",
+        description: "Please verify your email. Your edLEAD ID will be sent via email and SMS once your account is set up.",
       });
 
       setTab("login");
