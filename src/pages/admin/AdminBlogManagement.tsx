@@ -1687,18 +1687,24 @@ const AdminBlogManagement = () => {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Blog Post</DialogTitle>
+            <DialogTitle>{statusFilter === "trash" ? "Permanently Delete?" : "Move to Trash?"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedPost?.title}"? This action cannot be undone.
+              {statusFilter === "trash"
+                ? `Are you sure you want to permanently delete "${selectedPost?.title}"? This action cannot be undone.`
+                : `Are you sure you want to move "${selectedPost?.title}" to trash? You can restore it later.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={saving}>
+            <Button
+              variant="destructive"
+              onClick={statusFilter === "trash" ? handlePurge : handleDelete}
+              disabled={saving}
+            >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Delete
+              {statusFilter === "trash" ? "Delete Permanently" : "Move to Trash"}
             </Button>
           </DialogFooter>
         </DialogContent>
