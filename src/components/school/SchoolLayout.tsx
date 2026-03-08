@@ -19,7 +19,7 @@ import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
+  LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, AlertTriangle,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Settings,
   CalendarDays, Clock, BookMarked, Bell, GraduationCap, MessageCircle,
 } from "lucide-react";
