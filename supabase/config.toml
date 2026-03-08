@@ -119,3 +119,6 @@ verify_jwt = false
 
 [functions.school-send-2fa-code]
 verify_jwt = false
+
+[functions.portal-register]
+verify_jwt = false
