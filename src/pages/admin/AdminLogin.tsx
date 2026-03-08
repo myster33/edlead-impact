@@ -164,12 +164,11 @@ export default function AdminLogin() {
       // Check if user is approved (exists in admin_users table)
       const { data: adminData, error: adminError } = await supabase
         .from("admin_users")
-        .select("id")
+        .select("id, two_fa_enabled, two_fa_channel")
         .eq("user_id", data.user?.id)
         .maybeSingle();
 
       if (!adminData) {
-        // User exists but not approved yet - sign them out
         await supabase.auth.signOut();
         toast({
           title: "Pending Approval",
@@ -179,14 +178,22 @@ export default function AdminLogin() {
         return;
       }
 
-      // Check if MFA is required
+      // Check if TOTP MFA is required
       const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const verifiedFactors = factorsData?.totp?.filter(f => f.status === "verified") || [];
       
-      if (verifiedFactors.length > 0) {
-        // User has MFA enabled, need to verify
-        setMfaFactorId(verifiedFactors[0].id);
+      const hasTotp = verifiedFactors.length > 0;
+      const hasEmailSms = !!(adminData as any).two_fa_enabled;
+
+      if (hasTotp || hasEmailSms) {
+        if (hasTotp) {
+          setMfaFactorId(verifiedFactors[0].id);
+        }
         setMfaAdminUserId(adminData?.id || null);
+        if (hasEmailSms) {
+          setEmailSmsTwoFa(true);
+          setEmailSmsTwoFaChannel((adminData as any).two_fa_channel || "email");
+        }
         setShowMfaVerify(true);
       } else {
         toast({
