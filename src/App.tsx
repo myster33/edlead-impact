@@ -71,6 +71,7 @@ const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 
 // General portal pages
 const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
+const PortalResetPassword = lazy(() => import("./pages/portal/PortalResetPassword"));
 const PortalDashboard = lazy(() => import("./pages/portal/PortalDashboard"));
 const PortalAttendance = lazy(() => import("./pages/portal/PortalAttendance"));
 const PortalAbsenceRequest = lazy(() => import("./pages/portal/PortalAbsenceRequest"));
