@@ -62,6 +62,7 @@ const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
 const SchoolResetPassword = lazy(() => import("./pages/school/SchoolResetPassword"));
 const SchoolDashboard = lazy(() => import("./pages/school/SchoolDashboard"));
 const SchoolAttendance = lazy(() => import("./pages/school/SchoolAttendance"));
+const SchoolCalendar = lazy(() => import("./pages/school/SchoolCalendar"));
 const SchoolClasses = lazy(() => import("./pages/school/SchoolClasses"));
 const SchoolStudents = lazy(() => import("./pages/school/SchoolStudents"));
 const SchoolStaff = lazy(() => import("./pages/school/SchoolStaff"));
@@ -151,6 +152,7 @@ const App = () => (
                     <Route path="/school/reset-password" element={<SchoolResetPassword />} />
                     <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
                     <Route path="/school/attendance" element={<SchoolProtectedRoute><SchoolAttendance /></SchoolProtectedRoute>} />
+                    <Route path="/school/calendar" element={<SchoolProtectedRoute><SchoolCalendar /></SchoolProtectedRoute>} />
                     <Route path="/school/classes" element={<SchoolProtectedRoute><SchoolClasses /></SchoolProtectedRoute>} />
                     <Route path="/school/students" element={<SchoolProtectedRoute><SchoolStudents /></SchoolProtectedRoute>} />
                     <Route path="/school/staff" element={<SchoolProtectedRoute><SchoolStaff /></SchoolProtectedRoute>} />
