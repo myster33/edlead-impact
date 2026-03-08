@@ -222,6 +222,13 @@ export default function AdminApplications() {
         .select("*")
         .order("created_at", { ascending: false });
 
+      // Filter by trash view
+      if (showTrash) {
+        query = query.not("deleted_at", "is", null);
+      } else {
+        query = query.is("deleted_at", null);
+      }
+
       // Apply region restrictions for reviewers/viewers
       if (regionInfo.hasRestrictions) {
         if (regionInfo.country) {
