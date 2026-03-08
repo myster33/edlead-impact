@@ -942,14 +942,24 @@ export default function AdminApplications() {
                     <Kanban className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0}>
+                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={filteredApplications.length === 0 || showTrash}>
                   <Download className="h-4 w-4 mr-2" />
                   CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={exportToPDF} disabled={filteredApplications.length === 0}>
+                <Button variant="outline" size="sm" onClick={exportToPDF} disabled={filteredApplications.length === 0 || showTrash}>
                   <FileText className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
+                {adminUser?.role === "admin" && (
+                  <Button
+                    variant={showTrash ? "destructive" : "outline"}
+                    size="sm"
+                    onClick={() => { setShowTrash(!showTrash); setSelectedIds(new Set()); }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {showTrash ? "Back to Active" : "Trash"}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={fetchApplications} disabled={isLoading}>
                   <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
                   Refresh
