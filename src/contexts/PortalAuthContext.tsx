@@ -12,6 +12,8 @@ interface PortalUser {
   phone?: string | null;
   profile_picture_url?: string | null;
   student_id_number?: string | null;
+  user_code?: string | null;
+  id_passport_number?: string | null;
   is_active: boolean;
 }
 
@@ -32,7 +34,7 @@ interface PortalAuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   switchSchool: (schoolId: string) => void;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (identifier: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -121,7 +123,28 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (identifier: string, password: string) => {
+    const trimmed = identifier.trim();
+    const isEmail = trimmed.includes("@");
+
+    let email = trimmed;
+
+    // If not email, look up the email via edge function
+    if (!isEmail) {
+      try {
+        const { data, error } = await supabase.functions.invoke("portal-lookup-login", {
+          body: { identifier: trimmed },
+        });
+
+        if (error || !data?.email) {
+          return { error: new Error("No account found with that identifier") };
+        }
+        email = data.email;
+      } catch {
+        return { error: new Error("Failed to look up account") };
+      }
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };

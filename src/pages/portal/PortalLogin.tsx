@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound } from "lucide-react";
+import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, Hash, CreditCard } from "lucide-react";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -17,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  identifier: z.string().min(3, "Please enter your email, phone number, or User ID"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -25,6 +25,7 @@ const signupSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
+  idPassportNumber: z.string().min(5, "ID or Passport number is required"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   role: z.enum(["student", "parent", "educator"], { required_error: "Select a role" }),
@@ -39,17 +40,18 @@ export default function PortalLogin() {
   const [tab, setTab] = useState("login");
 
   // Login state
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showTwoFaVerify, setShowTwoFaVerify] = useState(false);
   const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("email");
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone" | "userid">("email");
 
   // Signup state
   const [signupData, setSignupData] = useState({
-    fullName: "", email: "", phone: "", password: "", confirmPassword: "",
+    fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "",
     role: "" as string, schoolId: "", studentIdNumber: "",
   });
   const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
@@ -96,10 +98,34 @@ export default function PortalLogin() {
     s.name.toLowerCase().includes(schoolSearch.toLowerCase())
   );
 
+  const getLoginPlaceholder = () => {
+    switch (loginMethod) {
+      case "phone": return "+27 xxx xxx xxxx";
+      case "userid": return "EDL-XXXXXX";
+      default: return "you@example.com";
+    }
+  };
+
+  const getLoginIcon = () => {
+    switch (loginMethod) {
+      case "phone": return <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
+      case "userid": return <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
+      default: return <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
+  const getLoginLabel = () => {
+    switch (loginMethod) {
+      case "phone": return "Phone Number";
+      case "userid": return "User ID";
+      default: return "Email";
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      loginSchema.parse({ email, password });
+      loginSchema.parse({ identifier, password });
       setErrors({});
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -112,9 +138,9 @@ export default function PortalLogin() {
 
     setIsLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(identifier, password);
       if (error) {
-        toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+        toast({ title: "Login Failed", description: error.message || "Invalid credentials.", variant: "destructive" });
         return;
       }
 
@@ -183,6 +209,7 @@ export default function PortalLogin() {
           role: signupData.role,
           school_id: signupData.schoolId,
           student_id_number: signupData.studentIdNumber || null,
+          id_passport_number: signupData.idPassportNumber,
           auth_user_id: authData.user?.id || null,
         } as any);
 
@@ -195,11 +222,11 @@ export default function PortalLogin() {
 
       toast({
         title: "Registration Submitted!",
-        description: "Please verify your email, then wait for your school to approve your account.",
+        description: "Please verify your email, then wait for your school to approve your account. Your User ID will be sent via email and SMS once approved.",
       });
 
       setTab("login");
-      setSignupData({ fullName: "", email: "", phone: "", password: "", confirmPassword: "", role: "", schoolId: "", studentIdNumber: "" });
+      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", schoolId: "", studentIdNumber: "" });
     } finally {
       setIsSigningUp(false);
     }
@@ -324,13 +351,52 @@ export default function PortalLogin() {
 
             <TabsContent value="login">
               <form onSubmit={handleSignIn} className="space-y-4">
+                {/* Login method selector */}
+                <div className="flex items-center gap-1 p-1 rounded-lg bg-muted/50">
+                  <Button
+                    type="button"
+                    variant={loginMethod === "email" ? "default" : "ghost"}
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => { setLoginMethod("email"); setIdentifier(""); }}
+                  >
+                    <Mail className="h-3 w-3 mr-1" />Email
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={loginMethod === "phone" ? "default" : "ghost"}
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => { setLoginMethod("phone"); setIdentifier(""); }}
+                  >
+                    <Phone className="h-3 w-3 mr-1" />Phone
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={loginMethod === "userid" ? "default" : "ghost"}
+                    size="sm"
+                    className="flex-1 text-xs"
+                    onClick={() => { setLoginMethod("userid"); setIdentifier(""); }}
+                  >
+                    <Hash className="h-3 w-3 mr-1" />User ID
+                  </Button>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-identifier">{getLoginLabel()}</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="login-email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" disabled={isLoading} />
+                    {getLoginIcon()}
+                    <Input
+                      id="login-identifier"
+                      type={loginMethod === "email" ? "email" : "text"}
+                      placeholder={getLoginPlaceholder()}
+                      value={identifier}
+                      onChange={e => setIdentifier(e.target.value)}
+                      className="pl-10"
+                      disabled={isLoading}
+                    />
                   </div>
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  {errors.identifier && <p className="text-sm text-destructive">{errors.identifier}</p>}
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -378,6 +444,15 @@ export default function PortalLogin() {
                     <Input placeholder="Your full name" value={signupData.fullName} onChange={e => setSignupData(d => ({ ...d, fullName: e.target.value }))} className="pl-10" />
                   </div>
                   {signupErrors.fullName && <p className="text-sm text-destructive">{signupErrors.fullName}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>ID / Passport Number</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Your ID or Passport number" value={signupData.idPassportNumber} onChange={e => setSignupData(d => ({ ...d, idPassportNumber: e.target.value }))} className="pl-10" />
+                  </div>
+                  {signupErrors.idPassportNumber && <p className="text-sm text-destructive">{signupErrors.idPassportNumber}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -454,7 +529,7 @@ export default function PortalLogin() {
                   {isSigningUp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : "Create Account"}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  Your school will need to approve your account before you can log in.
+                  Your school will need to approve your account. Once approved, your User ID will be sent via email and SMS.
                 </p>
               </form>
             </TabsContent>

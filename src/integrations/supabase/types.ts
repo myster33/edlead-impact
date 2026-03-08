@@ -1835,12 +1835,14 @@ export type Database = {
           created_at: string
           id: string
           matched_student_id: string | null
+          parent_approved: boolean | null
           parent_user_id: string
           relationship: string
           reviewed_at: string | null
           reviewed_by: string | null
           school_id: string
           status: string
+          student_approved: boolean | null
           student_id_number: string | null
           student_name: string
         }
@@ -1848,12 +1850,14 @@ export type Database = {
           created_at?: string
           id?: string
           matched_student_id?: string | null
+          parent_approved?: boolean | null
           parent_user_id: string
           relationship?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           school_id: string
           status?: string
+          student_approved?: boolean | null
           student_id_number?: string | null
           student_name: string
         }
@@ -1861,12 +1865,14 @@ export type Database = {
           created_at?: string
           id?: string
           matched_student_id?: string | null
+          parent_approved?: boolean | null
           parent_user_id?: string
           relationship?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           school_id?: string
           status?: string
+          student_approved?: boolean | null
           student_id_number?: string | null
           student_name?: string
         }
@@ -1908,6 +1914,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          id_passport_number: string | null
           phone: string | null
           rejection_reason: string | null
           reviewed_at: string | null
@@ -1923,6 +1930,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          id_passport_number?: string | null
           phone?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -1938,6 +1946,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          id_passport_number?: string | null
           phone?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -2021,6 +2030,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          id_passport_number: string | null
           is_active: boolean
           phone: string | null
           profile_picture_url: string | null
@@ -2030,6 +2040,7 @@ export type Database = {
           two_fa_channel: string
           two_fa_enabled: boolean
           updated_at: string
+          user_code: string | null
           user_id: string
         }
         Insert: {
@@ -2037,6 +2048,7 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          id_passport_number?: string | null
           is_active?: boolean
           phone?: string | null
           profile_picture_url?: string | null
@@ -2046,6 +2058,7 @@ export type Database = {
           two_fa_channel?: string
           two_fa_enabled?: boolean
           updated_at?: string
+          user_code?: string | null
           user_id: string
         }
         Update: {
@@ -2053,6 +2066,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          id_passport_number?: string | null
           is_active?: boolean
           phone?: string | null
           profile_picture_url?: string | null
@@ -2062,6 +2076,7 @@ export type Database = {
           two_fa_channel?: string
           two_fa_enabled?: boolean
           updated_at?: string
+          user_code?: string | null
           user_id?: string
         }
         Relationships: [
@@ -2318,6 +2333,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      generate_user_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
