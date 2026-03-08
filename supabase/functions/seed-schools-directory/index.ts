@@ -15,16 +15,40 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const { schools } = await req.json();
+    const { raw_data } = await req.json();
 
-    if (!Array.isArray(schools) || schools.length === 0) {
-      return new Response(JSON.stringify({ error: "No schools data provided" }), {
+    if (!raw_data || typeof raw_data !== "string") {
+      return new Response(JSON.stringify({ error: "raw_data string required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Batch insert in chunks of 500
+    const lines = raw_data.split("\n").filter((l: string) => l.trim().startsWith("|") && !l.includes("District Name") && !l.includes("|-"));
+    
+    const schools = lines.map((line: string) => {
+      const cols = line.split("|").map((c: string) => c.trim()).filter((_: string, i: number) => i > 0);
+      // cols: 0=District, 1=DistCode, 2=GautengRef, 3=EmisNumber, 4=InstitutionName, 5=Level, ...
+      // 13=StreetNo, 14=StreetName, 15=Township, 16=Suburb, 17=Town
+      const streetNo = cols[13] || "";
+      const streetName = cols[14] || "";
+      const township = cols[15] || "";
+      const suburb = cols[16] || "";
+      const town = cols[17] || "";
+      const address = [streetNo, streetName, township, suburb, town].filter(Boolean).join(", ");
+
+      return {
+        emis_number: cols[3] || "",
+        name: cols[4] || "",
+        address: address || null,
+        province: "Gauteng",
+        district: cols[0] || null,
+        level: cols[5] || null,
+        sector: cols[8] || null,
+      };
+    }).filter((s: any) => s.emis_number && s.name);
+
+    // Batch insert
     const chunkSize = 500;
     let inserted = 0;
     
@@ -35,13 +59,13 @@ Deno.serve(async (req) => {
         .upsert(chunk, { onConflict: "emis_number", ignoreDuplicates: true });
       
       if (error) {
-        console.error(`Error inserting chunk at ${i}:`, error);
+        console.error(`Error inserting chunk at ${i}:`, error.message);
       } else {
         inserted += chunk.length;
       }
     }
 
-    return new Response(JSON.stringify({ success: true, inserted }), {
+    return new Response(JSON.stringify({ success: true, parsed: schools.length, inserted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
