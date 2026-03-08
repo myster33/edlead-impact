@@ -15,8 +15,110 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { auth_user_id, full_name, email, phone, role, student_id_number, id_passport_number } = await req.json();
+    const { auth_user_id, full_name, email, phone, role, student_id_number, id_passport_number, resend_user_id } = await req.json();
 
+    // Handle resend notification for existing user
+    if (resend_user_id) {
+      const { data: existingUser, error: fetchError } = await supabase
+        .from("school_users")
+        .select("id, user_code, full_name, email, phone")
+        .eq("id", resend_user_id)
+        .single();
+
+      if (fetchError || !existingUser) {
+        return new Response(JSON.stringify({ error: "User not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const results: { sms?: string; email?: string } = {};
+
+      // Send SMS
+      if (existingUser.phone) {
+        try {
+          const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+          const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
+          const messagingSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
+
+          if (twilioSid && twilioAuth && messagingSid) {
+            const cleanPhone = existingUser.phone.replace(/\s/g, "");
+            const body = `Hi ${existingUser.full_name}, your updated edLEAD ID is: ${existingUser.user_code}. You can use this ID, your email, or phone number to log in at edlead.co.za/portal/login`;
+
+            const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+            const twilioResp = await fetch(twilioUrl, {
+              method: "POST",
+              headers: {
+                "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                MessagingServiceSid: messagingSid,
+                To: cleanPhone,
+                Body: body,
+              }),
+            });
+
+            results.sms = twilioResp.ok ? "sent" : "failed";
+          }
+        } catch {
+          results.sms = "failed";
+        }
+      }
+
+      // Send email
+      try {
+        const resendKey = Deno.env.get("RESEND_API_KEY");
+        if (resendKey) {
+          const emailResp = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "edLEAD <noreply@edlead.co.za>",
+              to: [existingUser.email],
+              subject: "Your Updated edLEAD ID",
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+                  <div style="text-align:center;margin-bottom:20px;">
+                    <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="height:50px;" />
+                  </div>
+                  <h2 style="color:#ED7621;">Your Updated edLEAD ID</h2>
+                  <p>Dear ${existingUser.full_name},</p>
+                  <p>Your edLEAD ID has been updated. Here is your new ID:</p>
+                  <div style="background:#f5f5f5;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
+                    <p style="margin:0 0 8px 0;color:#666;font-size:14px;">Your edLEAD ID</p>
+                    <p style="margin:0;font-size:28px;font-weight:bold;color:#ED7621;letter-spacing:2px;">${existingUser.user_code}</p>
+                  </div>
+                  <p>You can log in using any of the following:</p>
+                  <ul>
+                    <li><strong>Email:</strong> ${existingUser.email}</li>
+                    ${existingUser.phone ? `<li><strong>Phone:</strong> ${existingUser.phone}</li>` : ""}
+                    <li><strong>edLEAD ID:</strong> ${existingUser.user_code}</li>
+                  </ul>
+                  <p>Visit <a href="https://edlead.co.za/portal/login" style="color:#ED7621;">edlead.co.za/portal/login</a> to sign in.</p>
+                  <hr style="margin:20px 0;border:none;border-top:1px solid #eee;" />
+                  <p style="color:#999;font-size:12px;">This is an automated message from edLEAD. Please do not reply.</p>
+                </div>
+              `,
+            }),
+          });
+
+          results.email = emailResp.ok ? "sent" : "failed";
+        }
+      } catch {
+        results.email = "failed";
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, user_code: existingUser.user_code, notifications: results }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Original signup flow
     if (!auth_user_id || !full_name || !email || !role) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
@@ -24,7 +126,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Map signup role to school_user_role
     const roleMap: Record<string, string> = {
       student: "student",
       parent: "parent",
@@ -32,8 +133,6 @@ Deno.serve(async (req) => {
     };
     const schoolRole = roleMap[role] || "student";
 
-    // Create the school_user entry (no school_id - user will link later)
-    // user_code is auto-generated by the trigger
     const { data: insertedUser, error: insertError } = await supabase
       .from("school_users")
       .insert({
@@ -61,7 +160,6 @@ Deno.serve(async (req) => {
     const userCode = insertedUser.user_code;
     const results: { sms?: string; email?: string } = {};
 
-    // Send SMS with user_code if phone exists
     if (phone) {
       try {
         const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
@@ -93,7 +191,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Send email with user_code
     try {
       const resendKey = Deno.env.get("RESEND_API_KEY");
       if (resendKey) {

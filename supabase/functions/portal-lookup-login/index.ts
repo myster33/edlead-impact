@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
     // Determine identifier type
     const isEmail = trimmed.includes("@");
-    const isUserCode = trimmed.toUpperCase().startsWith("EDL-");
+    const isUserCode = /^ED\d{6}$/i.test(trimmed);
     const isPhone = /^\+?\d{7,15}$/.test(trimmed.replace(/\s/g, ""));
 
     let query = supabase

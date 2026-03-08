@@ -84,7 +84,7 @@ export default function PortalLogin() {
   const getLoginPlaceholder = () => {
     switch (loginMethod) {
       case "phone": return "+27 xxx xxx xxxx";
-      case "edleadid": return "EDL-XXXXXX";
+      case "edleadid": return "EDXXXXXX";
       default: return "you@example.com";
     }
   };
