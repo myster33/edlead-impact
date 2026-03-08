@@ -27,6 +27,7 @@ const menuItems = [
   { title: "Students", url: "/school/students", icon: Users },
   { title: "Staff", url: "/school/staff", icon: UserCheck },
   { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
+  { title: "Link requests", url: "/school/link-requests", icon: Link2 },
   { title: "Reports", url: "/school/reports", icon: FileText },
 ];
 
