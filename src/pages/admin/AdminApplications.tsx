@@ -80,7 +80,7 @@ import { TableSkeleton } from "@/components/admin/TableSkeleton";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import { ApplicationKanban } from "@/components/admin/ApplicationKanban";
 import { ApplicationTimeline } from "@/components/admin/ApplicationTimeline";
-import { LayoutList, Kanban } from "lucide-react";
+import { LayoutList, Kanban, Trash2, ArchiveRestore } from "lucide-react";
 
 
 interface Application {
