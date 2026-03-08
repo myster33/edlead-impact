@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
 
         if (twilioSid && twilioAuth && messagingSid) {
           const phone = schoolUser.phone.replace(/\s/g, "");
-          const body = `Welcome to edLEAD Portal, ${schoolUser.full_name}! Your User ID is: ${schoolUser.user_code}. You can use this ID, your email, or phone number to log in.`;
+          const body = `Welcome to edLEAD Portal, ${schoolUser.full_name}! Your edLEAD ID is: ${schoolUser.user_code}. You can use this ID, your email, or phone number to log in.`;
 
           const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
           const twilioResp = await fetch(twilioUrl, {
