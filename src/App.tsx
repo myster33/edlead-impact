@@ -70,7 +70,7 @@ const SchoolReports = lazy(() => import("./pages/school/SchoolReports"));
 const SchoolLinkRequests = lazy(() => import("./pages/school/SchoolLinkRequests"));
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 
-// General portal pages
+// User portal pages
 const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
 const PortalResetPassword = lazy(() => import("./pages/portal/PortalResetPassword"));
 const PortalDashboard = lazy(() => import("./pages/portal/PortalDashboard"));
