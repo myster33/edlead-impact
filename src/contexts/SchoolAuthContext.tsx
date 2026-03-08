@@ -19,6 +19,7 @@ interface School {
   id: string;
   name: string;
   school_code: string;
+  emis_number?: string | null;
   logo_url?: string | null;
   is_verified: boolean;
 }
@@ -31,7 +32,7 @@ interface SchoolAuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, schoolName: string, schoolAddress: string, province: string, role: "school_admin" | "hr", fullName: string, phone: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, schoolName: string, schoolAddress: string, province: string, role: "school_admin" | "hr", fullName: string, phone: string, emisNumber: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -67,7 +68,7 @@ export function SchoolAuthProvider({ children }: { children: React.ReactNode }) 
       // Fetch school details
       const { data: school } = await supabase
         .from("schools")
-        .select("id, name, school_code, logo_url, is_verified")
+        .select("id, name, school_code, emis_number, logo_url, is_verified")
         .eq("id", data.school_id)
         .single();
 
@@ -114,7 +115,8 @@ export function SchoolAuthProvider({ children }: { children: React.ReactNode }) 
   const signUp = async (
     email: string, password: string,
     schoolName: string, schoolAddress: string, province: string,
-    role: "school_admin" | "hr", fullName: string, phone: string
+    role: "school_admin" | "hr", fullName: string, phone: string,
+    emisNumber: string
   ) => {
     // 1. Create auth user
     const { data, error } = await supabase.auth.signUp({
@@ -126,8 +128,8 @@ export function SchoolAuthProvider({ children }: { children: React.ReactNode }) 
     if (error) return { error: error as Error };
     if (!data.user) return { error: new Error("Failed to create account") };
 
-    // 2. Generate school code
-    const schoolCode = schoolName.substring(0, 3).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+    // 2. Use EMIS number as school code, or generate one
+    const schoolCode = emisNumber || (schoolName.substring(0, 3).toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase());
 
     // 3. Create the school (unverified)
     const { data: school, error: schoolError } = await supabase
@@ -135,6 +137,7 @@ export function SchoolAuthProvider({ children }: { children: React.ReactNode }) 
       .insert({
         name: schoolName,
         school_code: schoolCode,
+        emis_number: emisNumber || null,
         address: schoolAddress,
         province,
         is_verified: false,
