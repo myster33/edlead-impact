@@ -1381,7 +1381,13 @@ const AdminBlogManagement = () => {
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
-                  <TableRow key={post.id}>
+                  <TableRow key={post.id} className={selectedBlogIds.has(post.id) ? "bg-primary/5" : ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedBlogIds.has(post.id)}
+                        onCheckedChange={() => toggleBlogSelect(post.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium max-w-[200px] sm:max-w-xs truncate">
                       {post.title}
                     </TableCell>
