@@ -54,6 +54,7 @@ const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
 const AdminSchools = lazy(() => import("./pages/admin/AdminSchools"));
+const AdminMarketplace = lazy(() => import("./pages/admin/AdminMarketplace"));
 
 // School portal pages
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -75,6 +76,7 @@ const PortalMyChildren = lazy(() => import("./pages/portal/PortalMyChildren"));
 const PortalMyClasses = lazy(() => import("./pages/portal/PortalMyClasses"));
 const PortalECard = lazy(() => import("./pages/portal/PortalECard"));
 const PortalReports = lazy(() => import("./pages/portal/PortalReports"));
+const PortalMarketplace = lazy(() => import("./pages/portal/PortalMarketplace"));
 
 const queryClient = new QueryClient();
 
@@ -136,6 +138,7 @@ const App = () => (
                     <Route path="/admin/email-logs" element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>} />
                     <Route path="/admin/webhooks" element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>} />
                     <Route path="/admin/schools" element={<ProtectedRoute moduleKey="schools"><AdminSchools /></ProtectedRoute>} />
+                    <Route path="/admin/marketplace" element={<ProtectedRoute moduleKey="marketplace"><AdminMarketplace /></ProtectedRoute>} />
 
                     {/* School Portal Routes */}
                     <Route path="/school/login" element={<SchoolLogin />} />
@@ -157,6 +160,7 @@ const App = () => (
                     <Route path="/portal/my-classes" element={<PortalProtectedRoute><PortalMyClasses /></PortalProtectedRoute>} />
                     <Route path="/portal/e-card" element={<PortalProtectedRoute><PortalECard /></PortalProtectedRoute>} />
                     <Route path="/portal/reports" element={<PortalProtectedRoute><PortalReports /></PortalProtectedRoute>} />
+                    <Route path="/portal/marketplace" element={<PortalProtectedRoute><PortalMarketplace /></PortalProtectedRoute>} />
                     
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
