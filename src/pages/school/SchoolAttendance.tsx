@@ -811,6 +811,7 @@ export default function SchoolAttendance() {
                             </TableCell>
                             <TableCell className="text-center text-sm">
                               {record.checkOut ? new Date(record.checkOut.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                              {record.checkOut?.isDefault && <span className="text-xs text-muted-foreground ml-1">(Default)</span>}
                             </TableCell>
                           </TableRow>
                         ))}
