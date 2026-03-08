@@ -337,8 +337,8 @@ export default function SchoolSettings() {
                   </Button>
                 ) : codeSent ? (
                   <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      A 6-digit code has been sent to <strong>{schoolUser?.email}</strong>. Enter it below to enable 2FA.
+                  <p className="text-sm text-muted-foreground">
+                      A 6-digit code has been sent to {twoFaChannel === "sms" ? <strong>{schoolUser?.phone}</strong> : <strong>{schoolUser?.email}</strong>}. Enter it below to enable 2FA.
                     </p>
                     <div className="flex gap-2 max-w-xs">
                       <Input
