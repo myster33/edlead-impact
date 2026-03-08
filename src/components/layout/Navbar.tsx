@@ -39,20 +39,7 @@ export const Navbar = () => {
     <header className="sticky top-0 z-50 w-full">
       {/* Top bar */}
       <div className="bg-primary">
-        <div className="container flex h-10 items-center justify-between">
-          <div className="flex items-center gap-1">
-            <Link to="/portal/login">
-              <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 text-xs">
-                Student/Parent Portal
-              </Button>
-            </Link>
-            <span className="text-primary-foreground/40">|</span>
-            <Link to="/school/login">
-              <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 text-xs">
-                School Portal
-              </Button>
-            </Link>
-          </div>
+        <div className="container flex h-10 items-center justify-end">
           <Link to="/contact">
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10">
               Contact Us
