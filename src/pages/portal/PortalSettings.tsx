@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, ShieldCheck, ShieldOff, Phone, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { StudentSubjectPicker } from "@/components/portal/StudentSubjectPicker";
 
 export default function PortalSettings() {
   const { portalUser } = usePortalAuth();
