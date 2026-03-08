@@ -219,6 +219,17 @@ export default function SchoolAttendance() {
       }
     });
 
+    // Apply default 5PM checkout for students with check-in but no check-out
+    const today = new Date().toISOString().split("T")[0];
+    const applyDefault = selectedDate < today || (selectedDate === today && new Date().getHours() >= 17);
+    if (applyDefault) {
+      map.forEach((entry) => {
+        if (entry.checkIn && !entry.checkOut) {
+          entry.checkOut = { status: "present", event_type: "check_out", timestamp: `${selectedDate}T17:00:00`, isDefault: true };
+        }
+      });
+    }
+
     setClassAttendanceRecords(Array.from(map.values()));
     setClassAttendanceLoading(false);
   }, [currentSchool?.id, isStaffRole, classViewClassId, classViewGrade, classesForSelectedGrade, classes, selectedDate]);
@@ -472,6 +483,25 @@ export default function SchoolAttendance() {
   const lateCount = Object.values(markingStatus).filter(v => v === "late").length;
   const absentCount = Object.values(markingStatus).filter(v => v === "absent").length;
 
+  // Helper: should we apply default 5PM checkout?
+  const shouldApplyDefaultCheckout = useCallback((date: string) => {
+    const today = new Date().toISOString().split("T")[0];
+    if (date < today) return true; // past date
+    if (date === today) {
+      const now = new Date();
+      return now.getHours() >= 17; // today after 5PM
+    }
+    return false;
+  }, []);
+
+  // Create a default 5PM checkout event object
+  const makeDefaultCheckout = useCallback((date: string) => ({
+    status: "present",
+    event_type: "check_out",
+    timestamp: `${date}T17:00:00`,
+    isDefault: true,
+  }), []);
+
   // Group records by user for the records view
   const groupedRecords = useMemo(() => {
     const map = new Map<string, { name: string; role: string; checkIn?: any; checkOut?: any }>();
@@ -489,8 +519,18 @@ export default function SchoolAttendance() {
       if (event.event_type === "check_in") entry.checkIn = event;
       if (event.event_type === "check_out") entry.checkOut = event;
     });
+
+    // Apply default 5PM checkout for students who checked in but didn't check out
+    if (shouldApplyDefaultCheckout(selectedDate)) {
+      map.forEach((entry) => {
+        if (entry.checkIn && !entry.checkOut && entry.role === "student") {
+          entry.checkOut = makeDefaultCheckout(selectedDate);
+        }
+      });
+    }
+
     return Array.from(map.values());
-  }, [attendanceEvents]);
+  }, [attendanceEvents, selectedDate, shouldApplyDefaultCheckout, makeDefaultCheckout]);
 
   // Class attendance summary stats
   const classAttendanceSummary = useMemo(() => {
@@ -564,6 +604,7 @@ export default function SchoolAttendance() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="records">Records</TabsTrigger>
+            <TabsTrigger value="mark">Mark School Attendance</TabsTrigger>
             {isStaffRole && (
               <TabsTrigger value="class-view" className="gap-1.5">
                 <GraduationCap className="h-3.5 w-3.5" />
@@ -576,7 +617,6 @@ export default function SchoolAttendance() {
                 Period Attendance
               </TabsTrigger>
             )}
-            <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
           </TabsList>
 
           {/* School Attendance Records tab */}
@@ -638,6 +678,7 @@ export default function SchoolAttendance() {
                           </TableCell>
                           <TableCell className="text-center text-sm">
                             {record.checkOut ? new Date(record.checkOut.timestamp).toLocaleTimeString() : "—"}
+                            {record.checkOut?.isDefault && <span className="text-xs text-muted-foreground ml-1">(Default)</span>}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -770,6 +811,7 @@ export default function SchoolAttendance() {
                             </TableCell>
                             <TableCell className="text-center text-sm">
                               {record.checkOut ? new Date(record.checkOut.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                              {record.checkOut?.isDefault && <span className="text-xs text-muted-foreground ml-1">(Default)</span>}
                             </TableCell>
                           </TableRow>
                         ))}
