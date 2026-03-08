@@ -35,6 +35,7 @@ export default function SchoolSettings() {
   const [verifyCode, setVerifyCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [disabling, setDisabling] = useState(false);
+  const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("sms");
 
   useEffect(() => {
     if (schoolUser) {
