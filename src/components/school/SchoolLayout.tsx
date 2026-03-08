@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
-  LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox,
+  LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -27,6 +27,7 @@ const menuItems = [
   { title: "Students", url: "/school/students", icon: Users },
   { title: "Staff", url: "/school/staff", icon: UserCheck },
   { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
+  { title: "Link requests", url: "/school/link-requests", icon: Link2 },
   { title: "Reports", url: "/school/reports", icon: FileText },
 ];
 
