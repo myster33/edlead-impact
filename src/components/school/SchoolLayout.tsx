@@ -13,6 +13,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2, Settings,
@@ -20,17 +22,27 @@ import {
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 
-const menuItems = [
-  { title: "Dashboard", url: "/school/dashboard", icon: LayoutDashboard },
-  { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
-  { title: "Classes", url: "/school/classes", icon: BookOpen },
-  { title: "Students", url: "/school/students", icon: Users },
-  { title: "Staff", url: "/school/staff", icon: UserCheck },
-  { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
-  { title: "Link requests", url: "/school/link-requests", icon: Link2 },
-  { title: "Reports", url: "/school/reports", icon: FileText },
-  { title: "Settings", url: "/school/settings", icon: Settings },
+const menuGroups = [
+  [
+    { title: "Dashboard", url: "/school/dashboard", icon: LayoutDashboard },
+  ],
+  [
+    { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
+    { title: "Classes", url: "/school/classes", icon: BookOpen },
+    { title: "Students", url: "/school/students", icon: Users },
+    { title: "Staff", url: "/school/staff", icon: UserCheck },
+  ],
+  [
+    { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
+    { title: "Link requests", url: "/school/link-requests", icon: Link2 },
+    { title: "Reports", url: "/school/reports", icon: FileText },
+  ],
+  [
+    { title: "Settings", url: "/school/settings", icon: Settings },
+  ],
 ];
+
+const allMenuItems = menuGroups.flat();
 
 export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -40,12 +52,15 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const displayName = schoolUser?.full_name || schoolUser?.email?.split("@")[0] || "User";
   const initials = displayName.split(/\s/).slice(0, 2).map(s => s.charAt(0).toUpperCase()).join("");
 
-  const filteredItems = useMemo(() => {
+  const filteredGroups = useMemo(() => {
     if (schoolUser?.role === "hr") {
-      return menuItems.filter(i => ["Dashboard", "Staff", "Reports"].includes(i.title));
+      const allowed = ["Dashboard", "Staff", "Reports"];
+      return menuGroups.map(g => g.filter(i => allowed.includes(i.title))).filter(g => g.length > 0);
     }
-    return menuItems;
+    return menuGroups;
   }, [schoolUser?.role]);
+
+  const filteredItems = filteredGroups.flat();
 
   return (
     <SidebarProvider>
@@ -61,7 +76,11 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
             </Link>
             {currentSchool && (
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <School className="h-3 w-3" />
+                {currentSchool.logo_url ? (
+                  <img src={currentSchool.logo_url} alt="" className="h-4 w-4 rounded object-cover" />
+                ) : (
+                  <School className="h-3 w-3" />
+                )}
                 <span className="truncate">{currentSchool.name}</span>
               </div>
             )}
@@ -69,19 +88,24 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
 
           <SidebarContent>
             <SidebarMenu className="px-2 py-1">
-              {filteredItems.map(item => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive}>
-                      <Link to={item.url} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {filteredGroups.map((group, gi) => (
+                <div key={gi}>
+                  {gi > 0 && <Separator className="my-1.5" />}
+                  {group.map(item => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild isActive={isActive}>
+                          <Link to={item.url} className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </div>
+              ))}
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
@@ -110,6 +134,9 @@ export function SchoolLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="ml-2 flex items-center gap-2">
                   <Avatar className="h-8 w-8">
+                    {schoolUser?.profile_picture_url && (
+                      <AvatarImage src={schoolUser.profile_picture_url} alt={displayName} />
+                    )}
                     <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block text-left">
