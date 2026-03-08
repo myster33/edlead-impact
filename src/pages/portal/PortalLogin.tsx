@@ -306,7 +306,7 @@ export default function PortalLogin() {
         {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
       </Button>
 
-      <Card className="w-full max-w-lg">
+      <Card className="w-full max-w-lg animate-login-slide-up">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-2">
             <div className="relative h-14 w-auto">

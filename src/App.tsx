@@ -30,6 +30,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 const CheckStatus = lazy(() => import("./pages/CheckStatus"));
 const FAQ = lazy(() => import("./pages/FAQ"));
+const UserAccess = lazy(() => import("./pages/UserAccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin pages
@@ -118,6 +119,7 @@ const App = () => (
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/check-status" element={<CheckStatus />} />
                     <Route path="/faq" element={<FAQ />} />
+                    <Route path="/user-access" element={<UserAccess />} />
                     
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />
