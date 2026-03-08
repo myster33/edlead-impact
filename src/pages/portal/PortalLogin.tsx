@@ -62,9 +62,6 @@ export default function PortalLogin() {
   const [resetEmail, setResetEmail] = useState("");
   const [isResetting, setIsResetting] = useState(false);
 
-  // Schools list
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
-  const [schoolSearch, setSchoolSearch] = useState("");
 
   const { signIn, user, isAuthenticated, isLoading: authLoading } = usePortalAuth();
   const navigate = useNavigate();
