@@ -239,7 +239,7 @@ serve(async (req: Request): Promise<Response> => {
             </table>
 
             <div style="margin-top: 30px; text-align: center;">
-              <a class="cta-button" href="https://edlead.lovable.app/admin/dashboard" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+              <a class="cta-button" href="https://edlead.co.za/admin/dashboard" style="display: inline-block; background: #1e40af; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600;">
                 View Full Dashboard
               </a>
             </div>

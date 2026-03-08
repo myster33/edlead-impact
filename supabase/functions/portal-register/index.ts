@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
         if (twilioSid && twilioAuth && messagingSid) {
           const cleanPhone = phone.replace(/\s/g, "");
-          const body = `Welcome to edLEAD, ${full_name}! Your edLEAD ID is: ${userCode}. You can use this ID, your email, or phone number to log in at edlead.lovable.app/portal/login`;
+          const body = `Welcome to edLEAD, ${full_name}! Your edLEAD ID is: ${userCode}. You can use this ID, your email, or phone number to log in at edlead.co.za/portal/login`;
 
           const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
           const twilioResp = await fetch(twilioUrl, {
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
             html: `
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <div style="text-align:center;margin-bottom:20px;">
-                  <img src="https://edlead.lovable.app/images/edlead-logo-email-header.png" alt="edLEAD" style="height:50px;" />
+                  <img src="https://edlead.co.za/images/edlead-logo-email-header.png" alt="edLEAD" style="height:50px;" />
                 </div>
                 <h2 style="color:#ED7621;">Welcome to edLEAD!</h2>
                 <p>Dear ${full_name},</p>
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
                   <li><strong>edLEAD ID:</strong> ${userCode}</li>
                 </ul>
                 <p>Once logged in, you can link your account to a school from your portal dashboard.</p>
-                <p>Visit <a href="https://edlead.lovable.app/portal/login" style="color:#ED7621;">edlead.lovable.app/portal/login</a> to sign in.</p>
+                <p>Visit <a href="https://edlead.co.za/portal/login" style="color:#ED7621;">edlead.co.za/portal/login</a> to sign in.</p>
                 <hr style="margin:20px 0;border:none;border-top:1px solid #eee;" />
                 <p style="color:#999;font-size:12px;">This is an automated message from edLEAD. Please do not reply.</p>
               </div>
