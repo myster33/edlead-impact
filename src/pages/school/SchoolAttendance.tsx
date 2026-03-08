@@ -564,6 +564,7 @@ export default function SchoolAttendance() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="records">Records</TabsTrigger>
+            <TabsTrigger value="mark">Mark School Attendance</TabsTrigger>
             {isStaffRole && (
               <TabsTrigger value="class-view" className="gap-1.5">
                 <GraduationCap className="h-3.5 w-3.5" />
@@ -576,7 +577,6 @@ export default function SchoolAttendance() {
                 Period Attendance
               </TabsTrigger>
             )}
-            <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
           </TabsList>
 
           {/* School Attendance Records tab */}
