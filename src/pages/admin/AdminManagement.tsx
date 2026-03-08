@@ -1164,11 +1164,19 @@ export default function AdminManagement() {
                         Admin
                       </div>
                     </SelectItem>
+                    {isSuperAdmin && (
+                      <SelectItem value="super_admin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-destructive" />
+                          Super Admin
+                        </div>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               
-              {bulkApproveRole !== "admin" && (
+              {bulkApproveRole !== "admin" && bulkApproveRole !== "super_admin" && (
                 <>
                   <div className="space-y-2">
                     <Label>Country (Optional)</Label>
