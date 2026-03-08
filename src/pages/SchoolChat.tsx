@@ -417,6 +417,9 @@ export default function SchoolChat() {
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-foreground"
                     }`}>
+                      {msg.senderName && (
+                        <span className="block text-[10px] font-semibold mb-0.5">{msg.senderName}</span>
+                      )}
                       {renderContent(msg.content)}
                     </div>
                     {msg.role === "user" && (
