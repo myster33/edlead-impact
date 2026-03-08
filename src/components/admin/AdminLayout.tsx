@@ -54,6 +54,7 @@ import {
   FileBarChart,
   Search,
   ChevronDown,
+  School,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
