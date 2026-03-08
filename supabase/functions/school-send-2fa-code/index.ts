@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, code } = body;
+    const { action, code, test_email } = body;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     if (action === "send") {
