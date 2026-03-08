@@ -66,6 +66,10 @@ export default function SchoolLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
+  
+  // 2FA login state
+  const [showTwoFaVerify, setShowTwoFaVerify] = useState(false);
+  const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("email");
 
   // Register state
   const [regFullName, setRegFullName] = useState("");
