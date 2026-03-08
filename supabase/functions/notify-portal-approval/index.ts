@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
                 <ul>
                   <li><strong>Email:</strong> ${schoolUser.email}</li>
                   ${schoolUser.phone ? `<li><strong>Phone:</strong> ${schoolUser.phone}</li>` : ""}
-                  <li><strong>User ID:</strong> ${schoolUser.user_code}</li>
+                  <li><strong>edLEAD ID:</strong> ${schoolUser.user_code}</li>
                 </ul>
                 <p>Visit <a href="https://edlead.lovable.app/portal/login" style="color:#ED7621;">edlead.lovable.app/portal/login</a> to sign in.</p>
                 <hr style="margin:20px 0;border:none;border-top:1px solid #eee;" />
