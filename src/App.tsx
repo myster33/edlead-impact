@@ -68,7 +68,7 @@ const SchoolStudents = lazy(() => import("./pages/school/SchoolStudents"));
 const SchoolStaff = lazy(() => import("./pages/school/SchoolStaff"));
 const SchoolAbsenceRequests = lazy(() => import("./pages/school/SchoolAbsenceRequests"));
 const SchoolReports = lazy(() => import("./pages/school/SchoolReports"));
-const SchoolLinkRequests = lazy(() => import("./pages/school/SchoolLinkRequests"));
+// SchoolLinkRequests removed - merged into Staff and Students pages
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 const SchoolTimetable = lazy(() => import("./pages/school/SchoolTimetable"));
 const SchoolPeriodAttendance = lazy(() => import("./pages/school/SchoolPeriodAttendance"));
@@ -160,7 +160,7 @@ const App = () => (
                     <Route path="/school/staff" element={<SchoolProtectedRoute><SchoolStaff /></SchoolProtectedRoute>} />
                     <Route path="/school/absence-requests" element={<SchoolProtectedRoute><SchoolAbsenceRequests /></SchoolProtectedRoute>} />
                     <Route path="/school/reports" element={<SchoolProtectedRoute><SchoolReports /></SchoolProtectedRoute>} />
-                    <Route path="/school/link-requests" element={<SchoolProtectedRoute><SchoolLinkRequests /></SchoolProtectedRoute>} />
+                    {/* Link requests route removed - merged into Staff and Students */}
                     <Route path="/school/settings" element={<SchoolProtectedRoute><SchoolSettings /></SchoolProtectedRoute>} />
                     <Route path="/school/timetable" element={<SchoolProtectedRoute><SchoolTimetable /></SchoolProtectedRoute>} />
                     <Route path="/school/period-attendance" element={<SchoolProtectedRoute><SchoolPeriodAttendance /></SchoolProtectedRoute>} />
