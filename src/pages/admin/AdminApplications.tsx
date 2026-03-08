@@ -172,6 +172,8 @@ export default function AdminApplications() {
   const [showTrash, setShowTrash] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [purgeId, setPurgeId] = useState<string | null>(null);
+  const [bulkTrashOpen, setBulkTrashOpen] = useState(false);
+  const [bulkPurgeOpen, setBulkPurgeOpen] = useState(false);
 
   // Presence: who is viewing the currently open application
   const presenceAdmin = useMemo(() => adminUser ? {
