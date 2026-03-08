@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardCheck, Calendar, UserCheck, Users, Loader2, CheckCircle, LogIn, LogOut, GraduationCap, Building, Filter } from "lucide-react";
+import { ClipboardCheck, Calendar, UserCheck, Users, Loader2, CheckCircle, LogIn, LogOut, GraduationCap, Building, Filter, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const GRADE_OPTIONS = [
@@ -56,6 +56,14 @@ export default function SchoolAttendance() {
   const [classViewClassId, setClassViewClassId] = useState<string>("all");
   const [classAttendanceRecords, setClassAttendanceRecords] = useState<any[]>([]);
   const [classAttendanceLoading, setClassAttendanceLoading] = useState(false);
+
+  // Period attendance view filters (admin)
+  const [periodViewGrade, setPeriodViewGrade] = useState<string>("all");
+  const [periodViewClassId, setPeriodViewClassId] = useState<string>("all");
+  const [periodViewSubjectId, setPeriodViewSubjectId] = useState<string>("all");
+  const [periodRecords, setPeriodRecords] = useState<any[]>([]);
+  const [periodLoading, setPeriodLoading] = useState(false);
+  const [allSubjects, setAllSubjects] = useState<any[]>([]);
 
   const isClassTeacher = schoolUser?.role === "class_teacher";
   const isSubjectTeacher = schoolUser?.role === "subject_teacher";
@@ -237,12 +245,59 @@ export default function SchoolAttendance() {
       .then(({ data }) => setClasses(data || []));
   }, [currentSchool?.id]);
 
+  // Fetch subjects for period attendance filter
+  useEffect(() => {
+    if (!currentSchool?.id || !isStaffRole) return;
+    supabase
+      .from("subjects")
+      .select("id, name")
+      .eq("school_id", currentSchool.id)
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => setAllSubjects(data || []));
+  }, [currentSchool?.id, isStaffRole]);
+
   // Fetch class attendance when tab or filters change
   useEffect(() => {
     if (activeTab === "class-view" && isStaffRole && classes.length > 0) {
       fetchClassAttendance();
     }
   }, [activeTab, fetchClassAttendance, isStaffRole, classes]);
+
+  // Fetch period attendance for admin view
+  const fetchPeriodAttendance = useCallback(async () => {
+    if (!currentSchool?.id || !isStaffRole) return;
+    setPeriodLoading(true);
+
+    const { data } = await supabase
+      .from("period_attendance")
+      .select("*, school_users!period_attendance_student_id_fkey(full_name), timetable_entries(*, subjects(name), classes(name, grade))")
+      .eq("school_id", currentSchool.id)
+      .eq("event_date", selectedDate)
+      .order("created_at", { ascending: false });
+
+    let filtered = data || [];
+    if (periodViewGrade !== "all") {
+      filtered = filtered.filter((r: any) => r.timetable_entries?.classes?.grade === periodViewGrade);
+    }
+    if (periodViewClassId !== "all") {
+      filtered = filtered.filter((r: any) => r.timetable_entries?.class_id === periodViewClassId);
+    }
+    if (periodViewSubjectId !== "all") {
+      filtered = filtered.filter((r: any) => r.timetable_entries?.subject_id === periodViewSubjectId);
+    }
+
+    setPeriodRecords(filtered);
+    setPeriodLoading(false);
+  }, [currentSchool?.id, isStaffRole, selectedDate, periodViewGrade, periodViewClassId, periodViewSubjectId]);
+
+  useEffect(() => {
+    if (activeTab === "period-view" && isStaffRole) {
+      fetchPeriodAttendance();
+    }
+  }, [activeTab, fetchPeriodAttendance, isStaffRole]);
+
+  useEffect(() => { setPeriodViewClassId("all"); }, [periodViewGrade]);
 
   // Reset class filter when grade changes
   useEffect(() => {
@@ -447,6 +502,18 @@ export default function SchoolAttendance() {
     return { total, present, late, absent, unmarked };
   }, [classAttendanceRecords]);
 
+  const periodSummary = useMemo(() => {
+    const total = periodRecords.length;
+    const present = periodRecords.filter(r => r.status === "present").length;
+    const absent = periodRecords.filter(r => r.status === "absent").length;
+    return { total, present, absent };
+  }, [periodRecords]);
+
+  const periodFilteredClasses = useMemo(() => {
+    if (periodViewGrade === "all") return classes;
+    return classes.filter(c => c.grade === periodViewGrade);
+  }, [classes, periodViewGrade]);
+
   const availableClasses = isTeacherRole ? teacherClasses : classes;
 
   const attendanceContextLabel = isTeacherRole ? "Class Attendance" : "School Attendance";
@@ -501,6 +568,12 @@ export default function SchoolAttendance() {
               <TabsTrigger value="class-view" className="gap-1.5">
                 <GraduationCap className="h-3.5 w-3.5" />
                 Class Attendance
+              </TabsTrigger>
+            )}
+            {isStaffRole && (
+              <TabsTrigger value="period-view" className="gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" />
+                Period Attendance
               </TabsTrigger>
             )}
             <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
@@ -708,7 +781,122 @@ export default function SchoolAttendance() {
             </TabsContent>
           )}
 
-          {/* Mark Attendance tab */}
+          {/* Period Attendance View (Admin only) */}
+          {isStaffRole && (
+            <TabsContent value="period-view" className="mt-4 space-y-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end flex-wrap">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                        <Filter className="h-3.5 w-3.5" /> Grade
+                      </label>
+                      <Select value={periodViewGrade} onValueChange={setPeriodViewGrade}>
+                        <SelectTrigger className="w-44">
+                          <SelectValue placeholder="All grades" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Grades</SelectItem>
+                          {availableGrades.map(g => (
+                            <SelectItem key={g} value={g}>{g}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-foreground">Class</label>
+                      <Select value={periodViewClassId} onValueChange={setPeriodViewClassId}>
+                        <SelectTrigger className="w-52">
+                          <SelectValue placeholder="All classes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Classes</SelectItem>
+                          {periodFilteredClasses.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name} ({c.grade})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-foreground">Subject</label>
+                      <Select value={periodViewSubjectId} onValueChange={setPeriodViewSubjectId}>
+                        <SelectTrigger className="w-52">
+                          <SelectValue placeholder="All subjects" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Subjects</SelectItem>
+                          {allSubjects.map(s => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {periodRecords.length > 0 && (
+                <div className="flex gap-3 flex-wrap">
+                  <Badge variant="outline">{periodSummary.total} Total</Badge>
+                  <Badge variant="default">{periodSummary.present} Present</Badge>
+                  <Badge variant="destructive">{periodSummary.absent} Absent</Badge>
+                </div>
+              )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Period Attendance — {selectedDate}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {periodLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : periodRecords.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">No period attendance records found for the selected filters.</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-8">#</TableHead>
+                          <TableHead>Student</TableHead>
+                          <TableHead>Subject</TableHead>
+                          <TableHead>Class</TableHead>
+                          <TableHead>Grade</TableHead>
+                          <TableHead>Period</TableHead>
+                          <TableHead className="text-center">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {periodRecords.map((record: any, idx: number) => (
+                          <TableRow key={record.id}>
+                            <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
+                            <TableCell className="font-medium">{record.school_users?.full_name || "—"}</TableCell>
+                            <TableCell>{record.timetable_entries?.subjects?.name || "—"}</TableCell>
+                            <TableCell>{record.timetable_entries?.classes?.name || "—"}</TableCell>
+                            <TableCell>{record.timetable_entries?.classes?.grade || "—"}</TableCell>
+                            <TableCell className="text-sm">
+                              {record.timetable_entries?.start_time?.slice(0, 5)}–{record.timetable_entries?.end_time?.slice(0, 5)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={record.status === "present" ? "default" : "destructive"}>
+                                {record.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+
           <TabsContent value="mark" className="mt-4 space-y-4">
             <Card>
               <CardContent className="pt-6">
