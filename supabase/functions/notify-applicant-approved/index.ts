@@ -147,7 +147,7 @@ async function getMessageTemplate(supabase: any, templateKey: string, channel: s
   }
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
+async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string; resendId?: string }> {
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -167,9 +167,31 @@ async function sendEmail(to: string, subject: string, html: string): Promise<{ s
       const errorData = await response.json();
       return { success: false, error: errorData.message || "Failed to send email" };
     }
-    return { success: true };
+    const data = await response.json();
+    return { success: true, resendId: data.id };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+}
+
+async function logEmailSend(supabase: any, details: {
+  recipientEmail: string; subject: string; success: boolean;
+  resendId?: string; errorMessage?: string; templateKey?: string;
+  relatedTable?: string; relatedRecordId?: string;
+}) {
+  try {
+    await supabase.from("email_logs").insert({
+      recipient_email: details.recipientEmail,
+      subject: details.subject,
+      status: details.success ? "sent" : "failed",
+      resend_id: details.resendId || null,
+      error_message: details.errorMessage || null,
+      template_key: details.templateKey || null,
+      related_table: details.relatedTable || null,
+      related_record_id: details.relatedRecordId || null,
+    });
+  } catch (err) {
+    console.error("Failed to log email:", err);
   }
 }
 
