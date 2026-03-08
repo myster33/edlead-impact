@@ -1399,14 +1399,14 @@ export default function AdminManagement() {
         </Dialog>
 
         {/* Role Legend */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Eye className="h-5 w-5 text-muted-foreground" />
                 Viewer
               </CardTitle>
-              <CardDescription>Can only view applications</CardDescription>
+              <CardDescription>Read-only access within assigned modules and region</CardDescription>
             </CardHeader>
           </Card>
           <Card>
@@ -1415,7 +1415,7 @@ export default function AdminManagement() {
                 <Edit className="h-5 w-5 text-blue-500" />
                 Reviewer
               </CardTitle>
-              <CardDescription>Can view and approve/reject applications</CardDescription>
+              <CardDescription>Can make changes within assigned modules and region</CardDescription>
             </CardHeader>
           </Card>
           <Card>
@@ -1424,7 +1424,16 @@ export default function AdminManagement() {
                 <Shield className="h-5 w-5 text-primary" />
                 Admin
               </CardTitle>
-              <CardDescription>Full access including managing admins</CardDescription>
+              <CardDescription>Full access, can appoint viewers and reviewers</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="h-5 w-5 text-destructive" />
+                Super Admin
+              </CardTitle>
+              <CardDescription>Unrestricted access, can manage all roles</CardDescription>
             </CardHeader>
           </Card>
         </div>
