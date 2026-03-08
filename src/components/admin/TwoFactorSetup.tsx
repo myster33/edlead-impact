@@ -77,6 +77,7 @@ export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminP
 
   useEffect(() => {
     checkMfaStatus();
+    checkChannelMfaStatus();
   }, []);
 
   useEffect(() => {
