@@ -1538,6 +1538,45 @@ export default function AdminApplications() {
           </AlertDialogContent>
         </AlertDialog>
 
+        {/* Soft Delete Confirmation */}
+        <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Move to Trash?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This application will be moved to trash. You can restore it later from the Trash view.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => deleteId && softDeleteApplication(deleteId)}>
+                Move to Trash
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Permanent Delete Confirmation */}
+        <AlertDialog open={!!purgeId} onOpenChange={() => setPurgeId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently Delete?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently remove the application. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => purgeId && purgeApplication(purgeId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Social Banner Preview Dialog */}
         {selectedApplication && (
           <SocialBannerPreview
