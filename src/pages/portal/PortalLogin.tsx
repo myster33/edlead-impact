@@ -29,7 +29,6 @@ const signupSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
   role: z.enum(["student", "parent", "educator"], { required_error: "Select a role" }),
-  schoolId: z.string().min(1, "Please select a school"),
   studentIdNumber: z.string().optional(),
 }).refine(d => d.password === d.confirmPassword, {
   message: "Passwords do not match",
