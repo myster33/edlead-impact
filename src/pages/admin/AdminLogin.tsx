@@ -342,13 +342,15 @@ export default function AdminLogin() {
   }
 
   // Show 2FA verification screen if needed
-  if (showMfaVerify && mfaFactorId) {
+  if (showMfaVerify) {
     return (
       <TwoFactorVerify
-        factorId={mfaFactorId}
+        factorId={mfaFactorId || undefined}
         adminUserId={mfaAdminUserId || undefined}
         onVerified={handleMfaVerified}
         onCancel={handleMfaCancel}
+        portalType={emailSmsTwoFa ? "admin" : undefined}
+        twoFaChannel={emailSmsTwoFaChannel}
       />
     );
   }
