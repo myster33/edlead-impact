@@ -566,6 +566,22 @@ const handler = async (req: Request): Promise<Response> => {
           app.full_name
         );
 
+        // Log learner email
+        try {
+          await supabase.from("email_logs").insert({
+            recipient_email: app.student_email,
+            subject: "Congratulations! Your edLEAD Certificate of Accomplishment",
+            status: learnerResult.success ? "sent" : "failed",
+            resend_id: learnerResult.resendId || null,
+            error_message: learnerResult.error || null,
+            template_key: "certificate-learner",
+            related_table: "certificate_recipients",
+            related_record_id: recipient.id,
+          });
+        } catch (logErr) {
+          console.error("Failed to log email:", logErr);
+        }
+
         let parentSent = false;
         
         // Send parent email if parent emails are enabled, and parent email is provided and different from learner
