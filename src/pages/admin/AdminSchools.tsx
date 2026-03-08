@@ -211,6 +211,13 @@ export default function AdminSchools() {
           </CardContent>
         </Card>
       </div>
+
+      <SchoolEditDialog
+        school={editSchool}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={fetchSchools}
+      />
     </AdminLayout>
   );
 }
