@@ -502,6 +502,18 @@ export default function SchoolAttendance() {
     return { total, present, late, absent, unmarked };
   }, [classAttendanceRecords]);
 
+  const periodSummary = useMemo(() => {
+    const total = periodRecords.length;
+    const present = periodRecords.filter(r => r.status === "present").length;
+    const absent = periodRecords.filter(r => r.status === "absent").length;
+    return { total, present, absent };
+  }, [periodRecords]);
+
+  const periodFilteredClasses = useMemo(() => {
+    if (periodViewGrade === "all") return classes;
+    return classes.filter(c => c.grade === periodViewGrade);
+  }, [classes, periodViewGrade]);
+
   const availableClasses = isTeacherRole ? teacherClasses : classes;
 
   const attendanceContextLabel = isTeacherRole ? "Class Attendance" : "School Attendance";
