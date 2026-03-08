@@ -310,13 +310,13 @@ export default function SchoolSettings() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {mfaEnabled ? <ShieldCheck className="h-5 w-5 text-green-600" /> : <ShieldOff className="h-5 w-5 text-muted-foreground" />}
+                  {mfaEnabled ? <ShieldCheck className="h-5 w-5 text-primary" /> : <ShieldOff className="h-5 w-5 text-muted-foreground" />}
                   Two-Factor Authentication
                 </CardTitle>
                 <CardDescription>
                   {mfaEnabled
-                    ? "2FA is enabled. Your account has an extra layer of security."
-                    : "Add an extra layer of security to your account using a TOTP authenticator app."}
+                    ? "2FA is enabled. A verification code will be sent to your email on login."
+                    : "Add an extra layer of security. A code will be emailed to you each time you sign in."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -325,33 +325,33 @@ export default function SchoolSettings() {
                     <Loader2 className="h-4 w-4 animate-spin" /> Checking status...
                   </div>
                 ) : mfaEnabled ? (
-                  <Button variant="destructive" onClick={handleDisableMfa} disabled={disabling}>
+                  <Button variant="destructive" onClick={handleDisable2fa} disabled={disabling}>
                     {disabling && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                     Disable 2FA
                   </Button>
-                ) : qrCode ? (
+                ) : codeSent ? (
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Scan this QR code with your authenticator app (e.g. Google Authenticator, Authy):
+                      A 6-digit code has been sent to <strong>{schoolUser?.email}</strong>. Enter it below to enable 2FA.
                     </p>
-                    <div className="flex justify-center">
-                      <img src={qrCode} alt="QR Code" className="h-48 w-48 rounded-lg border" />
-                    </div>
-                    <div className="flex gap-2 max-w-xs mx-auto">
+                    <div className="flex gap-2 max-w-xs">
                       <Input
                         placeholder="Enter 6-digit code"
                         value={verifyCode}
                         onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                         maxLength={6}
                       />
-                      <Button onClick={handleVerifyMfa} disabled={verifying || verifyCode.length !== 6}>
+                      <Button onClick={handleVerifyCode} disabled={verifying || verifyCode.length !== 6}>
                         {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
                       </Button>
                     </div>
+                    <Button variant="link" size="sm" onClick={handleSendCode} disabled={sendingCode}>
+                      Resend code
+                    </Button>
                   </div>
                 ) : (
-                  <Button onClick={handleEnrollMfa} disabled={enrolling}>
-                    {enrolling && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                  <Button onClick={handleSendCode} disabled={sendingCode}>
+                    {sendingCode && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
                     <Shield className="h-4 w-4 mr-1" /> Enable 2FA
                   </Button>
                 )}
