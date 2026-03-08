@@ -199,6 +199,7 @@ export default function SchoolSettings() {
           <TabsList>
             <TabsTrigger value="profile"><User className="h-4 w-4 mr-1" />Profile</TabsTrigger>
             <TabsTrigger value="school"><School className="h-4 w-4 mr-1" />School</TabsTrigger>
+            <TabsTrigger value="ai-chat"><Bot className="h-4 w-4 mr-1" />AI Chat</TabsTrigger>
             <TabsTrigger value="security"><Shield className="h-4 w-4 mr-1" />Security</TabsTrigger>
           </TabsList>
 
