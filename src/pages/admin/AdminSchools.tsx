@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { School, CheckCircle, XCircle, Search, Users, MapPin } from "lucide-react";
+import { School, CheckCircle, XCircle, Search, Users, MapPin, Pencil } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import { SchoolEditDialog } from "@/components/admin/SchoolEditDialog";
 
 interface SchoolRecord {
   id: string;
