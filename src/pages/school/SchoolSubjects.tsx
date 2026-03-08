@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap } from "lucide-react";
+import { BookOpen, Plus, Trash2, Loader2, Search, Users, GraduationCap, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const GRADES = [
