@@ -629,6 +629,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending learner email to: ${applicantEmail}`);
     const learnerEmailResult = await sendEmail(applicantEmail, learnerSubject, learnerHtmlContent);
     results.learner.email = learnerEmailResult.success;
+    await logEmailSend(supabase, { recipientEmail: applicantEmail, subject: learnerSubject, success: learnerEmailResult.success, resendId: learnerEmailResult.resendId, errorMessage: learnerEmailResult.error, templateKey: `applicant-status-${newStatus}`, relatedTable: "applications" });
 
     // SMS
     if (smsEnabled && applicantPhone) {
