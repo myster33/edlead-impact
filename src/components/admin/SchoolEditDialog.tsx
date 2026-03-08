@@ -146,7 +146,7 @@ export function SchoolEditDialog({ school, open, onOpenChange, onSaved }: School
   const saveUserChanges = async (userId: string) => {
     const { error } = await supabase
       .from("school_users")
-      .update({ role: editRole, is_active: editActive })
+      .update({ role: editRole as any, is_active: editActive })
       .eq("id", userId);
 
     if (error) {
