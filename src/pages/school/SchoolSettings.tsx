@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, User, Shield, ShieldCheck, ShieldOff, School, Camera } from "lucide-react";
+import { Loader2, Upload, User, Shield, ShieldCheck, ShieldOff, School, Camera, Phone, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function SchoolSettings() {
@@ -35,6 +35,7 @@ export default function SchoolSettings() {
   const [verifyCode, setVerifyCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [disabling, setDisabling] = useState(false);
+  const [twoFaChannel, setTwoFaChannel] = useState<"email" | "sms">("sms");
 
   useEffect(() => {
     if (schoolUser) {
@@ -128,12 +129,17 @@ export default function SchoolSettings() {
     setSendingCode(true);
     try {
       const { data, error } = await supabase.functions.invoke("school-send-2fa-code", {
-        body: { action: "send" },
+        body: { action: "send", channel: twoFaChannel },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setCodeSent(true);
-      toast({ title: "Code sent", description: "Check your email for the verification code." });
+      toast({ 
+        title: "Code sent", 
+        description: twoFaChannel === "sms" 
+          ? "Check your phone for the verification code." 
+          : "Check your email for the verification code." 
+      });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -331,8 +337,8 @@ export default function SchoolSettings() {
                   </Button>
                 ) : codeSent ? (
                   <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      A 6-digit code has been sent to <strong>{schoolUser?.email}</strong>. Enter it below to enable 2FA.
+                  <p className="text-sm text-muted-foreground">
+                      A 6-digit code has been sent to {twoFaChannel === "sms" ? <strong>{schoolUser?.phone}</strong> : <strong>{schoolUser?.email}</strong>}. Enter it below to enable 2FA.
                     </p>
                     <div className="flex gap-2 max-w-xs">
                       <Input
@@ -350,10 +356,34 @@ export default function SchoolSettings() {
                     </Button>
                   </div>
                 ) : (
-                  <Button onClick={handleSendCode} disabled={sendingCode}>
-                    {sendingCode && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                    <Shield className="h-4 w-4 mr-1" /> Enable 2FA
-                  </Button>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button
+                        variant={twoFaChannel === "sms" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTwoFaChannel("sms")}
+                      >
+                        <Phone className="h-4 w-4 mr-1" /> SMS
+                      </Button>
+                      <Button
+                        variant={twoFaChannel === "email" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTwoFaChannel("email")}
+                      >
+                        <Mail className="h-4 w-4 mr-1" /> Email
+                      </Button>
+                    </div>
+                    {twoFaChannel === "sms" && !schoolUser?.phone && (
+                      <p className="text-sm text-destructive">Please add a phone number to your profile first.</p>
+                    )}
+                    <Button 
+                      onClick={handleSendCode} 
+                      disabled={sendingCode || (twoFaChannel === "sms" && !schoolUser?.phone)}
+                    >
+                      {sendingCode && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                      <Shield className="h-4 w-4 mr-1" /> Enable 2FA
+                    </Button>
+                  </div>
                 )}
 
                 <Separator />

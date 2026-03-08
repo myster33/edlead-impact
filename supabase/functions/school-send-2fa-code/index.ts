@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { action, code, test_email } = body;
+    const { action, code, channel, test_phone } = body;
     const adminClient = createClient(supabaseUrl, serviceKey);
 
     if (action === "send") {
@@ -60,41 +60,84 @@ Deno.serve(async (req: Request) => {
         expires_at: expiresAt,
       });
 
-      // Send email via Resend
-      const resendKey = Deno.env.get("RESEND_API_KEY");
-      if (!resendKey) throw new Error("Email service not configured");
+      if (channel === "sms") {
+        // Send SMS via Twilio
+        const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+        const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
+        const twilioMsgSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
+        if (!twilioSid || !twilioAuth || !twilioMsgSid) throw new Error("SMS service not configured");
 
-      const recipientEmail = test_email || user.email;
-      console.log("Sending 2FA code to:", recipientEmail);
-      
-      const emailRes = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${resendKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: "edLEAD <noreply@edlead.co.za>",
-          to: [recipientEmail],
-          subject: "Your edLEAD School Portal Verification Code",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-              <h2 style="color: #333;">Your Verification Code</h2>
-              <p style="color: #555;">Use this code to enable two-factor authentication on your School Portal account:</p>
-              <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #ED7621;">${otp}</span>
+        // Get user's phone from school_users
+        const { data: schoolUser } = await adminClient
+          .from("school_users")
+          .select("phone")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const recipientPhone = test_phone || schoolUser?.phone;
+        if (!recipientPhone) throw new Error("No phone number on your profile. Please add one first.");
+
+        console.log("Sending 2FA SMS to:", recipientPhone);
+
+        const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
+        const smsBody = new URLSearchParams({
+          To: recipientPhone,
+          MessagingServiceSid: twilioMsgSid,
+          Body: `Your edLEAD School Portal verification code is: ${otp}. This code expires in 10 minutes.`,
+        });
+
+        const smsRes = await fetch(twilioUrl, {
+          method: "POST",
+          headers: {
+            "Authorization": "Basic " + btoa(`${twilioSid}:${twilioAuth}`),
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: smsBody.toString(),
+        });
+
+        const smsResBody = await smsRes.text();
+        console.log("Twilio status:", smsRes.status, "body:", smsResBody);
+        if (!smsRes.ok) {
+          console.error("Twilio error:", smsResBody);
+          throw new Error("Failed to send SMS: " + smsResBody);
+        }
+      } else {
+        // Send email via Resend (default)
+        const resendKey = Deno.env.get("RESEND_API_KEY");
+        if (!resendKey) throw new Error("Email service not configured");
+
+        const recipientEmail = user.email;
+        console.log("Sending 2FA code to:", recipientEmail);
+
+        const emailRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${resendKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "edLEAD <noreply@edlead.co.za>",
+            to: [recipientEmail],
+            subject: "Your edLEAD School Portal Verification Code",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+                <h2 style="color: #333;">Your Verification Code</h2>
+                <p style="color: #555;">Use this code to enable two-factor authentication on your School Portal account:</p>
+                <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                  <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #ED7621;">${otp}</span>
+                </div>
+                <p style="color: #888; font-size: 13px;">This code expires in 10 minutes. If you didn't request this, please ignore this email.</p>
               </div>
-              <p style="color: #888; font-size: 13px;">This code expires in 10 minutes. If you didn't request this, please ignore this email.</p>
-            </div>
-          `,
-        }),
-      });
+            `,
+          }),
+        });
 
-      const emailResBody = await emailRes.text();
-      console.log("Resend status:", emailRes.status, "body:", emailResBody);
-      if (!emailRes.ok) {
-        console.error("Resend error:", emailResBody);
-        throw new Error("Failed to send verification email: " + emailResBody);
+        const emailResBody = await emailRes.text();
+        console.log("Resend status:", emailRes.status, "body:", emailResBody);
+        if (!emailRes.ok) {
+          console.error("Resend error:", emailResBody);
+          throw new Error("Failed to send verification email: " + emailResBody);
+        }
       }
 
       return new Response(JSON.stringify({ success: true }), {
