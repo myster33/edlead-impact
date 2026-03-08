@@ -59,6 +59,7 @@ export default function SchoolLogin() {
   
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginEmisNumber, setLoginEmisNumber] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
