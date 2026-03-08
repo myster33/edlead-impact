@@ -183,9 +183,8 @@ export default function SchoolLogin() {
       const { error } = await signIn(loginEmail, loginPassword);
       if (error) {
         toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
-      } else {
-        toast({ title: "Welcome!", description: "Successfully logged in." });
       }
+      // Navigation is handled by the useEffect watching isAuthenticated
     } finally {
       setIsLoading(false);
     }
