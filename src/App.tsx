@@ -70,7 +70,7 @@ const SchoolReports = lazy(() => import("./pages/school/SchoolReports"));
 const SchoolLinkRequests = lazy(() => import("./pages/school/SchoolLinkRequests"));
 const SchoolSettings = lazy(() => import("./pages/school/SchoolSettings"));
 
-// General portal pages
+// User portal pages
 const PortalLogin = lazy(() => import("./pages/portal/PortalLogin"));
 const PortalResetPassword = lazy(() => import("./pages/portal/PortalResetPassword"));
 const PortalDashboard = lazy(() => import("./pages/portal/PortalDashboard"));
@@ -159,7 +159,7 @@ const App = () => (
                     <Route path="/school/link-requests" element={<SchoolProtectedRoute><SchoolLinkRequests /></SchoolProtectedRoute>} />
                     <Route path="/school/settings" element={<SchoolProtectedRoute><SchoolSettings /></SchoolProtectedRoute>} />
 
-                    {/* General Portal Routes */}
+                    {/* User Portal Routes */}
                     <Route path="/portal/login" element={<PortalLogin />} />
                     <Route path="/portal/reset-password" element={<PortalResetPassword />} />
                     <Route path="/portal/dashboard" element={<PortalProtectedRoute><PortalDashboard /></PortalProtectedRoute>} />
