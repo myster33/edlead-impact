@@ -29,8 +29,8 @@ const menuGroups = [
   ],
   [
     { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
-    { title: "Period Attendance", url: "/school/period-attendance", icon: BookMarked },
-    { title: "Timetable", url: "/school/timetable", icon: Clock },
+    { title: "Period Attendance", url: "/school/period-attendance", icon: BookMarked, teacherOnly: true },
+    { title: "Timetable", url: "/school/timetable", icon: Clock, teacherOnly: true },
     { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Classes", url: "/school/classes", icon: BookOpen },
     { title: "Students", url: "/school/students", icon: Users },
