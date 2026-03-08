@@ -1266,7 +1266,7 @@ export default function AdminManagement() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                   <SelectContent>
                     <SelectItem value="viewer">
                       <div className="flex items-center gap-2">
                         <Eye className="h-4 w-4 text-muted-foreground" />
@@ -1285,11 +1285,19 @@ export default function AdminManagement() {
                         Admin
                       </div>
                     </SelectItem>
+                    {isSuperAdmin && (
+                      <SelectItem value="super_admin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-destructive" />
+                          Super Admin
+                        </div>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               
-              {approveRole !== "admin" && (
+              {approveRole !== "admin" && approveRole !== "super_admin" && (
                 <>
                   <div className="space-y-2">
                     <Label>Country (Optional)</Label>
