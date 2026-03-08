@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
-  LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2,
+  LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2, Settings,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -29,6 +29,7 @@ const menuItems = [
   { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
   { title: "Link requests", url: "/school/link-requests", icon: Link2 },
   { title: "Reports", url: "/school/reports", icon: FileText },
+  { title: "Settings", url: "/school/settings", icon: Settings },
 ];
 
 export function SchoolLayout({ children }: { children: React.ReactNode }) {
