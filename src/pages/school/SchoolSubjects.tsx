@@ -51,6 +51,12 @@ export default function SchoolSubjects() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [enrolledStudents, setEnrolledStudents] = useState<Record<string, number>>({});
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<any>(null);
+  const [editSubjectName, setEditSubjectName] = useState("");
+  const [editSubjectCode, setEditSubjectCode] = useState("");
+  const [editSubjectGrade, setEditSubjectGrade] = useState("");
+  const [editSubjectCurriculum, setEditSubjectCurriculum] = useState("");
 
   const isStaff = schoolUser?.role === "school_admin" || schoolUser?.role === "hr";
 
