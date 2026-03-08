@@ -129,7 +129,7 @@ export default function SchoolSettings() {
     setSendingCode(true);
     try {
       const { data, error } = await supabase.functions.invoke("school-send-2fa-code", {
-        body: { action: "send" },
+        body: { action: "send", channel: twoFaChannel },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
