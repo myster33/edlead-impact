@@ -25,6 +25,7 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
   student: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My attendance", url: "/portal/attendance", icon: ClipboardCheck },
+    { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
     { title: "E-Card", url: "/portal/e-card", icon: CreditCard },
   ],
   parent: [
@@ -32,23 +33,27 @@ const roleMenuItems: Record<string, { title: string; url: string; icon: React.El
     { title: "My children", url: "/portal/my-children", icon: Users },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Absence request", url: "/portal/absence-request", icon: Inbox },
+    { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
   ],
   educator: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Reports", url: "/portal/reports", icon: FileText },
+    { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
   ],
   class_teacher: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
     { title: "Reports", url: "/portal/reports", icon: FileText },
+    { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
   ],
   subject_teacher: [
     { title: "Dashboard", url: "/portal/dashboard", icon: LayoutDashboard },
     { title: "My classes", url: "/portal/my-classes", icon: BookOpen },
     { title: "Attendance", url: "/portal/attendance", icon: ClipboardCheck },
+    { title: "Marketplace", url: "/portal/marketplace", icon: ShoppingCart },
   ],
 };
 
