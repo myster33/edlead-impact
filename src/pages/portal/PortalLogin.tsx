@@ -319,7 +319,7 @@ export default function PortalLogin() {
               <Users className="h-5 w-5 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-foreground">General Portal</CardTitle>
+          <CardTitle className="text-2xl font-bold text-foreground">User Portal</CardTitle>
           <CardDescription className="text-muted-foreground">
             For parents, students & educators
           </CardDescription>
