@@ -54,7 +54,7 @@ export default function PortalLogin() {
   // Signup state
   const [signupData, setSignupData] = useState({
     fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "",
-    role: "" as string, studentIdNumber: "",
+    role: "" as string, studentIdNumber: "", countryCode: "+27|South Africa",
   });
   const [signupErrors, setSignupErrors] = useState<Record<string, string>>({});
   const [isSigningUp, setIsSigningUp] = useState(false);
