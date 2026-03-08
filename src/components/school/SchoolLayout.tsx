@@ -29,6 +29,7 @@ const menuGroups = [
   ],
   [
     { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
+    { title: "Calendar", url: "/school/calendar", icon: CalendarDays },
     { title: "Classes", url: "/school/classes", icon: BookOpen },
     { title: "Students", url: "/school/students", icon: Users },
     { title: "Staff", url: "/school/staff", icon: UserCheck },
