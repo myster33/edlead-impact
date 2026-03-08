@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
         if (twilioSid && twilioAuth && messagingSid) {
           const cleanPhone = phone.replace(/\s/g, "");
-          const body = `Welcome to edLEAD, ${full_name}! Your edLEAD ID is: ${userCode}. You can use this ID, your email, or phone number to log in at edlead.lovable.app/portal/login`;
+          const body = `Welcome to edLEAD, ${full_name}! Your edLEAD ID is: ${userCode}. You can use this ID, your email, or phone number to log in at edlead.co.za/portal/login`;
 
           const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`;
           const twilioResp = await fetch(twilioUrl, {
