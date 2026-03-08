@@ -194,7 +194,9 @@ export default function AdminManagement() {
   const [sendRejectEmail, setSendRejectEmail] = useState(true);
   const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
 
-  const isAdmin = adminUser?.role === "admin";
+  const isSuperAdmin = adminUser?.role === "super_admin";
+  const isAdmin = adminUser?.role === "admin" || isSuperAdmin;
+  const canManageUsers = isAdmin; // Both super_admin and admin can manage users
 
   // Online presence — track self and observe who else is online
   const presenceAdmin = useMemo(() => adminUser ? {
