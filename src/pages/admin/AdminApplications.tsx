@@ -169,6 +169,9 @@ export default function AdminApplications() {
   } | null>(null);
   const [showBannerPreview, setShowBannerPreview] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+  const [showTrash, setShowTrash] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [purgeId, setPurgeId] = useState<string | null>(null);
 
   // Presence: who is viewing the currently open application
   const presenceAdmin = useMemo(() => adminUser ? {
