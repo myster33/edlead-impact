@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { SchoolLayout } from "@/components/school/SchoolLayout";
 import { useSchoolAuth } from "@/contexts/SchoolAuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardCheck, Calendar, UserCheck, Users, Loader2, CheckCircle, LogIn, LogOut } from "lucide-react";
+import { ClipboardCheck, Calendar, UserCheck, Users, Loader2, CheckCircle, LogIn, LogOut, GraduationCap, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserForMarking {
@@ -42,18 +42,60 @@ export default function SchoolAttendance() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
+  // Class teacher's assigned classes
+  const [teacherClasses, setTeacherClasses] = useState<any[]>([]);
+
+  const isClassTeacher = schoolUser?.role === "class_teacher";
+  const isSubjectTeacher = schoolUser?.role === "subject_teacher";
+  const isEducator = schoolUser?.role === "educator";
+  const isTeacherRole = isClassTeacher || isSubjectTeacher || isEducator;
+  const isStaffRole = schoolUser?.role === "school_admin" || schoolUser?.role === "hr";
+
+  // Fetch teacher's assigned classes
+  useEffect(() => {
+    if (!currentSchool?.id || !schoolUser?.id || !isTeacherRole) return;
+    supabase
+      .from("classes")
+      .select("id, name, grade")
+      .eq("school_id", currentSchool.id)
+      .eq("class_teacher_id", schoolUser.id)
+      .order("grade")
+      .then(({ data }) => {
+        setTeacherClasses(data || []);
+        if (data && data.length > 0) {
+          setSelectedClassId(data[0].id);
+        }
+      });
+  }, [currentSchool?.id, schoolUser?.id, isTeacherRole]);
+
   const fetchAttendance = useCallback(async () => {
     if (!currentSchool?.id) return;
     setIsLoading(true);
-    const { data } = await supabase
+
+    let query = supabase
       .from("attendance_events")
       .select("*, school_users!attendance_events_user_id_fkey(full_name, role)")
       .eq("school_id", currentSchool.id)
       .eq("event_date", selectedDate)
       .order("timestamp", { ascending: false });
+
+    // Class teachers only see their class students' records
+    if (isTeacherRole && teacherClasses.length > 0) {
+      const classIds = teacherClasses.map(c => c.id);
+      const { data: classStudents } = await supabase
+        .from("class_students")
+        .select("student_id")
+        .in("class_id", classIds);
+      const studentIds = (classStudents || []).map((cs: any) => cs.student_id);
+      if (studentIds.length > 0) {
+        query = query.in("user_id", studentIds);
+      }
+    }
+
+    const { data } = await query;
     setAttendanceEvents(data || []);
     setIsLoading(false);
-  }, [currentSchool?.id, selectedDate]);
+  }, [currentSchool?.id, selectedDate, isTeacherRole, teacherClasses]);
 
   useEffect(() => {
     fetchAttendance();
@@ -83,11 +125,14 @@ export default function SchoolAttendance() {
 
       let userIds: string[] = [];
 
-      if (markingTarget === "students" && selectedClassId && selectedClassId !== "all-students") {
+      // For class teachers, always filter by their class
+      const effectiveClassId = isTeacherRole ? selectedClassId : selectedClassId;
+
+      if (markingTarget === "students" && effectiveClassId && effectiveClassId !== "all-students") {
         const { data: classStudents } = await supabase
           .from("class_students")
           .select("student_id")
-          .eq("class_id", selectedClassId);
+          .eq("class_id", effectiveClassId);
         userIds = (classStudents || []).map((cs: any) => cs.student_id);
       }
 
@@ -107,9 +152,22 @@ export default function SchoolAttendance() {
         query = query.in("id", userIds);
       }
 
+      // For class teachers marking students without a specific class selected but they have classes
+      if (isTeacherRole && markingTarget === "students" && effectiveClassId === "all-students" && teacherClasses.length > 0) {
+        const allClassIds = teacherClasses.map(c => c.id);
+        const { data: allClassStudents } = await supabase
+          .from("class_students")
+          .select("student_id")
+          .in("class_id", allClassIds);
+        const allStudentIds = (allClassStudents || []).map((cs: any) => cs.student_id);
+        if (allStudentIds.length > 0) {
+          query = query.in("id", allStudentIds);
+        }
+      }
+
       const { data: users } = await query;
 
-      // Fetch existing attendance for this date (both check_in and check_out)
+      // Fetch existing attendance for this date
       const { data: existing } = await supabase
         .from("attendance_events")
         .select("id, user_id, status, event_type, timestamp")
@@ -139,7 +197,6 @@ export default function SchoolAttendance() {
 
       setUsersToMark(mapped);
 
-      // Pre-fill from existing records for the selected event type
       const initial: Record<string, string> = {};
       mapped.forEach(u => {
         const existing = markingEventType === "check_in" ? u.checkInStatus : u.checkOutStatus;
@@ -150,7 +207,7 @@ export default function SchoolAttendance() {
     };
 
     fetchUsersToMark();
-  }, [activeTab, currentSchool?.id, selectedClassId, markingTarget, selectedDate, markingEventType]);
+  }, [activeTab, currentSchool?.id, selectedClassId, markingTarget, selectedDate, markingEventType, isTeacherRole, teacherClasses]);
 
   const setAllStatus = (status: string) => {
     const updated: Record<string, string> = {};
@@ -232,7 +289,7 @@ export default function SchoolAttendance() {
   const absentCount = Object.values(markingStatus).filter(v => v === "absent").length;
 
   // Group records by user for the records view
-  const groupedRecords = (() => {
+  const groupedRecords = useMemo(() => {
     const map = new Map<string, { name: string; role: string; checkIn?: any; checkOut?: any }>();
     attendanceEvents.forEach(event => {
       const userId = event.user_id;
@@ -249,7 +306,18 @@ export default function SchoolAttendance() {
       if (event.event_type === "check_out") entry.checkOut = event;
     });
     return Array.from(map.values());
-  })();
+  }, [attendanceEvents]);
+
+  // Available classes for the current user
+  const availableClasses = isTeacherRole ? teacherClasses : classes;
+
+  const attendanceContextLabel = isTeacherRole
+    ? "Class Attendance"
+    : "Gate Attendance";
+
+  const attendanceContextIcon = isTeacherRole
+    ? <GraduationCap className="h-5 w-5 text-primary" />
+    : <Building className="h-5 w-5 text-primary" />;
 
   return (
     <SchoolLayout>
@@ -257,9 +325,19 @@ export default function SchoolAttendance() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Attendance</h1>
-            <p className="text-muted-foreground">Daily check-in & check-out tracking (STATs)</p>
+            <p className="text-muted-foreground flex items-center gap-2">
+              {attendanceContextIcon}
+              {isTeacherRole
+                ? "Mark and view class attendance for your students"
+                : "Daily check-in & check-out tracking at the school gate (STATs)"
+              }
+            </p>
           </div>
           <div className="flex items-center gap-2">
+            <Badge variant="outline" className="gap-1.5 py-1.5 px-3">
+              {isTeacherRole ? <GraduationCap className="h-3.5 w-3.5" /> : <Building className="h-3.5 w-3.5" />}
+              {attendanceContextLabel}
+            </Badge>
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <input
               type="date"
@@ -269,6 +347,17 @@ export default function SchoolAttendance() {
             />
           </div>
         </div>
+
+        {/* Info card for class teachers */}
+        {isTeacherRole && teacherClasses.length === 0 && (
+          <Card className="border-dashed">
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground text-center">
+                You don't have any classes assigned yet. Ask your school administrator to assign you as a class teacher.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -281,8 +370,13 @@ export default function SchoolAttendance() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardCheck className="h-5 w-5" />
-                  Attendance Records — {selectedDate}
+                  {isTeacherRole ? "Class Attendance Records" : "Gate Attendance Records"} — {selectedDate}
                 </CardTitle>
+                {isTeacherRole && teacherClasses.length > 0 && (
+                  <CardDescription>
+                    Showing records for: {teacherClasses.map(c => `${c.name} (${c.grade})`).join(", ")}
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -357,29 +451,37 @@ export default function SchoolAttendance() {
                     </Select>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Marking</label>
-                    <Select value={markingTarget} onValueChange={(v) => setMarkingTarget(v as "students" | "staff")}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="students"><span className="flex items-center gap-2"><Users className="h-4 w-4" />Students</span></SelectItem>
-                        <SelectItem value="staff"><span className="flex items-center gap-2"><UserCheck className="h-4 w-4" />Staff</span></SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {markingTarget === "students" && (
+                  {/* Staff/Student toggle — only for admin/HR (gate attendance) */}
+                  {isStaffRole && (
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-foreground">Class</label>
-                      <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="All students" />
+                      <label className="text-sm font-medium text-foreground">Marking</label>
+                      <Select value={markingTarget} onValueChange={(v) => setMarkingTarget(v as "students" | "staff")}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all-students">All students</SelectItem>
-                          {classes.map(c => (
+                          <SelectItem value="students"><span className="flex items-center gap-2"><Users className="h-4 w-4" />Students</span></SelectItem>
+                          <SelectItem value="staff"><span className="flex items-center gap-2"><UserCheck className="h-4 w-4" />Staff</span></SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Class filter */}
+                  {markingTarget === "students" && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-foreground">
+                        {isTeacherRole ? "Your Class" : "Class"}
+                      </label>
+                      <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder={isTeacherRole ? "Select class" : "All students"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {!isTeacherRole && (
+                            <SelectItem value="all-students">All students</SelectItem>
+                          )}
+                          {availableClasses.map(c => (
                             <SelectItem key={c.id} value={c.id}>{c.name} ({c.grade})</SelectItem>
                           ))}
                         </SelectContent>
@@ -411,8 +513,13 @@ export default function SchoolAttendance() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {markingEventType === "check_in" ? <LogIn className="h-5 w-5" /> : <LogOut className="h-5 w-5" />}
-                  Mark {markingEventType === "check_in" ? "Check In" : "Check Out"} — {markingTarget === "students" ? "Students" : "Staff"} — {selectedDate}
+                  Mark {markingEventType === "check_in" ? "Check In" : "Check Out"} — {isTeacherRole ? "Class Students" : (markingTarget === "students" ? "Students" : "Staff")} — {selectedDate}
                 </CardTitle>
+                {isTeacherRole && selectedClassId !== "all-students" && (
+                  <CardDescription>
+                    {availableClasses.find(c => c.id === selectedClassId)?.name} ({availableClasses.find(c => c.id === selectedClassId)?.grade})
+                  </CardDescription>
+                )}
               </CardHeader>
               <CardContent>
                 {loadingUsers ? (
@@ -421,7 +528,10 @@ export default function SchoolAttendance() {
                   </div>
                 ) : usersToMark.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
-                    {markingTarget === "students" ? "No students found. Add students to this school first." : "No staff found."}
+                    {isTeacherRole
+                      ? "No students found in your class. Students need to be assigned to your class first."
+                      : markingTarget === "students" ? "No students found. Add students to this school first." : "No staff found."
+                    }
                   </p>
                 ) : (
                   <>
