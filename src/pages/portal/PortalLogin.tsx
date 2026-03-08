@@ -208,7 +208,7 @@ export default function PortalLogin() {
       });
 
       setTab("login");
-      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", studentIdNumber: "" });
+      setSignupData({ fullName: "", email: "", phone: "", idPassportNumber: "", password: "", confirmPassword: "", role: "", studentIdNumber: "", countryCode: "+27|South Africa" });
     } finally {
       setIsSigningUp(false);
     }
