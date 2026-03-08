@@ -1610,7 +1610,10 @@ export default function AdminManagement() {
                                 setEditCountry(user.country || "");
                                 setEditProvince(user.province || "");
                               }}
-                              disabled={user.user_id === adminUser?.user_id}
+                              disabled={
+                                user.user_id === adminUser?.user_id || 
+                                (!isSuperAdmin && (user.role === "admin" || user.role === "super_admin"))
+                              }
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -1618,7 +1621,10 @@ export default function AdminManagement() {
                               variant="ghost"
                               size="sm"
                               onClick={() => setDeletingUser(user)}
-                              disabled={user.user_id === adminUser?.user_id}
+                              disabled={
+                                user.user_id === adminUser?.user_id || 
+                                (!isSuperAdmin && (user.role === "admin" || user.role === "super_admin"))
+                              }
                               className="text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
