@@ -2045,6 +2045,44 @@ const AdminBlogManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Bulk Trash Confirmation */}
+      <AlertDialog open={bulkTrashOpen} onOpenChange={setBulkTrashOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Move {selectedBlogIds.size} Stories to Trash?</AlertDialogTitle>
+            <AlertDialogDescription>
+              These stories will be moved to trash. You can restore them later from the Trash filter.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={bulkTrashBlogs}>
+              Move to Trash
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Purge Confirmation */}
+      <AlertDialog open={bulkPurgeOpen} onOpenChange={setBulkPurgeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete {selectedBlogIds.size} Stories?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove {selectedBlogIds.size} stories. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={bulkPurgeBlogs}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };
