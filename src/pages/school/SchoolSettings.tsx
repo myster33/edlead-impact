@@ -119,14 +119,14 @@ export default function SchoolSettings() {
     setUploadingLogo(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `school-logos/${currentSchool.id}.${ext}`;
+      const path = `logos/${currentSchool.id}.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from("admin-avatars")
+        .from("school-assets")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from("admin-avatars")
+        .from("school-assets")
         .getPublicUrl(path);
 
       await supabase.from("schools").update({ logo_url: publicUrl }).eq("id", currentSchool.id);
