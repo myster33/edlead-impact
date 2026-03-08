@@ -174,6 +174,35 @@ export default function SchoolSubjects() {
     }
   };
 
+  const openEditDialog = (subject: any) => {
+    setEditingSubject(subject);
+    setEditSubjectName(subject.name);
+    setEditSubjectCode(subject.code || "");
+    setEditSubjectGrade(subject.grade || "");
+    setEditSubjectCurriculum(subject.curriculum_id || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubject = async () => {
+    if (!editingSubject || !editSubjectName.trim()) return;
+    setIsSaving(true);
+    const { error } = await supabase.from("subjects").update({
+      name: editSubjectName.trim(),
+      code: editSubjectCode.trim() || null,
+      grade: editSubjectGrade || null,
+      curriculum_id: editSubjectCurriculum || null,
+    }).eq("id", editingSubject.id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Subject updated" });
+      setEditDialogOpen(false);
+      setEditingSubject(null);
+      fetchSubjects();
+    }
+    setIsSaving(false);
+  };
+
   const filteredSubjects = subjects.filter(s =>
     !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()) || (s.code && s.code.toLowerCase().includes(searchQuery.toLowerCase()))
   );
