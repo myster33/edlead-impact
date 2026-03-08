@@ -13,6 +13,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard, Users, ClipboardCheck, BookOpen, UserCheck, FileText,
   LogOut, Moon, Sun, Monitor, School, ChevronDown, Inbox, Link2, Settings,
