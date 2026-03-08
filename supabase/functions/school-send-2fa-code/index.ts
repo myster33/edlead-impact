@@ -176,10 +176,50 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    if (action === "verify_login") {
+      // Verify code at login (doesn't change two_fa_enabled)
+      if (!code) throw new Error("Code required");
+
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(code));
+      const codeHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+      const { data: codeRecord } = await adminClient
+        .from("school_2fa_codes")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("code_hash", codeHash)
+        .eq("used", false)
+        .gte("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (!codeRecord) {
+        return new Response(JSON.stringify({ error: "Invalid or expired code" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await adminClient.from("school_2fa_codes").update({ used: true }).eq("id", codeRecord.id);
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "disable") {
-      await adminClient.from("school_users").update({ two_fa_enabled: false }).eq("user_id", user.id);
+      await adminClient.from("school_users").update({ two_fa_enabled: false, two_fa_channel: "email" }).eq("user_id", user.id);
       await adminClient.from("school_2fa_codes").delete().eq("user_id", user.id);
 
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "set_channel") {
+      const { channel: newChannel } = body;
+      if (!["email", "sms"].includes(newChannel)) throw new Error("Invalid channel");
+      await adminClient.from("school_users").update({ two_fa_channel: newChannel }).eq("user_id", user.id);
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
