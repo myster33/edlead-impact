@@ -22,17 +22,27 @@ import {
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 
-const menuItems = [
-  { title: "Dashboard", url: "/school/dashboard", icon: LayoutDashboard },
-  { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
-  { title: "Classes", url: "/school/classes", icon: BookOpen },
-  { title: "Students", url: "/school/students", icon: Users },
-  { title: "Staff", url: "/school/staff", icon: UserCheck },
-  { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
-  { title: "Link requests", url: "/school/link-requests", icon: Link2 },
-  { title: "Reports", url: "/school/reports", icon: FileText },
-  { title: "Settings", url: "/school/settings", icon: Settings },
+const menuGroups = [
+  [
+    { title: "Dashboard", url: "/school/dashboard", icon: LayoutDashboard },
+  ],
+  [
+    { title: "Attendance", url: "/school/attendance", icon: ClipboardCheck },
+    { title: "Classes", url: "/school/classes", icon: BookOpen },
+    { title: "Students", url: "/school/students", icon: Users },
+    { title: "Staff", url: "/school/staff", icon: UserCheck },
+  ],
+  [
+    { title: "Absence requests", url: "/school/absence-requests", icon: Inbox },
+    { title: "Link requests", url: "/school/link-requests", icon: Link2 },
+    { title: "Reports", url: "/school/reports", icon: FileText },
+  ],
+  [
+    { title: "Settings", url: "/school/settings", icon: Settings },
+  ],
 ];
+
+const allMenuItems = menuGroups.flat();
 
 export function SchoolLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
