@@ -77,6 +77,7 @@ export default function SchoolLogin() {
   const [regFullName, setRegFullName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPhone, setRegPhone] = useState("");
+  const [regCountryCode, setRegCountryCode] = useState("+27|South Africa");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regSchoolName, setRegSchoolName] = useState("");
