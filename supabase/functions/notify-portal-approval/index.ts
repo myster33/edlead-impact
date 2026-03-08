@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
                 <p>Dear ${schoolUser.full_name},</p>
                 <p>Your registration has been approved. Here are your login details:</p>
                 <div style="background:#f5f5f5;border-radius:8px;padding:20px;margin:20px 0;text-align:center;">
-                  <p style="margin:0 0 8px 0;color:#666;font-size:14px;">Your User ID</p>
+                  <p style="margin:0 0 8px 0;color:#666;font-size:14px;">Your edLEAD ID</p>
                   <p style="margin:0;font-size:28px;font-weight:bold;color:#ED7621;letter-spacing:2px;">${schoolUser.user_code}</p>
                 </div>
                 <p>You can log in using any of the following:</p>
