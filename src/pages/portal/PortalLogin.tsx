@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, Hash, CreditCard } from "lucide-react";
+import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, CreditCard } from "lucide-react";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
+import edleadIcon from "@/assets/edlead-icon.png";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
