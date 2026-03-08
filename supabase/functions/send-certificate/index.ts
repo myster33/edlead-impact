@@ -34,7 +34,7 @@ async function sendEmail(
   html: string,
   pdfContent: string,
   recipientName: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; resendId?: string }> {
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -62,7 +62,8 @@ async function sendEmail(
       return { success: false, error: errorData.message || "Failed to send email" };
     }
 
-    return { success: true };
+    const data = await response.json();
+    return { success: true, resendId: data.id };
   } catch (error: any) {
     console.error("Error sending email:", error);
     return { success: false, error: error.message };
@@ -565,6 +566,22 @@ const handler = async (req: Request): Promise<Response> => {
           app.full_name
         );
 
+        // Log learner email
+        try {
+          await supabase.from("email_logs").insert({
+            recipient_email: app.student_email,
+            subject: "Congratulations! Your edLEAD Certificate of Accomplishment",
+            status: learnerResult.success ? "sent" : "failed",
+            resend_id: learnerResult.resendId || null,
+            error_message: learnerResult.error || null,
+            template_key: "certificate-learner",
+            related_table: "certificate_recipients",
+            related_record_id: recipient.id,
+          });
+        } catch (logErr) {
+          console.error("Failed to log email:", logErr);
+        }
+
         let parentSent = false;
         
         // Send parent email if parent emails are enabled, and parent email is provided and different from learner
@@ -662,6 +679,23 @@ const handler = async (req: Request): Promise<Response> => {
             app.full_name
           );
           parentSent = parentResult.success;
+
+          // Log parent email
+          try {
+            await supabase.from("email_logs").insert({
+              recipient_email: app.parent_email,
+              subject: `Congratulations! ${app.full_name}'s edLEAD Certificate of Accomplishment`,
+              status: parentResult.success ? "sent" : "failed",
+              resend_id: parentResult.resendId || null,
+              error_message: parentResult.error || null,
+              template_key: "certificate-parent",
+              related_table: "certificate_recipients",
+              related_record_id: recipient.id,
+            });
+          } catch (logErr) {
+            console.error("Failed to log parent email:", logErr);
+          }
+
           if (parentResult.success) {
             console.log(`Certificate sent successfully to parent: ${app.parent_email}`);
           } else {

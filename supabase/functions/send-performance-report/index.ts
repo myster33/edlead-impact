@@ -255,14 +255,28 @@ serve(async (req: Request): Promise<Response> => {
 
     // Send to all admins
     const adminEmails = adminUsers.map(a => a.email);
+    const reportSubject = `edLEAD ${period === "monthly" ? "Monthly" : "Weekly"} Performance Report - ${periodLabel}`;
     console.log(`Sending ${period} report to admins:`, adminEmails);
 
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: "edLEAD <noreply@edlead.co.za>",
       to: adminEmails,
-      subject: `edLEAD ${period === "monthly" ? "Monthly" : "Weekly"} Performance Report - ${periodLabel}`,
+      subject: reportSubject,
       html: emailHtml,
     });
+
+    // Log email for each admin
+    for (const email of adminEmails) {
+      try {
+        await supabase.from("email_logs").insert({
+          recipient_email: email, subject: reportSubject,
+          status: emailError ? "failed" : "sent",
+          resend_id: (emailData as any)?.id || null,
+          error_message: emailError?.message || null,
+          template_key: "performance-report", related_table: "admin_users",
+        });
+      } catch (logErr) { console.error("Failed to log email:", logErr); }
+    }
 
     if (emailError) {
       console.error("Error sending email:", emailError);

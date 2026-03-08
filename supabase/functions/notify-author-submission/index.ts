@@ -165,13 +165,29 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
-    if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error("Resend API error:", errorText);
-      throw new Error(`Failed to send email: ${errorText}`);
+    const result = await emailResponse.json();
+    const emailSuccess = emailResponse.ok;
+
+    // Log email
+    try {
+      await supabase.from("email_logs").insert({
+        recipient_email: submission.author_email,
+        subject,
+        status: emailSuccess ? "sent" : "failed",
+        resend_id: result.id || null,
+        error_message: emailSuccess ? null : (result.message || "Failed"),
+        template_key: "blog-submission",
+        related_table: "blog_posts",
+      });
+    } catch (logErr) {
+      console.error("Failed to log email:", logErr);
     }
 
-    const result = await emailResponse.json();
+    if (!emailSuccess) {
+      console.error("Resend API error:", result);
+      throw new Error(`Failed to send email: ${JSON.stringify(result)}`);
+    }
+
     console.log("Email sent successfully:", result);
 
     return new Response(

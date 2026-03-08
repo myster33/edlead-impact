@@ -178,7 +178,25 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResult = await emailResponse.json();
-    console.log("Email sent successfully:", emailResult);
+    const emailSuccess = emailResponse.ok;
+    console.log("Email sent:", emailSuccess, emailResult);
+
+    // Log email for each admin
+    for (const email of adminEmails) {
+      try {
+        await supabase.from("email_logs").insert({
+          recipient_email: email,
+          subject,
+          status: emailSuccess ? "sent" : "failed",
+          resend_id: emailResult.id || null,
+          error_message: emailSuccess ? null : (emailResult.message || "Failed"),
+          template_key: "blog-admin-notification",
+          related_table: "blog_posts",
+        });
+      } catch (logErr) {
+        console.error("Failed to log email:", logErr);
+      }
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: "Notification sent" }),

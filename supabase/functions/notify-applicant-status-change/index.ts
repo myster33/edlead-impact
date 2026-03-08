@@ -350,7 +350,7 @@ function replaceVariables(content: string, variables: Record<string, string>): s
   return result;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string }> {
+async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; error?: string; resendId?: string }> {
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -374,10 +374,31 @@ async function sendEmail(to: string, subject: string, html: string): Promise<{ s
 
     const data = await response.json();
     console.log("Email sent successfully:", data);
-    return { success: true };
+    return { success: true, resendId: data.id };
   } catch (error: any) {
     console.error("Error sending email:", error);
     return { success: false, error: error.message };
+  }
+}
+
+async function logEmailSend(supabase: any, details: {
+  recipientEmail: string; subject: string; success: boolean;
+  resendId?: string; errorMessage?: string; templateKey?: string;
+  relatedTable?: string; relatedRecordId?: string;
+}) {
+  try {
+    await supabase.from("email_logs").insert({
+      recipient_email: details.recipientEmail,
+      subject: details.subject,
+      status: details.success ? "sent" : "failed",
+      resend_id: details.resendId || null,
+      error_message: details.errorMessage || null,
+      template_key: details.templateKey || null,
+      related_table: details.relatedTable || null,
+      related_record_id: details.relatedRecordId || null,
+    });
+  } catch (err) {
+    console.error("Failed to log email:", err);
   }
 }
 
@@ -608,6 +629,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending learner email to: ${applicantEmail}`);
     const learnerEmailResult = await sendEmail(applicantEmail, learnerSubject, learnerHtmlContent);
     results.learner.email = learnerEmailResult.success;
+    await logEmailSend(supabase, { recipientEmail: applicantEmail, subject: learnerSubject, success: learnerEmailResult.success, resendId: learnerEmailResult.resendId, errorMessage: learnerEmailResult.error, templateKey: `applicant-status-${newStatus}`, relatedTable: "applications" });
 
     // SMS
     if (smsEnabled && applicantPhone) {
@@ -647,6 +669,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending parent email to: ${parentEmail}`);
       const parentEmailResult = await sendEmail(parentEmail, parentSubject, parentHtmlContent);
       results.parent.email = parentEmailResult.success;
+      await logEmailSend(supabase, { recipientEmail: parentEmail, subject: parentSubject, success: parentEmailResult.success, resendId: parentEmailResult.resendId, errorMessage: parentEmailResult.error, templateKey: `parent-status-${newStatus}`, relatedTable: "applications" });
     }
 
     // SMS

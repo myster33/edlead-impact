@@ -227,11 +227,27 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResult = await emailResponse.json();
+    const emailSuccess = emailResponse.ok;
 
-    if (!emailResponse.ok) {
+    if (!emailSuccess) {
       console.error("Resend API error:", emailResult);
     } else {
       console.log("Email sent successfully:", emailResult);
+    }
+
+    // Log email
+    try {
+      await supabase.from("email_logs").insert({
+        recipient_email: data.author_email,
+        subject,
+        status: emailSuccess ? "sent" : "failed",
+        resend_id: emailResult.id || null,
+        error_message: emailSuccess ? null : (emailResult.message || "Failed"),
+        template_key: "blog-approved",
+        related_table: "blog_posts",
+      });
+    } catch (logErr) {
+      console.error("Failed to log email:", logErr);
     }
 
     // Send SMS/WhatsApp if author_phone is provided

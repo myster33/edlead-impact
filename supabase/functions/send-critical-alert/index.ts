@@ -234,10 +234,40 @@ const handler = async (req: Request): Promise<Response> => {
         });
         
         console.log(`Alert sent to ${admin.email}:`, result);
+
+        // Log email
+        try {
+          await supabase.from("email_logs").insert({
+            recipient_email: admin.email,
+            subject: `${subjectPrefix} ${config.title} - EdLead Admin`,
+            status: "sent",
+            resend_id: (result as any)?.data?.id || null,
+            template_key: "critical-alert",
+            related_table: "admin_audit_log",
+          });
+        } catch (logErr) {
+          console.error("Failed to log email:", logErr);
+        }
+
         return { email: admin.email, success: true, result };
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`Failed to send alert to ${admin.email}:`, error);
+
+        // Log failed email
+        try {
+          await supabase.from("email_logs").insert({
+            recipient_email: admin.email,
+            subject: `${subjectPrefix} ${config.title} - EdLead Admin`,
+            status: "failed",
+            error_message: errorMessage,
+            template_key: "critical-alert",
+            related_table: "admin_audit_log",
+          });
+        } catch (logErr) {
+          console.error("Failed to log email:", logErr);
+        }
+
         return { email: admin.email, success: false, error: errorMessage };
       }
     });
