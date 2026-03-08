@@ -452,29 +452,6 @@ export default function PortalLogin() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>School</Label>
-                  <Select value={signupData.schoolId} onValueChange={v => setSignupData(d => ({ ...d, schoolId: v }))}>
-                    <SelectTrigger>
-                      <div className="flex items-center gap-2">
-                        <School className="h-4 w-4 text-muted-foreground" />
-                        <SelectValue placeholder="Select your school" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input placeholder="Search schools..." value={schoolSearch} onChange={e => setSchoolSearch(e.target.value)} className="mb-2" />
-                      </div>
-                      {filteredSchools.map(s => (
-                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                      ))}
-                      {filteredSchools.length === 0 && (
-                        <p className="text-sm text-muted-foreground p-2 text-center">No schools found</p>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {signupErrors.schoolId && <p className="text-sm text-destructive">{signupErrors.schoolId}</p>}
-                </div>
 
                 {signupData.role === "student" && (
                   <div className="space-y-2">
