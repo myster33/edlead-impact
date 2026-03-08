@@ -572,6 +572,40 @@ const AdminBlogManagement = () => {
     if (!selectedPost) return;
 
     setSaving(true);
+    // Soft delete: set deleted_at instead of hard delete
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ deleted_at: new Date().toISOString() } as any)
+      .eq("id", selectedPost.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to move the post to trash.",
+        variant: "destructive",
+      });
+    } else {
+      await logAction({
+        action: "blog_trashed" as any,
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        old_values: { title: selectedPost.title, author_name: selectedPost.author_name },
+      });
+
+      toast({
+        title: "Moved to Trash",
+        description: "The blog post has been moved to trash. You can restore it later.",
+      });
+      setDeleteDialogOpen(false);
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
+  const handlePurge = async () => {
+    if (!selectedPost) return;
+
+    setSaving(true);
     const { error } = await supabase
       .from("blog_posts")
       .delete()
@@ -580,23 +614,54 @@ const AdminBlogManagement = () => {
     if (error) {
       toast({
         title: "Error",
-        description: "Failed to delete the post.",
+        description: "Failed to permanently delete the post.",
         variant: "destructive",
       });
     } else {
-      // Log the deletion
       await logAction({
-        action: "blog_deleted",
+        action: "blog_purged" as any,
         table_name: "blog_posts",
         record_id: selectedPost.id,
         old_values: { title: selectedPost.title, author_name: selectedPost.author_name },
       });
 
       toast({
-        title: "Post Deleted",
-        description: "The blog post has been deleted.",
+        title: "Permanently Deleted",
+        description: "The blog post has been permanently removed.",
       });
       setDeleteDialogOpen(false);
+      fetchPosts();
+    }
+    setSaving(false);
+  };
+
+  const handleRestoreFromTrash = async () => {
+    if (!selectedPost) return;
+
+    setSaving(true);
+    const { error } = await supabase
+      .from("blog_posts")
+      .update({ deleted_at: null } as any)
+      .eq("id", selectedPost.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to restore the post.",
+        variant: "destructive",
+      });
+    } else {
+      await logAction({
+        action: "blog_restored" as any,
+        table_name: "blog_posts",
+        record_id: selectedPost.id,
+        new_values: { title: selectedPost.title },
+      });
+
+      toast({
+        title: "Restored from Trash",
+        description: "The blog post has been restored and set to its previous status.",
+      });
       fetchPosts();
     }
     setSaving(false);
