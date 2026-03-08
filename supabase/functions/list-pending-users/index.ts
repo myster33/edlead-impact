@@ -54,7 +54,7 @@ serve(async (req: Request): Promise<Response> => {
       .eq("user_id", currentUser.id)
       .single();
 
-    if (!adminCheck || adminCheck.role !== "admin") {
+    if (!adminCheck || !["admin", "super_admin"].includes(adminCheck.role)) {
       return new Response(
         JSON.stringify({ success: false, error: "Only admins can view pending users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
