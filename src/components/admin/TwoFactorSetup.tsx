@@ -22,6 +22,8 @@ import {
 interface TwoFactorSetupProps {
   onStatusChange?: (enabled: boolean) => void;
   adminUserId?: string;
+  adminEmail?: string;
+  adminPhone?: string;
 }
 
 // Generate a random backup code
