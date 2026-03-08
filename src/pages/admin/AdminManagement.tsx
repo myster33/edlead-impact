@@ -226,10 +226,10 @@ export default function AdminManagement() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Non-admin users (reviewers/viewers) cannot see admin users
+      // Non-admin/super_admin users cannot see admin/super_admin users
       // and can only see users in their assigned region
       if (!isAdmin) {
-        query = query.neq("role", "admin");
+        query = query.not("role", "in", '("admin","super_admin")');
         
         // Filter by region if user has one assigned
         if (adminUser?.country) {
@@ -238,6 +238,9 @@ export default function AdminManagement() {
         if (adminUser?.province) {
           query = query.eq("province", adminUser.province);
         }
+      } else if (!isSuperAdmin) {
+        // Admin can see everyone except super_admins
+        query = query.neq("role", "super_admin");
       }
 
       const { data, error } = await query;
