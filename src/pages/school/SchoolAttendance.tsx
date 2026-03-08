@@ -313,7 +313,7 @@ export default function SchoolAttendance() {
 
   const attendanceContextLabel = isTeacherRole
     ? "Class Attendance"
-    : "Gate Attendance";
+    : "School Attendance";
 
   const attendanceContextIcon = isTeacherRole
     ? <GraduationCap className="h-5 w-5 text-primary" />
@@ -329,7 +329,7 @@ export default function SchoolAttendance() {
               {attendanceContextIcon}
               {isTeacherRole
                 ? "Mark and view class attendance for your students"
-                : "Daily check-in & check-out tracking at the school gate (STATs)"
+                : "Daily check-in & check-out tracking (STATs)"
               }
             </p>
           </div>
@@ -370,7 +370,7 @@ export default function SchoolAttendance() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardCheck className="h-5 w-5" />
-                  {isTeacherRole ? "Class Attendance Records" : "Gate Attendance Records"} — {selectedDate}
+                  {isTeacherRole ? "Class Attendance Records" : "School Attendance Records"} — {selectedDate}
                 </CardTitle>
                 {isTeacherRole && teacherClasses.length > 0 && (
                   <CardDescription>
@@ -451,7 +451,7 @@ export default function SchoolAttendance() {
                     </Select>
                   </div>
 
-                  {/* Staff/Student toggle — only for admin/HR (gate attendance) */}
+                  {/* Staff/Student toggle — only for admin/HR (school attendance) */}
                   {isStaffRole && (
                     <div className="space-y-1.5">
                       <label className="text-sm font-medium text-foreground">Marking</label>
