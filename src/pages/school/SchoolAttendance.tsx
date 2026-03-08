@@ -313,7 +313,7 @@ export default function SchoolAttendance() {
 
   const attendanceContextLabel = isTeacherRole
     ? "Class Attendance"
-    : "Gate Attendance";
+    : "School Attendance";
 
   const attendanceContextIcon = isTeacherRole
     ? <GraduationCap className="h-5 w-5 text-primary" />
