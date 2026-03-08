@@ -9,9 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, User, Shield, ShieldCheck, ShieldOff, School, Camera, Phone, Mail, Bot } from "lucide-react";
+import { Loader2, Upload, User, Shield, ShieldCheck, ShieldOff, School, Camera, Phone, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import SchoolChatKnowledgeTab from "@/components/school/SchoolChatKnowledgeTab";
 
 export default function SchoolSettings() {
   const { schoolUser, currentSchool, user } = useSchoolAuth();
