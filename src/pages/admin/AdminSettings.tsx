@@ -1804,6 +1804,11 @@ function DataCleanupCard() {
           <p className="text-sm text-muted-foreground">
             Removes chat data older than 90 days, expired announcements, and stale rate-limit entries.
           </p>
+          {lastRun && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Last run: {new Date(lastRun).toLocaleString()}
+            </p>
+          )}
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
