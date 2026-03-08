@@ -8,16 +8,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ClipboardCheck, Calendar, UserCheck, Users, Loader2, CheckCircle } from "lucide-react";
+import { ClipboardCheck, Calendar, UserCheck, Users, Loader2, CheckCircle, LogIn, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface StudentForMarking {
+interface UserForMarking {
   id: string;
   full_name: string;
   role: string;
   email: string;
-  existingStatus?: string;
-  existingEventId?: string;
+  checkInStatus?: string;
+  checkInEventId?: string;
+  checkInTime?: string;
+  checkOutStatus?: string;
+  checkOutEventId?: string;
+  checkOutTime?: string;
 }
 
 export default function SchoolAttendance() {
@@ -32,10 +36,11 @@ export default function SchoolAttendance() {
   const [classes, setClasses] = useState<any[]>([]);
   const [selectedClassId, setSelectedClassId] = useState<string>("all-students");
   const [markingTarget, setMarkingTarget] = useState<"students" | "staff">("students");
-  const [studentsToMark, setStudentsToMark] = useState<StudentForMarking[]>([]);
+  const [markingEventType, setMarkingEventType] = useState<"check_in" | "check_out">("check_in");
+  const [usersToMark, setUsersToMark] = useState<UserForMarking[]>([]);
   const [markingStatus, setMarkingStatus] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const fetchAttendance = useCallback(async () => {
     if (!currentSchool?.id) return;
@@ -59,7 +64,6 @@ export default function SchoolAttendance() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchAttendance]);
 
-  // Fetch classes for class filter
   useEffect(() => {
     if (!currentSchool?.id) return;
     supabase
@@ -70,113 +74,87 @@ export default function SchoolAttendance() {
       .then(({ data }) => setClasses(data || []));
   }, [currentSchool?.id]);
 
-  // Fetch students/staff to mark when tab or filters change
+  // Fetch users to mark when tab or filters change
   useEffect(() => {
     if (activeTab !== "mark" || !currentSchool?.id) return;
 
     const fetchUsersToMark = async () => {
-      setLoadingStudents(true);
+      setLoadingUsers(true);
 
       let userIds: string[] = [];
 
-      if (markingTarget === "students") {
-        if (selectedClassId && selectedClassId !== "all-students") {
-          // Get students in specific class
-          const { data: classStudents } = await supabase
-            .from("class_students")
-            .select("student_id")
-            .eq("class_id", selectedClassId);
-          userIds = (classStudents || []).map((cs: any) => cs.student_id);
-        }
-
-        // Get student users
-        let query = supabase
-          .from("school_users")
-          .select("id, full_name, role, email")
-          .eq("school_id", currentSchool.id)
-          .eq("role", "student")
-          .eq("is_active", true)
-          .order("full_name");
-
-        if (userIds.length > 0) {
-          query = query.in("id", userIds);
-        }
-
-        const { data: students } = await query;
-
-        // Fetch existing attendance for this date
-        const { data: existing } = await supabase
-          .from("attendance_events")
-          .select("id, user_id, status")
-          .eq("school_id", currentSchool.id)
-          .eq("event_date", selectedDate)
-          .eq("event_type", "check_in");
-
-        const existingMap = new Map((existing || []).map((e: any) => [e.user_id, e]));
-
-        const mapped: StudentForMarking[] = (students || []).map((s: any) => {
-          const ex = existingMap.get(s.id) as any;
-          return {
-            ...s,
-            existingStatus: ex?.status || undefined,
-            existingEventId: ex?.id || undefined,
-          };
-        });
-
-        setStudentsToMark(mapped);
-
-        // Pre-fill marking status from existing records
-        const initial: Record<string, string> = {};
-        mapped.forEach(s => {
-          if (s.existingStatus) initial[s.id] = s.existingStatus;
-        });
-        setMarkingStatus(initial);
-      } else {
-        // Staff
-        const { data: staff } = await supabase
-          .from("school_users")
-          .select("id, full_name, role, email")
-          .eq("school_id", currentSchool.id)
-          .in("role", ["educator", "class_teacher", "subject_teacher", "school_admin", "hr"])
-          .eq("is_active", true)
-          .order("full_name");
-
-        const { data: existing } = await supabase
-          .from("attendance_events")
-          .select("id, user_id, status")
-          .eq("school_id", currentSchool.id)
-          .eq("event_date", selectedDate)
-          .eq("event_type", "check_in")
-          .in("role", ["educator", "class_teacher", "subject_teacher", "school_admin", "hr"]);
-
-        const existingMap = new Map((existing || []).map((e: any) => [e.user_id, e]));
-
-        const mapped: StudentForMarking[] = (staff || []).map((s: any) => {
-          const ex = existingMap.get(s.id) as any;
-          return {
-            ...s,
-            existingStatus: ex?.status || undefined,
-            existingEventId: ex?.id || undefined,
-          };
-        });
-
-        setStudentsToMark(mapped);
-        const initial: Record<string, string> = {};
-        mapped.forEach(s => {
-          if (s.existingStatus) initial[s.id] = s.existingStatus;
-        });
-        setMarkingStatus(initial);
+      if (markingTarget === "students" && selectedClassId && selectedClassId !== "all-students") {
+        const { data: classStudents } = await supabase
+          .from("class_students")
+          .select("student_id")
+          .eq("class_id", selectedClassId);
+        userIds = (classStudents || []).map((cs: any) => cs.student_id);
       }
 
-      setLoadingStudents(false);
+      const roleFilter = markingTarget === "students"
+        ? ["student" as const]
+        : ["educator" as const, "class_teacher" as const, "subject_teacher" as const, "school_admin" as const, "hr" as const];
+
+      let query = supabase
+        .from("school_users")
+        .select("id, full_name, role, email")
+        .eq("school_id", currentSchool.id)
+        .in("role", roleFilter)
+        .eq("is_active", true)
+        .order("full_name");
+
+      if (markingTarget === "students" && userIds.length > 0) {
+        query = query.in("id", userIds);
+      }
+
+      const { data: users } = await query;
+
+      // Fetch existing attendance for this date (both check_in and check_out)
+      const { data: existing } = await supabase
+        .from("attendance_events")
+        .select("id, user_id, status, event_type, timestamp")
+        .eq("school_id", currentSchool.id)
+        .eq("event_date", selectedDate);
+
+      const checkInMap = new Map<string, any>();
+      const checkOutMap = new Map<string, any>();
+      (existing || []).forEach((e: any) => {
+        if (e.event_type === "check_in") checkInMap.set(e.user_id, e);
+        if (e.event_type === "check_out") checkOutMap.set(e.user_id, e);
+      });
+
+      const mapped: UserForMarking[] = (users || []).map((u: any) => {
+        const ci = checkInMap.get(u.id) as any;
+        const co = checkOutMap.get(u.id) as any;
+        return {
+          ...u,
+          checkInStatus: ci?.status,
+          checkInEventId: ci?.id,
+          checkInTime: ci?.timestamp,
+          checkOutStatus: co?.status,
+          checkOutEventId: co?.id,
+          checkOutTime: co?.timestamp,
+        };
+      });
+
+      setUsersToMark(mapped);
+
+      // Pre-fill from existing records for the selected event type
+      const initial: Record<string, string> = {};
+      mapped.forEach(u => {
+        const existing = markingEventType === "check_in" ? u.checkInStatus : u.checkOutStatus;
+        if (existing) initial[u.id] = existing;
+      });
+      setMarkingStatus(initial);
+      setLoadingUsers(false);
     };
 
     fetchUsersToMark();
-  }, [activeTab, currentSchool?.id, selectedClassId, markingTarget, selectedDate]);
+  }, [activeTab, currentSchool?.id, selectedClassId, markingTarget, selectedDate, markingEventType]);
 
   const setAllStatus = (status: string) => {
     const updated: Record<string, string> = {};
-    studentsToMark.forEach(s => { updated[s.id] = status; });
+    usersToMark.forEach(u => { updated[u.id] = status; });
     setMarkingStatus(updated);
   };
 
@@ -191,20 +169,21 @@ export default function SchoolAttendance() {
 
     setIsSubmitting(true);
 
-    // Separate into updates and inserts
     const toUpdate: { id: string; status: string }[] = [];
     const toInsert: any[] = [];
 
     entries.forEach(([userId, status]) => {
-      const student = studentsToMark.find(s => s.id === userId);
-      if (student?.existingEventId) {
-        toUpdate.push({ id: student.existingEventId, status });
+      const user = usersToMark.find(u => u.id === userId);
+      const existingEventId = markingEventType === "check_in" ? user?.checkInEventId : user?.checkOutEventId;
+
+      if (existingEventId) {
+        toUpdate.push({ id: existingEventId, status });
       } else {
         toInsert.push({
           user_id: userId,
           school_id: currentSchool.id,
-          role: student?.role || "student",
-          event_type: "check_in",
+          role: user?.role || "student",
+          event_type: markingEventType,
           event_date: selectedDate,
           method: "manual",
           status,
@@ -215,13 +194,11 @@ export default function SchoolAttendance() {
 
     let hasError = false;
 
-    // Batch insert new records
     if (toInsert.length > 0) {
       const { error } = await supabase.from("attendance_events").insert(toInsert);
       if (error) { hasError = true; console.error(error); }
     }
 
-    // Update existing records
     for (const item of toUpdate) {
       const { error } = await supabase
         .from("attendance_events")
@@ -233,7 +210,7 @@ export default function SchoolAttendance() {
     if (hasError) {
       toast({ title: "Error", description: "Some records failed to save.", variant: "destructive" });
     } else {
-      toast({ title: "Attendance saved", description: `${entries.length} records saved successfully.` });
+      toast({ title: "Attendance saved", description: `${entries.length} ${markingEventType.replace("_", " ")} records saved.` });
     }
 
     setIsSubmitting(false);
@@ -254,13 +231,33 @@ export default function SchoolAttendance() {
   const lateCount = Object.values(markingStatus).filter(v => v === "late").length;
   const absentCount = Object.values(markingStatus).filter(v => v === "absent").length;
 
+  // Group records by user for the records view
+  const groupedRecords = (() => {
+    const map = new Map<string, { name: string; role: string; checkIn?: any; checkOut?: any }>();
+    attendanceEvents.forEach(event => {
+      const userId = event.user_id;
+      if (!map.has(userId)) {
+        map.set(userId, {
+          name: event.school_users?.full_name || "—",
+          role: event.role,
+          checkIn: undefined,
+          checkOut: undefined,
+        });
+      }
+      const entry = map.get(userId)!;
+      if (event.event_type === "check_in") entry.checkIn = event;
+      if (event.event_type === "check_out") entry.checkOut = event;
+    });
+    return Array.from(map.values());
+  })();
+
   return (
     <SchoolLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Attendance</h1>
-            <p className="text-muted-foreground">Daily attendance tracking (STATs)</p>
+            <p className="text-muted-foreground">Daily check-in & check-out tracking (STATs)</p>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -290,7 +287,7 @@ export default function SchoolAttendance() {
               <CardContent>
                 {isLoading ? (
                   <p className="text-muted-foreground text-center py-8">Loading...</p>
-                ) : attendanceEvents.length === 0 ? (
+                ) : groupedRecords.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">No attendance records for this date.</p>
                 ) : (
                   <Table>
@@ -298,23 +295,41 @@ export default function SchoolAttendance() {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Role</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Time</TableHead>
+                        <TableHead className="text-center">
+                          <span className="flex items-center justify-center gap-1"><LogIn className="h-3.5 w-3.5" />Check In</span>
+                        </TableHead>
+                        <TableHead className="text-center">Check-In Time</TableHead>
+                        <TableHead className="text-center">
+                          <span className="flex items-center justify-center gap-1"><LogOut className="h-3.5 w-3.5" />Check Out</span>
+                        </TableHead>
+                        <TableHead className="text-center">Check-Out Time</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {attendanceEvents.map(event => (
-                        <TableRow key={event.id}>
-                          <TableCell className="font-medium">{event.school_users?.full_name || "—"}</TableCell>
-                          <TableCell className="capitalize">{event.role?.replace("_", " ")}</TableCell>
-                          <TableCell className="capitalize">{event.event_type?.replace("_", " ")}</TableCell>
-                          <TableCell className="capitalize">{event.method}</TableCell>
-                          <TableCell>
-                            <Badge variant={statusColor(event.status) as any}>{event.status}</Badge>
+                      {groupedRecords.map((record, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{record.name}</TableCell>
+                          <TableCell className="capitalize">{record.role?.replace("_", " ")}</TableCell>
+                          <TableCell className="text-center">
+                            {record.checkIn ? (
+                              <Badge variant={statusColor(record.checkIn.status) as any}>{record.checkIn.status}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
                           </TableCell>
-                          <TableCell>{new Date(event.timestamp).toLocaleTimeString()}</TableCell>
+                          <TableCell className="text-center text-sm">
+                            {record.checkIn ? new Date(record.checkIn.timestamp).toLocaleTimeString() : "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {record.checkOut ? (
+                              <Badge variant={statusColor(record.checkOut.status) as any}>{record.checkOut.status}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center text-sm">
+                            {record.checkOut ? new Date(record.checkOut.timestamp).toLocaleTimeString() : "—"}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -328,7 +343,20 @@ export default function SchoolAttendance() {
             {/* Filters */}
             <Card>
               <CardContent className="pt-6">
-                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end flex-wrap">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Event Type</label>
+                    <Select value={markingEventType} onValueChange={(v) => setMarkingEventType(v as "check_in" | "check_out")}>
+                      <SelectTrigger className="w-44">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="check_in"><span className="flex items-center gap-2"><LogIn className="h-4 w-4" />Check In</span></SelectItem>
+                        <SelectItem value="check_out"><span className="flex items-center gap-2"><LogOut className="h-4 w-4" />Check Out</span></SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">Marking</label>
                     <Select value={markingTarget} onValueChange={(v) => setMarkingTarget(v as "students" | "staff")}>
@@ -374,7 +402,7 @@ export default function SchoolAttendance() {
                 <Badge variant="default">{presentCount} Present</Badge>
                 <Badge variant="secondary">{lateCount} Late</Badge>
                 <Badge variant="destructive">{absentCount} Absent</Badge>
-                <Badge variant="outline">{studentsToMark.length - markedCount} Unmarked</Badge>
+                <Badge variant="outline">{usersToMark.length - markedCount} Unmarked</Badge>
               </div>
             )}
 
@@ -382,16 +410,16 @@ export default function SchoolAttendance() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5" />
-                  {markingTarget === "students" ? "Mark Student Attendance" : "Mark Staff Attendance"} — {selectedDate}
+                  {markingEventType === "check_in" ? <LogIn className="h-5 w-5" /> : <LogOut className="h-5 w-5" />}
+                  Mark {markingEventType === "check_in" ? "Check In" : "Check Out"} — {markingTarget === "students" ? "Students" : "Staff"} — {selectedDate}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {loadingStudents ? (
+                {loadingUsers ? (
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : studentsToMark.length === 0 ? (
+                ) : usersToMark.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">
                     {markingTarget === "students" ? "No students found. Add students to this school first." : "No staff found."}
                   </p>
@@ -403,45 +431,66 @@ export default function SchoolAttendance() {
                           <TableHead className="w-8">#</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead>Role</TableHead>
+                          <TableHead>
+                            <span className="flex items-center gap-1"><LogIn className="h-3.5 w-3.5" />In</span>
+                          </TableHead>
+                          <TableHead>
+                            <span className="flex items-center gap-1"><LogOut className="h-3.5 w-3.5" />Out</span>
+                          </TableHead>
                           <TableHead>Status</TableHead>
-                          {studentsToMark.some(s => s.existingStatus) && <TableHead>Saved</TableHead>}
+                          <TableHead>Saved</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {studentsToMark.map((student, idx) => (
-                          <TableRow key={student.id}>
-                            <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
-                            <TableCell className="font-medium">{student.full_name}</TableCell>
-                            <TableCell className="capitalize text-sm text-muted-foreground">{student.role.replace("_", " ")}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                {(["present", "late", "absent"] as const).map(status => (
-                                  <Button
-                                    key={status}
-                                    size="sm"
-                                    variant={markingStatus[student.id] === status ? (
-                                      status === "present" ? "default" : status === "late" ? "secondary" : "destructive"
-                                    ) : "outline"}
-                                    className="text-xs h-7 px-2"
-                                    onClick={() => setMarkingStatus(prev => ({
-                                      ...prev,
-                                      [student.id]: prev[student.id] === status ? "" : status,
-                                    }))}
-                                  >
-                                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                                  </Button>
-                                ))}
-                              </div>
-                            </TableCell>
-                            {studentsToMark.some(s => s.existingStatus) && (
-                              <TableCell>
-                                {student.existingStatus && (
-                                  <CheckCircle className="h-4 w-4 text-primary" />
-                                )}
+                        {usersToMark.map((user, idx) => {
+                          const existingStatus = markingEventType === "check_in" ? user.checkInStatus : user.checkOutStatus;
+                          return (
+                            <TableRow key={user.id}>
+                              <TableCell className="text-muted-foreground text-xs">{idx + 1}</TableCell>
+                              <TableCell className="font-medium">{user.full_name}</TableCell>
+                              <TableCell className="capitalize text-sm text-muted-foreground">{user.role.replace("_", " ")}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {user.checkInStatus ? (
+                                  <span className="flex items-center gap-1">
+                                    <Badge variant={statusColor(user.checkInStatus) as any} className="text-[10px] px-1.5 py-0">{user.checkInStatus}</Badge>
+                                    <span>{user.checkInTime ? new Date(user.checkInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                                  </span>
+                                ) : "—"}
                               </TableCell>
-                            )}
-                          </TableRow>
-                        ))}
+                              <TableCell className="text-xs text-muted-foreground">
+                                {user.checkOutStatus ? (
+                                  <span className="flex items-center gap-1">
+                                    <Badge variant={statusColor(user.checkOutStatus) as any} className="text-[10px] px-1.5 py-0">{user.checkOutStatus}</Badge>
+                                    <span>{user.checkOutTime ? new Date(user.checkOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                                  </span>
+                                ) : "—"}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-1">
+                                  {(["present", "late", "absent"] as const).map(status => (
+                                    <Button
+                                      key={status}
+                                      size="sm"
+                                      variant={markingStatus[user.id] === status ? (
+                                        status === "present" ? "default" : status === "late" ? "secondary" : "destructive"
+                                      ) : "outline"}
+                                      className="text-xs h-7 px-2"
+                                      onClick={() => setMarkingStatus(prev => ({
+                                        ...prev,
+                                        [user.id]: prev[user.id] === status ? "" : status,
+                                      }))}
+                                    >
+                                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </Button>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {existingStatus && <CheckCircle className="h-4 w-4 text-primary" />}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
 
@@ -450,7 +499,7 @@ export default function SchoolAttendance() {
                         {isSubmitting ? (
                           <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
                         ) : (
-                          <><ClipboardCheck className="mr-2 h-4 w-4" />Save Attendance ({markedCount})</>
+                          <><ClipboardCheck className="mr-2 h-4 w-4" />Save {markingEventType === "check_in" ? "Check In" : "Check Out"} ({markedCount})</>
                         )}
                       </Button>
                     </div>
