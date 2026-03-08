@@ -69,16 +69,21 @@ export function PortalAuthProvider({ children }: { children: React.ReactNode }) 
       setAllPortalUsers(portalUsers);
       setPortalUser(portalUsers[0]);
 
-      // Fetch all linked schools
-      const schoolIds = [...new Set(portalUsers.map(u => u.school_id))];
-      const { data: schools } = await supabase
-        .from("schools")
-        .select("id, name, school_code, logo_url")
-        .in("id", schoolIds);
+      // Fetch all linked schools (only for users that have a school_id)
+      const schoolIds = [...new Set(portalUsers.map(u => u.school_id).filter(Boolean))] as string[];
+      if (schoolIds.length > 0) {
+        const { data: schools } = await supabase
+          .from("schools")
+          .select("id, name, school_code, logo_url")
+          .in("id", schoolIds);
 
-      const schoolList = (schools || []) as PortalSchool[];
-      setAvailableSchools(schoolList);
-      setCurrentSchool(schoolList.find(s => s.id === portalUsers[0].school_id) || null);
+        const schoolList = (schools || []) as PortalSchool[];
+        setAvailableSchools(schoolList);
+        setCurrentSchool(schoolList.find(s => s.id === portalUsers[0].school_id) || null);
+      } else {
+        setAvailableSchools([]);
+        setCurrentSchool(null);
+      }
     } catch {
       setPortalUser(null);
       setAllPortalUsers([]);

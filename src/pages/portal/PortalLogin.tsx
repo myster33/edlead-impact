@@ -180,30 +180,29 @@ export default function PortalLogin() {
         return;
       }
 
-      // Submit registration request for school approval
-      const { error: reqError } = await supabase
-        .from("portal_registration_requests" as any)
-        .insert({
-          email: signupData.email,
+      // Create account immediately via edge function (no school approval needed)
+      const { data: regData, error: regError } = await supabase.functions.invoke("portal-register", {
+        body: {
+          auth_user_id: authData.user?.id,
           full_name: signupData.fullName,
+          email: signupData.email,
           phone: signupData.phone || null,
           role: signupData.role,
-          school_id: null,
           student_id_number: signupData.studentIdNumber || null,
           id_passport_number: signupData.idPassportNumber,
-          auth_user_id: authData.user?.id || null,
-        } as any);
+        },
+      });
 
-      if (reqError) {
-        console.error("Registration request error:", reqError);
+      if (regError) {
+        console.error("Registration error:", regError);
       }
 
-      // Sign out - they need to verify email and wait for school approval
+      // Sign out - they need to verify email first
       await supabase.auth.signOut();
 
       toast({
-        title: "Registration Submitted!",
-        description: "Please verify your email. Your edLEAD ID will be sent via email and SMS once your account is set up.",
+        title: "Account Created!",
+        description: `Your edLEAD ID${regData?.user_code ? ` (${regData.user_code})` : ""} has been sent via email${signupData.phone ? " and SMS" : ""}. Please verify your email to sign in.`,
       });
 
       setTab("login");
