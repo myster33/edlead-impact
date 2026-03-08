@@ -57,6 +57,14 @@ export default function SchoolAttendance() {
   const [classAttendanceRecords, setClassAttendanceRecords] = useState<any[]>([]);
   const [classAttendanceLoading, setClassAttendanceLoading] = useState(false);
 
+  // Period attendance view filters (admin)
+  const [periodViewGrade, setPeriodViewGrade] = useState<string>("all");
+  const [periodViewClassId, setPeriodViewClassId] = useState<string>("all");
+  const [periodViewSubjectId, setPeriodViewSubjectId] = useState<string>("all");
+  const [periodRecords, setPeriodRecords] = useState<any[]>([]);
+  const [periodLoading, setPeriodLoading] = useState(false);
+  const [allSubjects, setAllSubjects] = useState<any[]>([]);
+
   const isClassTeacher = schoolUser?.role === "class_teacher";
   const isSubjectTeacher = schoolUser?.role === "subject_teacher";
   const isEducator = schoolUser?.role === "educator";
