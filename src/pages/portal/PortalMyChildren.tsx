@@ -37,7 +37,7 @@ export default function PortalMyChildren() {
     setLinkedStudents(links || []);
 
     // Fetch pending link requests
-    const { data: reqs } = await supabase
+    const { data: reqs } = await (supabase as any)
       .from("parent_link_requests")
       .select("*")
       .eq("parent_user_id", portalUser.id)
