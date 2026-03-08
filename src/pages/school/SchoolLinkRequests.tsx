@@ -87,7 +87,7 @@ export default function SchoolLinkRequests() {
 
   const handleReject = async (req: any) => {
     if (!schoolUser) return;
-    const { error } = await supabase.from("parent_link_requests").update({
+    const { error } = await (supabase as any).from("parent_link_requests").update({
       status: "rejected",
       reviewed_by: schoolUser.id,
       reviewed_at: new Date().toISOString(),

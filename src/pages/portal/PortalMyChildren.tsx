@@ -54,7 +54,7 @@ export default function PortalMyChildren() {
       return;
     }
     setIsSaving(true);
-    const { error } = await supabase.from("parent_link_requests").insert({
+    const { error } = await (supabase as any).from("parent_link_requests").insert({
       school_id: currentSchool.id,
       parent_user_id: portalUser.id,
       student_name: studentName.trim(),
