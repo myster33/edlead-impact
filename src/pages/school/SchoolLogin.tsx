@@ -59,6 +59,7 @@ export default function SchoolLogin() {
   
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
+  const [loginEmisNumber, setLoginEmisNumber] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -323,6 +324,14 @@ export default function SchoolLogin() {
 
               <TabsContent value="login">
                 <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-emis">School EMIS Number</Label>
+                    <div className="relative">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="login-emis" placeholder="e.g. 700210001" value={loginEmisNumber} onChange={e => setLoginEmisNumber(e.target.value)} className="pl-10" disabled={isLoading} />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Your school's EMIS number used during registration</p>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
                     <div className="relative">
