@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School, KeyRound, CreditCard } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
