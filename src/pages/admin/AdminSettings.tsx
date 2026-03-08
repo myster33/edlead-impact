@@ -1754,3 +1754,68 @@ function ScheduledReportSettings() {
     </div>
   );
 }
+
+// ── Data Cleanup sub-component ──
+function DataCleanupCard() {
+  const [isRunning, setIsRunning] = useState(false);
+  const [results, setResults] = useState<Record<string, number> | null>(null);
+
+  const handleRunCleanup = async () => {
+    setIsRunning(true);
+    setResults(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("cleanup-stale-data");
+      if (error) throw error;
+      setResults(data?.results || {});
+      toast({
+        title: "Cleanup complete",
+        description: "Stale data has been cleaned up successfully.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Cleanup failed",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const labelMap: Record<string, string> = {
+    chat_messages_deleted: "Chat messages deleted",
+    chat_conversations_deleted: "Chat conversations deleted",
+    expired_announcements_deleted: "Expired announcements deleted",
+    rate_limits_cleaned: "Rate limit entries cleaned",
+    old_audit_entries: "Audit entries older than 1 year (kept)",
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-medium">Run Cleanup Now</p>
+          <p className="text-sm text-muted-foreground">
+            Removes chat data older than 90 days, expired announcements, and stale rate-limit entries.
+          </p>
+        </div>
+        <Button onClick={handleRunCleanup} disabled={isRunning}>
+          {isRunning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Eraser className="h-4 w-4 mr-1" />
+          Run Cleanup
+        </Button>
+      </div>
+      {results && (
+        <div className="rounded-md border p-4 space-y-2">
+          <p className="text-sm font-medium">Results</p>
+          {Object.entries(results).map(([key, value]) => (
+            <div key={key} className="flex justify-between text-sm">
+              <span className="text-muted-foreground">{labelMap[key] || key}</span>
+              <Badge variant={value > 0 ? "default" : "secondary"}>{value}</Badge>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
