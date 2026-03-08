@@ -258,12 +258,25 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    await sendEmail(
+    const adminResult = await sendEmail(
       ADMIN_EMAIL,
       `[edLEAD Contact] ${sanitizedSubject}`,
       adminEmailHtml
     );
     console.log("Admin notification email sent");
+
+    // Log admin email
+    try {
+      await supabaseRL.from("email_logs").insert({
+        recipient_email: ADMIN_EMAIL,
+        subject: `[edLEAD Contact] ${sanitizedSubject}`,
+        status: "sent",
+        template_key: "contact-admin-notification",
+        related_table: "contact_submissions",
+      });
+    } catch (logErr) {
+      console.error("Failed to log admin email:", logErr);
+    }
 
     // Send confirmation email to sender
     const confirmationEmailHtml = `
