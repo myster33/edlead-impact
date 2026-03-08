@@ -963,7 +963,7 @@ export function ChatWidget() {
           <AlertDialogHeader>
             <AlertDialogTitle>Clear this chat?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will start a fresh conversation. Your previous messages will still be saved on our end.
+              This will start a fresh conversation.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
