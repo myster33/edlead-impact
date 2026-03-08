@@ -305,6 +305,23 @@ export default function SchoolLogin() {
     );
   }
 
+  if (showTwoFaVerify) {
+    return (
+      <TwoFactorVerify
+        onVerified={() => {
+          setShowTwoFaVerify(false);
+          toast({ title: "Welcome!", description: "Successfully verified." });
+        }}
+        onCancel={async () => {
+          await supabase.auth.signOut();
+          setShowTwoFaVerify(false);
+        }}
+        portalType="school"
+        twoFaChannel={twoFaChannel}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4 relative">
       <Button variant="outline" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="absolute top-4 right-4">
