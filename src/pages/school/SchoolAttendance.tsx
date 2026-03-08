@@ -472,6 +472,25 @@ export default function SchoolAttendance() {
   const lateCount = Object.values(markingStatus).filter(v => v === "late").length;
   const absentCount = Object.values(markingStatus).filter(v => v === "absent").length;
 
+  // Helper: should we apply default 5PM checkout?
+  const shouldApplyDefaultCheckout = useCallback((date: string) => {
+    const today = new Date().toISOString().split("T")[0];
+    if (date < today) return true; // past date
+    if (date === today) {
+      const now = new Date();
+      return now.getHours() >= 17; // today after 5PM
+    }
+    return false;
+  }, []);
+
+  // Create a default 5PM checkout event object
+  const makeDefaultCheckout = useCallback((date: string) => ({
+    status: "present",
+    event_type: "check_out",
+    timestamp: `${date}T17:00:00`,
+    isDefault: true,
+  }), []);
+
   // Group records by user for the records view
   const groupedRecords = useMemo(() => {
     const map = new Map<string, { name: string; role: string; checkIn?: any; checkOut?: any }>();
@@ -489,8 +508,18 @@ export default function SchoolAttendance() {
       if (event.event_type === "check_in") entry.checkIn = event;
       if (event.event_type === "check_out") entry.checkOut = event;
     });
+
+    // Apply default 5PM checkout for students who checked in but didn't check out
+    if (shouldApplyDefaultCheckout(selectedDate)) {
+      map.forEach((entry) => {
+        if (entry.checkIn && !entry.checkOut && entry.role === "student") {
+          entry.checkOut = makeDefaultCheckout(selectedDate);
+        }
+      });
+    }
+
     return Array.from(map.values());
-  }, [attendanceEvents]);
+  }, [attendanceEvents, selectedDate, shouldApplyDefaultCheckout, makeDefaultCheckout]);
 
   // Class attendance summary stats
   const classAttendanceSummary = useMemo(() => {
