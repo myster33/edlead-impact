@@ -143,6 +143,63 @@ export default function SchoolPeriodAttendance() {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      // Sync with school attendance (attendance_events) for students without a check-in
+      try {
+        const studentIds = students.map(s => s.id);
+        const { data: existingCheckIns } = await supabase
+          .from("attendance_events")
+          .select("user_id")
+          .in("user_id", studentIds)
+          .eq("school_id", currentSchool.id)
+          .eq("event_date", selectedDate)
+          .eq("event_type", "check_in");
+
+        const checkedInIds = new Set((existingCheckIns || []).map((e: any) => e.user_id));
+        const now = new Date().toISOString();
+
+        const schoolAttendanceRecords: any[] = [];
+        students.forEach(student => {
+          if (checkedInIds.has(student.id)) return; // already checked in, skip
+
+          const isAbsent = absentStudentIds.has(student.id);
+          if (isAbsent) {
+            // No check-in + absent in period → mark absent in school attendance
+            schoolAttendanceRecords.push({
+              user_id: student.id,
+              school_id: currentSchool.id,
+              role: "student" as const,
+              event_date: selectedDate,
+              event_type: "check_in",
+              status: "absent",
+              method: "period_sync",
+              marked_by: schoolUser.id,
+              timestamp: now,
+              notes: "Auto-marked absent from period attendance",
+            });
+          } else {
+            // No check-in + present in period → mark late in school attendance with current time
+            schoolAttendanceRecords.push({
+              user_id: student.id,
+              school_id: currentSchool.id,
+              role: "student" as const,
+              event_date: selectedDate,
+              event_type: "check_in",
+              status: "late",
+              method: "period_sync",
+              marked_by: schoolUser.id,
+              timestamp: now,
+              notes: "Auto-marked late from period attendance (no prior check-in)",
+            });
+          }
+        });
+
+        if (schoolAttendanceRecords.length > 0) {
+          await supabase.from("attendance_events").insert(schoolAttendanceRecords);
+        }
+      } catch (syncErr) {
+        console.error("School attendance sync error:", syncErr);
+      }
+
       toast({
         title: "Period attendance saved",
         description: `${students.length - absentStudentIds.size} present, ${absentStudentIds.size} absent`,
