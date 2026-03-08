@@ -53,6 +53,7 @@ const AdminTestimonials = lazy(() => import("./pages/admin/AdminTestimonials"));
 const AdminSubscribers = lazy(() => import("./pages/admin/AdminSubscribers"));
 const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
+const AdminSchools = lazy(() => import("./pages/admin/AdminSchools"));
 
 // School portal pages
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -133,6 +134,7 @@ const App = () => (
                     <Route path="/admin/subscribers" element={<ProtectedRoute moduleKey="subscribers"><AdminSubscribers /></ProtectedRoute>} />
                     <Route path="/admin/email-logs" element={<ProtectedRoute moduleKey="email-logs"><AdminEmailLogs /></ProtectedRoute>} />
                     <Route path="/admin/webhooks" element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>} />
+                    <Route path="/admin/schools" element={<ProtectedRoute moduleKey="schools"><AdminSchools /></ProtectedRoute>} />
 
                     {/* School Portal Routes */}
                     <Route path="/school/login" element={<SchoolLogin />} />

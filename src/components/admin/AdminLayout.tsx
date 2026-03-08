@@ -54,6 +54,7 @@ import {
   FileBarChart,
   Search,
   ChevronDown,
+  School,
 } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
@@ -92,6 +93,7 @@ const menuItems = [
   { title: "Email Logs", url: "/admin/email-logs", icon: Mail, moduleKey: "email-logs" },
   { title: "Testimonials", url: "/admin/testimonials", icon: Quote, moduleKey: "testimonials" },
   { title: "Subscribers", url: "/admin/subscribers", icon: UserCheck, moduleKey: "subscribers" },
+  { title: "Schools", url: "/admin/schools", icon: School, moduleKey: "schools" },
   { title: "Admin Users", url: "/admin/users", icon: Users, moduleKey: "admin-users" },
   { title: "Permissions", url: "/admin/permissions", icon: Lock, moduleKey: "permissions" },
   { title: "Webhooks", url: "/admin/webhooks", icon: Shield, moduleKey: "webhooks" },
