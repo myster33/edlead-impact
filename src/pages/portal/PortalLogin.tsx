@@ -90,7 +90,7 @@ export default function PortalLogin() {
   const getLoginIcon = () => {
     switch (loginMethod) {
       case "phone": return <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
-      case "edleadid": return <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
+      case "edleadid": return <img src={edleadIcon} alt="edLEAD" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" />;
       default: return <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />;
     }
   };
