@@ -152,6 +152,7 @@ const App = () => (
                     <Route path="/school/reset-password" element={<SchoolResetPassword />} />
                     <Route path="/school/dashboard" element={<SchoolProtectedRoute><SchoolDashboard /></SchoolProtectedRoute>} />
                     <Route path="/school/attendance" element={<SchoolProtectedRoute><SchoolAttendance /></SchoolProtectedRoute>} />
+                    <Route path="/school/calendar" element={<SchoolProtectedRoute><SchoolCalendar /></SchoolProtectedRoute>} />
                     <Route path="/school/classes" element={<SchoolProtectedRoute><SchoolClasses /></SchoolProtectedRoute>} />
                     <Route path="/school/students" element={<SchoolProtectedRoute><SchoolStudents /></SchoolProtectedRoute>} />
                     <Route path="/school/staff" element={<SchoolProtectedRoute><SchoolStaff /></SchoolProtectedRoute>} />
