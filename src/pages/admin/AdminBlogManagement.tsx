@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -67,7 +68,8 @@ import {
   Filter,
   Search,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CheckSquare,
 } from "lucide-react";
 import { TableSkeleton } from "@/components/admin/TableSkeleton";
 import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
