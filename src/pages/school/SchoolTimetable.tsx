@@ -39,10 +39,6 @@ export default function SchoolTimetable() {
   const [formEndTime, setFormEndTime] = useState("08:45");
   const [formPeriodLabel, setFormPeriodLabel] = useState("");
 
-  // Subject management
-  const [newSubjectName, setNewSubjectName] = useState("");
-  const [addingSubject, setAddingSubject] = useState(false);
-
   const isStaffRole = schoolUser?.role === "school_admin" || schoolUser?.role === "hr";
   const isTeacherRole = ["class_teacher", "subject_teacher", "educator"].includes(schoolUser?.role || "");
 
