@@ -887,6 +887,98 @@ export default function AdminApplications() {
     }
   };
 
+  const bulkSoftDeleteApplications = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: new Date().toISOString() } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const app = applications.find(a => a.id === id);
+        logAction({
+          action: "application_trashed" as any,
+          table_name: "applications",
+          record_id: id,
+          new_values: { full_name: app?.full_name, reference_number: app?.reference_number },
+        });
+      }
+      setSelectedIds(new Set());
+      setBulkTrashOpen(false);
+      toast({ title: "Moved to Trash", description: `${idsArray.length} applications moved to trash.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error bulk trashing:", error);
+      toast({ title: "Error", description: "Failed to move applications to trash.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const bulkRestoreApplications = async () => {
+    if (selectedIds.size === 0) return;
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("applications")
+        .update({ deleted_at: null } as any)
+        .in("id", idsArray);
+      if (error) throw error;
+      for (const id of idsArray) {
+        const app = applications.find(a => a.id === id);
+        logAction({
+          action: "application_restored" as any,
+          table_name: "applications",
+          record_id: id,
+          new_values: { full_name: app?.full_name, reference_number: app?.reference_number },
+        });
+      }
+      setSelectedIds(new Set());
+      toast({ title: "Restored", description: `${idsArray.length} applications restored.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error bulk restoring:", error);
+      toast({ title: "Error", description: "Failed to restore applications.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const bulkPurgeApplications = async () => {
+    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    setIsUpdating(true);
+    try {
+      const idsArray = Array.from(selectedIds);
+      for (const id of idsArray) {
+        const app = applications.find(a => a.id === id);
+        logAction({
+          action: "application_purged" as any,
+          table_name: "applications",
+          record_id: id,
+          old_values: { full_name: app?.full_name, reference_number: app?.reference_number },
+        });
+      }
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .in("id", idsArray);
+      if (error) throw error;
+      setSelectedIds(new Set());
+      setBulkPurgeOpen(false);
+      toast({ title: "Permanently Deleted", description: `${idsArray.length} applications permanently removed.` });
+      fetchApplications();
+    } catch (error) {
+      console.error("Error bulk purging:", error);
+      toast({ title: "Error", description: "Failed to permanently delete applications.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
