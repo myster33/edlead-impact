@@ -84,6 +84,7 @@ interface AdminUser {
   country: string | null;
   province: string | null;
   profile_picture_url: string | null;
+  region_scope: string | null;
 }
 
 const countries = [
@@ -194,7 +195,9 @@ export default function AdminManagement() {
   const [sendRejectEmail, setSendRejectEmail] = useState(true);
   const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
 
-  const isAdmin = adminUser?.role === "admin";
+  const isSuperAdmin = adminUser?.role === "super_admin";
+  const isAdmin = adminUser?.role === "admin" || isSuperAdmin;
+  const canManageUsers = isAdmin; // Both super_admin and admin can manage users
 
   // Online presence — track self and observe who else is online
   const presenceAdmin = useMemo(() => adminUser ? {
@@ -223,10 +226,10 @@ export default function AdminManagement() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Non-admin users (reviewers/viewers) cannot see admin users
+      // Non-admin/super_admin users cannot see admin/super_admin users
       // and can only see users in their assigned region
       if (!isAdmin) {
-        query = query.neq("role", "admin");
+        query = query.not("role", "in", '("admin","super_admin")');
         
         // Filter by region if user has one assigned
         if (adminUser?.country) {
@@ -235,6 +238,9 @@ export default function AdminManagement() {
         if (adminUser?.province) {
           query = query.eq("province", adminUser.province);
         }
+      } else if (!isSuperAdmin) {
+        // Admin can see everyone except super_admins
+        query = query.neq("role", "super_admin");
       }
 
       const { data, error } = await query;
@@ -299,12 +305,18 @@ export default function AdminManagement() {
     
     setApprovingUserId(approvingPendingUser.id);
     try {
+      const regionScope = (approveRole === "admin" || approveRole === "super_admin") ? "all" 
+        : approveProvince ? "region" 
+        : approveCountry ? "country" 
+        : "all";
+      
       const response = await supabase.functions.invoke("add-admin-user", {
         body: { 
           email: approvingPendingUser.email, 
           role: approveRole,
-          country: approveRole !== "admin" ? approveCountry : null,
-          province: approveRole !== "admin" ? approveProvince : null,
+          country: (approveRole !== "admin" && approveRole !== "super_admin") ? approveCountry : null,
+          province: (approveRole !== "admin" && approveRole !== "super_admin") ? approveProvince : null,
+          region_scope: regionScope,
         },
       });
 
@@ -450,12 +462,17 @@ export default function AdminManagement() {
 
     for (const user of usersToApprove) {
       try {
+        const bulkRegionScope = (bulkApproveRole === "admin" || bulkApproveRole === "super_admin") ? "all"
+          : bulkApproveProvince ? "region"
+          : bulkApproveCountry ? "country"
+          : "all";
         const response = await supabase.functions.invoke("add-admin-user", {
           body: { 
             email: user.email, 
             role: bulkApproveRole,
-            country: bulkApproveRole !== "admin" ? bulkApproveCountry : null,
-            province: bulkApproveRole !== "admin" ? bulkApproveProvince : null,
+            country: (bulkApproveRole !== "admin" && bulkApproveRole !== "super_admin") ? bulkApproveCountry : null,
+            province: (bulkApproveRole !== "admin" && bulkApproveRole !== "super_admin") ? bulkApproveProvince : null,
+            region_scope: bulkRegionScope,
           },
         });
 
@@ -564,6 +581,16 @@ export default function AdminManagement() {
       return;
     }
 
+    // Admin role can only appoint viewer/reviewer, not admin/super_admin
+    if (!isSuperAdmin && (newUserRole === "admin" || newUserRole === "super_admin")) {
+      toast({
+        title: "Insufficient Permissions",
+        description: "Only Super Admins can appoint Admin or Super Admin roles.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Check if already an admin
@@ -578,14 +605,19 @@ export default function AdminManagement() {
         return;
       }
 
-      // Try to insert - will fail if user_id doesn't exist
-      // We need to use an edge function for this since we can't access auth.users directly
+      // Determine region_scope
+      const regionScope = (newUserRole === "admin" || newUserRole === "super_admin") ? "all" 
+        : newUserProvince ? "region" 
+        : newUserCountry ? "country" 
+        : "all";
+
       const response = await supabase.functions.invoke("add-admin-user", {
         body: { 
           email: newUserEmail.toLowerCase().trim(), 
           role: newUserRole,
-          country: newUserRole !== "admin" ? newUserCountry : null,
-          province: newUserRole !== "admin" ? newUserProvince : null,
+          country: (newUserRole !== "admin" && newUserRole !== "super_admin") ? newUserCountry : null,
+          province: (newUserRole !== "admin" && newUserRole !== "super_admin") ? newUserProvince : null,
+          region_scope: regionScope,
         },
       });
 
@@ -659,10 +691,15 @@ export default function AdminManagement() {
     try {
       const updateData: any = { role: editRole };
       
-      // Only set country/province for non-admin roles
-      if (editRole !== "admin") {
+      // Determine region_scope
+      if (editRole === "admin" || editRole === "super_admin") {
+        updateData.region_scope = "all";
+        updateData.country = null;
+        updateData.province = null;
+      } else {
         updateData.country = editCountry || null;
         updateData.province = editProvince || null;
+        updateData.region_scope = editProvince ? "region" : editCountry ? "country" : "all";
       }
 
       const { error } = await supabase
@@ -676,8 +713,8 @@ export default function AdminManagement() {
         u.id === editingUser.id ? { 
           ...u, 
           role: editRole, 
-          country: editRole !== "admin" ? editCountry : null,
-          province: editRole !== "admin" ? editProvince : null 
+          country: (editRole !== "admin" && editRole !== "super_admin") ? editCountry : null,
+          province: (editRole !== "admin" && editRole !== "super_admin") ? editProvince : null 
         } : u
       ));
 
@@ -697,7 +734,7 @@ export default function AdminManagement() {
       );
 
       // Send region assignment notification if region changed for non-admin roles
-      const regionChanged = editRole !== "admin" && (
+      const regionChanged = (editRole !== "admin" && editRole !== "super_admin") && (
         editCountry !== editingUser.country || 
         editProvince !== editingUser.province
       );
@@ -790,6 +827,8 @@ export default function AdminManagement() {
 
   const getRoleBadge = (role: AppRole) => {
     switch (role) {
+      case "super_admin":
+        return <Badge className="bg-red-500/10 text-red-600">Super Admin</Badge>;
       case "admin":
         return <Badge className="bg-primary/10 text-primary">Admin</Badge>;
       case "reviewer":
@@ -801,12 +840,14 @@ export default function AdminManagement() {
 
   const getRoleDescription = (role: AppRole) => {
     switch (role) {
+      case "super_admin":
+        return "Full unrestricted access: can manage all roles including other super admins, no region limits";
       case "admin":
-        return "Full access: can manage admins, approve/reject applications, and delete data";
+        return "Full access: can appoint viewers and reviewers, manage modules and data";
       case "reviewer":
-        return "Can view and approve/reject applications";
+        return "Can view and make changes within assigned modules and region";
       default:
-        return "Can only view applications";
+        return "Read-only access within assigned modules and region";
     }
   };
 
@@ -854,7 +895,7 @@ export default function AdminManagement() {
                     <Label htmlFor="role">Role</Label>
                     <Select value={newUserRole} onValueChange={(v) => {
                       setNewUserRole(v as AppRole);
-                      if (v === "admin") {
+                      if (v === "admin" || v === "super_admin") {
                         setNewUserCountry("");
                         setNewUserProvince("");
                       }
@@ -881,6 +922,14 @@ export default function AdminManagement() {
                             Admin
                           </div>
                         </SelectItem>
+                        {isSuperAdmin && (
+                          <SelectItem value="super_admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-destructive" />
+                              Super Admin
+                            </div>
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
@@ -888,7 +937,7 @@ export default function AdminManagement() {
                     </p>
                   </div>
                   
-                  {newUserRole !== "admin" && (
+                  {newUserRole !== "admin" && newUserRole !== "super_admin" && (
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="country">Assigned Country</Label>
@@ -1123,11 +1172,19 @@ export default function AdminManagement() {
                         Admin
                       </div>
                     </SelectItem>
+                    {isSuperAdmin && (
+                      <SelectItem value="super_admin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-destructive" />
+                          Super Admin
+                        </div>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               
-              {bulkApproveRole !== "admin" && (
+              {bulkApproveRole !== "admin" && bulkApproveRole !== "super_admin" && (
                 <>
                   <div className="space-y-2">
                     <Label>Country (Optional)</Label>
@@ -1252,7 +1309,7 @@ export default function AdminManagement() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                   <SelectContent>
                     <SelectItem value="viewer">
                       <div className="flex items-center gap-2">
                         <Eye className="h-4 w-4 text-muted-foreground" />
@@ -1271,11 +1328,19 @@ export default function AdminManagement() {
                         Admin
                       </div>
                     </SelectItem>
+                    {isSuperAdmin && (
+                      <SelectItem value="super_admin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4 text-destructive" />
+                          Super Admin
+                        </div>
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               
-              {approveRole !== "admin" && (
+              {approveRole !== "admin" && approveRole !== "super_admin" && (
                 <>
                   <div className="space-y-2">
                     <Label>Country (Optional)</Label>
@@ -1385,14 +1450,14 @@ export default function AdminManagement() {
         </Dialog>
 
         {/* Role Legend */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Eye className="h-5 w-5 text-muted-foreground" />
                 Viewer
               </CardTitle>
-              <CardDescription>Can only view applications</CardDescription>
+              <CardDescription>Read-only access within assigned modules and region</CardDescription>
             </CardHeader>
           </Card>
           <Card>
@@ -1401,7 +1466,7 @@ export default function AdminManagement() {
                 <Edit className="h-5 w-5 text-blue-500" />
                 Reviewer
               </CardTitle>
-              <CardDescription>Can view and approve/reject applications</CardDescription>
+              <CardDescription>Can make changes within assigned modules and region</CardDescription>
             </CardHeader>
           </Card>
           <Card>
@@ -1410,7 +1475,16 @@ export default function AdminManagement() {
                 <Shield className="h-5 w-5 text-primary" />
                 Admin
               </CardTitle>
-              <CardDescription>Full access including managing admins</CardDescription>
+              <CardDescription>Full access, can appoint viewers and reviewers</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Shield className="h-5 w-5 text-destructive" />
+                Super Admin
+              </CardTitle>
+              <CardDescription>Unrestricted access, can manage all roles</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -1497,12 +1571,17 @@ export default function AdminManagement() {
 
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {user.role !== "admin" && (user.country || user.province) ? (
+                        {(user.role !== "admin" && user.role !== "super_admin") && (user.country || user.province) ? (
                           <div className="text-sm">
+                            <Badge variant="outline" className="text-xs mr-1">
+                              {(user as any).region_scope === "region" ? "Region" : (user as any).region_scope === "country" ? "Country" : "All"}
+                            </Badge>
                             {user.province && <span>{user.province}</span>}
                             {user.province && user.country && <span>, </span>}
                             {user.country && <span className="text-muted-foreground">{user.country}</span>}
                           </div>
+                        ) : (user.role === "admin" || user.role === "super_admin") ? (
+                          <Badge variant="outline" className="text-xs">All Regions</Badge>
                         ) : (
                           <span className="text-muted-foreground text-sm">-</span>
                         )}
@@ -1539,7 +1618,10 @@ export default function AdminManagement() {
                                 setEditCountry(user.country || "");
                                 setEditProvince(user.province || "");
                               }}
-                              disabled={user.user_id === adminUser?.user_id}
+                              disabled={
+                                user.user_id === adminUser?.user_id || 
+                                (!isSuperAdmin && (user.role === "admin" || user.role === "super_admin"))
+                              }
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -1547,7 +1629,10 @@ export default function AdminManagement() {
                               variant="ghost"
                               size="sm"
                               onClick={() => setDeletingUser(user)}
-                              disabled={user.user_id === adminUser?.user_id}
+                              disabled={
+                                user.user_id === adminUser?.user_id || 
+                                (!isSuperAdmin && (user.role === "admin" || user.role === "super_admin"))
+                              }
                               className="text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -1577,7 +1662,7 @@ export default function AdminManagement() {
               <Label htmlFor="edit-role">Role</Label>
               <Select value={editRole} onValueChange={(v) => {
                 setEditRole(v as AppRole);
-                if (v === "admin") {
+                if (v === "admin" || v === "super_admin") {
                   setEditCountry("");
                   setEditProvince("");
                 }
@@ -1589,6 +1674,9 @@ export default function AdminManagement() {
                   <SelectItem value="viewer">Viewer</SelectItem>
                   <SelectItem value="reviewer">Reviewer</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  {isSuperAdmin && (
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
@@ -1596,7 +1684,7 @@ export default function AdminManagement() {
               </p>
             </div>
             
-            {editRole !== "admin" && (
+            {editRole !== "admin" && editRole !== "super_admin" && (
               <>
                 <div className="space-y-2">
                   <Label>Assigned Country</Label>

@@ -5,7 +5,7 @@ export type ModulePermission = {
   id: string;
   module_key: string;
   module_name: string;
-  allowed_roles: ("viewer" | "reviewer" | "admin")[];
+  allowed_roles: ("viewer" | "reviewer" | "admin" | "super_admin")[];
   created_at: string;
   updated_at: string;
 };
@@ -43,8 +43,10 @@ export function useModulePermission(moduleKey: string) {
 
 export async function checkModuleAccess(
   moduleKey: string,
-  userRole: "viewer" | "reviewer" | "admin"
+  userRole: "viewer" | "reviewer" | "admin" | "super_admin"
 ): Promise<boolean> {
+  // Super admin always has access
+  if (userRole === "super_admin") return true;
   const { data, error } = await supabase
     .from("module_permissions")
     .select("allowed_roles")

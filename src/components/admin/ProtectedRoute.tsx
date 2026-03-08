@@ -68,6 +68,12 @@ export function ProtectedRoute({ children, moduleKey }: ProtectedRouteProps) {
   // Check module permission if moduleKey is provided
   if (moduleKey && adminUser) {
     const userRole = adminUser.role;
+    
+    // Super admins bypass all module permission checks
+    if (userRole === "super_admin") {
+      return <>{children}</>;
+    }
+    
     const allowedRoles = modulePermission?.allowed_roles as string[] | undefined;
 
     // If no permission found, default to admin-only

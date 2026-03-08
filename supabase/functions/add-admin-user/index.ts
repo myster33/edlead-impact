@@ -41,21 +41,21 @@ serve(async (req: Request): Promise<Response> => {
     // Use service role client to check admin status and add user
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if current user is an admin
+    // Check if current user is an admin or super_admin
     const { data: adminCheck } = await adminClient
       .from("admin_users")
       .select("role")
       .eq("user_id", currentUser.id)
       .single();
 
-    if (!adminCheck || adminCheck.role !== "admin") {
+    if (!adminCheck || !["admin", "super_admin"].includes(adminCheck.role)) {
       return new Response(
         JSON.stringify({ success: false, error: "Only admins can add new admin users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { email, role, country, province } = await req.json();
+    const { email, role, country, province, region_scope } = await req.json();
 
     if (!email || !role) {
       return new Response(
@@ -65,11 +65,19 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Validate role
-    const validRoles = ["viewer", "reviewer", "admin"];
+    const validRoles = ["viewer", "reviewer", "admin", "super_admin"];
     if (!validRoles.includes(role)) {
       return new Response(
         JSON.stringify({ success: false, error: "Invalid role" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Only super_admin can appoint admin or super_admin
+    if ((role === "admin" || role === "super_admin") && adminCheck.role !== "super_admin") {
+      return new Response(
+        JSON.stringify({ success: false, error: "Only Super Admins can appoint Admin or Super Admin roles" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -105,19 +113,20 @@ serve(async (req: Request): Promise<Response> => {
       );
     }
 
-    // Add admin user with optional country/province for non-admin roles
+    // Add admin user with optional country/province and region_scope
     const insertData: any = {
       user_id: targetUser.id,
       email: email.toLowerCase(),
       role: role,
       created_by: currentUser.id,
+      region_scope: region_scope || "all",
     };
     
-    // Only set country/province for reviewer and viewer roles
-    if (role !== "admin" && country) {
+    // Only set country/province for non-admin/super_admin roles
+    if (role !== "admin" && role !== "super_admin" && country) {
       insertData.country = country;
     }
-    if (role !== "admin" && province) {
+    if (role !== "admin" && role !== "super_admin" && province) {
       insertData.province = province;
     }
 

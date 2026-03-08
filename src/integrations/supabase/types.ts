@@ -316,6 +316,7 @@ export type Database = {
           position: string | null
           profile_picture_url: string | null
           province: string | null
+          region_scope: string
           role: Database["public"]["Enums"]["app_role"]
           theme_preference: string | null
           two_fa_channel: string
@@ -339,6 +340,7 @@ export type Database = {
           position?: string | null
           profile_picture_url?: string | null
           province?: string | null
+          region_scope?: string
           role?: Database["public"]["Enums"]["app_role"]
           theme_preference?: string | null
           two_fa_channel?: string
@@ -362,6 +364,7 @@ export type Database = {
           position?: string | null
           profile_picture_url?: string | null
           province?: string | null
+          region_scope?: string
           role?: Database["public"]["Enums"]["app_role"]
           theme_preference?: string | null
           two_fa_channel?: string
@@ -2199,7 +2202,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "viewer" | "reviewer" | "admin"
+      app_role: "viewer" | "reviewer" | "admin" | "super_admin"
       school_user_role:
         | "school_admin"
         | "hr"
@@ -2335,7 +2338,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["viewer", "reviewer", "admin"],
+      app_role: ["viewer", "reviewer", "admin", "super_admin"],
       school_user_role: [
         "school_admin",
         "hr",
