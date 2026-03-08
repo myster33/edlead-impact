@@ -356,10 +356,34 @@ export default function SchoolSettings() {
                     </Button>
                   </div>
                 ) : (
-                  <Button onClick={handleSendCode} disabled={sendingCode}>
-                    {sendingCode && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                    <Shield className="h-4 w-4 mr-1" /> Enable 2FA
-                  </Button>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button
+                        variant={twoFaChannel === "sms" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTwoFaChannel("sms")}
+                      >
+                        <Phone className="h-4 w-4 mr-1" /> SMS
+                      </Button>
+                      <Button
+                        variant={twoFaChannel === "email" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTwoFaChannel("email")}
+                      >
+                        <Mail className="h-4 w-4 mr-1" /> Email
+                      </Button>
+                    </div>
+                    {twoFaChannel === "sms" && !schoolUser?.phone && (
+                      <p className="text-sm text-destructive">Please add a phone number to your profile first.</p>
+                    )}
+                    <Button 
+                      onClick={handleSendCode} 
+                      disabled={sendingCode || (twoFaChannel === "sms" && !schoolUser?.phone)}
+                    >
+                      {sendingCode && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                      <Shield className="h-4 w-4 mr-1" /> Enable 2FA
+                    </Button>
+                  </div>
                 )}
 
                 <Separator />
