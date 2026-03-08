@@ -64,6 +64,9 @@ Deno.serve(async (req: Request) => {
       const resendKey = Deno.env.get("RESEND_API_KEY");
       if (!resendKey) throw new Error("Email service not configured");
 
+      const recipientEmail = test_email || user.email;
+      console.log("Sending 2FA code to:", recipientEmail);
+      
       const emailRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -72,7 +75,7 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           from: "edLEAD <noreply@edlead.co.za>",
-          to: [user.email],
+          to: [recipientEmail],
           subject: "Your edLEAD School Portal Verification Code",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
