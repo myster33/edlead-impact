@@ -559,6 +559,87 @@ export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminP
         </CardContent>
       </Card>
 
+      {/* Alternative Channel 2FA (Email/SMS) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Smartphone className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Alternative 2FA (Email / SMS)</CardTitle>
+          </div>
+          <CardDescription>
+            Receive a verification code via email or SMS as an alternative to the authenticator app.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {channelMfaEnabled ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">
+                  {channelMfaChannel === "sms" ? "SMS" : "Email"} 2FA is enabled
+                </span>
+              </div>
+              <Button variant="destructive" onClick={handleChannelDisable} disabled={channelDisabling}>
+                {channelDisabling && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                Disable {channelMfaChannel === "sms" ? "SMS" : "Email"} 2FA
+              </Button>
+            </div>
+          ) : channelCodeSent ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                A 6-digit code has been sent to{" "}
+                {channelMfaChannel === "sms" ? <strong>your phone</strong> : <strong>your email</strong>}.
+              </p>
+              <div className="flex gap-2 max-w-xs">
+                <Input
+                  placeholder="Enter 6-digit code"
+                  value={channelVerifyCode}
+                  onChange={(e) => setChannelVerifyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  maxLength={6}
+                />
+                <Button onClick={handleChannelVerifyCode} disabled={channelVerifying || channelVerifyCode.length !== 6}>
+                  {channelVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify"}
+                </Button>
+              </div>
+              <Button variant="link" size="sm" onClick={handleChannelSendCode} disabled={channelSending}>
+                Resend code
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <Button
+                  variant={channelMfaChannel === "sms" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setChannelMfaChannel("sms")}
+                >
+                  <Phone className="h-4 w-4 mr-1" /> SMS
+                </Button>
+                <Button
+                  variant={channelMfaChannel === "email" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setChannelMfaChannel("email")}
+                >
+                  <Mail className="h-4 w-4 mr-1" /> Email
+                </Button>
+              </div>
+              {channelMfaChannel === "sms" && !adminPhone && (
+                <p className="text-sm text-destructive">
+                  Please add a phone number to your profile first.
+                </p>
+              )}
+              <Button
+                onClick={handleChannelSendCode}
+                disabled={channelSending || (channelMfaChannel === "sms" && !adminPhone)}
+              >
+                {channelSending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                <Shield className="h-4 w-4 mr-1" /> Enable {channelMfaChannel === "sms" ? "SMS" : "Email"} 2FA
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Backup Codes Dialog */}
       <Dialog open={showBackupCodes} onOpenChange={setShowBackupCodes}>
         <DialogContent className="max-w-md">
