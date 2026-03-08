@@ -169,6 +169,7 @@ const App = () => (
                     <Route path="/school/timetable" element={<SchoolProtectedRoute><SchoolTimetable /></SchoolProtectedRoute>} />
                     <Route path="/school/period-attendance" element={<SchoolProtectedRoute><SchoolPeriodAttendance /></SchoolProtectedRoute>} />
                     <Route path="/school/subjects" element={<SchoolProtectedRoute><SchoolSubjects /></SchoolProtectedRoute>} />
+                    <Route path="/school/edlead-chat" element={<SchoolProtectedRoute><SchoolEdleadChat /></SchoolProtectedRoute>} />
 
                     {/* User Portal Routes */}
                     <Route path="/portal/login" element={<PortalLogin />} />

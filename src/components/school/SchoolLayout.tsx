@@ -46,6 +46,9 @@ const menuGroups = [
     { title: "Reports", url: "/school/reports", icon: FileText },
   ],
   [
+    { title: "edLEAD Chat", url: "/school/edlead-chat", icon: MessageCircle },
+  ],
+  [
     { title: "Settings", url: "/school/settings", icon: Settings },
   ],
 ];
