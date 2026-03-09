@@ -292,99 +292,6 @@ export default function SchoolCalendar() {
             <TabsTrigger value="terms">School Terms</TabsTrigger>
           </TabsList>
 
-          {/* ═══ TERMS TAB ═══ */}
-          <TabsContent value="terms" className="mt-4 space-y-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <GraduationCap className="h-5 w-5" />
-                    Academic Terms — {selectedYear}
-                  </CardTitle>
-                  <CardDescription>Define when each term starts and ends. Total school days: {totalSchoolDays}</CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(parseInt(v))}>
-                    <SelectTrigger className="w-28">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(y => (
-                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" onClick={openCreateTermDialog}>
-                    <Plus className="mr-1 h-3 w-3" />Add Term
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {termsLoading ? (
-                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-                ) : terms.length === 0 ? (
-                  <div className="text-center py-8">
-                    <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-muted-foreground">No terms set up for {selectedYear}.</p>
-                    <p className="text-sm text-muted-foreground mt-1">Add Term 1 through Term 4 with their start and end dates.</p>
-                    <Button className="mt-4" onClick={openCreateTermDialog}>
-                      <Plus className="mr-2 h-4 w-4" />Add First Term
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {terms.map(term => {
-                      const days = differenceInCalendarDays(parseISO(term.end_date), parseISO(term.start_date)) + 1;
-                      const isActive = (() => {
-                        const today = new Date();
-                        const s = parseISO(term.start_date), e = parseISO(term.end_date);
-                        return isSameDay(today, s) || isSameDay(today, e) || isWithinInterval(today, { start: s, end: e });
-                      })();
-                      return (
-                        <Card key={term.id} className={isActive ? "border-primary" : ""}>
-                          <CardContent className="pt-6">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-semibold text-foreground">{term.name}</h3>
-                                  {isActive && <Badge variant="default" className="text-xs">Current</Badge>}
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  {format(parseISO(term.start_date), "d MMM yyyy")} — {format(parseISO(term.end_date), "d MMM yyyy")}
-                                </p>
-                                <p className="text-xs text-muted-foreground mt-1">{days} school days</p>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditTermDialog(term)}>
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Delete {term.name}?</AlertDialogTitle>
-                                      <AlertDialogDescription>This will permanently remove this term.</AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleDeleteTerm(term.id)}>Delete</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           {/* ═══ CALENDAR TAB ═══ */}
           <TabsContent value="calendar" className="mt-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -542,6 +449,99 @@ export default function SchoolCalendar() {
                       })}
                     </TableBody>
                   </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ═══ TERMS TAB ═══ */}
+          <TabsContent value="terms" className="mt-4 space-y-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5" />
+                    Academic Terms — {selectedYear}
+                  </CardTitle>
+                  <CardDescription>Define when each term starts and ends. Total school days: {totalSchoolDays}</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={String(selectedYear)} onValueChange={v => setSelectedYear(parseInt(v))}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1].map(y => (
+                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" onClick={openCreateTermDialog}>
+                    <Plus className="mr-1 h-3 w-3" />Add Term
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {termsLoading ? (
+                  <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+                ) : terms.length === 0 ? (
+                  <div className="text-center py-8">
+                    <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground">No terms set up for {selectedYear}.</p>
+                    <p className="text-sm text-muted-foreground mt-1">Add Term 1 through Term 4 with their start and end dates.</p>
+                    <Button className="mt-4" onClick={openCreateTermDialog}>
+                      <Plus className="mr-2 h-4 w-4" />Add First Term
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {terms.map(term => {
+                      const days = differenceInCalendarDays(parseISO(term.end_date), parseISO(term.start_date)) + 1;
+                      const isActive = (() => {
+                        const today = new Date();
+                        const s = parseISO(term.start_date), e = parseISO(term.end_date);
+                        return isSameDay(today, s) || isSameDay(today, e) || isWithinInterval(today, { start: s, end: e });
+                      })();
+                      return (
+                        <Card key={term.id} className={isActive ? "border-primary" : ""}>
+                          <CardContent className="pt-6">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold text-foreground">{term.name}</h3>
+                                  {isActive && <Badge variant="default" className="text-xs">Current</Badge>}
+                                </div>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {format(parseISO(term.start_date), "d MMM yyyy")} — {format(parseISO(term.end_date), "d MMM yyyy")}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">{days} school days</p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditTermDialog(term)}>
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"><Trash2 className="h-3 w-3" /></Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete {term.name}?</AlertDialogTitle>
+                                      <AlertDialogDescription>This will permanently remove this term.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteTerm(term.id)}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 )}
               </CardContent>
             </Card>
