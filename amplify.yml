@@ -46,6 +46,18 @@ customRules:
   - source: /blog
     target: /blog/index.html
     status: '200'
+  - source: /faq
+    target: /faq/index.html
+    status: '200'
+  - source: /privacy
+    target: /privacy/index.html
+    status: '200'
+  - source: /terms
+    target: /terms/index.html
+    status: '200'
+  - source: /check-status
+    target: /check-status/index.html
+    status: '200'
   # Blog post routes - serve pre-rendered HTML if it exists, fallback to SPA
   - source: '/blog/<slug>'
     target: /blog/<slug>/index.html
