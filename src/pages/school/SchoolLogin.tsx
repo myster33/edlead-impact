@@ -158,7 +158,7 @@ export default function SchoolLogin() {
   }, []);
 
   // Debounced school search
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const handleSchoolNameChange = (value: string) => {
     setRegSchoolName(value);
     setIsFromDirectory(false);
