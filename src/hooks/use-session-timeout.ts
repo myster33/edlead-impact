@@ -11,7 +11,7 @@ export function useSessionTimeout({
   onTimeout,
   enabled = true,
 }: UseSessionTimeoutOptions) {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timeoutMs = timeoutMinutes * 60 * 1000;
 
   const resetTimeout = useCallback(() => {
