@@ -199,6 +199,7 @@ export function TwoFactorSetup({ onStatusChange, adminUserId, adminEmail, adminP
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
         friendlyName: "Authenticator App",
+        issuer: "edlead.co.za",
       });
 
       if (error) throw error;

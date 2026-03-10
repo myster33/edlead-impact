@@ -686,6 +686,7 @@ export default function AdminSettings() {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
         friendlyName: "Authenticator App",
+        issuer: "edlead.co.za",
       });
 
       if (error) throw error;
