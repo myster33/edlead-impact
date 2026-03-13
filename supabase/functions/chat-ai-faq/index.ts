@@ -109,6 +109,10 @@ edLEAD is fundamentally committed to safeguarding the welfare of all children an
 - All materials created become property of edLEAD
 - Confidentiality of internal materials, learner data, and program strategies is mandatory
 
+=== SCHOOL OUTREACH & VISITS ===
+
+edLEAD does arrange school outreach visits and engagements for selected schools. If a school, educator, or group is interested in having edLEAD visit or facilitate a session at their school, they should fill in their details on the Contact Us page on the website (edlead.co.za/contact) or send an email to info@edlead.co.za so the team can follow up and arrange accordingly.
+
 === ALUMNI PROGRAMME ===
 
 edLEAD has an Alumni Programme for graduates of the programme to stay connected and continue their leadership journey.
