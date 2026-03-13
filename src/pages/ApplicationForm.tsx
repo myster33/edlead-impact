@@ -667,7 +667,7 @@ const ApplicationForm = () => {
         return;
       }
 
-      setApplicationRef(data.applicationId?.slice(0, 8).toUpperCase() || "");
+      setApplicationRef(data.referenceNumber || data.applicationId?.slice(0, 8).toUpperCase() || "");
       setIsSubmitted(true);
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       
