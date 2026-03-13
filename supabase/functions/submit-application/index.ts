@@ -352,10 +352,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Sanitize the application data
     const applicationData = sanitizeApplication(rawData);
 
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Reuse Supabase client
+    const supabase = supabaseRL;
 
     // Check for duplicate submission by email
     const { data: existingApplication, error: checkError } = await supabase
