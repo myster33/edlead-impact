@@ -648,8 +648,23 @@ const ApplicationForm = () => {
         body: applicationPayload,
       });
 
-      if (error) {
-        throw error;
+      // supabase.functions.invoke may return the error body inside `data` for non-2xx responses
+      if (error || (data && data.error)) {
+        const errorBody = data || {};
+        let description = errorBody.error || error?.message || "There was an error submitting your application. Please try again.";
+
+        if (errorBody.details && Array.isArray(errorBody.details) && errorBody.details.length) {
+          description = errorBody.details.join("\n• ");
+          description = "• " + description;
+        }
+
+        toast({
+          title: "Submission Failed",
+          description,
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       setApplicationRef(data.applicationId?.slice(0, 8).toUpperCase() || "");
@@ -663,36 +678,9 @@ const ApplicationForm = () => {
     } catch (error: any) {
       console.error("Submission error:", error);
 
-      let description =
+      const description =
         error?.message ||
         "There was an error submitting your application. Please try again.";
-
-      // Try to surface validation details from the backend function response
-      try {
-        const response: Response | undefined =
-          typeof Response !== "undefined" && error?.context instanceof Response
-            ? error.context
-            : error?.context?.response;
-
-        if (response) {
-          const body: any = await response.clone().json().catch(async () => {
-            const text = await response.clone().text();
-            try {
-              return text ? JSON.parse(text) : null;
-            } catch {
-              return text ? { error: text } : null;
-            }
-          });
-
-          if (body?.details && Array.isArray(body.details) && body.details.length) {
-            description = body.details.slice(0, 3).join(" • ");
-          } else if (body?.error) {
-            description = String(body.error);
-          }
-        }
-      } catch {
-        // ignore parsing errors
-      }
 
       toast({
         title: "Submission Failed",
