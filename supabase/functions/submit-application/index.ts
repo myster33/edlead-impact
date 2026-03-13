@@ -18,8 +18,9 @@ const isValidEmail = (email: string): boolean => {
 };
 
 const isValidPhone = (phone: string): boolean => {
-  const phoneRegex = /^[0-9\\s\\-\\+\\(\\\)]+$/;
-  return phoneRegex.test(phone) && phone.length >= 7 && phone.length <= 25;
+  const cleaned = phone.replace(/[\s\-\(\)]/g, "");
+  const phoneRegex = /^\+?[0-9]{7,20}$/;
+  return phoneRegex.test(cleaned);
 };
 
 const isValidDate = (dateStr: string): boolean => {
