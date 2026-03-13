@@ -735,6 +735,55 @@ const handler = async (req: Request): Promise<Response> => {
       // Continue - don't fail the submission
     }
 
+    // Send SMS and WhatsApp notifications if enabled
+    try {
+      const { data: settingsData } = await supabase
+        .from("system_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["sms_notifications_enabled", "whatsapp_notifications_enabled"]);
+
+      const settings: Record<string, boolean> = {};
+      settingsData?.forEach((s: any) => {
+        settings[s.setting_key] = s.setting_value === true || s.setting_value === "true";
+      });
+
+      const smsEnabled = settings.sms_notifications_enabled ?? false;
+      const whatsappEnabled = settings.whatsapp_notifications_enabled ?? false;
+
+      const learnerSmsMsg = `Hi ${applicationData.full_name}, your edLEAD application (Ref: ${referenceNumber}) has been received! We'll review it and be in touch. -edLEAD`;
+      const parentSmsMsg = `Dear ${applicationData.parent_name}, ${applicationData.full_name}'s edLEAD application (Ref: ${referenceNumber}) has been received. We'll be in touch with updates. -edLEAD`;
+
+      const learnerWaMsg = `Hi ${applicationData.full_name},\n\nYour edLEAD application has been received successfully!\n\nReference Number: ${referenceNumber}\n\nWe will review your application and get back to you soon.\n\n-The edLEAD Team`;
+      const parentWaMsg = `Dear ${applicationData.parent_name},\n\nThis is to confirm that ${applicationData.full_name}'s application to the edLEAD Programme has been received.\n\nReference Number: ${referenceNumber}\n\nWe will keep you updated on the progress.\n\n-The edLEAD Team`;
+
+      // Send SMS
+      if (smsEnabled) {
+        if (applicationData.student_phone) {
+          const r = await sendSms(applicationData.student_phone, learnerSmsMsg);
+          console.log("Learner SMS:", r.success ? "sent" : r.error);
+        }
+        if (applicationData.parent_phone && applicationData.parent_phone !== applicationData.student_phone) {
+          const r = await sendSms(applicationData.parent_phone, parentSmsMsg);
+          console.log("Parent SMS:", r.success ? "sent" : r.error);
+        }
+      }
+
+      // Send WhatsApp
+      if (whatsappEnabled) {
+        if (applicationData.student_phone) {
+          const r = await sendWhatsapp(applicationData.student_phone, learnerWaMsg);
+          console.log("Learner WhatsApp:", r.success ? "sent" : r.error);
+        }
+        if (applicationData.parent_phone && applicationData.parent_phone !== applicationData.student_phone) {
+          const r = await sendWhatsapp(applicationData.parent_phone, parentWaMsg);
+          console.log("Parent WhatsApp:", r.success ? "sent" : r.error);
+        }
+      }
+    } catch (msgError) {
+      console.error("Failed to send SMS/WhatsApp notifications:", msgError);
+      // Continue - don't fail the submission
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
