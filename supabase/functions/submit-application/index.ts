@@ -2,9 +2,105 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const FROM_EMAIL = "edLEAD <info@edlead.co.za>";
 const SITE_URL = "https://edlead.co.za";
 const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
+
+function formatPhoneToE164(phone: string): string {
+  if (!phone) return "";
+  let cleaned = phone.replace(/[\s\-\(\)\.]/g, "");
+  if (cleaned.startsWith("+")) return cleaned;
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    return "+27" + cleaned.substring(1);
+  }
+  if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    return "+27" + cleaned;
+  }
+  return "+" + cleaned;
+}
+
+function formatPhoneDigitsOnly(phone: string): string {
+  return formatPhoneToE164(phone).replace(/\+/, "");
+}
+
+async function sendSms(to: string, message: string): Promise<{ success: boolean; error?: string }> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    return { success: false, error: "Twilio SMS not configured" };
+  }
+  const formattedPhone = formatPhoneToE164(to);
+  if (!formattedPhone || formattedPhone.length < 10) {
+    return { success: false, error: "Invalid phone number" };
+  }
+  try {
+    const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: formattedPhone,
+          From: TWILIO_PHONE_NUMBER,
+          Body: message,
+        }),
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("SMS error:", data);
+      return { success: false, error: data.message || "SMS failed" };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMS exception:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function sendWhatsapp(to: string, message: string): Promise<{ success: boolean; error?: string }> {
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+  const recipientPhone = formatPhoneDigitsOnly(to);
+  if (!recipientPhone || recipientPhone.length < 10) {
+    return { success: false, error: "Invalid phone number" };
+  }
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: recipientPhone,
+          type: "text",
+          text: { body: message },
+        }),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("WhatsApp error:", errorData);
+      return { success: false, error: JSON.stringify(errorData) };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error("WhatsApp exception:", error);
+    return { success: false, error: error.message };
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
