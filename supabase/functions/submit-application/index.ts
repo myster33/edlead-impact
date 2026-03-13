@@ -356,11 +356,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Reuse Supabase client
     const supabase = supabaseRL;
 
-    // Check for duplicate submission by email
+    // Check for duplicate submission by email — only block if an active application exists
     const { data: existingApplication, error: checkError } = await supabase
       .from("applications")
-      .select("id, created_at")
+      .select("id, created_at, status")
       .eq("student_email", applicationData.student_email)
+      .is("deleted_at", null)
+      .in("status", ["pending", "under_review", "approved"])
       .maybeSingle();
 
     if (checkError) {
@@ -369,10 +371,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (existingApplication) {
-      console.log("Duplicate application detected for:", applicationData.student_email);
+      console.log("Active application already exists for:", applicationData.student_email);
       return new Response(
         JSON.stringify({ 
-          error: "An application with this email address has already been submitted. If you need to make changes, please contact us."
+          error: "An active application with this email address already exists. If you need to make changes, please contact us."
         }),
         { status: 409, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
