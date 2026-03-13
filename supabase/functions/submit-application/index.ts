@@ -2,9 +2,105 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const FROM_EMAIL = "edLEAD <info@edlead.co.za>";
 const SITE_URL = "https://edlead.co.za";
 const LOGO_URL = `${SITE_URL}/images/edlead-logo-full.png`;
+
+function formatPhoneToE164(phone: string): string {
+  if (!phone) return "";
+  let cleaned = phone.replace(/[\s\-\(\)\.]/g, "");
+  if (cleaned.startsWith("+")) return cleaned;
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    return "+27" + cleaned.substring(1);
+  }
+  if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    return "+27" + cleaned;
+  }
+  return "+" + cleaned;
+}
+
+function formatPhoneDigitsOnly(phone: string): string {
+  return formatPhoneToE164(phone).replace(/\+/, "");
+}
+
+async function sendSms(to: string, message: string): Promise<{ success: boolean; error?: string }> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    return { success: false, error: "Twilio SMS not configured" };
+  }
+  const formattedPhone = formatPhoneToE164(to);
+  if (!formattedPhone || formattedPhone.length < 10) {
+    return { success: false, error: "Invalid phone number" };
+  }
+  try {
+    const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: formattedPhone,
+          From: TWILIO_PHONE_NUMBER,
+          Body: message,
+        }),
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("SMS error:", data);
+      return { success: false, error: data.message || "SMS failed" };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error("SMS exception:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function sendWhatsapp(to: string, message: string): Promise<{ success: boolean; error?: string }> {
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    return { success: false, error: "WhatsApp not configured" };
+  }
+  const recipientPhone = formatPhoneDigitsOnly(to);
+  if (!recipientPhone || recipientPhone.length < 10) {
+    return { success: false, error: "Invalid phone number" };
+  }
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v21.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to: recipientPhone,
+          type: "text",
+          text: { body: message },
+        }),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("WhatsApp error:", errorData);
+      return { success: false, error: JSON.stringify(errorData) };
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error("WhatsApp exception:", error);
+    return { success: false, error: error.message };
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -636,6 +732,55 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Admin notification email sent");
     } catch (emailError) {
       console.error("Failed to send admin notification email:", emailError);
+      // Continue - don't fail the submission
+    }
+
+    // Send SMS and WhatsApp notifications if enabled
+    try {
+      const { data: settingsData } = await supabase
+        .from("system_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["sms_notifications_enabled", "whatsapp_notifications_enabled"]);
+
+      const settings: Record<string, boolean> = {};
+      settingsData?.forEach((s: any) => {
+        settings[s.setting_key] = s.setting_value === true || s.setting_value === "true";
+      });
+
+      const smsEnabled = settings.sms_notifications_enabled ?? false;
+      const whatsappEnabled = settings.whatsapp_notifications_enabled ?? false;
+
+      const learnerSmsMsg = `Hi ${applicationData.full_name}, your edLEAD application (Ref: ${referenceNumber}) has been received! We'll review it and be in touch. -edLEAD`;
+      const parentSmsMsg = `Dear ${applicationData.parent_name}, ${applicationData.full_name}'s edLEAD application (Ref: ${referenceNumber}) has been received. We'll be in touch with updates. -edLEAD`;
+
+      const learnerWaMsg = `Hi ${applicationData.full_name},\n\nYour edLEAD application has been received successfully!\n\nReference Number: ${referenceNumber}\n\nWe will review your application and get back to you soon.\n\n-The edLEAD Team`;
+      const parentWaMsg = `Dear ${applicationData.parent_name},\n\nThis is to confirm that ${applicationData.full_name}'s application to the edLEAD Programme has been received.\n\nReference Number: ${referenceNumber}\n\nWe will keep you updated on the progress.\n\n-The edLEAD Team`;
+
+      // Send SMS
+      if (smsEnabled) {
+        if (applicationData.student_phone) {
+          const r = await sendSms(applicationData.student_phone, learnerSmsMsg);
+          console.log("Learner SMS:", r.success ? "sent" : r.error);
+        }
+        if (applicationData.parent_phone && applicationData.parent_phone !== applicationData.student_phone) {
+          const r = await sendSms(applicationData.parent_phone, parentSmsMsg);
+          console.log("Parent SMS:", r.success ? "sent" : r.error);
+        }
+      }
+
+      // Send WhatsApp
+      if (whatsappEnabled) {
+        if (applicationData.student_phone) {
+          const r = await sendWhatsapp(applicationData.student_phone, learnerWaMsg);
+          console.log("Learner WhatsApp:", r.success ? "sent" : r.error);
+        }
+        if (applicationData.parent_phone && applicationData.parent_phone !== applicationData.student_phone) {
+          const r = await sendWhatsapp(applicationData.parent_phone, parentWaMsg);
+          console.log("Parent WhatsApp:", r.success ? "sent" : r.error);
+        }
+      }
+    } catch (msgError) {
+      console.error("Failed to send SMS/WhatsApp notifications:", msgError);
       // Continue - don't fail the submission
     }
 
