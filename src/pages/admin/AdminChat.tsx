@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamDMPanel } from "@/components/admin/TeamDMPanel";
+import { AdminSchoolChatsPanel } from "@/components/admin/AdminSchoolChatsPanel";
 import { Helmet } from "react-helmet-async";
 
 
