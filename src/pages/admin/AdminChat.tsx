@@ -11,9 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users } from "lucide-react";
+import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users, School } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamDMPanel } from "@/components/admin/TeamDMPanel";
+import { AdminSchoolChatsPanel } from "@/components/admin/AdminSchoolChatsPanel";
 import { Helmet } from "react-helmet-async";
 
 
@@ -310,6 +311,12 @@ export default function AdminChat() {
             <Users className="h-3.5 w-3.5" />
             Team
           </TabsTrigger>
+          {adminUser?.role === "super_admin" && (
+            <TabsTrigger value="school-chats" className="gap-1.5">
+              <School className="h-3.5 w-3.5" />
+              School Chats
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="visitors" className="h-[calc(100%-3rem)] mt-0">
@@ -521,6 +528,12 @@ export default function AdminChat() {
             <TeamDMPanel />
           </Card>
         </TabsContent>
+
+        {adminUser?.role === "super_admin" && (
+          <TabsContent value="school-chats" className="h-[calc(100%-3rem)] mt-0">
+            <AdminSchoolChatsPanel />
+          </TabsContent>
+        )}
       </Tabs>
     </AdminLayout>
   );
