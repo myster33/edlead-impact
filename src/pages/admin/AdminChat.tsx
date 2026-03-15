@@ -528,6 +528,12 @@ export default function AdminChat() {
             <TeamDMPanel />
           </Card>
         </TabsContent>
+
+        {adminUser?.role === "super_admin" && (
+          <TabsContent value="school-chats" className="h-[calc(100%-3rem)] mt-0">
+            <AdminSchoolChatsPanel />
+          </TabsContent>
+        )}
       </Tabs>
     </AdminLayout>
   );
