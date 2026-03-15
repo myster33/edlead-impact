@@ -390,10 +390,7 @@ export default function AdminChat() {
                         )}
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {new Date(conv.last_message_at || conv.created_at).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {timeAgo(conv.last_message_at || conv.created_at)}
                         </span>
                       </div>
                     </button>
