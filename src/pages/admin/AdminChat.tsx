@@ -311,6 +311,12 @@ export default function AdminChat() {
             <Users className="h-3.5 w-3.5" />
             Team
           </TabsTrigger>
+          {adminUser?.role === "super_admin" && (
+            <TabsTrigger value="school-chats" className="gap-1.5">
+              <School className="h-3.5 w-3.5" />
+              School Chats
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="visitors" className="h-[calc(100%-3rem)] mt-0">
