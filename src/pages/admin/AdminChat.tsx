@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users } from "lucide-react";
+import { Send, MessageCircle, User, MapPin, Clock, X, Bot, Users, School } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TeamDMPanel } from "@/components/admin/TeamDMPanel";
 import { AdminSchoolChatsPanel } from "@/components/admin/AdminSchoolChatsPanel";
