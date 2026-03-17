@@ -271,6 +271,9 @@ function generateHtml(route, templateHtml) {
   const ogType = route.ogType || 'website';
   const ogImage = route.ogImage || OG_IMAGE;
 
+  // Build alternate URL for edlead.co
+  const coCanonical = route.canonical.replace('https://edlead.co.za', 'https://edlead.co');
+
   const metaTags = [
     `<title>${escapeHtml(route.title)}</title>`,
     `<meta name="description" content="${escapeHtml(route.description)}" />`,
@@ -287,6 +290,9 @@ function generateHtml(route, templateHtml) {
     `<meta name="twitter:description" content="${escapeHtml(route.ogDescription)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(ogImage)}" />`,
     `<link rel="canonical" href="${escapeHtml(route.canonical)}" />`,
+    `<link rel="alternate" hreflang="en-ZA" href="${escapeHtml(route.canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeHtml(coCanonical)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(route.canonical)}" />`,
   ];
 
   // Add keywords if present
