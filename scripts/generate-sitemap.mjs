@@ -3,6 +3,7 @@
  * 
  * Generates dynamic sitemaps for both edlead.co.za and edlead.co domains,
  * including all static routes and published blog post URLs fetched from the database.
+ * Includes hreflang annotations so Google treats them as alternate-language equivalents.
  * 
  * Run after `vite build` to create sitemap.xml and sitemap-co.xml in dist/.
  */
@@ -66,12 +67,16 @@ async function fetchBlogSlugs(supabaseUrl, anonKey) {
   }
 }
 
-function buildSitemapXml(baseUrl, staticRoutes, blogPosts) {
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+function buildSitemapXml(baseUrl, altBaseUrl, staticRoutes, blogPosts) {
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n`;
 
   for (const route of staticRoutes) {
+    const zaUrl = `https://edlead.co.za${route.path}`;
+    const coUrl = `https://edlead.co${route.path}`;
     xml += `  <url>\n`;
     xml += `    <loc>${baseUrl}${route.path}</loc>\n`;
+    xml += `    <xhtml:link rel="alternate" hreflang="en-ZA" href="${zaUrl}" />\n`;
+    xml += `    <xhtml:link rel="alternate" hreflang="en" href="${coUrl}" />\n`;
     xml += `    <lastmod>${TODAY}</lastmod>\n`;
     xml += `    <changefreq>${route.changefreq}</changefreq>\n`;
     xml += `    <priority>${route.priority}</priority>\n`;
@@ -81,8 +86,12 @@ function buildSitemapXml(baseUrl, staticRoutes, blogPosts) {
   for (const post of blogPosts) {
     const slug = post.slug || post.id;
     const lastmod = post.approved_at ? post.approved_at.split('T')[0] : TODAY;
+    const zaUrl = `https://edlead.co.za/blog/${slug}`;
+    const coUrl = `https://edlead.co/blog/${slug}`;
     xml += `  <url>\n`;
     xml += `    <loc>${baseUrl}/blog/${slug}</loc>\n`;
+    xml += `    <xhtml:link rel="alternate" hreflang="en-ZA" href="${zaUrl}" />\n`;
+    xml += `    <xhtml:link rel="alternate" hreflang="en" href="${coUrl}" />\n`;
     xml += `    <lastmod>${lastmod}</lastmod>\n`;
     xml += `    <changefreq>monthly</changefreq>\n`;
     xml += `    <priority>0.6</priority>\n`;
@@ -107,9 +116,8 @@ async function main() {
     console.warn('⚠️  Database credentials not found. Generating sitemap without blog posts.');
   }
 
-  // Generate sitemaps for both domains
-  const sitemapZa = buildSitemapXml('https://edlead.co.za', STATIC_ROUTES, blogPosts);
-  const sitemapCo = buildSitemapXml('https://edlead.co', STATIC_ROUTES, blogPosts);
+  const sitemapZa = buildSitemapXml('https://edlead.co.za', 'https://edlead.co', STATIC_ROUTES, blogPosts);
+  const sitemapCo = buildSitemapXml('https://edlead.co', 'https://edlead.co.za', STATIC_ROUTES, blogPosts);
 
   fs.writeFileSync(path.join(distDir, 'sitemap.xml'), sitemapZa);
   fs.writeFileSync(path.join(distDir, 'sitemap-co.xml'), sitemapCo);
@@ -117,7 +125,6 @@ async function main() {
   const totalUrls = STATIC_ROUTES.length + blogPosts.length;
   console.log(`🗺️  Generated sitemaps with ${totalUrls} URLs each (${STATIC_ROUTES.length} static + ${blogPosts.length} blog posts).`);
 
-  // Generate robots.txt
   const robotsTxt = [
     'User-agent: Googlebot',
     'Allow: /',
