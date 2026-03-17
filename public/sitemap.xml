@@ -1,74 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://edlead.co.za/</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/about</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/about" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/programme</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/programme" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/programme" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/admissions</loc>
-    <lastmod>2026-01-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://edlead.co.za/apply</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/admissions" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/admissions" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/impact</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/impact" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/impact" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/blog</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/blog" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/blog" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/partners</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/partners" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/partners" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/contact</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/contact" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/contact" />
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://edlead.co.za/faq</loc>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/faq" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/faq" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/check-status</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/check-status" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/check-status" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/privacy</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/privacy" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/privacy" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://edlead.co.za/terms</loc>
-    <lastmod>2026-01-22</lastmod>
+    <xhtml:link rel="alternate" hreflang="en-ZA" href="https://edlead.co.za/terms" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://edlead.co/terms" />
+    <lastmod>2026-03-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
