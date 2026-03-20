@@ -536,6 +536,7 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             applicantName,
             applicantPhotoUrl: applicantPhotoUrl || "",
+            applicationId: applicationId || "",
           }),
         });
 
