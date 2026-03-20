@@ -551,7 +551,7 @@ export default function AdminApplications() {
   };
 
   const updateApplicationCohort = async (applicationId: string, cohortId: string | null) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "Only admins can change cohort assignments.",
