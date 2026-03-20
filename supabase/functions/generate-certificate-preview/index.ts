@@ -217,7 +217,7 @@ async function generateCertificatePDF(
     y: 108,
     size: 11,
     font: fontBold,
-    color: orange,
+    color: darkGray,
   });
 
   page.drawText("DATE", {
@@ -228,7 +228,7 @@ async function generateCertificatePDF(
     color: lightGray,
   });
 
-  // Signature line
+  // Signature image + label
   page.drawLine({
     start: { x: 580, y: 95 },
     end: { x: 720, y: 95 },
@@ -236,18 +236,29 @@ async function generateCertificatePDF(
     color: rgb(0.45, 0.45, 0.45),
   });
 
-  page.drawText("Director", {
-    x: 615,
-    y: 108,
-    size: 14,
-    font: fontBoldItalic,
-    color: rgb(0.45, 0.45, 0.45),
-  });
+  // Embed director signature image
+  try {
+    const sigUrl = `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/signature/program-director-sign.png`;
+    const sigRes = await fetch(sigUrl);
+    if (sigRes.ok) {
+      const sigBytes = new Uint8Array(await sigRes.arrayBuffer());
+      const sigImage = await pdfDoc.embedPng(sigBytes);
+      const sigAspect = sigImage.width / sigImage.height;
+      const sigH = 35;
+      const sigW = sigH * sigAspect;
+      const sigX = 580 + (140 - sigW) / 2;
+      page.drawImage(sigImage, { x: sigX, y: 98, width: sigW, height: sigH });
+    }
+  } catch (e) {
+    console.log("Could not embed signature image:", e);
+  }
 
-  page.drawText("SIGNATURE", {
-    x: 620,
+  const pdLabel = "PROGRAM DIRECTOR";
+  const pdLabelWidth = fontRegular.widthOfTextAtSize(pdLabel, 8);
+  page.drawText(pdLabel, {
+    x: 580 + (140 - pdLabelWidth) / 2,
     y: 78,
-    size: 9,
+    size: 8,
     font: fontRegular,
     color: lightGray,
   });
