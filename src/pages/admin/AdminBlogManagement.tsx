@@ -76,7 +76,7 @@ import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
-  if (!adminUser || adminUser.role === "admin") {
+  if (!adminUser || adminUser.role === "admin" || adminUser.role === "super_admin") {
     return { hasRestrictions: false, country: null, province: null, role: adminUser?.role || null, canEdit: true };
   }
   return {
