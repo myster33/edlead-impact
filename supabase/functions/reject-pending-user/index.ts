@@ -57,7 +57,7 @@ serve(async (req: Request): Promise<Response> => {
       .eq("user_id", currentUser.id)
       .single();
 
-    if (!adminCheck || adminCheck.role !== "admin") {
+    if (!adminCheck || (adminCheck.role !== "admin" && adminCheck.role !== "super_admin")) {
       return new Response(
         JSON.stringify({ success: false, error: "Only admins can reject users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
