@@ -1754,6 +1754,8 @@ export default function AdminApplications() {
           <SocialBannerPreview
             applicantName={selectedApplication.full_name}
             applicantPhotoUrl={selectedApplication.learner_photo_url}
+            applicationId={selectedApplication.id}
+            existingBannerUrl={(selectedApplication as any).social_banner_url}
             open={showBannerPreview}
             onOpenChange={setShowBannerPreview}
           />
