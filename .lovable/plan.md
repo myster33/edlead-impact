@@ -1,66 +1,79 @@
 
 
-## Plan: Website Upgrades (7 items)
+# Social Banner — Pure Image Compositing (No AI)
 
-This covers all approved upgrades: accessibility, lazy loading, FAQ page, enhanced 404, page transitions, newsletter subscription, and testimonials on the Impact page.
+## What Changes
 
----
+Replace the current broken AI-based banner generation with a simple server-side image compositing approach using an HTML/CSS-to-image technique via Deno Canvas (`esm.sh/canvas`). The banner is generated automatically on approval — no admin action needed.
 
-### 1. Accessibility Improvements
+## How It Works
 
-**Files to modify:**
-- `src/components/layout/Layout.tsx` — Add a skip-to-content link (`<a href="#main-content">`) and `id="main-content"` on `<main>`
-- `src/components/layout/Navbar.tsx` — Add `aria-label` to theme toggle button and mobile menu toggle
-- `src/components/chat/ChatWidget.tsx` — Add `aria-label` to open/close/minimize/send buttons, add `aria-live="polite"` on message list container
-- `src/components/home/HeroSection.tsx` — Add `aria-live="polite"` to the typing animation heading
-- `src/index.css` — Add visible focus ring utility (e.g., `focus-visible:ring-2 ring-primary ring-offset-2`) as a global style
+The template has a clear layout: large dark circle (photo area) in the upper half, empty white space below for text. The edge function will:
 
-### 2. Lazy Loading Routes + Images
+1. Load the background template image (the uploaded JPG)
+2. Load the student's photo from their application
+3. Draw the template onto a canvas (1080x1080)
+4. Crop and draw the student photo as a circle, positioned over the dark circle area (~center x:480, y:340, radius:~250)
+5. Draw text below the circle:
+   - "CONGRATULATIONS" (white on dark or orange text)
+   - Student name in gold/orange
+   - "Accepted into the edLEAD Leadership Program"
+6. Export as PNG, upload to storage, return URL
 
-**Files to modify:**
-- `src/App.tsx` — Replace all eager imports with `React.lazy()` and wrap `<Routes>` children in `<Suspense>` with a loading fallback. Keep `Index` eager for fast first paint; lazy-load all other pages.
-- Image optimization across pages — Add `loading="lazy"` to below-the-fold images in `HeroSection` (images 2-5 only), programme, partners, and blog card components
+## Files to Change
 
-### 3. FAQ Page
+### 1. Save template to project
+- Copy `user-uploads://Social_Banner-2.jpg` to `public/social-banner-template.jpg`
+- Upload it to storage bucket `applicant-photos/templates/social-banner-template.jpg` via the edge function on first use (or manually)
 
-**Files to create:**
-- `src/pages/FAQ.tsx` — New page using `Layout`, `Helmet` with SEO tags, and `@radix-ui/react-accordion` for Q&A sections covering: Programme Overview, Eligibility & Admissions, Application Process, Technical Support, and General. Include 4-5 questions per section.
+### 2. Rewrite `supabase/functions/generate-social-banner/index.ts`
+- Remove Bedrock/AI dependency entirely
+- Use `jsr:@nicolo/canvas` or the built-in `ImageMagick` approach via Deno — however, since Deno edge functions have limited native image libraries, the most reliable approach is to use **SVG compositing**:
+  - Build an SVG string (1080x1080) that embeds:
+    - The background template as a base64 `<image>`
+    - The student photo as a base64 `<image>` with a circular `<clipPath>`
+    - Text elements positioned below the circle
+  - Convert the SVG to PNG using `resvg-wasm` (available on esm.sh for Deno)
+- Upload the final PNG to storage
+- Return the public URL
 
-**Files to modify:**
-- `src/App.tsx` — Add `/faq` route (lazy-loaded)
-- `scripts/generate-seo-pages.mjs` — Add `/faq` to the static routes array for prerendering
+### 3. `SocialBannerPreview.tsx` — Simplify
+- Remove the manual "Generate Banner" button flow
+- Instead, show the banner if it already exists (fetched from the application record or storage)
+- Optionally keep a "Regenerate" button for edge cases
+- The banner is auto-generated during the approval flow (already wired in `notify-applicant-approved`)
 
-### 4. Enhanced 404 Page
+### 4. Store banner URL on application
+- Add a `social_banner_url` column to the `applications` table (if not already present) so the generated URL is saved and can be displayed without regenerating
 
-**Files to modify:**
-- `src/pages/NotFound.tsx` — Wrap in `Layout`, add `Helmet` SEO tags, edLEAD branding, a friendly illustration (using Lucide icons), and navigation links to Home, About, Admissions, Contact, and Blog
+## Technical Approach — SVG + resvg-wasm
 
-### 5. Page Transition Animations
+Since Deno edge functions cannot use Node Canvas, the approach is:
+- Construct an SVG with embedded base64 images and text
+- Use `resvg-wasm` to render the SVG to PNG bytes
+- This is lightweight, deterministic, and requires no AI
 
-**Files to modify:**
-- `src/index.css` — Add a CSS `@keyframes` for fade-in-up animation
-- `src/components/layout/Layout.tsx` — Apply the animation class to the `<main>` element so each page fades in on mount
+```text
+┌──────────────────────────┐
+│  Background template     │
+│  (base64 embedded)       │
+│                          │
+│     ┌──────────┐         │
+│     │ Student  │ circular│
+│     │  Photo   │ clip    │
+│     └──────────┘         │
+│                          │
+│   CONGRATULATIONS        │
+│   STUDENT NAME           │
+│   Accepted into the      │
+│   edLEAD Leadership      │
+│   Program                │
+└──────────────────────────┘
+```
 
-### 6. Newsletter Subscription
-
-**Database migration:** Create a `newsletter_subscribers` table with columns: `id` (uuid), `email` (text, unique), `subscribed_at` (timestamptz, default now()), `is_active` (boolean, default true). Enable RLS with a public INSERT policy (anyone can subscribe) and admin-only SELECT.
-
-**Files to modify:**
-- `src/components/layout/Footer.tsx` — Add a newsletter signup form (email input + subscribe button) in the "Get in Touch" column, using the database client to insert into `newsletter_subscribers`
-
-### 7. Testimonials Section on Impact Page
-
-**Database migration:** Create a `testimonials` table with columns: `id` (uuid), `name` (text), `role` (text), `school` (text), `province` (text), `quote` (text), `is_published` (boolean, default false), `created_at` (timestamptz). Enable RLS with public SELECT for published testimonials, admin-only INSERT/UPDATE/DELETE.
-
-**Files to modify:**
-- `src/pages/Impact.tsx` — Add a "What Our Leaders Say" section between the Outcomes and Stats sections. Fetch published testimonials from the database and display them in a carousel (using the existing `embla-carousel-react` + autoplay). Each card shows the quote, name, role, and school. Include a static fallback with 3-4 hardcoded testimonials if the database returns empty.
-
----
-
-### Technical Notes
-- Lazy loading uses `React.lazy` + `Suspense` — no new dependencies needed
-- FAQ uses the already-installed `@radix-ui/react-accordion`
-- Newsletter and testimonials each need one new database table with RLS
-- Page transitions use pure CSS animation — no library needed
-- The testimonials carousel reuses the existing Embla carousel dependency
+## Summary
+- No AI involved — pure image compositing
+- Fully automatic on approval
+- Deterministic output every time
+- Admin can still preview/regenerate from the application detail view
 
