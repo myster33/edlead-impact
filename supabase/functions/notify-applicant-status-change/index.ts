@@ -510,7 +510,8 @@ const handler = async (req: Request): Promise<Response> => {
       parentName,
       applicantPhone,
       parentPhone,
-      applicantPhotoUrl
+      applicantPhotoUrl,
+      applicationId
     }: StatusChangeRequest = await req.json();
 
     console.log(`Sending status change notification: ${oldStatus} -> ${newStatus}`);
