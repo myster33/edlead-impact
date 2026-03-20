@@ -604,7 +604,7 @@ const handler = async (req: Request): Promise<Response> => {
           </p>
           <img src="${socialBannerUrl}" alt="Your edLEAD Acceptance Banner" style="max-width: 400px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" />
           <p style="font-size: 12px; color: #888; margin-top: 10px;">
-            Tag us <strong>@edlead_za</strong> when you share! 📱
+            Tag us <strong>@edLEAD</strong> when you share! 📱
           </p>
           <a href="${socialBannerUrl}" download="edLEAD-Acceptance-${applicantName.replace(/[^a-zA-Z0-9]/g, '_')}.png" 
              style="display: inline-block; margin-top: 15px; padding: 12px 24px; background-color: #ED7621; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
