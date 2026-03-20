@@ -1,46 +1,33 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import {
-  ImageMagick,
-  initialize,
-  MagickFormat,
-  MagickGeometry,
-  Gravity,
-  MagickImage,
-  DrawableFont,
-  DrawableFontPointSize,
-  DrawableGravity,
-  DrawableFillColor,
-  DrawableText,
-  MagickColor,
-  MagickColors,
-} from "https://deno.land/x/imagemagick_deno@0.0.31/mod.ts";
+import React from "https://esm.sh/react@18.2.0";
+import { ImageResponse } from "https://deno.land/x/og_edge@0.0.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-let magickInitialized = false;
-
-async function ensureMagick() {
-  if (!magickInitialized) {
-    await initialize();
-    magickInitialized = true;
-    console.log("ImageMagick initialized");
-  }
-}
-
-async function fetchImageBytes(url: string): Promise<Uint8Array | null> {
+async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      console.error(`Failed to fetch ${url}: ${response.status}`);
+      console.error(`Failed to fetch image: ${response.status} from ${url}`);
       return null;
     }
-    return new Uint8Array(await response.arrayBuffer());
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+      binary += String.fromCharCode(...chunk);
+    }
+    const base64 = btoa(binary);
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    return `data:${contentType};base64,${base64}`;
   } catch (e) {
-    console.error(`Error fetching ${url}:`, e);
+    console.error("Error fetching image:", e);
     return null;
   }
 }
@@ -66,78 +53,161 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    await ensureMagick();
-
-    // Get template URL and fetch bytes
+    // Fetch template as base64
     const { data: templateUrlData } = supabase.storage
       .from("applicant-photos")
       .getPublicUrl("templates/social-banner-template.jpg");
     console.log("Template URL:", templateUrlData.publicUrl);
 
-    const templateBytes = await fetchImageBytes(templateUrlData.publicUrl);
-    if (!templateBytes) {
+    const templateBase64 = await fetchImageAsBase64(templateUrlData.publicUrl);
+    if (!templateBase64) {
       return new Response(
         JSON.stringify({ error: "Failed to fetch template image" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
-    console.log("Template loaded, size:", templateBytes.length);
+    console.log("Template loaded as base64, length:", templateBase64.length);
 
-    // Fetch student photo if provided
-    let photoBytes: Uint8Array | null = null;
+    // Fetch student photo as base64
+    let photoBase64: string | null = null;
     if (applicantPhotoUrl?.trim()) {
-      photoBytes = await fetchImageBytes(applicantPhotoUrl);
-      if (!photoBytes) console.warn("Could not fetch applicant photo, proceeding without it");
-      else console.log("Photo loaded, size:", photoBytes.length);
+      photoBase64 = await fetchImageAsBase64(applicantPhotoUrl);
+      if (!photoBase64) console.warn("Could not fetch photo, proceeding without");
+      else console.log("Photo loaded as base64, length:", photoBase64.length);
     }
 
-    // Compose image using ImageMagick
-    const pngBuffer = await new Promise<Uint8Array>((resolve, reject) => {
-      try {
-        ImageMagick.read(templateBytes, (template) => {
-          // Resize template to 1080x1080
-          template.resize(new MagickGeometry(1080, 1080));
-          
-          // If we have a photo, composite it as a circle
-          if (photoBytes) {
-            ImageMagick.read(photoBytes, (photo) => {
-              // Resize photo to fit circle area (440x440)
-              photo.resize(new MagickGeometry(440, 440));
-              
-              // Create circular mask
-              const mask = MagickImage.create();
-              mask.read(new MagickColor(0, 0, 0, 0), 440, 440);
-              mask.draw([
-                new DrawableFillColor(new MagickColor("white")),
-                new DrawableText(220, 220, ""),
-              ]);
-              
-              // For simplicity, just composite the photo directly (square crop)
-              // Position: center at (540, 360), so top-left at (320, 140)
-              template.composite(photo, 320, 140);
-              
-              // Draw text
-              drawText(template, applicantName);
-              
-              // Export
-              template.write(MagickFormat.Png, (data) => {
-                resolve(new Uint8Array(data));
-              });
-            });
-          } else {
-            // No photo, just draw text
-            drawText(template, applicantName);
-            
-            template.write(MagickFormat.Png, (data) => {
-              resolve(new Uint8Array(data));
-            });
-          }
-        });
-      } catch (e) {
-        reject(e);
-      }
+    // Build image using og_edge (satori + resvg) with base64 embedded images
+    const children: any[] = [];
+
+    // Background template (base64 data URI)
+    children.push(
+      React.createElement("img", {
+        key: "bg",
+        src: templateBase64,
+        width: 1080,
+        height: 1080,
+        style: {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "1080px",
+          height: "1080px",
+        },
+      })
+    );
+
+    // Student photo (circular) - base64 data URI
+    if (photoBase64) {
+      children.push(
+        React.createElement("img", {
+          key: "photo",
+          src: photoBase64,
+          width: 440,
+          height: 440,
+          style: {
+            position: "absolute",
+            top: "140px",
+            left: "320px",
+            width: "440px",
+            height: "440px",
+            borderRadius: "220px",
+          },
+        })
+      );
+    }
+
+    // Text container
+    children.push(
+      React.createElement(
+        "div",
+        {
+          key: "text",
+          style: {
+            position: "absolute",
+            bottom: "100px",
+            left: "0",
+            width: "1080px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        },
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontSize: "42px",
+              fontWeight: 700,
+              color: "#ED7621",
+              letterSpacing: "4px",
+            },
+          },
+          "CONGRATULATIONS"
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontSize: "44px",
+              fontWeight: 700,
+              color: "#D4A843",
+              letterSpacing: "2px",
+              marginTop: "16px",
+            },
+          },
+          applicantName.toUpperCase()
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontSize: "28px",
+              color: "#4A4A4A",
+              marginTop: "16px",
+            },
+          },
+          "Accepted into the"
+        ),
+        React.createElement(
+          "div",
+          {
+            style: {
+              display: "flex",
+              fontSize: "34px",
+              fontWeight: 700,
+              color: "#4A4A4A",
+              marginTop: "8px",
+            },
+          },
+          "edLEAD Leadership Program"
+        )
+      )
+    );
+
+    const element = React.createElement(
+      "div",
+      {
+        style: {
+          width: "1080px",
+          height: "1080px",
+          display: "flex",
+          position: "relative",
+        },
+      },
+      ...children
+    );
+
+    console.log("Generating ImageResponse...");
+    const imageResponse = new ImageResponse(element, {
+      width: 1080,
+      height: 1080,
     });
 
+    const pngBuffer = new Uint8Array(await imageResponse.arrayBuffer());
     console.log("PNG generated, size:", pngBuffer.length);
 
     // Upload to storage
@@ -187,43 +257,5 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 };
-
-function drawText(image: any, applicantName: string) {
-  const orangeColor = new MagickColor("#ED7621");
-  const goldColor = new MagickColor("#D4A843");
-  const grayColor = new MagickColor("#4A4A4A");
-
-  // "CONGRATULATIONS"
-  image.draw([
-    new DrawableGravity(Gravity.North),
-    new DrawableFillColor(orangeColor),
-    new DrawableFontPointSize(42),
-    new DrawableText(0, 660, "CONGRATULATIONS"),
-  ]);
-
-  // Student name
-  image.draw([
-    new DrawableGravity(Gravity.North),
-    new DrawableFillColor(goldColor),
-    new DrawableFontPointSize(48),
-    new DrawableText(0, 730, applicantName.toUpperCase()),
-  ]);
-
-  // "Accepted into the"
-  image.draw([
-    new DrawableGravity(Gravity.North),
-    new DrawableFillColor(grayColor),
-    new DrawableFontPointSize(28),
-    new DrawableText(0, 800, "Accepted into the"),
-  ]);
-
-  // "edLEAD Leadership Program"
-  image.draw([
-    new DrawableGravity(Gravity.North),
-    new DrawableFillColor(grayColor),
-    new DrawableFontPointSize(34),
-    new DrawableText(0, 850, "edLEAD Leadership Program"),
-  ]);
-}
 
 serve(handler);
