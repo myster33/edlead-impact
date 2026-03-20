@@ -58,7 +58,7 @@ import { DashboardAnnouncements } from "@/components/admin/DashboardAnnouncement
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
-  if (!adminUser || adminUser.role === "admin") {
+  if (!adminUser || adminUser.role === "admin" || adminUser.role === "super_admin") {
     return { hasRestrictions: false, country: null, province: null };
   }
   return {
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
 
   // Get modules this user has access to
   const accessibleModules = modulePermissions?.filter((module) => {
-    if (adminUser?.role === "admin") return true;
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") return true;
     return module.allowed_roles.includes(adminUser?.role as "viewer" | "reviewer" | "admin");
   }) || [];
   
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   
   // Separate effect for reviewer activity with date filters
   useEffect(() => {
-    if (adminUser?.role === "admin") {
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") {
       fetchReviewerActivity();
     }
   }, [adminUser, activityStartDate, activityEndDate]);
@@ -479,7 +479,7 @@ export default function AdminDashboard() {
                         </div>
                       </>
                     )}
-                    {!regionInfo.hasRestrictions && adminUser?.role === "admin" && (
+                    {!regionInfo.hasRestrictions && (adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                       <>
                         <span className="text-muted-foreground">•</span>
                         <div className="flex items-center gap-1">
@@ -728,7 +728,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Reviewer Activity Summary - Only visible to admins */}
-        {adminUser?.role === "admin" && (
+        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -900,7 +900,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Reviewer Leaderboard - Only visible to admins */}
-        {adminUser?.role === "admin" && reviewerActivity.length > 0 && (
+        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && reviewerActivity.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

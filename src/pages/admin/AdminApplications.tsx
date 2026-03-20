@@ -130,7 +130,7 @@ interface Cohort {
 }
 
 const getAdminRegionInfo = (adminUser: any) => {
-  if (!adminUser || adminUser.role === "admin") {
+  if (!adminUser || adminUser.role === "admin" || adminUser.role === "super_admin") {
     return { hasRestrictions: false, country: null, province: null, role: adminUser?.role || null };
   }
   return {
@@ -1046,7 +1046,7 @@ export default function AdminApplications() {
                   <FileText className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                {adminUser?.role === "admin" && (
+                {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                   <Button
                     variant={showTrash ? "destructive" : "outline"}
                     size="sm"
@@ -1206,7 +1206,7 @@ export default function AdminApplications() {
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
                         Restore Selected
                       </Button>
-                      {adminUser?.role === "admin" && (
+                      {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                         <Button
                           size="sm"
                           variant="destructive"
@@ -1239,7 +1239,7 @@ export default function AdminApplications() {
                         {isUpdating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <XCircle className="h-4 w-4 mr-2" />}
                         Reject Selected
                       </Button>
-                      {adminUser?.role === "admin" && (
+                      {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                         <>
                           <Button
                             size="sm"
@@ -1286,7 +1286,7 @@ export default function AdminApplications() {
         {viewMode === "kanban" ? (
           <ApplicationKanban
             applications={filteredApplications}
-            canEdit={adminUser?.role === "reviewer" || adminUser?.role === "admin"}
+            canEdit={adminUser?.role === "reviewer" || adminUser?.role === "admin" || adminUser?.role === "super_admin"}
             onStatusChange={handleStatusChange}
             onView={(app) => setSelectedApplication(app as Application)}
           />
@@ -1448,7 +1448,7 @@ export default function AdminApplications() {
                                       <X className="h-4 w-4" />
                                     </Button>
                                   )}
-                                  {adminUser?.role === "admin" && (
+                                  {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -1572,7 +1572,7 @@ export default function AdminApplications() {
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">Cohort:</span>
                     </div>
-                    {adminUser?.role === "admin" ? (
+                    {(adminUser?.role === "admin" || adminUser?.role === "super_admin") ? (
                       <Select 
                         value={selectedApplication.cohort_id || "unassigned"} 
                         onValueChange={(value) => updateApplicationCohort(selectedApplication.id, value === "unassigned" ? null : value)}

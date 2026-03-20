@@ -76,7 +76,7 @@ import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 
 // Check if admin user has region restrictions
 const getAdminRegionInfo = (adminUser: any) => {
-  if (!adminUser || adminUser.role === "admin") {
+  if (!adminUser || adminUser.role === "admin" || adminUser.role === "super_admin") {
     return { hasRestrictions: false, country: null, province: null, role: adminUser?.role || null, canEdit: true };
   }
   return {
@@ -1316,7 +1316,7 @@ const AdminBlogManagement = () => {
                           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ArchiveRestore className="h-4 w-4 mr-2" />}
                           Restore Selected
                         </Button>
-                        {adminUser?.role === "admin" && (
+                        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                           <Button
                             size="sm"
                             variant="destructive"
@@ -1330,7 +1330,7 @@ const AdminBlogManagement = () => {
                       </>
                     ) : (
                       <>
-                        {adminUser?.role === "admin" && (
+                        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -1441,7 +1441,7 @@ const AdminBlogManagement = () => {
                             >
                               <ArchiveRestore className="h-4 w-4" />
                             </Button>
-                            {adminUser?.role === "admin" && (
+                            {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -1535,7 +1535,7 @@ const AdminBlogManagement = () => {
                                 <ArchiveRestore className="h-4 w-4" />
                               </Button>
                             )}
-                            {adminUser?.role === "admin" && (
+                            {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                               <Button
                                 variant="ghost"
                                 size="icon"

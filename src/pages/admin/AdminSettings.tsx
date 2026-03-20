@@ -204,7 +204,7 @@ export default function AdminSettings() {
   useEffect(() => {
     fetchMfaFactors();
     fetchProfile();
-    if (adminUser?.role === "admin") {
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") {
       fetchSystemSettings();
     }
   }, [adminUser]);
@@ -900,7 +900,7 @@ export default function AdminSettings() {
                       {adminUser?.role}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      {adminUser?.role === "admin" && "Full access to all features"}
+                      {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && "Full access to all features"}
                       {adminUser?.role === "reviewer" && "Can review and update applications"}
                       {adminUser?.role === "viewer" && "Read-only access"}
                     </span>
@@ -1361,7 +1361,7 @@ export default function AdminSettings() {
             </Card>
 
             {/* Admin Only Section */}
-            {adminUser?.role === "admin" && (
+            {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
               <>
                 {/* Global Email Settings */}
                 <Card>
