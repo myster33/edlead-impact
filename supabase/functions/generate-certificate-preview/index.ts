@@ -28,7 +28,7 @@ interface PreviewRequest {
   referenceNumber?: string;
 }
 
-// Font URLs from Google Fonts static CDN
+// Cormorant Garamond subset fonts hosted in storage (v2 - cleaned for fontkit compatibility)
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://klxrjohcpaxviltzpxam.supabase.co";
 const FONT_URLS = {
   regular: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-regular.ttf`,
