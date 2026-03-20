@@ -204,7 +204,7 @@ export default function AdminSettings() {
   useEffect(() => {
     fetchMfaFactors();
     fetchProfile();
-    if (adminUser?.role === "admin") {
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") {
       fetchSystemSettings();
     }
   }, [adminUser]);
