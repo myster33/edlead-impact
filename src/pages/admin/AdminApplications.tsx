@@ -890,7 +890,7 @@ export default function AdminApplications() {
   };
 
   const bulkSoftDeleteApplications = async () => {
-    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin") || selectedIds.size === 0) return;
     setIsUpdating(true);
     try {
       const idsArray = Array.from(selectedIds);
