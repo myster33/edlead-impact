@@ -96,10 +96,13 @@ export async function generateBannerBase64(
   try { ctx.letterSpacing = "3px"; } catch (_) { /* unsupported */ }
   ctx.fillText(applicantName.toUpperCase(), W / 2, 750);
 
-  // "APPLICATION ACCEPTED" in bold
-  ctx.font = "1000 36px 'Montserrat', Arial, Helvetica, sans-serif";
+  // "APPLICATION ACCEPTED" in extra bold
+  ctx.font = "900 40px 'Montserrat', Arial, Helvetica, sans-serif";
   ctx.fillStyle = "#1A1A1A";
+  ctx.strokeStyle = "#1A1A1A";
+  ctx.lineWidth = 2;
   try { ctx.letterSpacing = "6px"; } catch (_) { /* unsupported */ }
+  ctx.strokeText("APPLICATION ACCEPTED", W / 2, 830);
   ctx.fillText("APPLICATION ACCEPTED", W / 2, 830);
 
   // "edLEAD Leadership Program"
