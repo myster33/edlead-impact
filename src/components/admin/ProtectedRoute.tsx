@@ -74,7 +74,7 @@ export function ProtectedRoute({ children, moduleKey }: ProtectedRouteProps) {
 
     // If no permission found, default to admin-only
     if (!allowedRoles) {
-      if (userRole !== "admin") {
+      if (userRole !== "admin" && userRole !== "super_admin") {
         return (
           <div className="min-h-screen flex items-center justify-center bg-background">
             <div className="text-center space-y-4 p-8">

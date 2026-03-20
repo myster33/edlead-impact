@@ -612,7 +612,7 @@ export default function AdminApplications() {
   };
 
   const bulkAssignCohort = async (cohortId: string | null) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "Only admins can change cohort assignments.",

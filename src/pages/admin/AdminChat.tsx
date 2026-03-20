@@ -80,7 +80,7 @@ export default function AdminChat() {
   } : null;
   const { onlineAdmins } = useOnlinePresence(presenceUser);
 
-  const isRegionRestricted = adminUser?.role !== "admin" && (adminUser?.country || adminUser?.province);
+  const isRegionRestricted = adminUser?.role !== "admin" && adminUser?.role !== "super_admin" && (adminUser?.country || adminUser?.province);
 
   const fetchConversations = useCallback(async () => {
     let query = supabase
