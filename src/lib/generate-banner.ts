@@ -90,6 +90,12 @@ export async function generateBannerBase64(
   try { ctx.letterSpacing = "6px"; } catch (_) { /* unsupported */ }
   ctx.fillText("APPLICATION ACCEPTED", W / 2, 830);
 
+  // "edLEAD Leadership Program"
+  ctx.font = "bold 30px Arial, Helvetica, sans-serif";
+  ctx.fillStyle = "#4A4A4A";
+  try { ctx.letterSpacing = "2px"; } catch (_) { /* unsupported */ }
+  ctx.fillText("edLEAD Leadership Program", W / 2, 880);
+
   // Convert to base64 (strip data URI prefix)
   const dataUrl = canvas.toDataURL("image/png");
   return dataUrl.split(",")[1];
