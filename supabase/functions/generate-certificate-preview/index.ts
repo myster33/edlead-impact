@@ -29,10 +29,11 @@ interface PreviewRequest {
 }
 
 // Font URLs from Google Fonts static CDN
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://klxrjohcpaxviltzpxam.supabase.co";
 const FONT_URLS = {
-  regular: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3umX5slCNuHLi8bLeY9MK7whWMhyjypVO7abI26QOD_v86GnM.ttf",
-  bold: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3umX5slCNuHLi8bLeY9MK7whWMhyjypVO7abI26QOD_hg9GnM.ttf",
-  boldItalic: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5FTfOjw.ttf",
+  regular: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-regular.ttf`,
+  bold: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-bold.ttf`,
+  boldItalic: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-bold-italic.ttf`,
 };
 
 async function fetchFont(url: string): Promise<Uint8Array> {
