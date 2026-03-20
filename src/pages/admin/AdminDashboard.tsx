@@ -479,7 +479,7 @@ export default function AdminDashboard() {
                         </div>
                       </>
                     )}
-                    {!regionInfo.hasRestrictions && adminUser?.role === "admin" && (
+                    {!regionInfo.hasRestrictions && (adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                       <>
                         <span className="text-muted-foreground">•</span>
                         <div className="flex items-center gap-1">
