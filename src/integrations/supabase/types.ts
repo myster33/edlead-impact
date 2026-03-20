@@ -461,6 +461,7 @@ export type Database = {
           school_contact: string
           school_email: string
           school_name: string
+          social_banner_url: string | null
           status: string
           student_email: string
           student_phone: string
@@ -511,6 +512,7 @@ export type Database = {
           school_contact: string
           school_email: string
           school_name: string
+          social_banner_url?: string | null
           status?: string
           student_email: string
           student_phone: string
@@ -561,6 +563,7 @@ export type Database = {
           school_contact?: string
           school_email?: string
           school_name?: string
+          social_banner_url?: string | null
           status?: string
           student_email?: string
           student_phone?: string

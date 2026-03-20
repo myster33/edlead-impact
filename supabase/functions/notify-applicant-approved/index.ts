@@ -21,6 +21,7 @@ interface ApplicantApprovedRequest {
   applicantPhone?: string;
   parentPhone?: string;
   applicantPhotoUrl?: string;
+  applicationId?: string;
 }
 
 // Default email templates
@@ -296,7 +297,8 @@ const handler = async (req: Request): Promise<Response> => {
       parentName,
       applicantPhone,
       parentPhone,
-      applicantPhotoUrl
+      applicantPhotoUrl,
+      applicationId
     }: ApplicantApprovedRequest = await req.json();
 
     console.log(`Sending approval notification to applicant: ${applicantEmail}`);
@@ -305,7 +307,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Generate social media banner using AI
+    // Generate social media banner
     let socialBannerUrl: string | null = null;
     try {
       console.log("Generating social media banner...");
@@ -318,6 +320,7 @@ const handler = async (req: Request): Promise<Response> => {
         body: JSON.stringify({
           applicantName,
           applicantPhotoUrl: applicantPhotoUrl || "",
+          applicationId: applicationId || "",
         }),
       });
 

@@ -392,6 +392,7 @@ export default function AdminApplications() {
           applicantPhone: application.student_phone,
           parentPhone: application.parent_phone,
           applicantPhotoUrl: application.learner_photo_url,
+          applicationId: application.id,
         },
       }).catch(err => console.error("Failed to send status change notification:", err));
 
@@ -493,6 +494,7 @@ export default function AdminApplications() {
             applicantPhone: app.student_phone,
             parentPhone: app.parent_phone,
             applicantPhotoUrl: app.learner_photo_url,
+            applicationId: app.id,
           },
         }).catch(err => console.error("Failed to send status change notification:", err));
       }
@@ -1754,6 +1756,8 @@ export default function AdminApplications() {
           <SocialBannerPreview
             applicantName={selectedApplication.full_name}
             applicantPhotoUrl={selectedApplication.learner_photo_url}
+            applicationId={selectedApplication.id}
+            existingBannerUrl={(selectedApplication as any).social_banner_url}
             open={showBannerPreview}
             onOpenChange={setShowBannerPreview}
           />

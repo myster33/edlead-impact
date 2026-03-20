@@ -24,6 +24,7 @@ interface StatusChangeRequest {
   applicantPhone?: string;
   parentPhone?: string;
   applicantPhotoUrl?: string;
+  applicationId?: string;
 }
 
 // Format phone number to E.164 format
@@ -509,7 +510,8 @@ const handler = async (req: Request): Promise<Response> => {
       parentName,
       applicantPhone,
       parentPhone,
-      applicantPhotoUrl
+      applicantPhotoUrl,
+      applicationId
     }: StatusChangeRequest = await req.json();
 
     console.log(`Sending status change notification: ${oldStatus} -> ${newStatus}`);
@@ -534,6 +536,7 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             applicantName,
             applicantPhotoUrl: applicantPhotoUrl || "",
+            applicationId: applicationId || "",
           }),
         });
 
