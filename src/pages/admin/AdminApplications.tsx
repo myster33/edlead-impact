@@ -814,7 +814,7 @@ export default function AdminApplications() {
   };
 
   const softDeleteApplication = async (id: string) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({ title: "Permission Denied", description: "Only admins can move applications to trash.", variant: "destructive" });
       return;
     }
