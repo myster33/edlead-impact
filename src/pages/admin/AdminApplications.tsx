@@ -339,7 +339,7 @@ export default function AdminApplications() {
   };
 
   const updateApplicationStatus = async (id: string, newStatus: string) => {
-    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
+    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "You don't have permission to update application status.",
