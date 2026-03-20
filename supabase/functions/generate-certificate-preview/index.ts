@@ -35,10 +35,10 @@ const FONT_URLS = {
   boldItalic: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5FTfOjw.ttf",
 };
 
-async function fetchFont(url: string): Promise<ArrayBuffer> {
+async function fetchFont(url: string): Promise<Uint8Array> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch font from ${url}: ${res.status}`);
-  return await res.arrayBuffer();
+  return new Uint8Array(await res.arrayBuffer());
 }
 
 async function generateQRCode(url: string): Promise<Uint8Array | null> {
