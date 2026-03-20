@@ -126,7 +126,7 @@ export default function AdminDashboard() {
   
   // Separate effect for reviewer activity with date filters
   useEffect(() => {
-    if (adminUser?.role === "admin") {
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") {
       fetchReviewerActivity();
     }
   }, [adminUser, activityStartDate, activityEndDate]);
