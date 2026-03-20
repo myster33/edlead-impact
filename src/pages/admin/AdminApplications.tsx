@@ -1448,7 +1448,7 @@ export default function AdminApplications() {
                                       <X className="h-4 w-4" />
                                     </Button>
                                   )}
-                                  {adminUser?.role === "admin" && (
+                                  {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
