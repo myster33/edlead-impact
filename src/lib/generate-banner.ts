@@ -13,10 +13,16 @@ const CIRCLE_R = 220;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
-    img.onerror = (e) => reject(new Error(`Failed to load image: ${src}`));
+    img.onerror = () => {
+      // Retry without crossOrigin if CORS fails
+      const img2 = new window.Image();
+      img2.onload = () => resolve(img2);
+      img2.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+      img2.src = src;
+    };
     img.src = src;
   });
 }
