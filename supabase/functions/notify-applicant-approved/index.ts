@@ -307,7 +307,7 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Generate social media banner using AI
+    // Generate social media banner
     let socialBannerUrl: string | null = null;
     try {
       console.log("Generating social media banner...");
@@ -320,6 +320,7 @@ const handler = async (req: Request): Promise<Response> => {
         body: JSON.stringify({
           applicantName,
           applicantPhotoUrl: applicantPhotoUrl || "",
+          applicationId: applicationId || "",
         }),
       });
 
