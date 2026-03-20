@@ -114,7 +114,7 @@ export default function AdminAuditLog() {
   const [isExporting, setIsExporting] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "timeline">("table");
 
-  const isAdmin = adminUser?.role === "admin";
+  const isAdmin = adminUser?.role === "admin" || adminUser?.role === "super_admin";
 
   useEffect(() => {
     if (!authLoading && !adminUser) {

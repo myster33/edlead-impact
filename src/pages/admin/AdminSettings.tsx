@@ -1361,7 +1361,7 @@ export default function AdminSettings() {
             </Card>
 
             {/* Admin Only Section */}
-            {adminUser?.role === "admin" && (
+            {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
               <>
                 {/* Global Email Settings */}
                 <Card>

@@ -80,7 +80,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   const filteredItems = allNavItems.filter((item) => {
     if (item.moduleKey === "settings") return true;
-    if (adminUser?.role === "admin") return true;
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") return true;
     const perm = modulePermissions?.find((p) => p.module_key === item.moduleKey);
     if (!perm) return false;
     return perm.allowed_roles.includes(adminUser?.role as "viewer" | "reviewer" | "admin");

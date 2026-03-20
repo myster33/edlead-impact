@@ -1572,7 +1572,7 @@ export default function AdminApplications() {
                       <Users className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">Cohort:</span>
                     </div>
-                    {adminUser?.role === "admin" ? (
+                    {(adminUser?.role === "admin" || adminUser?.role === "super_admin") ? (
                       <Select 
                         value={selectedApplication.cohort_id || "unassigned"} 
                         onValueChange={(value) => updateApplicationCohort(selectedApplication.id, value === "unassigned" ? null : value)}
