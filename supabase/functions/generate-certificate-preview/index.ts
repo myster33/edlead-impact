@@ -37,9 +37,12 @@ const FONT_URLS = {
 };
 
 async function fetchFont(url: string): Promise<Uint8Array> {
+  console.log("Fetching font:", url);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch font from ${url}: ${res.status}`);
-  return new Uint8Array(await res.arrayBuffer());
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  console.log(`Font loaded: ${bytes.length} bytes, header: [${Array.from(bytes.slice(0,4))}]`);
+  return bytes;
 }
 
 async function generateQRCode(url: string): Promise<Uint8Array | null> {
