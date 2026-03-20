@@ -85,7 +85,7 @@ export async function generateBannerBase64(
   ctx.textAlign = "center";
 
   // "Congratulations" in calligraphy style
-  ctx.font = "52px 'Great Vibes', 'Georgia', cursive";
+  ctx.font = "bold 72px 'Great Vibes', 'Georgia', cursive";
   ctx.fillStyle = "#1A1A1A";
   try { ctx.letterSpacing = "2px"; } catch (_) { /* unsupported */ }
   ctx.fillText("Congratulations", W / 2, 680);
