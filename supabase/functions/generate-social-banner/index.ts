@@ -1,32 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resvg, initWasm } from "https://esm.sh/@aspect-dev/resvg-wasm-pack@0.0.5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-let wasmInitialized = false;
-
-async function ensureWasmInit() {
-  if (!wasmInitialized) {
-    try {
-      const wasmUrl = "https://esm.sh/@aspect-dev/resvg-wasm-pack@0.0.5/resvg_wasm_bg.wasm";
-      const wasmResponse = await fetch(wasmUrl);
-      const wasmBytes = await wasmResponse.arrayBuffer();
-      await initWasm(wasmBytes);
-      wasmInitialized = true;
-    } catch (e) {
-      // May already be initialized
-      if (String(e).includes("already")) {
-        wasmInitialized = true;
-      } else {
-        throw e;
-      }
-    }
-  }
-}
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
