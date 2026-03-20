@@ -1046,7 +1046,7 @@ export default function AdminApplications() {
                   <FileText className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                {adminUser?.role === "admin" && (
+                {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                   <Button
                     variant={showTrash ? "destructive" : "outline"}
                     size="sm"
