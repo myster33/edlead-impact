@@ -1330,7 +1330,7 @@ const AdminBlogManagement = () => {
                       </>
                     ) : (
                       <>
-                        {adminUser?.role === "admin" && (
+                        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
                           <Button
                             size="sm"
                             variant="outline"
