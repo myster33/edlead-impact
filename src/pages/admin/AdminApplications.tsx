@@ -339,7 +339,7 @@ export default function AdminApplications() {
   };
 
   const updateApplicationStatus = async (id: string, newStatus: string) => {
-    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
+    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "You don't have permission to update application status.",
@@ -443,7 +443,7 @@ export default function AdminApplications() {
   };
 
   const bulkUpdateStatus = async (newStatus: string) => {
-    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin")) {
+    if (!adminUser || (adminUser.role !== "reviewer" && adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "You don't have permission to update application status.",
@@ -551,7 +551,7 @@ export default function AdminApplications() {
   };
 
   const updateApplicationCohort = async (applicationId: string, cohortId: string | null) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "Only admins can change cohort assignments.",
@@ -612,7 +612,7 @@ export default function AdminApplications() {
   };
 
   const bulkAssignCohort = async (cohortId: string | null) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({
         title: "Permission Denied",
         description: "Only admins can change cohort assignments.",
@@ -814,7 +814,7 @@ export default function AdminApplications() {
   };
 
   const softDeleteApplication = async (id: string) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({ title: "Permission Denied", description: "Only admins can move applications to trash.", variant: "destructive" });
       return;
     }
@@ -863,7 +863,7 @@ export default function AdminApplications() {
   };
 
   const purgeApplication = async (id: string) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({ title: "Permission Denied", description: "Only admins can permanently delete applications.", variant: "destructive" });
       return;
     }
@@ -890,7 +890,7 @@ export default function AdminApplications() {
   };
 
   const bulkSoftDeleteApplications = async () => {
-    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin") || selectedIds.size === 0) return;
     setIsUpdating(true);
     try {
       const idsArray = Array.from(selectedIds);
@@ -951,7 +951,7 @@ export default function AdminApplications() {
   };
 
   const bulkPurgeApplications = async () => {
-    if (!adminUser || adminUser.role !== "admin" || selectedIds.size === 0) return;
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin") || selectedIds.size === 0) return;
     setIsUpdating(true);
     try {
       const idsArray = Array.from(selectedIds);

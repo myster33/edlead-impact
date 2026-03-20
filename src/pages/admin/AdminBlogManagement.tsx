@@ -682,7 +682,7 @@ const AdminBlogManagement = () => {
   };
 
   const bulkTrashBlogs = async () => {
-    if (!adminUser || adminUser.role !== "admin" || selectedBlogIds.size === 0) return;
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin") || selectedBlogIds.size === 0) return;
     setSaving(true);
     try {
       const idsArray = Array.from(selectedBlogIds);
@@ -743,7 +743,7 @@ const AdminBlogManagement = () => {
   };
 
   const bulkPurgeBlogs = async () => {
-    if (!adminUser || adminUser.role !== "admin" || selectedBlogIds.size === 0) return;
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin") || selectedBlogIds.size === 0) return;
     setSaving(true);
     try {
       const idsArray = Array.from(selectedBlogIds);
