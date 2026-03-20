@@ -21,6 +21,7 @@ interface ApplicantApprovedRequest {
   applicantPhone?: string;
   parentPhone?: string;
   applicantPhotoUrl?: string;
+  applicationId?: string;
 }
 
 // Default email templates
