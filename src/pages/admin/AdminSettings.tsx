@@ -900,7 +900,7 @@ export default function AdminSettings() {
                       {adminUser?.role}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      {adminUser?.role === "admin" && "Full access to all features"}
+                      {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && "Full access to all features"}
                       {adminUser?.role === "reviewer" && "Can review and update applications"}
                       {adminUser?.role === "viewer" && "Read-only access"}
                     </span>
