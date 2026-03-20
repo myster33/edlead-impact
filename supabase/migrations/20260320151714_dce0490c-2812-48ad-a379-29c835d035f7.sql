@@ -1,0 +1,1 @@
+ALTER TABLE public.applications ADD COLUMN social_banner_url text;
