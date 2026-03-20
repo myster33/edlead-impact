@@ -508,7 +508,7 @@ export default function AdminDashboard() {
                 <Key className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                 <div>
                   <span className="font-medium text-foreground">Module Access: </span>
-                  {adminUser?.role === "admin" ? (
+                  {(adminUser?.role === "admin" || adminUser?.role === "super_admin") ? (
                     <span>Full access to all modules</span>
                   ) : accessibleModules.length > 0 ? (
                     <span className="flex flex-wrap gap-1 mt-1">
