@@ -297,7 +297,8 @@ const handler = async (req: Request): Promise<Response> => {
       parentName,
       applicantPhone,
       parentPhone,
-      applicantPhotoUrl
+      applicantPhotoUrl,
+      applicationId
     }: ApplicantApprovedRequest = await req.json();
 
     console.log(`Sending approval notification to applicant: ${applicantEmail}`);
