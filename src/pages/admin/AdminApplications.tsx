@@ -863,7 +863,7 @@ export default function AdminApplications() {
   };
 
   const purgeApplication = async (id: string) => {
-    if (!adminUser || adminUser.role !== "admin") {
+    if (!adminUser || (adminUser.role !== "admin" && adminUser.role !== "super_admin")) {
       toast({ title: "Permission Denied", description: "Only admins can permanently delete applications.", variant: "destructive" });
       return;
     }
