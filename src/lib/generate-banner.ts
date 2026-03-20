@@ -85,7 +85,7 @@ export async function generateBannerBase64(
   ctx.fillText(applicantName.toUpperCase(), W / 2, 750);
 
   // "APPLICATION ACCEPTED" in bold
-  ctx.font = "900 36px 'Montserrat', Arial, Helvetica, sans-serif";
+  ctx.font = "950 36px 'Montserrat', Arial, Helvetica, sans-serif";
   ctx.fillStyle = "#1A1A1A";
   try { ctx.letterSpacing = "6px"; } catch (_) { /* unsupported */ }
   ctx.fillText("APPLICATION ACCEPTED", W / 2, 830);
