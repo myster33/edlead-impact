@@ -24,6 +24,7 @@ interface StatusChangeRequest {
   applicantPhone?: string;
   parentPhone?: string;
   applicantPhotoUrl?: string;
+  applicationId?: string;
 }
 
 // Format phone number to E.164 format
