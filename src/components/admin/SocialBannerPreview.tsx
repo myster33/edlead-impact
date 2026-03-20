@@ -16,6 +16,8 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 interface SocialBannerPreviewProps {
   applicantName: string;
   applicantPhotoUrl?: string;
+  applicationId?: string;
+  existingBannerUrl?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -23,20 +25,28 @@ interface SocialBannerPreviewProps {
 export function SocialBannerPreview({
   applicantName,
   applicantPhotoUrl,
+  applicationId,
+  existingBannerUrl,
   open,
   onOpenChange,
 }: SocialBannerPreviewProps) {
   const { toast } = useToast();
-  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(existingBannerUrl ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const generateBanner = async () => {
+  // Sync prop changes
+  if (existingBannerUrl && !bannerUrl) {
+    setBannerUrl(existingBannerUrl);
+  }
+
+  const regenerateBanner = async () => {
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-social-banner", {
         body: {
           applicantName,
           applicantPhotoUrl: applicantPhotoUrl || "",
+          applicationId: applicationId || "",
         },
       });
 
@@ -65,7 +75,6 @@ export function SocialBannerPreview({
 
   const downloadBanner = () => {
     if (!bannerUrl) return;
-    
     const link = document.createElement("a");
     link.href = bannerUrl;
     link.download = `edlead-banner-${applicantName.replace(/\s+/g, "-").toLowerCase()}.png`;
@@ -77,8 +86,6 @@ export function SocialBannerPreview({
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset state when closing
-    setBannerUrl(null);
   };
 
   return (
@@ -90,12 +97,11 @@ export function SocialBannerPreview({
             Social Media Banner
           </DialogTitle>
           <DialogDescription>
-            Preview and generate the acceptance banner for {applicantName}
+            Acceptance banner for {applicantName}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Banner Preview Area */}
           <div className="border rounded-lg overflow-hidden bg-muted/50">
             <AspectRatio ratio={1}>
               {bannerUrl ? (
@@ -108,31 +114,29 @@ export function SocialBannerPreview({
                 <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground gap-3">
                   <Image className="h-16 w-16 opacity-30" />
                   <p className="text-sm text-center px-4">
-                    Click "Generate Banner" to create a shareable<br />acceptance announcement image
+                    No banner generated yet. Click "Generate Banner" below.
                   </p>
                 </div>
               )}
             </AspectRatio>
           </div>
 
-          {/* Generation Progress */}
           {isGenerating && (
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Generating banner with AI... This may take a moment.</span>
+              <span>Generating banner...</span>
             </div>
           )}
 
-          {/* Info Text */}
           <p className="text-xs text-muted-foreground text-center">
-            This banner will be attached to the approval email for the applicant to share on social media.
+            This banner is automatically generated on approval and attached to the notification email.
           </p>
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           {bannerUrl ? (
             <>
-              <Button variant="outline" onClick={generateBanner} disabled={isGenerating}>
+              <Button variant="outline" onClick={regenerateBanner} disabled={isGenerating}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${isGenerating ? "animate-spin" : ""}`} />
                 Regenerate
               </Button>
@@ -142,7 +146,7 @@ export function SocialBannerPreview({
               </Button>
             </>
           ) : (
-            <Button onClick={generateBanner} disabled={isGenerating} className="w-full sm:w-auto">
+            <Button onClick={regenerateBanner} disabled={isGenerating} className="w-full sm:w-auto">
               {isGenerating ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
