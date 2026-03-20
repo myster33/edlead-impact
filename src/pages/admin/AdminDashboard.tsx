@@ -728,7 +728,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Reviewer Activity Summary - Only visible to admins */}
-        {adminUser?.role === "admin" && (
+        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && (
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
