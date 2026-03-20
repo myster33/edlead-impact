@@ -1,10 +1,38 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resvg, initWasm } from "https://esm.sh/@resvg/resvg-wasm@2.6.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+let wasmInitialized = false;
+
+async function ensureWasmInit() {
+  if (wasmInitialized) return;
+  try {
+    const wasmResponse = await fetch(
+      "https://esm.sh/@aspect-dev/resvg-wasm@0.0.1/resvg.wasm"
+    );
+    if (!wasmResponse.ok) {
+      // Try alternate WASM source
+      const alt = await fetch(
+        "https://unpkg.com/@resvg/resvg-wasm@2.6.2/index_bg.wasm"
+      );
+      await initWasm(await alt.arrayBuffer());
+    } else {
+      await initWasm(await wasmResponse.arrayBuffer());
+    }
+    wasmInitialized = true;
+  } catch (e) {
+    if (String(e).includes("already")) {
+      wasmInitialized = true;
+    } else {
+      throw e;
+    }
+  }
+}
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
@@ -58,7 +86,7 @@ function buildSvg(
         preserveAspectRatio="xMidYMid slice" />`
     : "";
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <image href="${templateBase64}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" />
   ${photoClip}
   <text x="${W / 2}" y="680" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="bold" fill="#ED7621" letter-spacing="4">CONGRATULATIONS</text>
@@ -109,11 +137,14 @@ const handler = async (req: Request): Promise<Response> => {
       if (!photoBase64) console.warn("Could not fetch applicant photo, proceeding without it");
     }
 
-    // Build SVG and render to PNG
+    // Build SVG
     const svg = buildSvg(templateBase64, applicantName, photoBase64);
 
+    // Render SVG to PNG
     await ensureWasmInit();
-    const resvg = new Resvg(svg, { fitTo: { mode: "width", value: 1080 } });
+    const resvg = new Resvg(svg, {
+      fitTo: { mode: "width" as const, value: 1080 },
+    });
     const pngData = resvg.render();
     const pngBuffer = pngData.asPng();
 
