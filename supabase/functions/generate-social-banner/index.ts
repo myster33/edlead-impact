@@ -1,46 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import satori from "https://esm.sh/satori@0.10.11";
-import { Resvg, initWasm } from "https://esm.sh/@aspect-dev/resvg-wasm@0.0.2";
-import React from "https://esm.sh/react@18.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
-
-let wasmInitialized = false;
-let fontData: ArrayBuffer | null = null;
-
-async function ensureWasm() {
-  if (!wasmInitialized) {
-    try {
-      const wasmUrl = "https://esm.sh/@aspect-dev/resvg-wasm@0.0.2/resvg.wasm";
-      const res = await fetch(wasmUrl);
-      if (!res.ok) throw new Error(`WASM fetch: ${res.status}`);
-      await initWasm(await res.arrayBuffer());
-      wasmInitialized = true;
-      console.log("WASM initialized");
-    } catch (e) {
-      if (String(e).includes("already")) {
-        wasmInitialized = true;
-      } else {
-        throw e;
-      }
-    }
-  }
-}
-
-async function loadFont(): Promise<ArrayBuffer> {
-  if (fontData) return fontData;
-  // Load Inter font from Google Fonts
-  const fontUrl = "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf";
-  const res = await fetch(fontUrl);
-  if (!res.ok) throw new Error(`Font fetch failed: ${res.status}`);
-  fontData = await res.arrayBuffer();
-  console.log("Font loaded, size:", fontData.byteLength);
-  return fontData;
-}
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
@@ -54,12 +18,35 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
       const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
       binary += String.fromCharCode(...chunk);
     }
-    const base64 = btoa(binary);
-    const contentType = response.headers.get("content-type") || "image/jpeg";
-    return `data:${contentType};base64,${base64}`;
+    return btoa(binary);
   } catch {
     return null;
   }
+}
+
+function escapeXml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
+
+function buildSvg(templateB64: string, applicantName: string, photoB64?: string | null): string {
+  const W = 1080, H = 1080;
+  const name = escapeXml(applicantName.toUpperCase());
+
+  // Photo circle clip
+  const photoSection = photoB64
+    ? `<defs><clipPath id="cp"><circle cx="540" cy="360" r="220"/></clipPath></defs>
+       <image xlink:href="data:image/jpeg;base64,${photoB64}" x="320" y="140" width="440" height="440" clip-path="url(#cp)" preserveAspectRatio="xMidYMid slice"/>`
+    : "";
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <image xlink:href="data:image/jpeg;base64,${templateB64}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+  ${photoSection}
+  <text x="${W/2}" y="680" text-anchor="middle" font-size="42" font-weight="bold" fill="#ED7621" letter-spacing="4">CONGRATULATIONS</text>
+  <text x="${W/2}" y="750" text-anchor="middle" font-size="48" font-weight="bold" fill="#D4A843" letter-spacing="2">${name}</text>
+  <text x="${W/2}" y="820" text-anchor="middle" font-size="28" fill="#4A4A4A" letter-spacing="1">Accepted into the</text>
+  <text x="${W/2}" y="865" text-anchor="middle" font-size="34" font-weight="bold" fill="#4A4A4A" letter-spacing="1">edLEAD Leadership Program</text>
+</svg>`;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -83,138 +70,37 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Load font and init WASM in parallel
-    const [font] = await Promise.all([loadFont(), ensureWasm()]);
-
-    // Get template base64
+    // Get template
     const { data: templateUrlData } = supabase.storage
       .from("applicant-photos")
       .getPublicUrl("templates/social-banner-template.jpg");
 
-    const templateBase64 = await fetchImageAsBase64(templateUrlData.publicUrl);
-    if (!templateBase64) {
+    const templateB64 = await fetchImageAsBase64(templateUrlData.publicUrl);
+    if (!templateB64) {
       return new Response(
-        JSON.stringify({ error: "Failed to fetch template image" }),
+        JSON.stringify({ error: "Failed to fetch template" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
-    console.log("Template loaded");
 
-    // Get photo base64
-    let photoBase64: string | null = null;
+    // Get photo
+    let photoB64: string | null = null;
     if (applicantPhotoUrl?.trim()) {
-      photoBase64 = await fetchImageAsBase64(applicantPhotoUrl);
-      if (!photoBase64) console.warn("Could not fetch photo");
-      else console.log("Photo loaded");
+      photoB64 = await fetchImageAsBase64(applicantPhotoUrl);
     }
 
-    // Build React element tree
-    const children: any[] = [
-      React.createElement("img", {
-        key: "bg",
-        src: templateBase64,
-        width: 1080,
-        height: 1080,
-        style: { position: "absolute", top: 0, left: 0, width: "1080px", height: "1080px" },
-      }),
-    ];
+    // Build SVG and upload as SVG (browsers render SVG perfectly including text)
+    const svg = buildSvg(templateB64, applicantName, photoB64);
+    const svgBuffer = new TextEncoder().encode(svg);
 
-    if (photoBase64) {
-      children.push(
-        React.createElement("img", {
-          key: "photo",
-          src: photoBase64,
-          width: 440,
-          height: 440,
-          style: {
-            position: "absolute",
-            top: "140px",
-            left: "320px",
-            width: "440px",
-            height: "440px",
-            borderRadius: "220px",
-          },
-        })
-      );
-    }
-
-    children.push(
-      React.createElement(
-        "div",
-        {
-          key: "text",
-          style: {
-            position: "absolute",
-            bottom: "80px",
-            left: "0",
-            width: "1080px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          },
-        },
-        React.createElement("div", {
-          style: { display: "flex", fontSize: "42px", fontWeight: 700, color: "#ED7621", letterSpacing: "4px" },
-        }, "CONGRATULATIONS"),
-        React.createElement("div", {
-          style: { display: "flex", fontSize: "44px", fontWeight: 700, color: "#D4A843", letterSpacing: "2px", marginTop: "16px" },
-        }, applicantName.toUpperCase()),
-        React.createElement("div", {
-          style: { display: "flex", fontSize: "28px", color: "#4A4A4A", marginTop: "16px" },
-        }, "Accepted into the"),
-        React.createElement("div", {
-          style: { display: "flex", fontSize: "34px", fontWeight: 700, color: "#4A4A4A", marginTop: "8px" },
-        }, "edLEAD Leadership Program")
-      )
-    );
-
-    const element = React.createElement(
-      "div",
-      { style: { width: "1080px", height: "1080px", display: "flex", position: "relative" } },
-      ...children
-    );
-
-    // Use satori with explicit font
-    console.log("Running satori...");
-    const svg = await satori(element, {
-      width: 1080,
-      height: 1080,
-      fonts: [
-        {
-          name: "Inter",
-          data: font,
-          weight: 400,
-          style: "normal" as const,
-        },
-        {
-          name: "Inter",
-          data: font,
-          weight: 700,
-          style: "normal" as const,
-        },
-      ],
-    });
-    console.log("SVG generated, length:", svg.length);
-
-    // Convert SVG to PNG with resvg
-    const resvg = new Resvg(svg, {
-      fitTo: { mode: "width", value: 1080 },
-      font: { loadSystemFonts: false },
-    });
-    const rendered = resvg.render();
-    const pngBuffer = rendered.asPng();
-    console.log("PNG rendered, size:", pngBuffer.length);
-
-    // Upload
     const timestamp = Date.now();
     const sanitizedName = applicantName.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
-    const fileName = `banners/${sanitizedName}_${timestamp}.png`;
+    const fileName = `banners/${sanitizedName}_${timestamp}.svg`;
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("applicant-photos")
-      .upload(fileName, pngBuffer, {
-        contentType: "image/png",
+      .upload(fileName, svgBuffer, {
+        contentType: "image/svg+xml",
         cacheControl: "3600",
         upsert: true,
       });
@@ -246,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
-    console.error("Error in generate-social-banner:", error);
+    console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
