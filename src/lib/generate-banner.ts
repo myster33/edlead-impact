@@ -31,6 +31,18 @@ export async function generateBannerBase64(
   applicantName: string,
   applicantPhotoUrl?: string | null
 ): Promise<string> {
+  // Load Great Vibes font for "Congratulations"
+  const greatVibesFont = new FontFace(
+    "Great Vibes",
+    "url(https://fonts.gstatic.com/s/greatvibes/v18/RWmMoKWR9v4ksMfaWd_JN9XFiaQo.woff2)"
+  );
+  try {
+    const loaded = await greatVibesFont.load();
+    document.fonts.add(loaded);
+  } catch (e) {
+    console.warn("Could not load Great Vibes font:", e);
+  }
+
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
