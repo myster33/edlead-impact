@@ -900,7 +900,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Reviewer Leaderboard - Only visible to admins */}
-        {adminUser?.role === "admin" && reviewerActivity.length > 0 && (
+        {(adminUser?.role === "admin" || adminUser?.role === "super_admin") && reviewerActivity.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
