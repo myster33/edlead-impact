@@ -494,6 +494,7 @@ export default function AdminApplications() {
             applicantPhone: app.student_phone,
             parentPhone: app.parent_phone,
             applicantPhotoUrl: app.learner_photo_url,
+            applicationId: app.id,
           },
         }).catch(err => console.error("Failed to send status change notification:", err));
       }
