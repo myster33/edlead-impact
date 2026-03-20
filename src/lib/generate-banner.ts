@@ -13,10 +13,16 @@ const CIRCLE_R = 220;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
-    img.onerror = (e) => reject(new Error(`Failed to load image: ${src}`));
+    img.onerror = () => {
+      // Retry without crossOrigin if CORS fails
+      const img2 = new window.Image();
+      img2.onload = () => resolve(img2);
+      img2.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+      img2.src = src;
+    };
     img.src = src;
   });
 }
@@ -69,25 +75,25 @@ export async function generateBannerBase64(
   // "CONGRATULATIONS"
   ctx.font = "bold 42px Arial, Helvetica, sans-serif";
   ctx.fillStyle = "#ED7621";
-  ctx.letterSpacing = "4px";
+  try { ctx.letterSpacing = "4px"; } catch (_) { /* unsupported */ }
   ctx.fillText("CONGRATULATIONS", W / 2, 680);
 
   // Student name
   ctx.font = "bold 48px Arial, Helvetica, sans-serif";
   ctx.fillStyle = "#D4A843";
-  ctx.letterSpacing = "2px";
+  try { ctx.letterSpacing = "2px"; } catch (_) { /* unsupported */ }
   ctx.fillText(applicantName.toUpperCase(), W / 2, 750);
 
   // "Accepted into the"
   ctx.font = "28px Arial, Helvetica, sans-serif";
   ctx.fillStyle = "#4A4A4A";
-  ctx.letterSpacing = "1px";
+  try { ctx.letterSpacing = "1px"; } catch (_) { /* unsupported */ }
   ctx.fillText("Accepted into the", W / 2, 820);
 
   // "edLEAD Leadership Program"
   ctx.font = "bold 34px Arial, Helvetica, sans-serif";
   ctx.fillStyle = "#4A4A4A";
-  ctx.letterSpacing = "1px";
+  try { ctx.letterSpacing = "1px"; } catch (_) { /* unsupported */ }
   ctx.fillText("edLEAD Leadership Program", W / 2, 865);
 
   // Convert to base64 (strip data URI prefix)
