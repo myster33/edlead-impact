@@ -75,7 +75,7 @@ export default function AdminDashboard() {
 
   // Get modules this user has access to
   const accessibleModules = modulePermissions?.filter((module) => {
-    if (adminUser?.role === "admin") return true;
+    if (adminUser?.role === "admin" || adminUser?.role === "super_admin") return true;
     return module.allowed_roles.includes(adminUser?.role as "viewer" | "reviewer" | "admin");
   }) || [];
   
