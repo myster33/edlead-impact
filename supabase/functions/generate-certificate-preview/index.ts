@@ -28,17 +28,21 @@ interface PreviewRequest {
   referenceNumber?: string;
 }
 
-// Font URLs from Google Fonts static CDN
+// Cormorant Garamond subset fonts hosted in storage (v2 - cleaned for fontkit compatibility)
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "https://klxrjohcpaxviltzpxam.supabase.co";
 const FONT_URLS = {
-  regular: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3smX5slCNuHLi8bLeY9MK7whWMhyjYrGFEsdtdc62E6zd5FTfOjw.ttf",
-  bold: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3umX5slCNuHLi8bLeY9MK7whWMhyjypVO7abI26QOD_v86GnM.ttf",
-  boldItalic: "https://fonts.gstatic.com/s/cormorantgaramond/v21/co3umX5slCNuHLi8bLeY9MK7whWMhyjypVO7abI26QOD_hg9GnM.ttf",
+  regular: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-regular.ttf`,
+  bold: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-bold.ttf`,
+  boldItalic: `${SUPABASE_URL}/storage/v1/object/public/certificate-backgrounds/fonts/cormorant-garamond-bold-italic.ttf`,
 };
 
-async function fetchFont(url: string): Promise<ArrayBuffer> {
+async function fetchFont(url: string): Promise<Uint8Array> {
+  console.log("Fetching font:", url);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Failed to fetch font from ${url}: ${res.status}`);
-  return await res.arrayBuffer();
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  console.log(`Font loaded: ${bytes.length} bytes, header: [${Array.from(bytes.slice(0,4))}]`);
+  return bytes;
 }
 
 async function generateQRCode(url: string): Promise<Uint8Array | null> {
