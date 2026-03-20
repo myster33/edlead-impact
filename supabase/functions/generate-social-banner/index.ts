@@ -81,62 +81,68 @@ const handler = async (req: Request): Promise<Response> => {
             },
           })
         : null,
-      // Text area below photo
+      // Text lines — each needs display:flex for satori
       React.createElement(
         "div",
         {
           style: {
             position: "absolute",
             top: "640px",
-            left: 0,
-            right: 0,
+            left: "0",
+            width: "1080px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "12px",
           },
         },
         React.createElement(
-          "span",
+          "div",
           {
             style: {
+              display: "flex",
               fontSize: "42px",
-              fontWeight: "bold",
+              fontWeight: 700,
               color: "#ED7621",
               letterSpacing: "4px",
+              marginBottom: "12px",
             },
           },
           "CONGRATULATIONS"
         ),
         React.createElement(
-          "span",
+          "div",
           {
             style: {
+              display: "flex",
               fontSize: "48px",
-              fontWeight: "bold",
+              fontWeight: 700,
               color: "#D4A843",
               letterSpacing: "2px",
+              marginBottom: "12px",
             },
           },
           applicantName.toUpperCase()
         ),
         React.createElement(
-          "span",
+          "div",
           {
             style: {
+              display: "flex",
               fontSize: "28px",
               color: "#4A4A4A",
               letterSpacing: "1px",
+              marginBottom: "8px",
             },
           },
           "Accepted into the"
         ),
         React.createElement(
-          "span",
+          "div",
           {
             style: {
+              display: "flex",
               fontSize: "34px",
-              fontWeight: "bold",
+              fontWeight: 700,
               color: "#4A4A4A",
               letterSpacing: "1px",
             },
