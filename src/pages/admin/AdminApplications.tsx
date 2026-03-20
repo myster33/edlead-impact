@@ -1286,7 +1286,7 @@ export default function AdminApplications() {
         {viewMode === "kanban" ? (
           <ApplicationKanban
             applications={filteredApplications}
-            canEdit={adminUser?.role === "reviewer" || adminUser?.role === "admin"}
+            canEdit={adminUser?.role === "reviewer" || adminUser?.role === "admin" || adminUser?.role === "super_admin"}
             onStatusChange={handleStatusChange}
             onView={(app) => setSelectedApplication(app as Application)}
           />
