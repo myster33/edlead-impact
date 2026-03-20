@@ -72,29 +72,23 @@ export async function generateBannerBase64(
   // 3. Draw text
   ctx.textAlign = "center";
 
-  // "CONGRATULATIONS"
-  ctx.font = "bold 42px Arial, Helvetica, sans-serif";
-  ctx.fillStyle = "#ED7621";
-  try { ctx.letterSpacing = "4px"; } catch (_) { /* unsupported */ }
-  ctx.fillText("CONGRATULATIONS", W / 2, 680);
-
-  // Student name
-  ctx.font = "bold 48px Arial, Helvetica, sans-serif";
-  ctx.fillStyle = "#D4A843";
+  // "Congratulations" in calligraphy style
+  ctx.font = "italic 52px 'Georgia', 'Palatino Linotype', 'Book Antiqua', 'Times New Roman', serif";
+  ctx.fillStyle = "#1A1A1A";
   try { ctx.letterSpacing = "2px"; } catch (_) { /* unsupported */ }
+  ctx.fillText("Congratulations", W / 2, 680);
+
+  // Student name in brand orange
+  ctx.font = "bold 48px Arial, Helvetica, sans-serif";
+  ctx.fillStyle = "#ED7621";
+  try { ctx.letterSpacing = "3px"; } catch (_) { /* unsupported */ }
   ctx.fillText(applicantName.toUpperCase(), W / 2, 750);
 
-  // "Accepted into the"
-  ctx.font = "28px Arial, Helvetica, sans-serif";
-  ctx.fillStyle = "#4A4A4A";
-  try { ctx.letterSpacing = "1px"; } catch (_) { /* unsupported */ }
-  ctx.fillText("Accepted into the", W / 2, 820);
-
-  // "edLEAD Leadership Program"
-  ctx.font = "bold 34px Arial, Helvetica, sans-serif";
-  ctx.fillStyle = "#4A4A4A";
-  try { ctx.letterSpacing = "1px"; } catch (_) { /* unsupported */ }
-  ctx.fillText("edLEAD Leadership Program", W / 2, 865);
+  // "APPLICATION ACCEPTED" in bold
+  ctx.font = "bold 36px Arial, Helvetica, sans-serif";
+  ctx.fillStyle = "#1A1A1A";
+  try { ctx.letterSpacing = "6px"; } catch (_) { /* unsupported */ }
+  ctx.fillText("APPLICATION ACCEPTED", W / 2, 830);
 
   // Convert to base64 (strip data URI prefix)
   const dataUrl = canvas.toDataURL("image/png");
