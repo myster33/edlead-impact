@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Image, RefreshCw, Download, Share2 } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { generateBannerBase64 } from "@/lib/generate-banner";
 
 interface SocialBannerPreviewProps {
   applicantName: string;
@@ -34,7 +35,6 @@ export function SocialBannerPreview({
   const [bannerUrl, setBannerUrl] = useState<string | null>(existingBannerUrl ?? null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Sync prop changes
   if (existingBannerUrl && !bannerUrl) {
     setBannerUrl(existingBannerUrl);
   }
@@ -42,11 +42,15 @@ export function SocialBannerPreview({
   const regenerateBanner = async () => {
     setIsGenerating(true);
     try {
+      // Generate banner client-side using Canvas
+      const pngBase64 = await generateBannerBase64(applicantName, applicantPhotoUrl);
+
+      // Upload via edge function
       const { data, error } = await supabase.functions.invoke("generate-social-banner", {
         body: {
           applicantName,
-          applicantPhotoUrl: applicantPhotoUrl || "",
           applicationId: applicationId || "",
+          pngBase64,
         },
       });
 
@@ -84,12 +88,8 @@ export function SocialBannerPreview({
     document.body.removeChild(link);
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -127,10 +127,6 @@ export function SocialBannerPreview({
               <span>Generating banner...</span>
             </div>
           )}
-
-          <p className="text-xs text-muted-foreground text-center">
-            This banner is automatically generated on approval and attached to the notification email.
-          </p>
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
