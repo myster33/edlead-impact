@@ -335,12 +335,6 @@ export default function SchoolLogin() {
               <School className="h-6 w-6 text-primary" />
             </div>
           </div>
-          <div className="flex justify-center mb-2">
-            <div className="relative h-16 w-auto">
-              <img src={edleadLogo} alt="edLEAD Logo" className={`h-16 w-auto absolute transition-opacity duration-300 ${theme === "dark" ? "opacity-0" : "opacity-100"}`} />
-              <img src={edleadLogoDark} alt="edLEAD Logo" className={`h-16 w-auto transition-opacity duration-300 ${theme === "dark" ? "opacity-100" : "opacity-0"}`} />
-            </div>
-          </div>
           <CardTitle className="text-2xl font-bold text-foreground">Schools Portal</CardTitle>
           <CardDescription className="text-muted-foreground">
             {showForgotPassword ? "Reset your password" : activeTab === "login" ? "Sign in to manage your school" : "Register your school"}

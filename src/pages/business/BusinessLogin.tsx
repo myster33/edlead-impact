@@ -166,14 +166,6 @@ export default function BusinessLogin() {
 
         <div className="w-full max-w-md z-10">
           {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <img
-              src={theme === "dark" ? edleadLogoDark : edleadLogo}
-              alt="edLEAD"
-              className="h-12 cursor-pointer"
-              onClick={() => navigate("/user-access")}
-            />
-          </div>
 
           <Card className="shadow-lg border-border/60">
             <CardHeader className="text-center pb-4">
