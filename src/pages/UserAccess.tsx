@@ -26,7 +26,7 @@ const roles = [
     label: "Parent / Guardian",
     icon: Users,
     path: "/portal/login",
-    description: "Track your child's academic progress and attendance records",
+    description: "Track your child's academic records",
     delay: "160ms",
   },
   {
