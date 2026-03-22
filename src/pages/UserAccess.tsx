@@ -40,7 +40,7 @@ const roles = [
     label: "Business / Organisation Admin",
     icon: Building2,
     path: "/business/login",
-    description: "Business AI Chats and Leads",
+    description: "Business Chats and Client Leads",
     delay: "320ms",
   },
   {
