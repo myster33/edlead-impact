@@ -10,8 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Building2, User, Phone } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
-import edleadLogo from "@/assets/edlead-logo.png";
-import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 
