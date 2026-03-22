@@ -140,13 +140,12 @@ export default function UserAccess() {
             {displayedText}
             {!typingDone && <span className="inline-block w-0.5 h-7 bg-primary ml-1 animate-pulse align-middle" />}
           </h1>
-          <p className={`text-muted-foreground text-center mb-10 transition-opacity duration-300 ${typingDone ? "opacity-100" : "opacity-0"}`}>
-            {displayedSubtitle}
-            {typingDone && !subtitleDone && <span className="inline-block w-0.5 h-5 bg-muted-foreground ml-0.5 animate-pulse align-middle" />}
+          <p className={`text-muted-foreground text-center mb-10 transition-opacity duration-700 ${typingDone ? "opacity-100" : "opacity-0"}`}>
+            Select your role to continue to the right portal.
           </p>
 
           {/* Role grid */}
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full transition-all duration-500 ${subtitleDone ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full transition-all duration-500 ${showCards ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             {roles.map((role) => (
               <button
                 key={role.label}
