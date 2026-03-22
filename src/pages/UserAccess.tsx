@@ -62,6 +62,10 @@ export default function UserAccess() {
   const [displayedText, setDisplayedText] = useState("");
   const [typingDone, setTypingDone] = useState(false);
 
+  const subtitleText = "Select your role to continue to the right portal.";
+  const [displayedSubtitle, setDisplayedSubtitle] = useState("");
+  const [subtitleDone, setSubtitleDone] = useState(false);
+
   useEffect(() => {
     let i = 0;
     const interval = setInterval(() => {
@@ -74,6 +78,20 @@ export default function UserAccess() {
     }, 60);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!typingDone) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayedSubtitle(subtitleText.slice(0, i));
+      if (i >= subtitleText.length) {
+        clearInterval(interval);
+        setSubtitleDone(true);
+      }
+    }, 30);
+    return () => clearInterval(interval);
+  }, [typingDone]);
 
   const handleSelect = (path: string) => {
     setSelectedPath(path);
