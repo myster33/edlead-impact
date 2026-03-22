@@ -10,8 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Building2, User, Phone } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
-import edleadLogo from "@/assets/edlead-logo.png";
-import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Helmet } from "react-helmet-async";
 
@@ -168,14 +166,6 @@ export default function BusinessLogin() {
 
         <div className="w-full max-w-md z-10">
           {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <img
-              src={theme === "dark" ? edleadLogoDark : edleadLogo}
-              alt="edLEAD"
-              className="h-12 cursor-pointer"
-              onClick={() => navigate("/user-access")}
-            />
-          </div>
 
           <Card className="shadow-lg border-border/60">
             <CardHeader className="text-center pb-4">

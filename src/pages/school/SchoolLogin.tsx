@@ -12,8 +12,6 @@ import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, School, User, Phone, Build
 import { countryCodes } from "@/lib/country-codes";
 import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
-import edleadLogo from "@/assets/edlead-logo.png";
-import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { useTheme } from "next-themes";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -335,12 +333,6 @@ export default function SchoolLogin() {
           <div className="flex justify-center mb-4">
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
               <School className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="flex justify-center mb-2">
-            <div className="relative h-16 w-auto">
-              <img src={edleadLogo} alt="edLEAD Logo" className={`h-16 w-auto absolute transition-opacity duration-300 ${theme === "dark" ? "opacity-0" : "opacity-100"}`} />
-              <img src={edleadLogoDark} alt="edLEAD Logo" className={`h-16 w-auto transition-opacity duration-300 ${theme === "dark" ? "opacity-100" : "opacity-0"}`} />
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">Schools Portal</CardTitle>
