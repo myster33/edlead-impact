@@ -62,6 +62,10 @@ export default function UserAccess() {
   const [displayedText, setDisplayedText] = useState("");
   const [typingDone, setTypingDone] = useState(false);
 
+  const subtitleText = "Select your role to continue to the right portal.";
+  const [displayedSubtitle, setDisplayedSubtitle] = useState("");
+  const [subtitleDone, setSubtitleDone] = useState(false);
+
   useEffect(() => {
     let i = 0;
     const interval = setInterval(() => {
@@ -74,6 +78,20 @@ export default function UserAccess() {
     }, 60);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!typingDone) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayedSubtitle(subtitleText.slice(0, i));
+      if (i >= subtitleText.length) {
+        clearInterval(interval);
+        setSubtitleDone(true);
+      }
+    }, 30);
+    return () => clearInterval(interval);
+  }, [typingDone]);
 
   const handleSelect = (path: string) => {
     setSelectedPath(path);
@@ -122,12 +140,13 @@ export default function UserAccess() {
             {displayedText}
             {!typingDone && <span className="inline-block w-0.5 h-7 bg-primary ml-1 animate-pulse align-middle" />}
           </h1>
-          <p className={`text-muted-foreground text-center mb-10 transition-opacity duration-500 ${typingDone ? "opacity-100" : "opacity-0"}`} style={{ animationDelay: "100ms" }}>
-            Select your role to continue to the right portal.
+          <p className={`text-muted-foreground text-center mb-10 transition-opacity duration-300 ${typingDone ? "opacity-100" : "opacity-0"}`}>
+            {displayedSubtitle}
+            {typingDone && !subtitleDone && <span className="inline-block w-0.5 h-5 bg-muted-foreground ml-0.5 animate-pulse align-middle" />}
           </p>
 
           {/* Role grid */}
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full transition-all duration-500 ${typingDone ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full transition-all duration-500 ${subtitleDone ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             {roles.map((role) => (
               <button
                 key={role.label}
