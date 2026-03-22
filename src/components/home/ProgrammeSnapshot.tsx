@@ -84,7 +84,7 @@ export const ProgrammeSnapshot = () => {
               Programme Snapshot
             </h2>
             <p className="text-secondary-foreground/80 text-lg mb-8 leading-relaxed">
-              edLEAD Captains participate in a structured, three-month online programme combining mentorship, training, collaboration, and practical leadership experience — culminating in a physical awards ceremony.
+              edLEAD Captains participate in a structured, three-month online programme combining mentorship, training, collaboration, and practical leadership experience culminating in a physical awards ceremony.
             </p>
             <Link to="/programme">
               <Button size="lg" className="gap-2">
