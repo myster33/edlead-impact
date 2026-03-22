@@ -12,7 +12,7 @@ const roles = [
     label: "School Admin",
     icon: School,
     path: "/school/login",
-    description: "Manage your school on the edLEAD platform",
+    description: "Manage student micro data and School Events/Activity Calendar",
     delay: "0ms",
   },
   {
