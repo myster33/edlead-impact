@@ -37,10 +37,10 @@ const roles = [
     delay: "240ms",
   },
   {
-    label: "Partner Organisation",
-    icon: Handshake,
-    path: "/contact",
-    description: "Sponsorship and partnership enquiries",
+    label: "Business / Organisation Admin",
+    icon: Building2,
+    path: "/business/login",
+    description: "Business AI Chats and Leads",
     delay: "320ms",
   },
   {
