@@ -32,6 +32,7 @@ const CheckStatus = lazy(() => import("./pages/CheckStatus"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const UserAccess = lazy(() => import("./pages/UserAccess"));
 const SchoolChat = lazy(() => import("./pages/SchoolChat"));
+const BusinessLogin = lazy(() => import("./pages/business/BusinessLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin pages
