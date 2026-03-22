@@ -58,6 +58,23 @@ export default function UserAccess() {
   const [exiting, setExiting] = useState(false);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
+  const fullText = "What is your title?";
+  const [displayedText, setDisplayedText] = useState("");
+  const [typingDone, setTypingDone] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayedText(fullText.slice(0, i));
+      if (i >= fullText.length) {
+        clearInterval(interval);
+        setTypingDone(true);
+      }
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSelect = (path: string) => {
     setSelectedPath(path);
     setExiting(true);
