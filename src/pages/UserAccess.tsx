@@ -33,7 +33,7 @@ const roles = [
     label: "Student / Learner",
     icon: GraduationCap,
     path: "/portal/login",
-    description: "Access your portal, student card and learning resources",
+    description: "Student portal and learning resources",
     delay: "240ms",
   },
   {
