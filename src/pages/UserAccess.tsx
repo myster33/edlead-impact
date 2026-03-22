@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,23 @@ export default function UserAccess() {
   const [exiting, setExiting] = useState(false);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
+  const fullText = "What is your title?";
+  const [displayedText, setDisplayedText] = useState("");
+  const [typingDone, setTypingDone] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayedText(fullText.slice(0, i));
+      if (i >= fullText.length) {
+        clearInterval(interval);
+        setTypingDone(true);
+      }
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSelect = (path: string) => {
     setSelectedPath(path);
     setExiting(true);
@@ -102,14 +119,15 @@ export default function UserAccess() {
           <h1
             className="text-2xl md:text-3xl font-bold text-foreground text-center mb-2 animate-user-access-slide-up"
           >
-            What is your title?
+            {displayedText}
+            {!typingDone && <span className="inline-block w-0.5 h-7 bg-primary ml-1 animate-pulse align-middle" />}
           </h1>
-          <p className="text-muted-foreground text-center mb-10 animate-user-access-slide-up" style={{ animationDelay: "100ms" }}>
+          <p className={`text-muted-foreground text-center mb-10 transition-opacity duration-500 ${typingDone ? "opacity-100" : "opacity-0"}`} style={{ animationDelay: "100ms" }}>
             Select your role to continue to the right portal.
           </p>
 
           {/* Role grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full transition-all duration-500 ${typingDone ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             {roles.map((role) => (
               <button
                 key={role.label}
