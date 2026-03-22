@@ -13,6 +13,7 @@ import { Loader2, Lock, Mail, Moon, Sun, Eye, EyeOff, Users, User, Phone, School
 import { countryCodes } from "@/lib/country-codes";
 import { PasswordStrengthIndicator } from "@/components/shared/PasswordStrengthIndicator";
 import { z } from "zod";
+import edleadIcon from "@/assets/edlead-icon.png";
 import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { TwoFactorVerify } from "@/components/admin/TwoFactorVerify";
