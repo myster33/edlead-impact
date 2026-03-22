@@ -209,6 +209,7 @@ const routes = [
       url: `${SITE_URL}/faq`,
       isPartOf: { '@type': 'WebSite', name: 'edLEAD', url: SITE_URL },
     },
+  },
   {
     path: '/privacy',
     title: 'Privacy Policy | edLEAD',
