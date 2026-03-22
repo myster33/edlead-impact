@@ -12,7 +12,7 @@ const roles = [
     label: "School Admin",
     icon: School,
     path: "/school/login",
-    description: "Manage student micro data and School Events/Activity Calendar",
+    description: "School micro data and events/activities management",
     delay: "0ms",
   },
   {
