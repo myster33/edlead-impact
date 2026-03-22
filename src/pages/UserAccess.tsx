@@ -26,14 +26,14 @@ const roles = [
     label: "Parent / Guardian",
     icon: Users,
     path: "/portal/login",
-    description: "Track your child's progress and attendance",
+    description: "Track your child's academic progress and attendance records",
     delay: "160ms",
   },
   {
     label: "Student / Learner",
     icon: GraduationCap,
     path: "/portal/login",
-    description: "Access your portal, e-card, and resources",
+    description: "Access your portal, student card and learning resources",
     delay: "240ms",
   },
   {
