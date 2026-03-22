@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, School, Users, GraduationCap, Building2, Shield, Handshake } from "lucide-react";
+import { Moon, Sun, School, Users, GraduationCap, Building2, Shield } from "lucide-react";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
 import { Helmet } from "react-helmet-async";
@@ -37,10 +37,10 @@ const roles = [
     delay: "240ms",
   },
   {
-    label: "Partner Organisation",
-    icon: Handshake,
-    path: "/contact",
-    description: "Sponsorship and partnership enquiries",
+    label: "Business / Organisation Admin",
+    icon: Building2,
+    path: "/business/login",
+    description: "Business AI Chats and Leads",
     delay: "320ms",
   },
   {
