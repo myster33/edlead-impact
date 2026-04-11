@@ -25,6 +25,7 @@ interface EventBookingDialogProps {
     id: string;
     title: string;
     current_bookings: number;
+    short_code?: string | null;
   };
 }
 
@@ -247,6 +248,7 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
               bookerType,
               ticketNumber,
               eventTitle: event.title,
+              eventShortCode: event.short_code || undefined,
               contacts,
             },
           });
