@@ -58,6 +58,39 @@ export function AdminEventBookingsTab() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("event_bookings").update({ status }).eq("id", id);
       if (error) throw error;
+
+      // Fetch booking details for notification
+      const booking = bookings?.find((b) => b.id === id);
+      if (booking && (status === "confirmed" || status === "cancelled")) {
+        const contacts: { name: string; phone: string | null; email: string | null; role: string; parentOf?: string }[] = [];
+        const bt = booking.booker_type;
+        if (bt === "school") {
+          contacts.push({ name: booking.contact_teacher_name || booking.school_name || "Teacher", phone: booking.contact_teacher_phone || booking.school_phone, email: booking.contact_teacher_email || booking.school_email, role: "teacher" });
+        } else if (bt === "student") {
+          contacts.push({ name: booking.student_name || "Student", phone: booking.student_phone, email: booking.student_email, role: "student" });
+          if (booking.parent_phone || booking.parent_email) {
+            contacts.push({ name: booking.parent_name || "Parent/Guardian", phone: booking.parent_phone, email: booking.parent_email, role: "parent", parentOf: booking.student_name || "your child" });
+          }
+        } else if (bt === "parent") {
+          contacts.push({ name: booking.parent_name || "Parent", phone: booking.parent_phone, email: booking.parent_email, role: "parent" });
+        } else {
+          contacts.push({ name: booking.parent_name || "Guest", phone: booking.parent_phone, email: booking.parent_email, role: "guest" });
+        }
+
+        try {
+          await supabase.functions.invoke("notify-event-booking", {
+            body: {
+              bookerType: bt,
+              ticketNumber: booking.reference_number || "N/A",
+              eventTitle: (booking as any).events?.title || "Event",
+              contacts,
+              statusChange: status,
+            },
+          });
+        } catch (e) {
+          console.error("Status notification error:", e);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-event-bookings"] });
