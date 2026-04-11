@@ -20,6 +20,9 @@ interface EventCardProps {
     current_bookings: number;
     price?: number | null;
     price_inclusions?: string[] | null;
+    organiser_name?: string | null;
+    organiser_logo_url?: string | null;
+    organiser_website?: string | null;
   };
 }
 
@@ -113,6 +116,22 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           )}
         </div>
+        {event.organiser_name && (
+          <div className="flex items-center gap-2 pt-2 border-t mt-2">
+            {event.organiser_logo_url && (
+              event.organiser_website ? (
+                <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                  <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-8 w-8 rounded object-contain border" />
+                </a>
+              ) : (
+                <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-8 w-8 rounded object-contain border" />
+              )
+            )}
+            <span className="text-xs text-muted-foreground">
+              Organised by <span className="font-medium text-foreground">{event.organiser_name}</span>
+            </span>
+          </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full" disabled={isFull}>
