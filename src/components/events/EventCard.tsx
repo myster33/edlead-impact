@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { CalendarDays, MapPin, Users, Banknote, CheckCircle } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { useState } from "react";
 import { EventBookingDialog } from "@/components/events/EventBookingDialog";
 
@@ -72,10 +72,10 @@ export function EventCard({ event }: EventCardProps) {
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4 text-primary" />
                 <span>
-                  {format(new Date(event.event_date), "dd MMM yyyy")}
-                  {format(new Date(event.event_date), "HH:mm") !== "00:00" && (
-                    <>{`, ${format(new Date(event.event_date), "HH:mm")}`}
-                      {event.event_end_date && format(new Date(event.event_end_date), "HH:mm") !== "00:00" && ` – ${format(new Date(event.event_end_date), "HH:mm")}`}
+                  {formatDateSAST(event.event_date, "dd MMM yyyy")}
+                  {getTimeSAST(event.event_date) !== "00:00" && (
+                    <>{`, ${getTimeSAST(event.event_date)}`}
+                      {event.event_end_date && getTimeSAST(event.event_end_date) !== "00:00" && ` – ${getTimeSAST(event.event_end_date)}`}
                     </>
                   )}
                 </span>
