@@ -400,6 +400,7 @@ export function AdminEventAttendanceTab() {
                 <TableHead>Event</TableHead>
                 <TableHead>Attendee</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>School</TableHead>
                 <TableHead>Checked In</TableHead>
                 <TableHead>Checked Out</TableHead>
                 <TableHead>Notified</TableHead>
@@ -421,6 +422,7 @@ export function AdminEventAttendanceTab() {
                   <TableCell>
                     <Badge variant="outline" className="capitalize text-xs">{a.attendee_type || "student"}</Badge>
                   </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{a.school_name || "—"}</TableCell>
                   <TableCell className="text-sm">{format(new Date(a.checked_in_at), "dd MMM yyyy, HH:mm")}</TableCell>
                   <TableCell className="text-sm">
                     {a.checked_out_at ? (
