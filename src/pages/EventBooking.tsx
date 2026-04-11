@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
-type BookerType = "school" | "student" | "parent";
+type BookerType = "school" | "student" | "parent" | "guest";
 
 interface ExtraEntry {
   full_name: string;
@@ -50,6 +50,11 @@ const EventBooking = () => {
   const [parentEmail, setParentEmail] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [children, setChildren] = useState<ExtraEntry[]>([{ full_name: "", email: "", phone: "", grade: "" }]);
+
+  // Guest fields
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
 
   const { data: event, isLoading } = useQuery({
     queryKey: ["event-detail", eventId],
@@ -96,11 +101,15 @@ const EventBooking = () => {
         bookingPayload.student_email = studentEmail;
         bookingPayload.student_phone = studentPhone;
         bookingPayload.student_school_name = studentSchoolName;
-      } else {
+      } else if (bookerType === "parent") {
         bookingPayload.parent_name = parentName;
         bookingPayload.parent_email = parentEmail;
         bookingPayload.parent_phone = parentPhone;
         bookingPayload.number_of_attendees = children.length;
+      } else if (bookerType === "guest") {
+        bookingPayload.parent_name = guestName;
+        bookingPayload.parent_email = guestEmail;
+        bookingPayload.parent_phone = guestPhone;
       }
 
       const { data: booking, error: bookingErr } = await supabase
@@ -190,7 +199,7 @@ const EventBooking = () => {
           <Card>
             <CardHeader><CardTitle className="text-lg">Who is booking?</CardTitle></CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-4">
-              {(["school", "student", "parent"] as BookerType[]).map((type) => (
+              {(["school", "student", "parent", "guest"] as BookerType[]).map((type) => (
                 <Button
                   key={type}
                   variant={bookerType === type ? "default" : "outline"}
@@ -274,6 +283,14 @@ const EventBooking = () => {
                     <div><Label>Full Name *</Label><Input value={studentName} onChange={(e) => setStudentName(e.target.value)} required /></div>
                     <div><Label>Email *</Label><Input type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} required /></div>
                     <div><Label>Phone</Label><Input value={studentPhone} onChange={(e) => setStudentPhone(e.target.value)} /></div>
+                  </div>
+                )}
+
+                {bookerType === "guest" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div><Label>Full Name *</Label><Input value={guestName} onChange={(e) => setGuestName(e.target.value)} required /></div>
+                    <div><Label>Email *</Label><Input type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} required /></div>
+                    <div><Label>Phone</Label><Input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} /></div>
                   </div>
                 )}
 
