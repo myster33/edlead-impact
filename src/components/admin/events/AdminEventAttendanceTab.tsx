@@ -60,7 +60,7 @@ export function AdminEventAttendanceTab() {
         query = query.eq("event_id", filterEventId);
       }
       if (filterSchool && filterSchool !== "all") {
-        query = query.eq("school_name", filterSchool);
+        query = query.eq("attendee_type", filterSchool);
       }
       if (searchTerm.trim()) {
         query = query.or(`attendee_name.ilike.%${searchTerm}%,ticket_number.ilike.%${searchTerm}%`);

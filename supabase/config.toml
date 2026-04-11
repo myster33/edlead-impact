@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.portal-register]
 verify_jwt = false
+
+[functions.notify-event-booking]
+verify_jwt = false
