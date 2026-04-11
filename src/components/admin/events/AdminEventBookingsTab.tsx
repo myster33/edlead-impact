@@ -72,6 +72,13 @@ export function AdminEventBookingsTab() {
     return b.parent_name;
   };
 
+  const getContactPhone = (b: any) => {
+    if (b.booker_type === "school") return b.school_phone || b.contact_teacher_phone;
+    if (b.booker_type === "student") return b.student_phone;
+    if (b.booker_type === "guest") return b.parent_phone;
+    return b.parent_phone;
+  };
+
   const getContactEmail = (b: any) => {
     if (b.booker_type === "school") return b.school_email;
     if (b.booker_type === "student") return b.student_email;
@@ -141,6 +148,7 @@ export function AdminEventBookingsTab() {
                 <TableHead>Event</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Contact</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -155,6 +163,7 @@ export function AdminEventBookingsTab() {
                     <Badge variant="outline" className="capitalize">{b.booker_type}</Badge>
                   </TableCell>
                   <TableCell>{getContactName(b)}</TableCell>
+                  <TableCell className="text-sm">{getContactPhone(b)}</TableCell>
                   <TableCell className="text-sm">{getContactEmail(b)}</TableCell>
                   <TableCell className="text-sm">{format(new Date(b.created_at), "dd MMM yyyy")}</TableCell>
                   <TableCell>
@@ -173,7 +182,7 @@ export function AdminEventBookingsTab() {
               ))}
               {bookings?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No bookings found.
                   </TableCell>
                 </TableRow>
