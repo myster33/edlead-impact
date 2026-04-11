@@ -1543,6 +1543,9 @@ export type Database = {
           image_url: string | null
           location: string | null
           max_capacity: number | null
+          organiser_logo_url: string | null
+          organiser_name: string | null
+          organiser_website: string | null
           price: number | null
           price_inclusions: string[] | null
           status: Database["public"]["Enums"]["event_status"]
@@ -1562,6 +1565,9 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_capacity?: number | null
+          organiser_logo_url?: string | null
+          organiser_name?: string | null
+          organiser_website?: string | null
           price?: number | null
           price_inclusions?: string[] | null
           status?: Database["public"]["Enums"]["event_status"]
@@ -1581,6 +1587,9 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_capacity?: number | null
+          organiser_logo_url?: string | null
+          organiser_name?: string | null
+          organiser_website?: string | null
           price?: number | null
           price_inclusions?: string[] | null
           status?: Database["public"]["Enums"]["event_status"]
