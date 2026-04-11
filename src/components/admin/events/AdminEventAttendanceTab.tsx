@@ -396,7 +396,7 @@ export function AdminEventAttendanceTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ticket #</TableHead>
+                <TableHead>Ticket No.</TableHead>
                 <TableHead>Event</TableHead>
                 <TableHead>Attendee</TableHead>
                 <TableHead>Type</TableHead>
