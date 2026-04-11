@@ -169,11 +169,11 @@ function EventSidebar({ event, isFull, spotsLeft, onBook }: { event: any; isFull
         <div className="flex items-center gap-3">
           <CalendarDays className="h-5 w-5 text-primary shrink-0" />
           <div>
-            <p className="font-medium">{format(new Date(event.event_date), "dd MMMM yyyy")}</p>
-            {format(new Date(event.event_date), "HH:mm") !== "00:00" && (
+            <p className="font-medium">{formatDateSAST(event.event_date, "dd MMMM yyyy")}</p>
+            {getTimeSAST(event.event_date) !== "00:00" && (
               <p className="text-sm text-muted-foreground">
-                {format(new Date(event.event_date), "HH:mm")}
-                {event.event_end_date && format(new Date(event.event_end_date), "HH:mm") !== "00:00" && ` – ${format(new Date(event.event_end_date), "HH:mm")}`}
+                {getTimeSAST(event.event_date)}
+                {event.event_end_date && getTimeSAST(event.event_end_date) !== "00:00" && ` – ${getTimeSAST(event.event_end_date)}`}
               </p>
             )}
           </div>
