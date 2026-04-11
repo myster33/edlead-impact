@@ -220,16 +220,16 @@ export function AdminEventAttendanceTab() {
           </Select>
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Filter by School</Label>
+            <Label className="text-xs text-muted-foreground">Filter by Type</Label>
             <Select value={filterSchool} onValueChange={setFilterSchool}>
               <SelectTrigger className="w-[200px] h-9">
-                <SelectValue placeholder="All Schools" />
+                <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Schools</SelectItem>
-                {[...new Set(attendance?.map((a: any) => a.school_name).filter(Boolean) || [])].sort().map((s: string) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                ))}
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+                <SelectItem value="teacher">Teacher</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
