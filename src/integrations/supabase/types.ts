@@ -1333,6 +1333,178 @@ export type Database = {
         }
         Relationships: []
       }
+      event_booking_extras: {
+        Row: {
+          booking_id: string
+          created_at: string
+          email: string | null
+          full_name: string
+          grade: string | null
+          id: string
+          phone: string | null
+          type: Database["public"]["Enums"]["booking_extra_type"]
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          grade?: string | null
+          id?: string
+          phone?: string | null
+          type: Database["public"]["Enums"]["booking_extra_type"]
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          grade?: string | null
+          id?: string
+          phone?: string | null
+          type?: Database["public"]["Enums"]["booking_extra_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_booking_extras_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "event_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_bookings: {
+        Row: {
+          booker_type: Database["public"]["Enums"]["booker_type"]
+          contact_teacher_email: string | null
+          contact_teacher_name: string | null
+          contact_teacher_phone: string | null
+          created_at: string
+          event_id: string
+          id: string
+          notes: string | null
+          number_of_attendees: number
+          parent_email: string | null
+          parent_name: string | null
+          parent_phone: string | null
+          reference_number: string | null
+          school_email: string | null
+          school_name: string | null
+          school_phone: string | null
+          status: string
+          student_email: string | null
+          student_name: string | null
+          student_phone: string | null
+          student_school_name: string | null
+        }
+        Insert: {
+          booker_type: Database["public"]["Enums"]["booker_type"]
+          contact_teacher_email?: string | null
+          contact_teacher_name?: string | null
+          contact_teacher_phone?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          number_of_attendees?: number
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          reference_number?: string | null
+          school_email?: string | null
+          school_name?: string | null
+          school_phone?: string | null
+          status?: string
+          student_email?: string | null
+          student_name?: string | null
+          student_phone?: string | null
+          student_school_name?: string | null
+        }
+        Update: {
+          booker_type?: Database["public"]["Enums"]["booker_type"]
+          contact_teacher_email?: string | null
+          contact_teacher_name?: string | null
+          contact_teacher_phone?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          number_of_attendees?: number
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
+          reference_number?: string | null
+          school_email?: string | null
+          school_name?: string | null
+          school_phone?: string | null
+          status?: string
+          student_email?: string | null
+          student_name?: string | null
+          student_phone?: string | null
+          student_school_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          category: Database["public"]["Enums"]["event_category"]
+          created_at: string
+          created_by: string | null
+          current_bookings: number
+          description: string
+          event_date: string | null
+          event_end_date: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          max_capacity: number | null
+          status: Database["public"]["Enums"]["event_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["event_category"]
+          created_at?: string
+          created_by?: string | null
+          current_bookings?: number
+          description: string
+          event_date?: string | null
+          event_end_date?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          max_capacity?: number | null
+          status?: Database["public"]["Enums"]["event_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["event_category"]
+          created_at?: string
+          created_by?: string | null
+          current_bookings?: number
+          description?: string
+          event_date?: string | null
+          event_end_date?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          max_capacity?: number | null
+          status?: Database["public"]["Enums"]["event_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketplace_categories: {
         Row: {
           created_at: string
@@ -2998,6 +3170,10 @@ export type Database = {
     }
     Enums: {
       app_role: "viewer" | "reviewer" | "admin" | "super_admin"
+      booker_type: "school" | "student" | "parent"
+      booking_extra_type: "teacher" | "child"
+      event_category: "concurrent" | "once_off"
+      event_status: "open" | "closed"
       school_user_role:
         | "school_admin"
         | "hr"
@@ -3134,6 +3310,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["viewer", "reviewer", "admin", "super_admin"],
+      booker_type: ["school", "student", "parent"],
+      booking_extra_type: ["teacher", "child"],
+      event_category: ["concurrent", "once_off"],
+      event_status: ["open", "closed"],
       school_user_role: [
         "school_admin",
         "hr",
