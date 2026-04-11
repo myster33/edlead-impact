@@ -210,7 +210,7 @@ const handler = async (req: Request): Promise<Response> => {
           );
         }
       } else {
-        const res = await notifyContact(contact.phone, contact.email, contact.name, ticketNumber, eventTitle);
+        const res = await notifyContact(contact.phone, contact.email, contact.name, ticketNumber, eventTitle, statusChange);
         Object.entries(res).forEach(([k, v]) => { allResults[`${contact.name}_${k}`] = v; });
       }
     }
