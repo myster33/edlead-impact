@@ -133,8 +133,11 @@ export function EventCard({ event }: EventCardProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter>
-        <Button asChild className="w-full" disabled={isFull}>
+      <CardFooter className="flex gap-2">
+        <Button asChild variant="outline" className="flex-1">
+          <Link to={`/events/${event.id}`}>View Details</Link>
+        </Button>
+        <Button asChild className="flex-1" disabled={isFull}>
           <Link to={`/events/${event.id}/book`}>
             {isFull ? "Fully Booked" : "Book Now"}
           </Link>
