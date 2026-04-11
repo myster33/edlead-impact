@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { CalendarDays, MapPin, Users } from "lucide-react";
+import { CalendarDays, MapPin, Users, Banknote, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface EventCardProps {
@@ -18,6 +18,8 @@ interface EventCardProps {
     category: string;
     max_capacity: number | null;
     current_bookings: number;
+    price?: number | null;
+    price_inclusions?: string[] | null;
   };
 }
 
@@ -85,6 +87,29 @@ export function EventCard({ event }: EventCardProps) {
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
               <span>{spotsLeft} spots remaining</span>
+            </div>
+          )}
+          {event.price && event.price > 0 ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Banknote className="h-4 w-4 text-primary" />
+                <span className="font-semibold text-foreground">R {Number(event.price).toFixed(2)}</span>
+              </div>
+              {event.price_inclusions && event.price_inclusions.length > 0 && (
+                <div className="ml-6 space-y-0.5">
+                  {event.price_inclusions.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5 text-xs">
+                      <CheckCircle className="h-3 w-3 text-primary" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-primary">Free</span>
             </div>
           )}
         </div>
