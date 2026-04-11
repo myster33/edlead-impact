@@ -24,6 +24,9 @@ interface EventFormData {
   category: "concurrent" | "once_off";
   status: "open" | "closed";
   max_capacity: string;
+  price: string;
+  price_inclusions: string[];
+  newInclusion: string;
 }
 
 const emptyForm: EventFormData = {
@@ -37,6 +40,9 @@ const emptyForm: EventFormData = {
   category: "once_off",
   status: "open",
   max_capacity: "",
+  price: "",
+  price_inclusions: [],
+  newInclusion: "",
 };
 
 /** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp or null */
@@ -131,6 +137,8 @@ export function AdminEventsTab() {
         category: formData.category,
         status: formData.status,
         max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : null,
+        price: formData.price ? parseFloat(formData.price) : null,
+        price_inclusions: formData.price_inclusions.length > 0 ? formData.price_inclusions : [],
       };
 
       if (editingId) {
@@ -186,6 +194,9 @@ export function AdminEventsTab() {
       category: event.category,
       status: event.status,
       max_capacity: event.max_capacity?.toString() || "",
+      price: event.price?.toString() || "",
+      price_inclusions: event.price_inclusions || [],
+      newInclusion: "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
