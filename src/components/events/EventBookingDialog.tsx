@@ -77,7 +77,9 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
   const submitMutation = useMutation({
     mutationFn: async () => {
       const refNumber = `EVT-${Date.now().toString(36).toUpperCase()}`;
+      const bookingId = crypto.randomUUID();
       const bookingPayload: any = {
+        id: bookingId,
         event_id: event.id,
         booker_type: bookerType,
         reference_number: refNumber,
@@ -110,21 +112,19 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
         bookingPayload.parent_phone = guestPhone;
       }
 
-      const { data: booking, error: bookingErr } = await supabase
+      const { error: bookingErr } = await supabase
         .from("event_bookings")
-        .insert(bookingPayload as any)
-        .select("id")
-        .single();
+        .insert(bookingPayload as any);
       if (bookingErr) throw bookingErr;
 
       const extras: any[] = [];
       if (bookerType === "school") {
         extraTeachers.forEach((t) => {
-          extras.push({ booking_id: booking.id, type: "teacher", full_name: t.full_name, email: t.email, phone: t.phone });
+          extras.push({ booking_id: bookingId, type: "teacher", full_name: t.full_name, email: t.email, phone: t.phone });
         });
       } else if (bookerType === "parent") {
         children.forEach((c) => {
-          extras.push({ booking_id: booking.id, type: "child", full_name: c.full_name, email: c.email, phone: c.phone, grade: c.grade || null });
+          extras.push({ booking_id: bookingId, type: "child", full_name: c.full_name, email: c.email, phone: c.phone, grade: c.grade || null });
         });
       }
 
@@ -138,7 +138,9 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
           .from("events")
           .update({ current_bookings: (event.current_bookings || 0) + (bookingPayload.number_of_attendees || 1) } as any)
           .eq("id", event.id);
-      } catch { /* non-critical */ }
+      } catch {
+        /* non-critical */
+      }
 
       return refNumber;
     },
@@ -147,8 +149,13 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
       resetForm();
       onOpenChange(false);
     },
-    onError: () => {
-      toast({ title: "Booking failed", description: "Please try again.", variant: "destructive" });
+    onError: (error) => {
+      console.error("Event booking failed", error);
+      toast({
+        title: "Booking failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
