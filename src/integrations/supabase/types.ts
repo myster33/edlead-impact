@@ -1548,6 +1548,7 @@ export type Database = {
           organiser_website: string | null
           price: number | null
           price_inclusions: string[] | null
+          short_code: string | null
           status: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at: string
@@ -1570,6 +1571,7 @@ export type Database = {
           organiser_website?: string | null
           price?: number | null
           price_inclusions?: string[] | null
+          short_code?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at?: string
@@ -1592,6 +1594,7 @@ export type Database = {
           organiser_website?: string | null
           price?: number | null
           price_inclusions?: string[] | null
+          short_code?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
           updated_at?: string
