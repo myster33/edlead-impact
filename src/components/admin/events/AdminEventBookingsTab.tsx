@@ -16,6 +16,7 @@ export function AdminEventBookingsTab() {
   const queryClient = useQueryClient();
   const [filterEventId, setFilterEventId] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("all");
 
   const { data: events } = useQuery({
     queryKey: ["admin-events-list"],
@@ -30,7 +31,7 @@ export function AdminEventBookingsTab() {
   });
 
   const { data: bookings, isLoading } = useQuery({
-    queryKey: ["admin-event-bookings", filterEventId, filterDate],
+    queryKey: ["admin-event-bookings", filterEventId, filterDate, filterType],
     queryFn: async () => {
       let query = supabase
         .from("event_bookings")
@@ -42,6 +43,9 @@ export function AdminEventBookingsTab() {
       }
       if (filterDate) {
         query = query.gte("created_at", `${filterDate}T00:00:00`).lte("created_at", `${filterDate}T23:59:59`);
+      }
+      if (filterType && filterType !== "all") {
+        query = query.eq("booker_type", filterType as any);
       }
 
       const { data, error } = await query;
@@ -64,12 +68,14 @@ export function AdminEventBookingsTab() {
   const getContactName = (b: any) => {
     if (b.booker_type === "school") return b.contact_teacher_name || b.school_name;
     if (b.booker_type === "student") return b.student_name;
+    if (b.booker_type === "guest") return b.parent_name;
     return b.parent_name;
   };
 
   const getContactEmail = (b: any) => {
     if (b.booker_type === "school") return b.school_email;
     if (b.booker_type === "student") return b.student_email;
+    if (b.booker_type === "guest") return b.parent_email;
     return b.parent_email;
   };
 
@@ -93,6 +99,21 @@ export function AdminEventBookingsTab() {
             </Select>
           </div>
           <div>
+            <Label className="text-xs text-muted-foreground">Filter by Type</Label>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[150px] h-9">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="school">School</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+                <SelectItem value="parent">Parent</SelectItem>
+                <SelectItem value="guest">Guest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label className="text-xs text-muted-foreground">Filter by Date</Label>
             <Input
               type="date"
@@ -101,8 +122,8 @@ export function AdminEventBookingsTab() {
               onChange={(e) => setFilterDate(e.target.value)}
             />
           </div>
-          {(filterEventId !== "all" || filterDate) && (
-            <Button variant="ghost" size="sm" onClick={() => { setFilterEventId("all"); setFilterDate(""); }}>
+          {(filterEventId !== "all" || filterDate || filterType !== "all") && (
+            <Button variant="ghost" size="sm" onClick={() => { setFilterEventId("all"); setFilterDate(""); setFilterType("all"); }}>
               Clear
             </Button>
           )}
