@@ -45,7 +45,7 @@ const Events = () => {
         <Tabs value={filter} onValueChange={(v) => setFilter(v as any)} className="mb-8">
           <TabsList>
             <TabsTrigger value="all">All Events</TabsTrigger>
-            <TabsTrigger value="concurrent">Concurrent</TabsTrigger>
+            <TabsTrigger value="concurrent">On-going</TabsTrigger>
             <TabsTrigger value="once_off">Once-Off</TabsTrigger>
           </TabsList>
         </Tabs>

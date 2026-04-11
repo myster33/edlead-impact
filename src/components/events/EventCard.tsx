@@ -34,7 +34,7 @@ export function EventCard({ event }: EventCardProps) {
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2 mb-2">
           <Badge variant={event.category === "concurrent" ? "default" : "secondary"}>
-            {event.category === "concurrent" ? "Concurrent" : "Once-Off"}
+            {event.category === "concurrent" ? "On-going" : "Once-Off"}
           </Badge>
         </div>
         <h3 className="text-lg font-semibold line-clamp-2">{event.title}</h3>
