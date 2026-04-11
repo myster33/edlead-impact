@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +10,7 @@ const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 function formatPhoneE164(phone: string): string {
   let cleaned = phone.replace(/\D/g, "");
@@ -24,10 +24,7 @@ function formatPhoneE164(phone: string): string {
 }
 
 async function sendSms(to: string, body: string) {
-  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
-    console.log("SMS credentials not configured, skipping");
-    return false;
-  }
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) return false;
   try {
     const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
@@ -48,10 +45,7 @@ async function sendSms(to: string, body: string) {
 }
 
 async function sendWhatsApp(to: string, body: string) {
-  if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) {
-    console.log("WhatsApp credentials not configured, skipping");
-    return false;
-  }
+  if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) return false;
   const waNumber = to.replace("+", "");
   try {
     const res = await fetch(
@@ -72,9 +66,61 @@ async function sendWhatsApp(to: string, body: string) {
     );
     const data = await res.json();
     if (!res.ok) { console.error("WhatsApp error:", data); return false; }
-    console.log("WhatsApp sent");
     return true;
   } catch (e) { console.error("WhatsApp error:", e); return false; }
+}
+
+async function sendEmail(to: string, subject: string, htmlBody: string) {
+  if (!RESEND_API_KEY) { console.log("Resend not configured, skipping email"); return false; }
+  try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
+    
+    const res = await fetch(`${GATEWAY_URL}/emails`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
+      },
+      body: JSON.stringify({
+        from: "edLEAD <noreply@edlead.co.za>",
+        to: [to],
+        subject,
+        html: htmlBody,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) { console.error("Email error:", data); return false; }
+    console.log("Email sent to", to);
+    return true;
+  } catch (e) { console.error("Email error:", e); return false; }
+}
+
+function buildMessage(attendeeName: string, ticketNumber: string, eventTitle: string, isParent = false, parentName?: string) {
+  if (isParent) {
+    return `🎟️ edLEAD Event Check-In Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${attendeeName} has been checked in for: ${eventTitle}\n\n📋 Ticket Number: ${ticketNumber}\n\nPlease keep this ticket number for reference.\n\nThank you!\n— edLEAD Team`;
+  }
+  return `🎟️ edLEAD Event Check-In Confirmed!\n\nHi ${attendeeName},\n\nYou have been checked in for: ${eventTitle}\n\n📋 Your Ticket Number: ${ticketNumber}\n\nPlease keep this ticket number for reference.\n\nThank you for attending!\n— edLEAD Team`;
+}
+
+function buildEmailHtml(attendeeName: string, ticketNumber: string, eventTitle: string, isParent = false, parentName?: string) {
+  const heading = isParent
+    ? `Dear ${parentName || "Parent/Guardian"},<br/>Your child <strong>${attendeeName}</strong> has been checked in for <strong>${eventTitle}</strong>.`
+    : `Hi <strong>${attendeeName}</strong>,<br/>You have been checked in for <strong>${eventTitle}</strong>.`;
+
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:8px;">
+      <h2 style="color:#ED7621;">🎟️ Event Check-In Confirmed</h2>
+      <p>${heading}</p>
+      <div style="background:#f5f5f5;padding:16px;border-radius:6px;text-align:center;margin:16px 0;">
+        <p style="margin:0;font-size:12px;color:#666;">Ticket Number</p>
+        <p style="margin:4px 0 0;font-size:24px;font-weight:bold;letter-spacing:2px;">${ticketNumber}</p>
+      </div>
+      <p style="font-size:13px;color:#666;">Please keep this ticket number for reference. You may need it to check out.</p>
+      <hr style="border:none;border-top:1px solid #e5e5e5;margin:16px 0;"/>
+      <p style="font-size:12px;color:#999;">— edLEAD Team</p>
+    </div>`;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -83,25 +129,49 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { attendeeName, ticketNumber, eventTitle, phone } = await req.json();
+    const { attendeeName, ticketNumber, eventTitle, phone, email, attendeeType, parentPhone, parentEmail, parentName } = await req.json();
 
-    if (!attendeeName || !ticketNumber || !phone) {
+    if (!attendeeName || !ticketNumber) {
       return new Response(
-        JSON.stringify({ error: "attendeeName, ticketNumber, and phone are required" }),
+        JSON.stringify({ error: "attendeeName and ticketNumber are required" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    const formattedPhone = formatPhoneE164(phone);
-    const message = `🎟️ edLEAD Event Check-In Confirmed!\n\nHi ${attendeeName},\n\nYou have been checked in for: ${eventTitle}\n\n📋 Your Ticket Number: ${ticketNumber}\n\nPlease keep this ticket number for reference.\n\nThank you for attending!\n— edLEAD Team`;
+    const results: Record<string, boolean> = {};
 
-    console.log(`Sending check-in notification to ${formattedPhone} for ticket ${ticketNumber}`);
+    // Send to attendee
+    const attendeeMsg = buildMessage(attendeeName, ticketNumber, eventTitle);
+    const attendeeEmailHtml = buildEmailHtml(attendeeName, ticketNumber, eventTitle);
 
-    const smsSent = await sendSms(formattedPhone, message);
-    const whatsappSent = await sendWhatsApp(formattedPhone, message);
+    if (phone) {
+      const formatted = formatPhoneE164(phone);
+      results.smsSent = await sendSms(formatted, attendeeMsg);
+      results.whatsappSent = await sendWhatsApp(formatted, attendeeMsg);
+    }
+    if (email) {
+      results.emailSent = await sendEmail(email, `🎟️ Check-In Confirmed — ${eventTitle}`, attendeeEmailHtml);
+    }
+
+    // For students, also notify parent
+    if (attendeeType === "student") {
+      const parentMsg = buildMessage(attendeeName, ticketNumber, eventTitle, true, parentName);
+      const parentHtml = buildEmailHtml(attendeeName, ticketNumber, eventTitle, true, parentName);
+
+      if (parentPhone) {
+        const formatted = formatPhoneE164(parentPhone);
+        results.parentSmsSent = await sendSms(formatted, parentMsg);
+        results.parentWhatsappSent = await sendWhatsApp(formatted, parentMsg);
+      }
+      if (parentEmail) {
+        results.parentEmailSent = await sendEmail(parentEmail, `🎟️ Your child checked in — ${eventTitle}`, parentHtml);
+      }
+    }
+
+    const anySuccess = Object.values(results).some(v => v === true);
 
     return new Response(
-      JSON.stringify({ success: smsSent || whatsappSent, smsSent, whatsappSent }),
+      JSON.stringify({ success: anySuccess, ...results }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
