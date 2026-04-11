@@ -17,6 +17,7 @@ export function AdminEventAttendanceTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filterEventId, setFilterEventId] = useState<string>("all");
+  const [filterSchool, setFilterSchool] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [scanMode, setScanMode] = useState(false);
@@ -28,6 +29,7 @@ export function AdminEventAttendanceTab() {
     email: "",
     booking_ref: "",
     attendee_type: "student" as "student" | "teacher" | "other",
+    school_name: "",
     parent_name: "",
     parent_phone: "",
     parent_email: "",
@@ -47,7 +49,7 @@ export function AdminEventAttendanceTab() {
   });
 
   const { data: attendance, isLoading } = useQuery({
-    queryKey: ["admin-event-attendance", filterEventId, searchTerm],
+    queryKey: ["admin-event-attendance", filterEventId, filterSchool, searchTerm],
     queryFn: async () => {
       let query = supabase
         .from("event_attendance")
@@ -56,6 +58,9 @@ export function AdminEventAttendanceTab() {
 
       if (filterEventId && filterEventId !== "all") {
         query = query.eq("event_id", filterEventId);
+      }
+      if (filterSchool && filterSchool !== "all") {
+        query = query.eq("school_name", filterSchool);
       }
       if (searchTerm.trim()) {
         query = query.or(`attendee_name.ilike.%${searchTerm}%,ticket_number.ilike.%${searchTerm}%`);
@@ -129,6 +134,7 @@ export function AdminEventAttendanceTab() {
         phone: checkInForm.phone.trim() || null,
         email: checkInForm.email.trim() || null,
         attendee_type: checkInForm.attendee_type,
+        school_name: checkInForm.school_name.trim() || null,
         ticket_number: "",
       };
 
@@ -184,7 +190,7 @@ export function AdminEventAttendanceTab() {
       setCheckInOpen(false);
       setCheckInForm({
         event_id: "", attendee_name: "", phone: "", email: "", booking_ref: "",
-        attendee_type: "student", parent_name: "", parent_phone: "", parent_email: "",
+        attendee_type: "student", school_name: "", parent_name: "", parent_phone: "", parent_email: "",
       });
     } catch (err: any) {
       console.error(err);
@@ -209,6 +215,20 @@ export function AdminEventAttendanceTab() {
                 <SelectItem value="all">All Events</SelectItem>
                 {events?.map((e) => (
                   <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>
+                ))}
+              </SelectContent>
+          </Select>
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">Filter by School</Label>
+            <Select value={filterSchool} onValueChange={setFilterSchool}>
+              <SelectTrigger className="w-[200px] h-9">
+                <SelectValue placeholder="All Schools" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Schools</SelectItem>
+                {[...new Set(attendance?.map((a: any) => a.school_name).filter(Boolean) || [])].sort().map((s: string) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -282,6 +302,14 @@ export function AdminEventAttendanceTab() {
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label>School Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                value={checkInForm.school_name}
+                onChange={(e) => setCheckInForm({ ...checkInForm, school_name: e.target.value })}
+                placeholder="School name"
+              />
             </div>
             <div>
               <Label>Booking Reference <span className="text-muted-foreground text-xs">(optional)</span></Label>
@@ -372,6 +400,7 @@ export function AdminEventAttendanceTab() {
                 <TableHead>Event</TableHead>
                 <TableHead>Attendee</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>School</TableHead>
                 <TableHead>Checked In</TableHead>
                 <TableHead>Checked Out</TableHead>
                 <TableHead>Notified</TableHead>
@@ -393,6 +422,7 @@ export function AdminEventAttendanceTab() {
                   <TableCell>
                     <Badge variant="outline" className="capitalize text-xs">{a.attendee_type || "student"}</Badge>
                   </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{a.school_name || "—"}</TableCell>
                   <TableCell className="text-sm">{format(new Date(a.checked_in_at), "dd MMM yyyy, HH:mm")}</TableCell>
                   <TableCell className="text-sm">
                     {a.checked_out_at ? (
@@ -422,7 +452,7 @@ export function AdminEventAttendanceTab() {
               ))}
               {attendance?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     No attendance records yet. Use "Check In" to register attendees.
                   </TableCell>
                 </TableRow>

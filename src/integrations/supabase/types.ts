@@ -1350,6 +1350,7 @@ export type Database = {
           parent_name: string | null
           parent_phone: string | null
           phone: string | null
+          school_name: string | null
           ticket_number: string
         }
         Insert: {
@@ -1368,6 +1369,7 @@ export type Database = {
           parent_name?: string | null
           parent_phone?: string | null
           phone?: string | null
+          school_name?: string | null
           ticket_number: string
         }
         Update: {
@@ -1386,6 +1388,7 @@ export type Database = {
           parent_name?: string | null
           parent_phone?: string | null
           phone?: string | null
+          school_name?: string | null
           ticket_number?: string
         }
         Relationships: [
