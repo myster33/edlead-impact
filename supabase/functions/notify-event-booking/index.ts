@@ -180,7 +180,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { bookerType, ticketNumber, eventTitle, contacts } = await req.json();
+    const { bookerType, ticketNumber, eventTitle, contacts, statusChange } = await req.json();
 
     if (!ticketNumber || !eventTitle) {
       return new Response(
@@ -191,23 +191,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     const allResults: Record<string, any> = {};
 
-    // contacts is an array of { name, phone, email, role, parentOf? }
     for (const contact of (contacts || [])) {
       if (!contact.phone && !contact.email) continue;
       
       if (contact.role === "parent" && contact.parentOf) {
-        // Parent notification about their child
-        const msg = buildParentSmsMessage(contact.name, contact.parentOf, ticketNumber, eventTitle);
+        const msg = buildParentSmsMessage(contact.name, contact.parentOf, ticketNumber, eventTitle, statusChange);
         if (contact.phone) {
           const formatted = formatPhoneE164(contact.phone);
           allResults[`${contact.name}_sms`] = await sendSms(formatted, msg);
           allResults[`${contact.name}_whatsapp`] = await sendWhatsApp(formatted, msg);
         }
         if (contact.email) {
+          const subjectPrefix = statusChange === "confirmed" ? "✅ Booking Confirmed" : statusChange === "cancelled" ? "❌ Booking Cancelled" : "🎟️ Booking Received";
           allResults[`${contact.name}_email`] = await sendEmail(
             contact.email,
-            `🎟️ Your child booked — ${eventTitle}`,
-            buildEmailHtml(contact.name, ticketNumber, eventTitle, true, contact.parentOf)
+            `${subjectPrefix} — ${eventTitle}`,
+            buildEmailHtml(contact.name, ticketNumber, eventTitle, true, contact.parentOf, statusChange)
           );
         }
       } else {
