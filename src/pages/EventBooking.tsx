@@ -105,7 +105,7 @@ const EventBooking = () => {
 
       const { data: booking, error: bookingErr } = await supabase
         .from("event_bookings")
-        .insert(bookingPayload)
+        .insert(bookingPayload as any)
         .select("id")
         .single();
       if (bookingErr) throw bookingErr;
@@ -127,11 +127,15 @@ const EventBooking = () => {
         if (extErr) throw extErr;
       }
 
-      // Increment bookings count
-      await supabase.rpc("increment_event_bookings" as any, { _event_id: eventId } as any).catch(() => {
-        // Fallback: manual update
-        supabase.from("events").update({ current_bookings: (event?.current_bookings || 0) + (bookingPayload.number_of_attendees || 1) }).eq("id", eventId!);
-      });
+      // Increment bookings count (best-effort)
+      try {
+        await supabase
+          .from("events")
+          .update({ current_bookings: (event?.current_bookings || 0) + (bookingPayload.number_of_attendees || 1) } as any)
+          .eq("id", eventId!);
+      } catch {
+        // non-critical
+      }
 
       return refNumber;
     },
