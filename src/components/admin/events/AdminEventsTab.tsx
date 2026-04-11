@@ -399,7 +399,15 @@ export function AdminEventsTab() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {event.event_date ? format(new Date(event.event_date), "dd MMM yyyy") : "Anytime"}
+                    {event.event_date ? (
+                      <div className="text-sm">
+                        <div>{format(new Date(event.event_date), "dd MMM yyyy")}</div>
+                        <div className="text-muted-foreground text-xs">
+                          {format(new Date(event.event_date), "HH:mm")}
+                          {event.event_end_date && ` – ${format(new Date(event.event_end_date), "HH:mm")}`}
+                        </div>
+                      </div>
+                    ) : "Anytime"}
                   </TableCell>
                   <TableCell>
                     {event.current_bookings}{event.max_capacity ? ` / ${event.max_capacity}` : ""}

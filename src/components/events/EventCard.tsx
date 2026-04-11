@@ -59,7 +59,10 @@ export function EventCard({ event }: EventCardProps) {
           {event.event_date && (
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-primary" />
-              <span>{format(new Date(event.event_date), "dd MMM yyyy, HH:mm")}</span>
+              <span>
+                {format(new Date(event.event_date), "dd MMM yyyy, HH:mm")}
+                {event.event_end_date && ` – ${format(new Date(event.event_end_date), "HH:mm")}`}
+              </span>
             </div>
           )}
           {!event.event_date && (
