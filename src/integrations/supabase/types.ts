@@ -1336,34 +1336,55 @@ export type Database = {
       event_attendance: {
         Row: {
           attendee_name: string
+          attendee_type: string
           booking_id: string | null
           checked_in_at: string
+          checked_out_at: string | null
           created_at: string
+          email: string | null
+          email_sent: boolean
           event_id: string
           id: string
           notification_sent: boolean
+          parent_email: string | null
+          parent_name: string | null
+          parent_phone: string | null
           phone: string | null
           ticket_number: string
         }
         Insert: {
           attendee_name: string
+          attendee_type?: string
           booking_id?: string | null
           checked_in_at?: string
+          checked_out_at?: string | null
           created_at?: string
+          email?: string | null
+          email_sent?: boolean
           event_id: string
           id?: string
           notification_sent?: boolean
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
           phone?: string | null
           ticket_number: string
         }
         Update: {
           attendee_name?: string
+          attendee_type?: string
           booking_id?: string | null
           checked_in_at?: string
+          checked_out_at?: string | null
           created_at?: string
+          email?: string | null
+          email_sent?: boolean
           event_id?: string
           id?: string
           notification_sent?: boolean
+          parent_email?: string | null
+          parent_name?: string | null
+          parent_phone?: string | null
           phone?: string | null
           ticket_number?: string
         }
