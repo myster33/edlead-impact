@@ -90,7 +90,9 @@ const EventDetail = () => {
               <Badge variant={event.category === "concurrent" ? "default" : "secondary"}>
                 {event.category === "concurrent" ? "On-going" : "Once-Off"}
               </Badge>
-              {isFull && <Badge variant="destructive">Fully Booked</Badge>}
+              <Button size="sm" disabled={isFull} onClick={() => setBookingOpen(true)}>
+                {isFull ? "Fully Booked" : "Book Now"}
+              </Button>
             </div>
             <h1 className="text-2xl font-bold">{event.title}</h1>
             <div className="prose max-w-none text-muted-foreground whitespace-pre-wrap text-sm">
@@ -128,7 +130,9 @@ const EventDetail = () => {
               <Badge variant={event.category === "concurrent" ? "default" : "secondary"}>
                 {event.category === "concurrent" ? "On-going" : "Once-Off"}
               </Badge>
-              {isFull && <Badge variant="destructive">Fully Booked</Badge>}
+              <Button size="sm" disabled={isFull} onClick={() => setBookingOpen(true)}>
+                {isFull ? "Fully Booked" : "Book Now"}
+              </Button>
             </div>
             <h1 className="text-3xl lg:text-4xl font-bold">{event.title}</h1>
             <div className="prose prose-lg max-w-none text-muted-foreground whitespace-pre-wrap">
@@ -213,7 +217,7 @@ function EventSidebar({ event, isFull, spotsLeft, onBook }: { event: any; isFull
       ) : (
         <div className="flex items-center gap-3">
           <Banknote className="h-5 w-5 text-primary shrink-0" />
-          <p className="text-xl font-bold text-primary">Free</p>
+          <p className="text-xl font-bold text-primary">Free (By Booking)</p>
         </div>
       )}
       <Button className="w-full mt-2" size="lg" disabled={isFull} onClick={onBook}>
