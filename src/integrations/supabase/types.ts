@@ -1468,6 +1468,8 @@ export type Database = {
           image_url: string | null
           location: string | null
           max_capacity: number | null
+          price: number | null
+          price_inclusions: string[] | null
           status: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at: string
@@ -1485,6 +1487,8 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_capacity?: number | null
+          price?: number | null
+          price_inclusions?: string[] | null
           status?: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at?: string
@@ -1502,6 +1506,8 @@ export type Database = {
           image_url?: string | null
           location?: string | null
           max_capacity?: number | null
+          price?: number | null
+          price_inclusions?: string[] | null
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
           updated_at?: string
