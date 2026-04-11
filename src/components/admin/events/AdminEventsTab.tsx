@@ -27,6 +27,8 @@ interface EventFormData {
   price: string;
   price_inclusions: string[];
   newInclusion: string;
+  organiser_name: string;
+  organiser_website: string;
 }
 
 const emptyForm: EventFormData = {
@@ -43,6 +45,8 @@ const emptyForm: EventFormData = {
   price: "",
   price_inclusions: [],
   newInclusion: "",
+  organiser_name: "",
+  organiser_website: "",
 };
 
 /** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp or null */
@@ -75,8 +79,10 @@ export function AdminEventsTab() {
   // Banner file states
   const [wideBannerFile, setWideBannerFile] = useState<File | null>(null);
   const [squareBannerFile, setSquareBannerFile] = useState<File | null>(null);
+  const [organiserLogoFile, setOrganiserLogoFile] = useState<File | null>(null);
   const [existingWideUrl, setExistingWideUrl] = useState<string | null>(null);
   const [existingSquareUrl, setExistingSquareUrl] = useState<string | null>(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
   const [uploadingBanners, setUploadingBanners] = useState(false);
 
   // Preview dialog
@@ -114,6 +120,7 @@ export function AdminEventsTab() {
 
       let imageUrl = existingWideUrl;
       let squareUrl = existingSquareUrl;
+      let logoUrl = existingLogoUrl;
 
       try {
         if (wideBannerFile) {
@@ -122,11 +129,14 @@ export function AdminEventsTab() {
         if (squareBannerFile) {
           squareUrl = await uploadBanner(squareBannerFile, formData.title, "1x1");
         }
+        if (organiserLogoFile) {
+          logoUrl = await uploadBanner(organiserLogoFile, formData.title, "logo");
+        }
       } finally {
         setUploadingBanners(false);
       }
 
-      const payload = {
+      const payload: any = {
         title: formData.title,
         description: formData.description,
         image_url: imageUrl,
@@ -139,6 +149,9 @@ export function AdminEventsTab() {
         max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : null,
         price: formData.price ? parseFloat(formData.price) : null,
         price_inclusions: formData.price_inclusions.length > 0 ? formData.price_inclusions : [],
+        organiser_name: formData.organiser_name || null,
+        organiser_logo_url: logoUrl,
+        organiser_website: formData.organiser_website || null,
       };
 
       if (editingId) {
@@ -177,8 +190,10 @@ export function AdminEventsTab() {
     setForm(emptyForm);
     setWideBannerFile(null);
     setSquareBannerFile(null);
+    setOrganiserLogoFile(null);
     setExistingWideUrl(null);
     setExistingSquareUrl(null);
+    setExistingLogoUrl(null);
   };
 
   const openEdit = (event: any) => {
@@ -197,11 +212,15 @@ export function AdminEventsTab() {
       price: event.price?.toString() || "",
       price_inclusions: event.price_inclusions || [],
       newInclusion: "",
+      organiser_name: event.organiser_name || "",
+      organiser_website: event.organiser_website || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
+    setExistingLogoUrl(event.organiser_logo_url || null);
     setWideBannerFile(null);
     setSquareBannerFile(null);
+    setOrganiserLogoFile(null);
     setDialogOpen(true);
   };
 
@@ -367,6 +386,64 @@ export function AdminEventsTab() {
                     <p className="text-xs text-muted-foreground">Press Enter or click + to add each item</p>
                   </div>
                 )}
+              </div>
+
+              {/* Organiser Details */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Organiser Details</Label>
+                <div>
+                  <Label>Organiser Name</Label>
+                  <Input
+                    value={form.organiser_name}
+                    onChange={(e) => setForm({ ...form, organiser_name: e.target.value })}
+                    placeholder="e.g. edLEAD Foundation"
+                  />
+                </div>
+                <div>
+                  <Label>Organiser Website <span className="text-muted-foreground text-xs">(opens when logo is clicked)</span></Label>
+                  <Input
+                    type="url"
+                    value={form.organiser_website}
+                    onChange={(e) => setForm({ ...form, organiser_website: e.target.value })}
+                    placeholder="https://www.example.org"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Organiser Logo</Label>
+                  {getPreviewSrc(organiserLogoFile, existingLogoUrl) ? (
+                    <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[120px]">
+                      <div className="aspect-square">
+                        <img
+                          src={getPreviewSrc(organiserLogoFile, existingLogoUrl)!}
+                          alt="Organiser logo"
+                          className="w-full h-full object-contain p-2"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="h-7 w-7"
+                          onClick={() => { setOrganiserLogoFile(null); setExistingLogoUrl(null); }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-[120px] aspect-square">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground text-center">Upload logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { if (e.target.files?.[0]) setOrganiserLogoFile(e.target.files[0]); }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               {/* Banner uploads */}
