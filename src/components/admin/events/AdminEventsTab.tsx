@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit, Eye, EyeOff, Loader2, Upload, X, ZoomIn } from "lucide-react";
 import { format } from "date-fns";
+import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 
 interface EventFormData {
   title: string;
@@ -615,11 +616,11 @@ export function AdminEventsTab() {
                   <TableCell>
                     {event.event_date ? (
                       <div className="text-sm">
-                        <div>{format(new Date(event.event_date), "dd MMM yyyy")}</div>
+                        <div>{formatDateSAST(event.event_date, "dd MMM yyyy")}</div>
                         {extractTime(event.event_date) && (
                           <div className="text-muted-foreground text-xs">
-                            {format(new Date(event.event_date), "HH:mm")}
-                            {event.event_end_date && extractTime(event.event_end_date) && ` – ${format(new Date(event.event_end_date), "HH:mm")}`}
+                            {getTimeSAST(event.event_date)}
+                            {event.event_end_date && extractTime(event.event_end_date) && ` – ${getTimeSAST(event.event_end_date)}`}
                           </div>
                         )}
                       </div>
