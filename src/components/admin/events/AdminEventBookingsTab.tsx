@@ -35,7 +35,7 @@ export function AdminEventBookingsTab() {
     queryFn: async () => {
       let query = supabase
         .from("event_bookings")
-        .select("*, events(title)")
+        .select("*, events(title, short_code)")
         .order("created_at", { ascending: false });
 
       if (filterEventId && filterEventId !== "all") {
@@ -83,6 +83,7 @@ export function AdminEventBookingsTab() {
               bookerType: bt,
               ticketNumber: booking.reference_number || "N/A",
               eventTitle: (booking as any).events?.title || "Event",
+              eventShortCode: (booking as any).events?.short_code || undefined,
               contacts,
               statusChange: status,
             },
