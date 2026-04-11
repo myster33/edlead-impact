@@ -17,6 +17,7 @@ export function AdminEventAttendanceTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filterEventId, setFilterEventId] = useState<string>("all");
+  const [filterSchool, setFilterSchool] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [scanMode, setScanMode] = useState(false);
