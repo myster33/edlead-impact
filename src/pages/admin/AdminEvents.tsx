@@ -2,6 +2,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminEventsTab } from "@/components/admin/events/AdminEventsTab";
 import { AdminEventBookingsTab } from "@/components/admin/events/AdminEventBookingsTab";
+import { AdminEventAttendanceTab } from "@/components/admin/events/AdminEventAttendanceTab";
 import { Helmet } from "react-helmet-async";
 
 const AdminEvents = () => {
@@ -16,12 +17,16 @@ const AdminEvents = () => {
           <TabsList>
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
           </TabsList>
           <TabsContent value="events">
             <AdminEventsTab />
           </TabsContent>
           <TabsContent value="bookings">
             <AdminEventBookingsTab />
+          </TabsContent>
+          <TabsContent value="attendance">
+            <AdminEventAttendanceTab />
           </TabsContent>
         </Tabs>
       </div>
