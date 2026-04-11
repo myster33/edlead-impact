@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN parking_available boolean NOT NULL DEFAULT false;

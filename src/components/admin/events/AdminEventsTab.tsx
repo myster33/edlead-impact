@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,7 @@ interface EventFormData {
   title: string;
   description: string;
   location: string;
+  parking_available: boolean;
   event_date: string;
   event_start_time: string;
   event_end_date: string;
@@ -36,6 +38,7 @@ const emptyForm: EventFormData = {
   title: "",
   description: "",
   location: "",
+  parking_available: false,
   event_date: "",
   event_start_time: "",
   event_end_date: "",
@@ -167,6 +170,7 @@ export function AdminEventsTab() {
         organiser_name: formData.organiser_name || null,
         organiser_logo_url: logoUrl,
         organiser_website: formData.organiser_website || null,
+        parking_available: formData.parking_available,
       };
 
       if (editingId) {
@@ -217,6 +221,7 @@ export function AdminEventsTab() {
       title: event.title,
       description: event.description,
       location: event.location || "",
+      parking_available: event.parking_available ?? false,
       event_date: extractDate(event.event_date),
       event_start_time: extractTime(event.event_date),
       event_end_date: extractDate(event.event_end_date),
@@ -301,6 +306,13 @@ export function AdminEventsTab() {
               <div>
                 <Label>Location</Label>
                 <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label>Parking Available</Label>
+                  <p className="text-xs text-muted-foreground">Toggle if venue has parking</p>
+                </div>
+                <Switch checked={form.parking_available} onCheckedChange={(v) => setForm({ ...form, parking_available: v })} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

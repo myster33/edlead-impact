@@ -1546,6 +1546,7 @@ export type Database = {
           organiser_logo_url: string | null
           organiser_name: string | null
           organiser_website: string | null
+          parking_available: boolean
           price: number | null
           price_inclusions: string[] | null
           short_code: string | null
@@ -1569,6 +1570,7 @@ export type Database = {
           organiser_logo_url?: string | null
           organiser_name?: string | null
           organiser_website?: string | null
+          parking_available?: boolean
           price?: number | null
           price_inclusions?: string[] | null
           short_code?: string | null
@@ -1592,6 +1594,7 @@ export type Database = {
           organiser_logo_url?: string | null
           organiser_name?: string | null
           organiser_website?: string | null
+          parking_available?: boolean
           price?: number | null
           price_inclusions?: string[] | null
           short_code?: string | null

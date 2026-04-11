@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { CalendarDays, MapPin, Users, Banknote, CheckCircle } from "lucide-react";
+import { CalendarDays, MapPin, Users, Banknote, CheckCircle, Car } from "lucide-react";
 import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { useState } from "react";
 import { EventBookingDialog } from "@/components/events/EventBookingDialog";
@@ -26,6 +26,7 @@ interface EventCardProps {
     organiser_logo_url?: string | null;
     organiser_website?: string | null;
     short_code?: string | null;
+    parking_available?: boolean;
   };
 }
 
@@ -99,6 +100,10 @@ export function EventCard({ event }: EventCardProps) {
                 <span>{spotsLeft} spots remaining</span>
               </div>
             )}
+            <div className="flex items-center gap-2">
+              <Car className="h-4 w-4 text-primary" />
+              <span>{event.parking_available ? "Parking Available" : "No Parking"}</span>
+            </div>
             {event.price && event.price > 0 ? (
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
