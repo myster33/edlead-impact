@@ -23,24 +23,24 @@ interface EventCardProps {
     organiser_name?: string | null;
     organiser_logo_url?: string | null;
     organiser_website?: string | null;
+    short_code?: string | null;
   };
 }
 
 export function EventCard({ event }: EventCardProps) {
   const spotsLeft = event.max_capacity ? event.max_capacity - event.current_bookings : null;
   const isFull = spotsLeft !== null && spotsLeft <= 0;
+  const eventUrl = `/events/${event.short_code || event.id}`;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow">
       {(event.image_url || event.banner_square_url) && (
         <>
-          {/* Wide banner for md+ screens */}
           {event.image_url && (
             <div className="hidden md:block aspect-video overflow-hidden">
               <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
             </div>
           )}
-          {/* Square banner for mobile, fallback to wide if no square */}
           <div className="block md:hidden aspect-square overflow-hidden">
             <img
               src={event.banner_square_url || event.image_url || ""}
@@ -133,13 +133,10 @@ export function EventCard({ event }: EventCardProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Button asChild variant="outline" className="flex-1">
-          <Link to={`/events/${event.id}`}>View Details</Link>
-        </Button>
-        <Button asChild className="flex-1" disabled={isFull}>
-          <Link to={`/events/${event.id}/book`}>
-            {isFull ? "Fully Booked" : "Book Now"}
+      <CardFooter>
+        <Button asChild className="w-full" disabled={isFull}>
+          <Link to={eventUrl}>
+            {isFull ? "Fully Booked" : "View & Book"}
           </Link>
         </Button>
       </CardFooter>
