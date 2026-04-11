@@ -137,7 +137,7 @@ export function AdminEventBookingsTab() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Ref</TableHead>
+                <TableHead>Ticket No.</TableHead>
                 <TableHead>Event</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Contact</TableHead>
