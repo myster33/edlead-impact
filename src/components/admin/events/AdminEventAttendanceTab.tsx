@@ -452,7 +452,7 @@ export function AdminEventAttendanceTab() {
               ))}
               {attendance?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     No attendance records yet. Use "Check In" to register attendees.
                   </TableCell>
                 </TableRow>
