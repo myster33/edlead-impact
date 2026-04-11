@@ -1,7 +1,7 @@
 // Shared AWS Bedrock utility for Deno edge functions
 // Implements AWS Signature V4 signing using Web Crypto APIs
 
-const DEFAULT_MODEL = "anthropic.claude-3-5-sonnet-20240620-v1:0";
+const DEFAULT_MODEL = "anthropic.claude-sonnet-4-20250514-v1:0";
 
 async function hmacSHA256(key: ArrayBuffer | Uint8Array, message: string): Promise<ArrayBuffer> {
   const keyData = key instanceof Uint8Array ? key : new Uint8Array(key);
