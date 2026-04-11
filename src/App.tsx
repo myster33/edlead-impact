@@ -32,6 +32,8 @@ const CheckStatus = lazy(() => import("./pages/CheckStatus"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const UserAccess = lazy(() => import("./pages/UserAccess"));
 const SchoolChat = lazy(() => import("./pages/SchoolChat"));
+const Events = lazy(() => import("./pages/Events"));
+const EventBooking = lazy(() => import("./pages/EventBooking"));
 const BusinessLogin = lazy(() => import("./pages/business/BusinessLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -58,6 +60,7 @@ const AdminEmailLogs = lazy(() => import("./pages/admin/AdminEmailLogs"));
 const AdminWebhooks = lazy(() => import("./pages/admin/AdminWebhooks"));
 const AdminSchools = lazy(() => import("./pages/admin/AdminSchools"));
 const AdminMarketplace = lazy(() => import("./pages/admin/AdminMarketplace"));
+const AdminEvents = lazy(() => import("./pages/admin/AdminEvents"));
 
 // School portal pages
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -128,6 +131,8 @@ const App = () => (
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/user-access" element={<UserAccess />} />
                     <Route path="/school-chat" element={<SchoolChat />} />
+                    <Route path="/events" element={<Events />} />
+                    <Route path="/events/:eventId/book" element={<EventBooking />} />
                     <Route path="/business/login" element={<BusinessLogin />} />
                     
                     {/* Admin Routes */}
@@ -154,6 +159,7 @@ const App = () => (
                     <Route path="/admin/webhooks" element={<ProtectedRoute moduleKey="webhooks"><AdminWebhooks /></ProtectedRoute>} />
                     <Route path="/admin/schools" element={<ProtectedRoute moduleKey="schools"><AdminSchools /></ProtectedRoute>} />
                     <Route path="/admin/marketplace" element={<ProtectedRoute moduleKey="marketplace"><AdminMarketplace /></ProtectedRoute>} />
+                    <Route path="/admin/events" element={<ProtectedRoute moduleKey="events"><AdminEvents /></ProtectedRoute>} />
 
                     {/* School Portal Routes */}
                     <Route path="/school/login" element={<SchoolLogin />} />
