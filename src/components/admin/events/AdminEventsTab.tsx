@@ -157,7 +157,7 @@ export function AdminEventsTab() {
                   <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as any })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="concurrent">Concurrent</SelectItem>
+                      <SelectItem value="concurrent">On-going</SelectItem>
                       <SelectItem value="once_off">Once-Off</SelectItem>
                     </SelectContent>
                   </Select>
@@ -225,7 +225,7 @@ export function AdminEventsTab() {
                   <TableCell className="font-medium">{event.title}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {event.category === "concurrent" ? "Concurrent" : "Once-Off"}
+                      {event.category === "concurrent" ? "On-going" : "Once-Off"}
                     </Badge>
                   </TableCell>
                   <TableCell>
