@@ -388,6 +388,64 @@ export function AdminEventsTab() {
                 )}
               </div>
 
+              {/* Organiser Details */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Organiser Details</Label>
+                <div>
+                  <Label>Organiser Name</Label>
+                  <Input
+                    value={form.organiser_name}
+                    onChange={(e) => setForm({ ...form, organiser_name: e.target.value })}
+                    placeholder="e.g. edLEAD Foundation"
+                  />
+                </div>
+                <div>
+                  <Label>Organiser Website <span className="text-muted-foreground text-xs">(opens when logo is clicked)</span></Label>
+                  <Input
+                    type="url"
+                    value={form.organiser_website}
+                    onChange={(e) => setForm({ ...form, organiser_website: e.target.value })}
+                    placeholder="https://www.example.org"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Organiser Logo</Label>
+                  {getPreviewSrc(organiserLogoFile, existingLogoUrl) ? (
+                    <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[120px]">
+                      <div className="aspect-square">
+                        <img
+                          src={getPreviewSrc(organiserLogoFile, existingLogoUrl)!}
+                          alt="Organiser logo"
+                          className="w-full h-full object-contain p-2"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="h-7 w-7"
+                          onClick={() => { setOrganiserLogoFile(null); setExistingLogoUrl(null); }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-[120px] aspect-square">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground text-center">Upload logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { if (e.target.files?.[0]) setOrganiserLogoFile(e.target.files[0]); }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+
               {/* Banner uploads */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Event Banners</Label>
