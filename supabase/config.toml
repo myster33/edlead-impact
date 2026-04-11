@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.notify-event-booking]
 verify_jwt = false
+
+[functions.og-event]
+verify_jwt = false

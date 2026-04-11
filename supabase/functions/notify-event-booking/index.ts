@@ -11,6 +11,14 @@ const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
 const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+
+function buildEventLink(shortCode?: string): string {
+  if (shortCode && SUPABASE_URL) {
+    return `${SUPABASE_URL}/functions/v1/og-event?code=${shortCode}`;
+  }
+  return "https://edlead.co.za/events";
+}
 
 function formatPhoneE164(phone: string): string {
   let cleaned = phone.replace(/\D/g, "");
@@ -95,27 +103,29 @@ async function sendEmail(to: string, subject: string, htmlBody: string) {
   } catch (e) { console.error("Email error:", e); return false; }
 }
 
-function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string, statusChange?: string, eventLink?: string) {
+  const link = eventLink ? `\n\n🔗 Event: ${eventLink}` : "";
   if (statusChange === "confirmed") {
-    return `✅ edLEAD Event Booking Confirmed!\n\nHi ${name},\n\nGreat news! Your booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+    return `✅ edLEAD Event Booking Confirmed!\n\nHi ${name},\n\nGreat news! Your booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
   }
   if (statusChange === "cancelled") {
-    return `❌ edLEAD Event Booking Cancelled\n\nHi ${name},\n\nUnfortunately, your booking for "${eventTitle}" has been cancelled.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+    return `❌ edLEAD Event Booking Cancelled\n\nHi ${name},\n\nUnfortunately, your booking for "${eventTitle}" has been cancelled.\n\n📋 Ticket No: ${ticketNumber}${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
   }
-  return `🎟️ edLEAD Event Booking Received!\n\nHi ${name},\n\nYour booking for "${eventTitle}" has been received.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+  return `🎟️ edLEAD Event Booking Received!\n\nHi ${name},\n\nYour booking for "${eventTitle}" has been received.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
 }
 
-function buildParentSmsMessage(parentName: string, childName: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+function buildParentSmsMessage(parentName: string, childName: string, ticketNumber: string, eventTitle: string, statusChange?: string, eventLink?: string) {
+  const link = eventLink ? `\n\n🔗 Event: ${eventLink}` : "";
   if (statusChange === "confirmed") {
-    return `✅ edLEAD Event Booking Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName}'s booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+    return `✅ edLEAD Event Booking Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName}'s booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
   }
   if (statusChange === "cancelled") {
-    return `❌ edLEAD Event Booking Cancelled\n\nDear ${parentName || "Parent/Guardian"},\n\nUnfortunately, your child ${childName}'s booking for "${eventTitle}" has been cancelled.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+    return `❌ edLEAD Event Booking Cancelled\n\nDear ${parentName || "Parent/Guardian"},\n\nUnfortunately, your child ${childName}'s booking for "${eventTitle}" has been cancelled.\n\n📋 Ticket No: ${ticketNumber}${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
   }
-  return `🎟️ edLEAD Event Booking Received!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName} has been booked for: ${eventTitle}\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+  return `🎟️ edLEAD Event Booking Received!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName} has been booked for: ${eventTitle}\n\n📋 Ticket No: ${ticketNumber}${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
 }
 
-function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, isParent = false, childName?: string, statusChange?: string) {
+function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, isParent = false, childName?: string, statusChange?: string, eventLink?: string) {
   let heading: string;
   let color = "#ED7621";
   let icon = "🎟️";
@@ -144,6 +154,10 @@ function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, 
       : `Hi <strong>${name}</strong>,<br/>Your booking for <strong>${eventTitle}</strong> has been received.`;
   }
 
+  const eventLinkHtml = eventLink
+    ? `<p style="text-align:center;margin:16px 0;"><a href="${eventLink}" style="display:inline-block;background:${color};color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Event Details</a></p>`
+    : "";
+
   return `
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:8px;">
       <h2 style="color:${color};">${icon} ${title}</h2>
@@ -152,6 +166,7 @@ function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, 
         <p style="margin:0;font-size:12px;color:#666;">Ticket Number</p>
         <p style="margin:4px 0 0;font-size:24px;font-weight:bold;letter-spacing:2px;">${ticketNumber}</p>
       </div>
+      ${eventLinkHtml}
       <p style="font-size:13px;color:#666;">${note}</p>
       <p style="font-size:12px;color:#888;margin-top:12px;">If you have any questions, contact us on <a href="mailto:info@edlead.co.za">info@edlead.co.za</a> or talk to us through our website edLEAD Chat at <a href="https://edlead.co.za">edlead.co.za</a></p>
       <hr style="border:none;border-top:1px solid #e5e5e5;margin:16px 0;"/>
@@ -159,9 +174,9 @@ function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, 
     </div>`;
 }
 
-async function notifyContact(phone: string | null, email: string | null, name: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+async function notifyContact(phone: string | null, email: string | null, name: string, ticketNumber: string, eventTitle: string, statusChange?: string, eventLink?: string) {
   const results: Record<string, boolean> = {};
-  const msg = buildSmsMessage(name, ticketNumber, eventTitle, statusChange);
+  const msg = buildSmsMessage(name, ticketNumber, eventTitle, statusChange, eventLink);
   if (phone) {
     const formatted = formatPhoneE164(phone);
     results.sms = await sendSms(formatted, msg);
@@ -169,7 +184,7 @@ async function notifyContact(phone: string | null, email: string | null, name: s
   }
   if (email) {
     const subjectPrefix = statusChange === "confirmed" ? "✅ Booking Confirmed" : statusChange === "cancelled" ? "❌ Booking Cancelled" : "🎟️ Booking Received";
-    results.email = await sendEmail(email, `${subjectPrefix} — ${eventTitle}`, buildEmailHtml(name, ticketNumber, eventTitle, false, undefined, statusChange));
+    results.email = await sendEmail(email, `${subjectPrefix} — ${eventTitle}`, buildEmailHtml(name, ticketNumber, eventTitle, false, undefined, statusChange, eventLink));
   }
   return results;
 }
@@ -180,7 +195,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { bookerType, ticketNumber, eventTitle, contacts, statusChange } = await req.json();
+    const { bookerType, ticketNumber, eventTitle, contacts, statusChange, eventShortCode } = await req.json();
 
     if (!ticketNumber || !eventTitle) {
       return new Response(
@@ -189,13 +204,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    const eventLink = buildEventLink(eventShortCode);
     const allResults: Record<string, any> = {};
 
     for (const contact of (contacts || [])) {
       if (!contact.phone && !contact.email) continue;
       
       if (contact.role === "parent" && contact.parentOf) {
-        const msg = buildParentSmsMessage(contact.name, contact.parentOf, ticketNumber, eventTitle, statusChange);
+        const msg = buildParentSmsMessage(contact.name, contact.parentOf, ticketNumber, eventTitle, statusChange, eventLink);
         if (contact.phone) {
           const formatted = formatPhoneE164(contact.phone);
           allResults[`${contact.name}_sms`] = await sendSms(formatted, msg);
@@ -206,11 +222,11 @@ const handler = async (req: Request): Promise<Response> => {
           allResults[`${contact.name}_email`] = await sendEmail(
             contact.email,
             `${subjectPrefix} — ${eventTitle}`,
-            buildEmailHtml(contact.name, ticketNumber, eventTitle, true, contact.parentOf, statusChange)
+            buildEmailHtml(contact.name, ticketNumber, eventTitle, true, contact.parentOf, statusChange, eventLink)
           );
         }
       } else {
-        const res = await notifyContact(contact.phone, contact.email, contact.name, ticketNumber, eventTitle, statusChange);
+        const res = await notifyContact(contact.phone, contact.email, contact.name, ticketNumber, eventTitle, statusChange, eventLink);
         Object.entries(res).forEach(([k, v]) => { allResults[`${contact.name}_${k}`] = v; });
       }
     }
