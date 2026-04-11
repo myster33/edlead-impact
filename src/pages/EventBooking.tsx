@@ -65,7 +65,7 @@ const EventBooking = () => {
   const { data: schools } = useQuery({
     queryKey: ["schools-list"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("schools").select("id, name").eq("is_active", true).order("name");
+      const { data, error } = await (supabase.from("schools") as any).select("id, name").eq("is_active", true).order("name");
       if (error) throw error;
       return data;
     },
