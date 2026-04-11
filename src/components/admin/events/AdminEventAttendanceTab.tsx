@@ -304,6 +304,14 @@ export function AdminEventAttendanceTab() {
               </Select>
             </div>
             <div>
+              <Label>School Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                value={checkInForm.school_name}
+                onChange={(e) => setCheckInForm({ ...checkInForm, school_name: e.target.value })}
+                placeholder="School name"
+              />
+            </div>
+            <div>
               <Label>Booking Reference <span className="text-muted-foreground text-xs">(optional)</span></Label>
               <Input
                 value={checkInForm.booking_ref}
