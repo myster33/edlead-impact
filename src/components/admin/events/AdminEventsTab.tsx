@@ -27,6 +27,8 @@ interface EventFormData {
   price: string;
   price_inclusions: string[];
   newInclusion: string;
+  organiser_name: string;
+  organiser_website: string;
 }
 
 const emptyForm: EventFormData = {
@@ -43,6 +45,8 @@ const emptyForm: EventFormData = {
   price: "",
   price_inclusions: [],
   newInclusion: "",
+  organiser_name: "",
+  organiser_website: "",
 };
 
 /** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp or null */
@@ -75,8 +79,10 @@ export function AdminEventsTab() {
   // Banner file states
   const [wideBannerFile, setWideBannerFile] = useState<File | null>(null);
   const [squareBannerFile, setSquareBannerFile] = useState<File | null>(null);
+  const [organiserLogoFile, setOrganiserLogoFile] = useState<File | null>(null);
   const [existingWideUrl, setExistingWideUrl] = useState<string | null>(null);
   const [existingSquareUrl, setExistingSquareUrl] = useState<string | null>(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
   const [uploadingBanners, setUploadingBanners] = useState(false);
 
   // Preview dialog
