@@ -1,0 +1,1 @@
+ALTER TYPE public.booker_type ADD VALUE IF NOT EXISTS 'guest';

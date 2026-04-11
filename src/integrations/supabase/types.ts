@@ -3263,7 +3263,7 @@ export type Database = {
     }
     Enums: {
       app_role: "viewer" | "reviewer" | "admin" | "super_admin"
-      booker_type: "school" | "student" | "parent"
+      booker_type: "school" | "student" | "parent" | "guest"
       booking_extra_type: "teacher" | "child"
       event_category: "concurrent" | "once_off"
       event_status: "open" | "closed"
@@ -3403,7 +3403,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["viewer", "reviewer", "admin", "super_admin"],
-      booker_type: ["school", "student", "parent"],
+      booker_type: ["school", "student", "parent", "guest"],
       booking_extra_type: ["teacher", "child"],
       event_category: ["concurrent", "once_off"],
       event_status: ["open", "closed"],
