@@ -293,6 +293,82 @@ export function AdminEventsTab() {
                 <Input type="number" min="1" value={form.max_capacity} onChange={(e) => setForm({ ...form, max_capacity: e.target.value })} placeholder="Unlimited if empty" />
               </div>
 
+              {/* Price & Inclusions */}
+              <div className="space-y-3">
+                <div>
+                  <Label>Price <span className="text-muted-foreground text-xs">(optional — leave empty for free events)</span></Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                    placeholder="R 0.00 (Free)"
+                  />
+                </div>
+                {form.price && parseFloat(form.price) > 0 && (
+                  <div className="space-y-2">
+                    <Label>What's Included</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={form.newInclusion}
+                        onChange={(e) => setForm({ ...form, newInclusion: e.target.value })}
+                        placeholder="e.g. Transportation, Lunch — Buffet"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && form.newInclusion.trim()) {
+                            e.preventDefault();
+                            setForm({
+                              ...form,
+                              price_inclusions: [...form.price_inclusions, form.newInclusion.trim()],
+                              newInclusion: "",
+                            });
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={!form.newInclusion.trim()}
+                        onClick={() => {
+                          if (form.newInclusion.trim()) {
+                            setForm({
+                              ...form,
+                              price_inclusions: [...form.price_inclusions, form.newInclusion.trim()],
+                              newInclusion: "",
+                            });
+                          }
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {form.price_inclusions.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {form.price_inclusions.map((item, idx) => (
+                          <Badge key={idx} variant="secondary" className="gap-1 pr-1">
+                            {item}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setForm({
+                                  ...form,
+                                  price_inclusions: form.price_inclusions.filter((_, i) => i !== idx),
+                                })
+                              }
+                              className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">Press Enter or click + to add each item</p>
+                  </div>
+                )}
+              </div>
+
               {/* Banner uploads */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Event Banners</Label>
