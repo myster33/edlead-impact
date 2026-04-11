@@ -95,43 +95,81 @@ async function sendEmail(to: string, subject: string, htmlBody: string) {
   } catch (e) { console.error("Email error:", e); return false; }
 }
 
-function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string, role: string) {
-  return `🎟️ edLEAD Event Booking Confirmed!\n\nHi ${name},\n\nYour booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.\n\nThank you!\n— edLEAD Team`;
+function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+  if (statusChange === "confirmed") {
+    return `✅ edLEAD Event Booking Confirmed!\n\nHi ${name},\n\nGreat news! Your booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+  }
+  if (statusChange === "cancelled") {
+    return `❌ edLEAD Event Booking Cancelled\n\nHi ${name},\n\nUnfortunately, your booking for "${eventTitle}" has been cancelled.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+  }
+  return `🎟️ edLEAD Event Booking Received!\n\nHi ${name},\n\nYour booking for "${eventTitle}" has been received.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
 }
 
-function buildParentSmsMessage(parentName: string, childName: string, ticketNumber: string, eventTitle: string) {
-  return `🎟️ edLEAD Event Booking Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName} has been booked for: ${eventTitle}\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for reference.\n\nThank you!\n— edLEAD Team`;
+function buildParentSmsMessage(parentName: string, childName: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+  if (statusChange === "confirmed") {
+    return `✅ edLEAD Event Booking Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName}'s booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+  }
+  if (statusChange === "cancelled") {
+    return `❌ edLEAD Event Booking Cancelled\n\nDear ${parentName || "Parent/Guardian"},\n\nUnfortunately, your child ${childName}'s booking for "${eventTitle}" has been cancelled.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
+  }
+  return `🎟️ edLEAD Event Booking Received!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName} has been booked for: ${eventTitle}\n\n📋 Ticket No: ${ticketNumber}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
 }
 
-function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, isParent = false, childName?: string) {
-  const heading = isParent
-    ? `Dear <strong>${name}</strong>,<br/>Your child <strong>${childName}</strong> has been booked for <strong>${eventTitle}</strong>.`
-    : `Hi <strong>${name}</strong>,<br/>Your booking for <strong>${eventTitle}</strong> has been confirmed.`;
+function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, isParent = false, childName?: string, statusChange?: string) {
+  let heading: string;
+  let color = "#ED7621";
+  let icon = "🎟️";
+  let title = "Event Booking Received";
+  let note = "Please keep this ticket number for check-in at the event.";
+
+  if (statusChange === "confirmed") {
+    color = "#22c55e";
+    icon = "✅";
+    title = "Event Booking Confirmed";
+    note = "Your booking has been confirmed. Please keep this ticket number for check-in.";
+    heading = isParent
+      ? `Dear <strong>${name}</strong>,<br/>Your child <strong>${childName}</strong>'s booking for <strong>${eventTitle}</strong> has been confirmed!`
+      : `Hi <strong>${name}</strong>,<br/>Your booking for <strong>${eventTitle}</strong> has been confirmed!`;
+  } else if (statusChange === "cancelled") {
+    color = "#ef4444";
+    icon = "❌";
+    title = "Event Booking Cancelled";
+    note = "Your booking has been cancelled. If this was unexpected, please contact us.";
+    heading = isParent
+      ? `Dear <strong>${name}</strong>,<br/>Unfortunately, your child <strong>${childName}</strong>'s booking for <strong>${eventTitle}</strong> has been cancelled.`
+      : `Hi <strong>${name}</strong>,<br/>Unfortunately, your booking for <strong>${eventTitle}</strong> has been cancelled.`;
+  } else {
+    heading = isParent
+      ? `Dear <strong>${name}</strong>,<br/>Your child <strong>${childName}</strong> has been booked for <strong>${eventTitle}</strong>.`
+      : `Hi <strong>${name}</strong>,<br/>Your booking for <strong>${eventTitle}</strong> has been received.`;
+  }
 
   return `
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:8px;">
-      <h2 style="color:#ED7621;">🎟️ Event Booking Confirmed</h2>
+      <h2 style="color:${color};">${icon} ${title}</h2>
       <p>${heading}</p>
       <div style="background:#f5f5f5;padding:16px;border-radius:6px;text-align:center;margin:16px 0;">
         <p style="margin:0;font-size:12px;color:#666;">Ticket Number</p>
         <p style="margin:4px 0 0;font-size:24px;font-weight:bold;letter-spacing:2px;">${ticketNumber}</p>
       </div>
-      <p style="font-size:13px;color:#666;">Please keep this ticket number for check-in at the event.</p>
+      <p style="font-size:13px;color:#666;">${note}</p>
+      <p style="font-size:12px;color:#888;margin-top:12px;">If you have any questions, contact us on <a href="mailto:info@edlead.co.za">info@edlead.co.za</a> or talk to us through our website edLEAD Chat at <a href="https://edlead.co.za">edlead.co.za</a></p>
       <hr style="border:none;border-top:1px solid #e5e5e5;margin:16px 0;"/>
       <p style="font-size:12px;color:#999;">— edLEAD Team</p>
     </div>`;
 }
 
-async function notifyContact(phone: string | null, email: string | null, name: string, ticketNumber: string, eventTitle: string) {
+async function notifyContact(phone: string | null, email: string | null, name: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
   const results: Record<string, boolean> = {};
-  const msg = buildSmsMessage(name, ticketNumber, eventTitle, "attendee");
+  const msg = buildSmsMessage(name, ticketNumber, eventTitle, statusChange);
   if (phone) {
     const formatted = formatPhoneE164(phone);
     results.sms = await sendSms(formatted, msg);
     results.whatsapp = await sendWhatsApp(formatted, msg);
   }
   if (email) {
-    results.email = await sendEmail(email, `🎟️ Booking Confirmed — ${eventTitle}`, buildEmailHtml(name, ticketNumber, eventTitle));
+    const subjectPrefix = statusChange === "confirmed" ? "✅ Booking Confirmed" : statusChange === "cancelled" ? "❌ Booking Cancelled" : "🎟️ Booking Received";
+    results.email = await sendEmail(email, `${subjectPrefix} — ${eventTitle}`, buildEmailHtml(name, ticketNumber, eventTitle, false, undefined, statusChange));
   }
   return results;
 }
