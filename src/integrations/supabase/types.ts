@@ -1456,6 +1456,7 @@ export type Database = {
       }
       events: {
         Row: {
+          banner_square_url: string | null
           category: Database["public"]["Enums"]["event_category"]
           created_at: string
           created_by: string | null
@@ -1472,6 +1473,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          banner_square_url?: string | null
           category?: Database["public"]["Enums"]["event_category"]
           created_at?: string
           created_by?: string | null
@@ -1488,6 +1490,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          banner_square_url?: string | null
           category?: Database["public"]["Enums"]["event_category"]
           created_at?: string
           created_by?: string | null
