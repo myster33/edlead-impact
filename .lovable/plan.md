@@ -1,30 +1,22 @@
 
 
-# Use Cormorant Garamond Font in Certificate PDF
+## Fix: AI Chat Not Responding — Deprecated AWS Bedrock Model
 
-## Overview
-Replace the standard Helvetica/Times fonts in the certificate with **Cormorant Garamond** from Google Fonts. Since pdf-lib only supports 14 built-in fonts, we need to fetch and embed the custom font files at runtime.
+### Problem
+The AI chat returns a 500 error because the Claude 3.5 Sonnet model (`anthropic.claude-3-5-sonnet-20240620-v1:0`) has reached end-of-life on AWS Bedrock. This affects all AI features: the main chat, school chat, story submission, and apply flow.
 
-## What Changes
+### Solution
+Update the default model in `supabase/functions/bedrock-utils.ts` to a currently supported Claude model on AWS Bedrock.
 
-### `supabase/functions/generate-certificate-preview/index.ts`
+**Recommended replacement**: `anthropic.claude-3-5-sonnet-20241022-v2:0` (Claude 3.5 Sonnet v2 — same capability tier, still active on Bedrock).
 
-1. **Fetch Cormorant Garamond font files** from Google Fonts CDN at runtime (Regular, Bold, Bold Italic variants)
-2. **Embed custom fonts** using `pdfDoc.embedFont(fontBytes)` instead of `StandardFonts.*`
-3. **Replace all font references**:
-   - Title "Certificate" → Cormorant Garamond Bold Italic (replaces Times Bold Italic)
-   - Recipient name → Cormorant Garamond Bold Italic
-   - Body text, labels → Cormorant Garamond Regular (replaces Helvetica)
-   - Bold text (cohort, date) → Cormorant Garamond Bold (replaces Helvetica Bold)
-4. **Adjust font sizes** slightly since Cormorant Garamond has different metrics than Helvetica
+### Changes
 
-### Font URLs (Google Fonts static TTF files)
-- Regular: `https://fonts.gstatic.com/s/cormorantgaramond/v16/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYrEtFmSq1.ttf`
-- Bold: similar path with bold variant
-- Bold Italic: similar path with bold-italic variant
+**File: `supabase/functions/bedrock-utils.ts`** (line 4)
+- Change `DEFAULT_MODEL` from `"anthropic.claude-3-5-sonnet-20240620-v1:0"` to `"anthropic.claude-3-5-sonnet-20241022-v2:0"`
 
-## Technical Notes
-- pdf-lib's `embedFont()` accepts raw font bytes (ArrayBuffer) for TrueType fonts
-- Fonts are fetched once per invocation — small overhead (~50-100KB per font file)
-- No changes needed to the frontend certificate preview component
+This single-line fix will restore AI responses across all chat functions (chat-ai-faq, school-chat-ai, chat-apply, chat-story-submit).
+
+### Technical Note
+The new model is a drop-in replacement — same API format, same parameters. No other code changes are needed. After deployment, all edge functions sharing `bedrock-utils.ts` will automatically use the updated model.
 
