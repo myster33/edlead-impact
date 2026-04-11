@@ -34,7 +34,7 @@ const UserAccess = lazy(() => import("./pages/UserAccess"));
 const SchoolChat = lazy(() => import("./pages/SchoolChat"));
 const Events = lazy(() => import("./pages/Events"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
-const EventBooking = lazy(() => import("./pages/EventBooking"));
+
 const BusinessLogin = lazy(() => import("./pages/business/BusinessLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -134,7 +134,6 @@ const App = () => (
                     <Route path="/school-chat" element={<SchoolChat />} />
                     <Route path="/events" element={<Events />} />
                     <Route path="/events/:eventId" element={<EventDetail />} />
-                    <Route path="/events/:eventId/book" element={<EventBooking />} />
                     <Route path="/business/login" element={<BusinessLogin />} />
                     
                     {/* Admin Routes */}
