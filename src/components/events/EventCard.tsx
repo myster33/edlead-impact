@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { CalendarDays, MapPin, Users, Banknote, CheckCircle } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { useState } from "react";
 import { EventBookingDialog } from "@/components/events/EventBookingDialog";
 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CalendarDays, MapPin, Users, Banknote, CheckCircle, ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { Helmet } from "react-helmet-async";
 
 const EventDetail = () => {
