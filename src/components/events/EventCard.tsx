@@ -11,6 +11,7 @@ interface EventCardProps {
     title: string;
     description: string;
     image_url: string | null;
+    banner_square_url?: string | null;
     location: string | null;
     event_date: string | null;
     event_end_date: string | null;
@@ -26,10 +27,23 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow">
-      {event.image_url && (
-        <div className="aspect-video overflow-hidden">
-          <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
-        </div>
+      {(event.image_url || event.banner_square_url) && (
+        <>
+          {/* Wide banner for md+ screens */}
+          {event.image_url && (
+            <div className="hidden md:block aspect-video overflow-hidden">
+              <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" />
+            </div>
+          )}
+          {/* Square banner for mobile, fallback to wide if no square */}
+          <div className="block md:hidden aspect-square overflow-hidden">
+            <img
+              src={event.banner_square_url || event.image_url || ""}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </>
       )}
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2 mb-2">
