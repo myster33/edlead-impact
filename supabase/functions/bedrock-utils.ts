@@ -63,9 +63,12 @@ export async function callBedrock(req: BedrockRequest): Promise<BedrockResponse>
   const modelId = req.model || DEFAULT_MODEL;
   const service = "bedrock";
   const host = `bedrock-runtime.${region}.amazonaws.com`;
-  // Model ID must be URI-encoded in the canonical URI for SigV4 signing
+  // Inference profiles (e.g. "us.anthropic.*") use /invocations, foundation models use /model/.../invoke
+  const isInferenceProfile = modelId.includes(".");
   const encodedModelId = encodeURIComponent(modelId);
-  const canonicalUri = `/model/${encodedModelId}/invoke`;
+  const canonicalUri = isInferenceProfile
+    ? `/model/${encodedModelId}/invoke`
+    : `/model/${encodedModelId}/invoke`;
   const endpoint = `https://${host}/model/${modelId}/invoke`;
   const method = "POST";
 
