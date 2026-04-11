@@ -9,32 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, UserCheck, Search, LogOut, QrCode } from "lucide-react";
+import { Loader2, Search, Download } from "lucide-react";
 import { format } from "date-fns";
 
 export function AdminEventAttendanceTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filterEventId, setFilterEventId] = useState<string>("all");
-  const [filterSchool, setFilterSchool] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [checkInOpen, setCheckInOpen] = useState(false);
-  const [scanMode, setScanMode] = useState(false);
-  const [scanInput, setScanInput] = useState("");
-  const [checkInForm, setCheckInForm] = useState({
-    event_id: "",
-    attendee_name: "",
-    phone: "",
-    email: "",
-    booking_ref: "",
-    attendee_type: "student" as "student" | "teacher" | "other",
-    school_name: "",
-    parent_name: "",
-    parent_phone: "",
-    parent_email: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: events } = useQuery({
     queryKey: ["admin-events-list"],
@@ -49,18 +32,18 @@ export function AdminEventAttendanceTab() {
   });
 
   const { data: attendance, isLoading } = useQuery({
-    queryKey: ["admin-event-attendance", filterEventId, filterSchool, searchTerm],
+    queryKey: ["admin-event-attendance", filterEventId, filterType, searchTerm],
     queryFn: async () => {
       let query = supabase
         .from("event_attendance")
         .select("*, events(title)")
-        .order("checked_in_at", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (filterEventId && filterEventId !== "all") {
         query = query.eq("event_id", filterEventId);
       }
-      if (filterSchool && filterSchool !== "all") {
-        query = query.eq("attendee_type", filterSchool);
+      if (filterType && filterType !== "all") {
+        query = query.eq("attendee_type", filterType);
       }
       if (searchTerm.trim()) {
         query = query.or(`attendee_name.ilike.%${searchTerm}%,ticket_number.ilike.%${searchTerm}%`);
@@ -72,132 +55,153 @@ export function AdminEventAttendanceTab() {
     },
   });
 
-  const handleCheckOut = async (id: string) => {
+  const handleCheckIn = async (record: any) => {
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from("event_attendance")
-      .update({ checked_out_at: new Date().toISOString() } as any)
-      .eq("id", id);
+      .update({ checked_in_at: now } as any)
+      .eq("id", record.id);
+
+    if (error) {
+      toast({ title: "Check-in failed", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    // Send check-in notification
+    const eventTitle = record.events?.title || "Event";
+    try {
+      await supabase.functions.invoke("notify-event-checkin", {
+        body: {
+          attendeeName: record.attendee_name,
+          ticketNumber: record.ticket_number,
+          eventTitle,
+          phone: record.phone,
+          email: record.email,
+          attendeeType: record.attendee_type,
+          parentPhone: record.parent_phone,
+          parentEmail: record.parent_email,
+          parentName: record.parent_name,
+        },
+      });
+      await supabase
+        .from("event_attendance")
+        .update({ notification_sent: true, email_sent: true } as any)
+        .eq("id", record.id);
+    } catch (e) {
+      console.error("Check-in notification error:", e);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["admin-event-attendance"] });
+    toast({ title: "Checked In", description: `${record.attendee_name} — ${record.ticket_number}` });
+  };
+
+  const handleCheckOut = async (record: any) => {
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from("event_attendance")
+      .update({ checked_out_at: now } as any)
+      .eq("id", record.id);
+
     if (error) {
       toast({ title: "Check-out failed", description: error.message, variant: "destructive" });
-    } else {
-      queryClient.invalidateQueries({ queryKey: ["admin-event-attendance"] });
-      toast({ title: "Checked out successfully" });
-    }
-  };
-
-  const handleScanCheckIn = async () => {
-    if (!scanInput.trim()) return;
-    // Look up by ticket number
-    const { data } = await supabase
-      .from("event_attendance")
-      .select("id, attendee_name, checked_out_at")
-      .eq("ticket_number", scanInput.trim().toUpperCase())
-      .maybeSingle();
-    
-    if (!data) {
-      toast({ title: "Ticket not found", description: `No record for ${scanInput}`, variant: "destructive" });
-      return;
-    }
-    if (!(data as any).checked_out_at) {
-      // Already checked in — check them out
-      await handleCheckOut(data.id);
-      toast({ title: "Checked Out", description: `${data.attendee_name} checked out via scan` });
-    } else {
-      toast({ title: "Already checked out", description: data.attendee_name });
-    }
-    setScanInput("");
-  };
-
-  const handleCheckIn = async () => {
-    if (!checkInForm.event_id || !checkInForm.attendee_name) {
-      toast({ title: "Event and attendee name are required", variant: "destructive" });
       return;
     }
 
-    setIsSubmitting(true);
+    // Send check-out notification (especially for parents of students)
+    const eventTitle = record.events?.title || "Event";
     try {
-      let bookingId: string | null = null;
-      if (checkInForm.booking_ref.trim()) {
-        const { data: booking } = await supabase
-          .from("event_bookings")
-          .select("id")
-          .eq("reference_number", checkInForm.booking_ref.trim())
-          .eq("event_id", checkInForm.event_id)
-          .maybeSingle();
-        bookingId = booking?.id || null;
-      }
-
-      const insertData: any = {
-        event_id: checkInForm.event_id,
-        booking_id: bookingId,
-        attendee_name: checkInForm.attendee_name.trim(),
-        phone: checkInForm.phone.trim() || null,
-        email: checkInForm.email.trim() || null,
-        attendee_type: checkInForm.attendee_type,
-        school_name: checkInForm.school_name.trim() || null,
-        ticket_number: "",
-      };
-
-      if (checkInForm.attendee_type === "student") {
-        insertData.parent_name = checkInForm.parent_name.trim() || null;
-        insertData.parent_phone = checkInForm.parent_phone.trim() || null;
-        insertData.parent_email = checkInForm.parent_email.trim() || null;
-      }
-
-      const { data: record, error } = await supabase
-        .from("event_attendance")
-        .insert(insertData)
-        .select("*, events(title)")
-        .single();
-
-      if (error) throw error;
-
-      // Send notifications
-      const eventTitle = (record as any).events?.title || "Event";
-      const hasContactInfo = record.phone || (record as any).email || 
-        (record as any).parent_phone || (record as any).parent_email;
-      
-      if (hasContactInfo) {
-        try {
-          await supabase.functions.invoke("notify-event-checkin", {
-            body: {
-              attendeeName: record.attendee_name,
-              ticketNumber: record.ticket_number,
-              eventTitle,
-              phone: record.phone,
-              email: (record as any).email,
-              attendeeType: (record as any).attendee_type,
-              parentPhone: (record as any).parent_phone,
-              parentEmail: (record as any).parent_email,
-              parentName: (record as any).parent_name,
-            },
-          });
-
-          await supabase
-            .from("event_attendance")
-            .update({ notification_sent: true, email_sent: true } as any)
-            .eq("id", record.id);
-        } catch (notifErr) {
-          console.error("Notification error:", notifErr);
-        }
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["admin-event-attendance"] });
-      toast({
-        title: "Checked In",
-        description: `${record.attendee_name} — Ticket: ${record.ticket_number}`,
+      await supabase.functions.invoke("notify-event-checkout", {
+        body: {
+          attendeeName: record.attendee_name,
+          ticketNumber: record.ticket_number,
+          eventTitle,
+          phone: record.phone,
+          email: record.email,
+          attendeeType: record.attendee_type,
+          parentPhone: record.parent_phone,
+          parentEmail: record.parent_email,
+          parentName: record.parent_name,
+        },
       });
-      setCheckInOpen(false);
-      setCheckInForm({
-        event_id: "", attendee_name: "", phone: "", email: "", booking_ref: "",
-        attendee_type: "student", school_name: "", parent_name: "", parent_phone: "", parent_email: "",
-      });
-    } catch (err: any) {
-      console.error(err);
-      toast({ title: "Check-in failed", description: err.message, variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
+    } catch (e) {
+      console.error("Check-out notification error:", e);
     }
+
+    queryClient.invalidateQueries({ queryKey: ["admin-event-attendance"] });
+    toast({ title: "Checked Out", description: `${record.attendee_name} has left the event` });
+  };
+
+  const handleUndoCheckIn = async (id: string) => {
+    const { error } = await supabase
+      .from("event_attendance")
+      .update({ checked_in_at: null, notification_sent: false, email_sent: false } as any)
+      .eq("id", id);
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ["admin-event-attendance"] });
+    }
+  };
+
+  const handleUndoCheckOut = async (id: string) => {
+    const { error } = await supabase
+      .from("event_attendance")
+      .update({ checked_out_at: null } as any)
+      .eq("id", id);
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ["admin-event-attendance"] });
+    }
+  };
+
+  const exportToSpreadsheet = () => {
+    if (!attendance || attendance.length === 0) {
+      toast({ title: "No data to export", variant: "destructive" });
+      return;
+    }
+
+    const headers = [
+      "Ticket Number", "Event", "Attendee Name", "Type", "School",
+      "Phone", "Email", "Parent Name", "Parent Phone", "Parent Email",
+      "Checked In", "Checked Out", "Notified"
+    ];
+
+    const rows = attendance.map((a: any) => [
+      a.ticket_number,
+      a.events?.title || "",
+      a.attendee_name,
+      a.attendee_type || "student",
+      a.school_name || "",
+      a.phone || "",
+      a.email || "",
+      a.parent_name || "",
+      a.parent_phone || "",
+      a.parent_email || "",
+      a.checked_in_at ? format(new Date(a.checked_in_at), "dd MMM yyyy, HH:mm") : "Not checked in",
+      a.checked_out_at ? format(new Date(a.checked_out_at), "dd MMM yyyy, HH:mm") : "",
+      a.notification_sent ? "Yes" : "No",
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map((cell: string) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const eventName = filterEventId !== "all"
+      ? events?.find(e => e.id === filterEventId)?.title?.replace(/\s+/g, "_") || "event"
+      : "all_events";
+    link.download = `attendance_${eventName}_${format(new Date(), "yyyyMMdd")}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Exported successfully" });
+  };
+
+  // Determine if a record is "checked in" — we set checked_in_at to a far-future date for pre-registered
+  const isActuallyCheckedIn = (record: any) => {
+    if (!record.checked_in_at) return false;
+    // Records from booking have checked_in_at set but notification_sent = false
+    // We treat all records with checked_in_at as checked in since bookings create attendance
+    return record.notification_sent === true;
   };
 
   return (
@@ -217,11 +221,11 @@ export function AdminEventAttendanceTab() {
                   <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>
                 ))}
               </SelectContent>
-          </Select>
+            </Select>
           </div>
           <div>
             <Label className="text-xs text-muted-foreground">Filter by Type</Label>
-            <Select value={filterSchool} onValueChange={setFilterSchool}>
+            <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-[200px] h-9">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
@@ -245,149 +249,12 @@ export function AdminEventAttendanceTab() {
               />
             </div>
           </div>
-          <Button variant="outline" onClick={() => setScanMode(!scanMode)}>
-            <QrCode className="h-4 w-4 mr-2" />
-            Scan QR
-          </Button>
-          <Button onClick={() => setCheckInOpen(true)}>
-            <UserCheck className="h-4 w-4 mr-2" />
-            Check In
+          <Button variant="outline" onClick={exportToSpreadsheet}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
           </Button>
         </div>
       </div>
-
-      {/* QR / Ticket scan bar */}
-      {scanMode && (
-        <div className="flex items-center gap-3 p-3 border rounded-md bg-muted/30">
-          <QrCode className="h-5 w-5 text-primary" />
-          <Input
-            className="max-w-xs"
-            placeholder="Scan or enter ticket number (e.g. EVT-000001)"
-            value={scanInput}
-            onChange={(e) => setScanInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleScanCheckIn()}
-            autoFocus
-          />
-          <Button size="sm" onClick={handleScanCheckIn}>
-            <LogOut className="h-4 w-4 mr-1" /> Check Out
-          </Button>
-        </div>
-      )}
-
-      {/* Check-in dialog */}
-      <Dialog open={checkInOpen} onOpenChange={setCheckInOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Check In Attendee</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Event *</Label>
-              <Select value={checkInForm.event_id} onValueChange={(v) => setCheckInForm({ ...checkInForm, event_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select event" /></SelectTrigger>
-                <SelectContent>
-                  {events?.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Attendee Type *</Label>
-              <Select value={checkInForm.attendee_type} onValueChange={(v: any) => setCheckInForm({ ...checkInForm, attendee_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>School Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
-              <Input
-                value={checkInForm.school_name}
-                onChange={(e) => setCheckInForm({ ...checkInForm, school_name: e.target.value })}
-                placeholder="School name"
-              />
-            </div>
-            <div>
-              <Label>Booking Reference <span className="text-muted-foreground text-xs">(optional)</span></Label>
-              <Input
-                value={checkInForm.booking_ref}
-                onChange={(e) => setCheckInForm({ ...checkInForm, booking_ref: e.target.value })}
-                placeholder="e.g. EVB-123456"
-              />
-            </div>
-            <div>
-              <Label>Attendee Name *</Label>
-              <Input
-                value={checkInForm.attendee_name}
-                onChange={(e) => setCheckInForm({ ...checkInForm, attendee_name: e.target.value })}
-                placeholder="Full name"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Phone <span className="text-muted-foreground text-xs">(SMS/WhatsApp)</span></Label>
-                <Input
-                  value={checkInForm.phone}
-                  onChange={(e) => setCheckInForm({ ...checkInForm, phone: e.target.value })}
-                  placeholder="+27..."
-                />
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={checkInForm.email}
-                  onChange={(e) => setCheckInForm({ ...checkInForm, email: e.target.value })}
-                  placeholder="attendee@email.com"
-                />
-              </div>
-            </div>
-
-            {/* Parent/Guardian fields for students */}
-            {checkInForm.attendee_type === "student" && (
-              <div className="border-t pt-4 space-y-3">
-                <Label className="text-sm font-semibold">Parent/Guardian Details</Label>
-                <div>
-                  <Label>Parent Name</Label>
-                  <Input
-                    value={checkInForm.parent_name}
-                    onChange={(e) => setCheckInForm({ ...checkInForm, parent_name: e.target.value })}
-                    placeholder="Parent full name"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Parent Phone</Label>
-                    <Input
-                      value={checkInForm.parent_phone}
-                      onChange={(e) => setCheckInForm({ ...checkInForm, parent_phone: e.target.value })}
-                      placeholder="+27..."
-                    />
-                  </div>
-                  <div>
-                    <Label>Parent Email</Label>
-                    <Input
-                      type="email"
-                      value={checkInForm.parent_email}
-                      onChange={(e) => setCheckInForm({ ...checkInForm, parent_email: e.target.value })}
-                      placeholder="parent@email.com"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <Button className="w-full" onClick={handleCheckIn} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Check In & Send Notifications
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {isLoading ? (
         <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -401,59 +268,88 @@ export function AdminEventAttendanceTab() {
                 <TableHead>Attendee</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>School</TableHead>
-                <TableHead>Checked In</TableHead>
-                <TableHead>Checked Out</TableHead>
+                <TableHead className="text-center">Check In</TableHead>
+                <TableHead className="text-center">Check Out</TableHead>
                 <TableHead>Notified</TableHead>
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendance?.map((a: any) => (
-                <TableRow key={a.id}>
-                  <TableCell className="font-mono text-xs font-semibold">{a.ticket_number}</TableCell>
-                  <TableCell>{a.events?.title || "—"}</TableCell>
-                  <TableCell>
-                    <div>
-                      <span className="font-medium">{a.attendee_name}</span>
-                      {a.phone && <div className="text-xs text-muted-foreground">{a.phone}</div>}
-                      {a.email && <div className="text-xs text-muted-foreground">{a.email}</div>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize text-xs">{a.attendee_type || "student"}</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{a.school_name || "—"}</TableCell>
-                  <TableCell className="text-sm">{format(new Date(a.checked_in_at), "dd MMM yyyy, HH:mm")}</TableCell>
-                  <TableCell className="text-sm">
-                    {a.checked_out_at ? (
-                      format(new Date(a.checked_out_at), "HH:mm")
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Badge variant={a.notification_sent ? "default" : "secondary"} className="text-xs">
-                        {a.notification_sent ? "SMS/WA" : "No"}
-                      </Badge>
-                      {a.email_sent && (
-                        <Badge variant="default" className="text-xs">Email</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {!a.checked_out_at && (
-                      <Button size="sm" variant="outline" onClick={() => handleCheckOut(a.id)}>
-                        <LogOut className="h-3 w-3 mr-1" /> Out
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {attendance?.map((a: any) => {
+                const checkedIn = !!a.notification_sent;
+                const checkedOut = !!a.checked_out_at;
+
+                return (
+                  <TableRow key={a.id}>
+                    <TableCell className="font-mono text-xs font-semibold">{a.ticket_number}</TableCell>
+                    <TableCell>{a.events?.title || "—"}</TableCell>
+                    <TableCell>
+                      <div>
+                        <span className="font-medium">{a.attendee_name}</span>
+                        {a.phone && <div className="text-xs text-muted-foreground">{a.phone}</div>}
+                        {a.email && <div className="text-xs text-muted-foreground">{a.email}</div>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="capitalize text-xs">{a.attendee_type || "student"}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{a.school_name || "—"}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Checkbox
+                          checked={checkedIn}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleCheckIn(a);
+                            } else {
+                              handleUndoCheckIn(a.id);
+                            }
+                          }}
+                          disabled={checkedOut}
+                        />
+                        {checkedIn && a.checked_in_at && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(a.checked_in_at), "HH:mm")}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        <Checkbox
+                          checked={checkedOut}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              handleCheckOut(a);
+                            } else {
+                              handleUndoCheckOut(a.id);
+                            }
+                          }}
+                          disabled={!checkedIn}
+                        />
+                        {checkedOut && a.checked_out_at && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(a.checked_out_at), "HH:mm")}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Badge variant={a.notification_sent ? "default" : "secondary"} className="text-xs">
+                          {a.notification_sent ? "SMS/WA" : "No"}
+                        </Badge>
+                        {a.email_sent && (
+                          <Badge variant="default" className="text-xs">Email</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
               {attendance?.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                    No attendance records yet. Use "Check In" to register attendees.
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    No attendance records yet. Attendance is automatically created from bookings.
                   </TableCell>
                 </TableRow>
               )}
