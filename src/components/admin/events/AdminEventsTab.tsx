@@ -120,6 +120,7 @@ export function AdminEventsTab() {
 
       let imageUrl = existingWideUrl;
       let squareUrl = existingSquareUrl;
+      let logoUrl = existingLogoUrl;
 
       try {
         if (wideBannerFile) {
@@ -128,11 +129,14 @@ export function AdminEventsTab() {
         if (squareBannerFile) {
           squareUrl = await uploadBanner(squareBannerFile, formData.title, "1x1");
         }
+        if (organiserLogoFile) {
+          logoUrl = await uploadBanner(organiserLogoFile, formData.title, "logo");
+        }
       } finally {
         setUploadingBanners(false);
       }
 
-      const payload = {
+      const payload: any = {
         title: formData.title,
         description: formData.description,
         image_url: imageUrl,
@@ -145,6 +149,9 @@ export function AdminEventsTab() {
         max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : null,
         price: formData.price ? parseFloat(formData.price) : null,
         price_inclusions: formData.price_inclusions.length > 0 ? formData.price_inclusions : [],
+        organiser_name: formData.organiser_name || null,
+        organiser_logo_url: logoUrl,
+        organiser_website: formData.organiser_website || null,
       };
 
       if (editingId) {
@@ -183,8 +190,10 @@ export function AdminEventsTab() {
     setForm(emptyForm);
     setWideBannerFile(null);
     setSquareBannerFile(null);
+    setOrganiserLogoFile(null);
     setExistingWideUrl(null);
     setExistingSquareUrl(null);
+    setExistingLogoUrl(null);
   };
 
   const openEdit = (event: any) => {
@@ -203,11 +212,15 @@ export function AdminEventsTab() {
       price: event.price?.toString() || "",
       price_inclusions: event.price_inclusions || [],
       newInclusion: "",
+      organiser_name: event.organiser_name || "",
+      organiser_website: event.organiser_website || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
+    setExistingLogoUrl(event.organiser_logo_url || null);
     setWideBannerFile(null);
     setSquareBannerFile(null);
+    setOrganiserLogoFile(null);
     setDialogOpen(true);
   };
 
