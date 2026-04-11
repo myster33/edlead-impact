@@ -18,7 +18,9 @@ interface EventFormData {
   description: string;
   location: string;
   event_date: string;
+  event_start_time: string;
   event_end_date: string;
+  event_end_time: string;
   category: "concurrent" | "once_off";
   status: "open" | "closed";
   max_capacity: string;
@@ -29,11 +31,33 @@ const emptyForm: EventFormData = {
   description: "",
   location: "",
   event_date: "",
+  event_start_time: "",
   event_end_date: "",
+  event_end_time: "",
   category: "once_off",
   status: "open",
   max_capacity: "",
 };
+
+/** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp or null */
+function combineDatetime(date: string, time: string): string | null {
+  if (!date) return null;
+  if (time) return `${date}T${time}:00`;
+  return `${date}T00:00:00`;
+}
+
+/** Extract date (YYYY-MM-DD) from an ISO string */
+function extractDate(iso: string | null): string {
+  if (!iso) return "";
+  return iso.slice(0, 10);
+}
+
+/** Extract time (HH:mm) from an ISO string, returns "" if midnight (meaning no time was set) */
+function extractTime(iso: string | null): string {
+  if (!iso) return "";
+  const t = iso.slice(11, 16);
+  return t === "00:00" ? "" : t;
+}
 
 export function AdminEventsTab() {
   const { toast } = useToast();
@@ -102,8 +126,8 @@ export function AdminEventsTab() {
         image_url: imageUrl,
         banner_square_url: squareUrl,
         location: formData.location || null,
-        event_date: formData.event_date || null,
-        event_end_date: formData.event_end_date || null,
+        event_date: combineDatetime(formData.event_date, formData.event_start_time),
+        event_end_date: combineDatetime(formData.event_end_date, formData.event_end_time),
         category: formData.category,
         status: formData.status,
         max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : null,
@@ -155,8 +179,10 @@ export function AdminEventsTab() {
       title: event.title,
       description: event.description,
       location: event.location || "",
-      event_date: event.event_date ? event.event_date.slice(0, 16) : "",
-      event_end_date: event.event_end_date ? event.event_end_date.slice(0, 16) : "",
+      event_date: extractDate(event.event_date),
+      event_start_time: extractTime(event.event_date),
+      event_end_date: extractDate(event.event_end_date),
+      event_end_time: extractTime(event.event_end_date),
       category: event.category,
       status: event.status,
       max_capacity: event.max_capacity?.toString() || "",
@@ -234,11 +260,21 @@ export function AdminEventsTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Start Date</Label>
-                  <Input type="datetime-local" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} />
+                  <Input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} />
                 </div>
                 <div>
+                  <Label>Start Time <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input type="time" value={form.event_start_time} onChange={(e) => setForm({ ...form, event_start_time: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <Label>End Date</Label>
-                  <Input type="datetime-local" value={form.event_end_date} onChange={(e) => setForm({ ...form, event_end_date: e.target.value })} />
+                  <Input type="date" value={form.event_end_date} onChange={(e) => setForm({ ...form, event_end_date: e.target.value })} />
+                </div>
+                <div>
+                  <Label>End Time <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input type="time" value={form.event_end_time} onChange={(e) => setForm({ ...form, event_end_time: e.target.value })} />
                 </div>
               </div>
               <div>
