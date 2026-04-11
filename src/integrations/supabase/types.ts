@@ -1333,6 +1333,57 @@ export type Database = {
         }
         Relationships: []
       }
+      event_attendance: {
+        Row: {
+          attendee_name: string
+          booking_id: string | null
+          checked_in_at: string
+          created_at: string
+          event_id: string
+          id: string
+          notification_sent: boolean
+          phone: string | null
+          ticket_number: string
+        }
+        Insert: {
+          attendee_name: string
+          booking_id?: string | null
+          checked_in_at?: string
+          created_at?: string
+          event_id: string
+          id?: string
+          notification_sent?: boolean
+          phone?: string | null
+          ticket_number: string
+        }
+        Update: {
+          attendee_name?: string
+          booking_id?: string | null
+          checked_in_at?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          notification_sent?: boolean
+          phone?: string | null
+          ticket_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendance_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "event_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendance_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_booking_extras: {
         Row: {
           booking_id: string
