@@ -29,6 +29,7 @@ export function AdminEventAttendanceTab() {
     email: "",
     booking_ref: "",
     attendee_type: "student" as "student" | "teacher" | "other",
+    school_name: "",
     parent_name: "",
     parent_phone: "",
     parent_email: "",
