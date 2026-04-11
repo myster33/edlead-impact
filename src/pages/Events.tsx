@@ -25,6 +25,10 @@ const Events = () => {
 
   const filtered = events?.filter((e) => filter === "all" || e.category === filter) || [];
 
+  const allCount = events?.length || 0;
+  const ongoingCount = events?.filter((e) => e.category === "concurrent").length || 0;
+  const onceOffCount = events?.filter((e) => e.category === "once_off").length || 0;
+
   return (
     <Layout>
       <Helmet>
@@ -32,21 +36,12 @@ const Events = () => {
         <meta name="description" content="Browse and book edLEAD events. Join our leadership programmes, workshops and community activities." />
       </Helmet>
 
-      <section className="py-16 bg-gradient-to-b from-primary/5 to-background">
-        <div className="container text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold">Events</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Explore our upcoming events and book your spot. From leadership workshops to community gatherings.
-          </p>
-        </div>
-      </section>
-
-      <section className="container py-12">
+      <section className="container pt-8 pb-12">
         <Tabs value={filter} onValueChange={(v) => setFilter(v as any)} className="mb-8">
           <TabsList>
-            <TabsTrigger value="all">All Events</TabsTrigger>
-            <TabsTrigger value="concurrent">On-going</TabsTrigger>
-            <TabsTrigger value="once_off">Once-Off</TabsTrigger>
+            <TabsTrigger value="all">All Events ({allCount})</TabsTrigger>
+            <TabsTrigger value="concurrent">On-going ({ongoingCount})</TabsTrigger>
+            <TabsTrigger value="once_off">Once-Off ({onceOffCount})</TabsTrigger>
           </TabsList>
         </Tabs>
 
