@@ -49,24 +49,38 @@ const emptyForm: EventFormData = {
   organiser_website: "",
 };
 
-/** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp or null */
+/** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp with SAST offset or null */
 function combineDatetime(date: string, time: string): string | null {
   if (!date) return null;
-  if (time) return `${date}T${time}:00`;
-  return `${date}T00:00:00`;
+  if (time) return `${date}T${time}:00+02:00`;
+  return `${date}T00:00:00+02:00`;
 }
 
-/** Extract date (YYYY-MM-DD) from an ISO string */
+/** Extract date (YYYY-MM-DD) from an ISO string, converting to SAST */
 function extractDate(iso: string | null): string {
   if (!iso) return "";
-  return iso.slice(0, 10);
+  // Parse as Date and format in SAST (Africa/Johannesburg)
+  const d = new Date(iso);
+  const sast = new Date(d.getTime() + 2 * 60 * 60 * 1000);
+  return sast.toISOString().slice(0, 10);
 }
 
-/** Extract time (HH:mm) from an ISO string, returns "" if midnight (meaning no time was set) */
+/** Extract time (HH:mm) from an ISO string in SAST, returns "" if midnight (meaning no time was set) */
 function extractTime(iso: string | null): string {
   if (!iso) return "";
-  const t = iso.slice(11, 16);
+  const d = new Date(iso);
+  const sast = new Date(d.getTime() + 2 * 60 * 60 * 1000);
+  const hh = String(sast.getUTCHours()).padStart(2, "0");
+  const mm = String(sast.getUTCMinutes()).padStart(2, "0");
+  const t = `${hh}:${mm}`;
   return t === "00:00" ? "" : t;
+}
+
+/** Format a date string to SAST for display */
+function formatInSAST(iso: string): Date {
+  // Shift UTC to SAST for display purposes
+  const d = new Date(iso);
+  return new Date(d.getTime() + 2 * 60 * 60 * 1000);
 }
 
 export function AdminEventsTab() {
