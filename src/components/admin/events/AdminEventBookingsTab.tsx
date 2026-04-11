@@ -45,7 +45,7 @@ export function AdminEventBookingsTab() {
         query = query.gte("created_at", `${filterDate}T00:00:00`).lte("created_at", `${filterDate}T23:59:59`);
       }
       if (filterType && filterType !== "all") {
-        query = query.eq("booker_type", filterType);
+        query = query.eq("booker_type", filterType as any);
       }
 
       const { data, error } = await query;
