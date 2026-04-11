@@ -1,73 +1,49 @@
 
 
-## Events Management System
+## Problem
 
-### Overview
-Build a full events module: admin creates/manages events, public events page for browsing, and a dynamic booking form that adapts based on who is reserving (School, Student, or Parent).
+WhatsApp, Facebook, Twitter etc. don't run JavaScript — they only read the raw HTML. Since this is a React SPA, the Open Graph meta tags set via `react-helmet-async` are invisible to social crawlers. That's why shared event links show the generic edLEAD description instead of the event's banner and title.
 
-### Database Tables (3 new tables via migrations)
+## Solution: Edge Function OG Proxy
 
-**1. `events`** — Admin-managed event listings
-- `id`, `title`, `description`, `image_url`, `location`, `event_date` (nullable for concurrent), `event_end_date`, `category` (enum: `concurrent` | `once_off`), `status` (enum: `open` | `closed`), `max_capacity`, `current_bookings` (default 0), `created_by` (uuid), `created_at`, `updated_at`
-- RLS: public can SELECT open events, admins can ALL
+Create a backend function that detects social media crawlers and serves a minimal HTML page with the correct OG tags (event title, description, square banner image). Normal users get redirected to the SPA as usual.
 
-**2. `event_bookings`** — Booking header
-- `id`, `event_id`, `booker_type` (enum: `school` | `student` | `parent`), `school_name`, `school_email`, `school_phone`, `contact_teacher_name`, `contact_teacher_email`, `contact_teacher_phone`, `student_name`, `student_email`, `student_phone`, `student_school_name`, `parent_name`, `parent_email`, `parent_phone`, `number_of_attendees`, `status` (default `pending`), `notes`, `reference_number`, `created_at`
-- RLS: anyone can INSERT, admins can ALL
+### How it works
 
-**3. `event_booking_extras`** — Additional teachers (for school) or additional children (for parent)
-- `id`, `booking_id`, `type` (enum: `teacher` | `child`), `full_name`, `email`, `phone`, `grade` (nullable, for children), `created_at`
-- RLS: anyone can INSERT, admins can ALL
+```text
+User shares: https://edlead.lovable.app/events/ed0001
 
-### Admin Module
+WhatsApp crawler hits URL
+  → Edge function detects bot user-agent
+  → Fetches event data from DB by short_code
+  → Returns minimal HTML with:
+      og:title = "2026 Student Leadership Masterclass | edLEAD Events"
+      og:description = event.description (truncated)
+      og:image = event.banner_square_url (1:1 square)
+      og:image:width = 1080
+      og:image:height = 1080
+  → WhatsApp renders the rich preview with square banner
 
-**File: `src/pages/admin/AdminEvents.tsx`**
-- Tabs: Events List | Bookings
-- Events List: table of all events with create/edit/close actions
-- Create/Edit dialog: title, description, category (concurrent/once-off), date fields, capacity, image upload, status toggle
-- Bookings tab: table of all bookings across events with status management
+Normal user hits URL
+  → Edge function redirects to the SPA
+  → React Router handles it as before
+```
 
-**File: `src/components/admin/events/AdminEventsTab.tsx`** and `AdminEventBookingsTab.tsx`
+### Steps
 
-### Public Events Page
+1. **Create Edge Function `og-event`** — accepts the short code from the URL, queries the `events` table, returns OG HTML for bots or a 302 redirect for humans. User-agent detection covers WhatsApp, Facebook, Twitter, LinkedIn, Telegram, and Slack bots.
 
-**File: `src/pages/Events.tsx`**
-- Grid/list of open events with category filter (Concurrent / Once-Off)
-- Each event card shows title, description, date, location, capacity remaining
-- "Book Now" button opens booking flow
+2. **No changes to `EventDetail.tsx`** — the existing Helmet tags stay for in-app SEO; the edge function handles external crawlers only.
 
-### Booking Flow
+3. **Share format** — the shareable URL stays `/events/ed0001`. The edge function will be invoked at `https://<supabase-url>/functions/v1/og-event?code=ed0001`. WhatsApp notification messages will use this URL instead of the direct SPA URL so crawlers hit the function first, which then redirects real users to the actual page.
 
-**File: `src/pages/EventBooking.tsx`** (route: `/events/:eventId/book`)
-- Step 1: Select booker type (School / Student / Parent)
-- Step 2: Dynamic form based on selection:
-  - **School**: School name, email, phone, contact teacher details, "Add Another Teacher" button
-  - **Student**: Select school (from `schools` table), student name, email, phone
-  - **Parent**: Parent name, email, phone, child details (name, grade), "Add Another Child" button
-- Step 3: Review and submit
-- Generates a reference number on submission
+4. **Update `notify-event-booking` edge function** — change the event link in SMS/WhatsApp/Email messages to point through the OG proxy so shared links always show rich previews.
 
-### Routing & Navigation
+### Technical details
 
-- Add `/events` and `/events/:eventId/book` public routes in `App.tsx`
-- Add "Events" link in footer under Community
-- Add `/admin/events` route with `ProtectedRoute moduleKey="events"`
-- Add "Events" nav item in `AdminLayout.tsx` sidebar
-
-### Files to Create
-1. `src/pages/Events.tsx` — public events listing
-2. `src/pages/EventBooking.tsx` — public booking form
-3. `src/pages/admin/AdminEvents.tsx` — admin events management
-4. `src/components/admin/events/AdminEventsTab.tsx` — events CRUD
-5. `src/components/admin/events/AdminEventBookingsTab.tsx` — bookings management
-6. `src/components/events/EventCard.tsx` — event card component
-7. `src/components/events/BookingForm.tsx` — dynamic booking form
-
-### Files to Modify
-1. `src/App.tsx` — add routes
-2. `src/components/layout/Footer.tsx` — add "Events" under Community
-3. `src/components/admin/AdminLayout.tsx` — add sidebar item
-
-### Migration
-One migration creating the 3 tables, RLS policies, and enabling realtime on `event_bookings`.
+- Edge function: `supabase/functions/og-event/index.ts`
+- Bot detection via `user-agent` header matching (WhatsAppBot, facebookexternalhit, Twitterbot, LinkedInBot, TelegramBot, Slackbot)
+- Square banner (`banner_square_url`) used as `og:image` for optimal WhatsApp display (1:1 ratio)
+- Falls back to `image_url` if no square banner exists
+- Redirect URL: `https://edlead.lovable.app/events/{short_code}`
 
