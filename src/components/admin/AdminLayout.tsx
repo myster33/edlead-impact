@@ -125,9 +125,9 @@ const filterItem = (
 const menuGroups = [
   { label: "Overview", items: menuItems.slice(0, 3) },
   { label: "Programme", items: menuItems.slice(3, 6) },
-  { label: "Communication", items: menuItems.slice(6, 14) },
-  { label: "Administration", items: menuItems.slice(14, 17) },
-  { label: "Account", items: menuItems.slice(17) },
+  { label: "Communication", items: menuItems.slice(6, 15) },
+  { label: "Administration", items: menuItems.slice(15, 18) },
+  { label: "Account", items: menuItems.slice(18) },
 ];
 
 const getFilteredItems = (
