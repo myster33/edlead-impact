@@ -11,6 +11,15 @@ import { CalendarDays, MapPin, Users, Banknote, CheckCircle, ArrowLeft, External
 import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { Helmet } from "react-helmet-async";
 
+interface EventPartner {
+  id: string;
+  role: string;
+  name: string;
+  website: string | null;
+  logo_url: string | null;
+  sort_order: number;
+}
+
 const EventDetail = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const [bannerOpen, setBannerOpen] = useState(false);
