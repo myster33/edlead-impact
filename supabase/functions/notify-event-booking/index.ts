@@ -98,8 +98,8 @@ async function sendEmail(to: string, subject: string, htmlBody: string) {
   } catch (e) { console.error("Email error:", e); return false; }
 }
 
-function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string, statusChange?: string, eventLink?: string) {
-  const link = eventLink ? `\n\n🔗 Event: ${eventLink}` : "";
+function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+  const link = `\n\n🔗 Event: ${EVENT_LINK}`;
   if (statusChange === "confirmed") {
     return `✅ edLEAD Event Booking Confirmed!\n\nHi ${name},\n\nGreat news! Your booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
   }
@@ -109,8 +109,8 @@ function buildSmsMessage(name: string, ticketNumber: string, eventTitle: string,
   return `🎟️ edLEAD Event Booking Received!\n\nHi ${name},\n\nYour booking for "${eventTitle}" has been received.\n\n📋 Ticket No: ${ticketNumber}\n\nPlease keep this ticket number for check-in at the event.${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
 }
 
-function buildParentSmsMessage(parentName: string, childName: string, ticketNumber: string, eventTitle: string, statusChange?: string, eventLink?: string) {
-  const link = eventLink ? `\n\n🔗 Event: ${eventLink}` : "";
+function buildParentSmsMessage(parentName: string, childName: string, ticketNumber: string, eventTitle: string, statusChange?: string) {
+  const link = `\n\n🔗 Event: ${EVENT_LINK}`;
   if (statusChange === "confirmed") {
     return `✅ edLEAD Event Booking Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName}'s booking for "${eventTitle}" has been confirmed.\n\n📋 Ticket No: ${ticketNumber}${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
   }
@@ -120,7 +120,7 @@ function buildParentSmsMessage(parentName: string, childName: string, ticketNumb
   return `🎟️ edLEAD Event Booking Received!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName} has been booked for: ${eventTitle}\n\n📋 Ticket No: ${ticketNumber}${link}\n\nPlease check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za\n\n— edLEAD Team`;
 }
 
-function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, isParent = false, childName?: string, statusChange?: string, eventLink?: string) {
+function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, isParent = false, childName?: string, statusChange?: string) {
   let heading: string;
   let color = "#ED7621";
   let icon = "🎟️";
@@ -149,9 +149,7 @@ function buildEmailHtml(name: string, ticketNumber: string, eventTitle: string, 
       : `Hi <strong>${name}</strong>,<br/>Your booking for <strong>${eventTitle}</strong> has been received.`;
   }
 
-  const eventLinkHtml = eventLink
-    ? `<p style="text-align:center;margin:16px 0;"><a href="${eventLink}" style="display:inline-block;background:${color};color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Event Details</a></p>`
-    : "";
+  const eventLinkHtml = `<p style="text-align:center;margin:16px 0;"><a href="${EVENT_LINK}" style="display:inline-block;background:${color};color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">View Event Details</a></p>`;
 
   return `
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:auto;padding:24px;border:1px solid #e5e5e5;border-radius:8px;">
