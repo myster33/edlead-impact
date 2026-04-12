@@ -1469,6 +1469,7 @@ export type Database = {
           school_phone: string | null
           status: string
           student_email: string | null
+          student_grade: string | null
           student_name: string | null
           student_phone: string | null
           student_school_name: string | null
@@ -1492,6 +1493,7 @@ export type Database = {
           school_phone?: string | null
           status?: string
           student_email?: string | null
+          student_grade?: string | null
           student_name?: string | null
           student_phone?: string | null
           student_school_name?: string | null
@@ -1515,6 +1517,7 @@ export type Database = {
           school_phone?: string | null
           status?: string
           student_email?: string | null
+          student_grade?: string | null
           student_name?: string | null
           student_phone?: string | null
           student_school_name?: string | null
@@ -1546,6 +1549,9 @@ export type Database = {
           organiser_logo_url: string | null
           organiser_name: string | null
           organiser_website: string | null
+          organiser2_logo_url: string | null
+          organiser2_name: string | null
+          organiser2_website: string | null
           parking_available: boolean
           price: number | null
           price_inclusions: string[] | null
@@ -1570,6 +1576,9 @@ export type Database = {
           organiser_logo_url?: string | null
           organiser_name?: string | null
           organiser_website?: string | null
+          organiser2_logo_url?: string | null
+          organiser2_name?: string | null
+          organiser2_website?: string | null
           parking_available?: boolean
           price?: number | null
           price_inclusions?: string[] | null
@@ -1594,6 +1603,9 @@ export type Database = {
           organiser_logo_url?: string | null
           organiser_name?: string | null
           organiser_website?: string | null
+          organiser2_logo_url?: string | null
+          organiser2_name?: string | null
+          organiser2_website?: string | null
           parking_available?: boolean
           price?: number | null
           price_inclusions?: string[] | null

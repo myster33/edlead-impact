@@ -232,27 +232,53 @@ function EventSidebar({ event, isFull, spotsLeft, onBook }: { event: any; isFull
 }
 
 function EventOrganiser({ event }: { event: any }) {
-  if (!event.organiser_name) return null;
+  if (!event.organiser_name && !event.organiser2_name) return null;
   return (
-    <div className="border rounded-lg p-4 flex items-center gap-4">
-      {event.organiser_logo_url && (
-        event.organiser_website ? (
-          <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="shrink-0">
-            <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
-          </a>
-        ) : (
-          <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
-        )
+    <div className="space-y-3">
+      {event.organiser_name && (
+        <div className="border rounded-lg p-4 flex items-center gap-4">
+          {event.organiser_logo_url && (
+            event.organiser_website ? (
+              <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
+              </a>
+            ) : (
+              <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
+            )
+          )}
+          <div>
+            <p className="text-sm text-muted-foreground">Organised by</p>
+            <p className="font-semibold">{event.organiser_name}</p>
+            {event.organiser_website && (
+              <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                Visit website <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        </div>
       )}
-      <div>
-        <p className="text-sm text-muted-foreground">Organised by</p>
-        <p className="font-semibold">{event.organiser_name}</p>
-        {event.organiser_website && (
-          <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-            Visit website <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
-      </div>
+      {event.organiser2_name && (
+        <div className="border rounded-lg p-4 flex items-center gap-4">
+          {event.organiser2_logo_url && (
+            event.organiser2_website ? (
+              <a href={event.organiser2_website} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                <img src={event.organiser2_logo_url} alt={event.organiser2_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
+              </a>
+            ) : (
+              <img src={event.organiser2_logo_url} alt={event.organiser2_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
+            )
+          )}
+          <div>
+            <p className="text-sm text-muted-foreground">Co-organised by</p>
+            <p className="font-semibold">{event.organiser2_name}</p>
+            {event.organiser2_website && (
+              <a href={event.organiser2_website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+                Visit website <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

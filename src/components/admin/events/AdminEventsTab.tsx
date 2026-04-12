@@ -32,6 +32,8 @@ interface EventFormData {
   newInclusion: string;
   organiser_name: string;
   organiser_website: string;
+  organiser2_name: string;
+  organiser2_website: string;
 }
 
 const emptyForm: EventFormData = {
@@ -51,6 +53,8 @@ const emptyForm: EventFormData = {
   newInclusion: "",
   organiser_name: "",
   organiser_website: "",
+  organiser2_name: "",
+  organiser2_website: "",
 };
 
 /** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp with SAST offset or null */
@@ -98,9 +102,11 @@ export function AdminEventsTab() {
   const [wideBannerFile, setWideBannerFile] = useState<File | null>(null);
   const [squareBannerFile, setSquareBannerFile] = useState<File | null>(null);
   const [organiserLogoFile, setOrganiserLogoFile] = useState<File | null>(null);
+  const [organiser2LogoFile, setOrganiser2LogoFile] = useState<File | null>(null);
   const [existingWideUrl, setExistingWideUrl] = useState<string | null>(null);
   const [existingSquareUrl, setExistingSquareUrl] = useState<string | null>(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
+  const [existingLogo2Url, setExistingLogo2Url] = useState<string | null>(null);
   const [uploadingBanners, setUploadingBanners] = useState(false);
 
   // Preview dialog
@@ -139,6 +145,7 @@ export function AdminEventsTab() {
       let imageUrl = existingWideUrl;
       let squareUrl = existingSquareUrl;
       let logoUrl = existingLogoUrl;
+      let logo2Url = existingLogo2Url;
 
       try {
         if (wideBannerFile) {
@@ -149,6 +156,9 @@ export function AdminEventsTab() {
         }
         if (organiserLogoFile) {
           logoUrl = await uploadBanner(organiserLogoFile, formData.title, "logo");
+        }
+        if (organiser2LogoFile) {
+          logo2Url = await uploadBanner(organiser2LogoFile, formData.title, "logo2");
         }
       } finally {
         setUploadingBanners(false);
@@ -170,6 +180,9 @@ export function AdminEventsTab() {
         organiser_name: formData.organiser_name || null,
         organiser_logo_url: logoUrl,
         organiser_website: formData.organiser_website || null,
+        organiser2_name: formData.organiser2_name || null,
+        organiser2_logo_url: logo2Url,
+        organiser2_website: formData.organiser2_website || null,
         parking_available: formData.parking_available,
       };
 
@@ -210,9 +223,11 @@ export function AdminEventsTab() {
     setWideBannerFile(null);
     setSquareBannerFile(null);
     setOrganiserLogoFile(null);
+    setOrganiser2LogoFile(null);
     setExistingWideUrl(null);
     setExistingSquareUrl(null);
     setExistingLogoUrl(null);
+    setExistingLogo2Url(null);
   };
 
   const openEdit = (event: any) => {
@@ -234,13 +249,17 @@ export function AdminEventsTab() {
       newInclusion: "",
       organiser_name: event.organiser_name || "",
       organiser_website: event.organiser_website || "",
+      organiser2_name: event.organiser2_name || "",
+      organiser2_website: event.organiser2_website || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
     setExistingLogoUrl(event.organiser_logo_url || null);
+    setExistingLogo2Url(event.organiser2_logo_url || null);
     setWideBannerFile(null);
     setSquareBannerFile(null);
     setOrganiserLogoFile(null);
+    setOrganiser2LogoFile(null);
     setDialogOpen(true);
   };
 
@@ -473,7 +492,63 @@ export function AdminEventsTab() {
                 </div>
               </div>
 
-              {/* Banner uploads */}
+              {/* Co-Organiser Details */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Co-Organiser Details <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
+                <div>
+                  <Label>Co-Organiser Name</Label>
+                  <Input
+                    value={form.organiser2_name}
+                    onChange={(e) => setForm({ ...form, organiser2_name: e.target.value })}
+                    placeholder="e.g. Partner Organisation"
+                  />
+                </div>
+                <div>
+                  <Label>Co-Organiser Website</Label>
+                  <Input
+                    type="url"
+                    value={form.organiser2_website}
+                    onChange={(e) => setForm({ ...form, organiser2_website: e.target.value })}
+                    placeholder="https://www.example.org"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Co-Organiser Logo</Label>
+                  {getPreviewSrc(organiser2LogoFile, existingLogo2Url) ? (
+                    <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[120px]">
+                      <div className="aspect-square">
+                        <img
+                          src={getPreviewSrc(organiser2LogoFile, existingLogo2Url)!}
+                          alt="Co-organiser logo"
+                          className="w-full h-full object-contain p-2"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="destructive"
+                          className="h-7 w-7"
+                          onClick={() => { setOrganiser2LogoFile(null); setExistingLogo2Url(null); }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-[120px] aspect-square">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground text-center">Upload logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { if (e.target.files?.[0]) setOrganiser2LogoFile(e.target.files[0]); }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Event Banners</Label>
 
