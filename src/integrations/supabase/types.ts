@@ -1532,6 +1532,47 @@ export type Database = {
           },
         ]
       }
+      event_partners: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          logo_url: string | null
+          name: string
+          role: string
+          sort_order: number
+          website: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          role?: string
+          sort_order?: number
+          website?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          role?: string
+          sort_order?: number
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_partners_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           banner_square_url: string | null

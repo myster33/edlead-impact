@@ -11,9 +11,19 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Eye, EyeOff, Loader2, Upload, X, ZoomIn } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Edit, Eye, EyeOff, Loader2, Upload, X, ZoomIn, Trash2 } from "lucide-react";
 import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
+
+interface PartnerEntry {
+  id?: string;
+  role: string;
+  name: string;
+  website: string;
+  logoFile: File | null;
+  existingLogoUrl: string | null;
+}
+
+const PARTNER_ROLES = ["Organised by", "Co-organised by", "Sponsored by", "Hosted by", "Powered by"];
 
 interface EventFormData {
   title: string;
@@ -30,10 +40,6 @@ interface EventFormData {
   price: string;
   price_inclusions: string[];
   newInclusion: string;
-  organiser_name: string;
-  organiser_website: string;
-  organiser2_name: string;
-  organiser2_website: string;
 }
 
 const emptyForm: EventFormData = {
@@ -51,29 +57,21 @@ const emptyForm: EventFormData = {
   price: "",
   price_inclusions: [],
   newInclusion: "",
-  organiser_name: "",
-  organiser_website: "",
-  organiser2_name: "",
-  organiser2_website: "",
 };
 
-/** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp with SAST offset or null */
 function combineDatetime(date: string, time: string): string | null {
   if (!date) return null;
   if (time) return `${date}T${time}:00+02:00`;
   return `${date}T00:00:00+02:00`;
 }
 
-/** Extract date (YYYY-MM-DD) from an ISO string, converting to SAST */
 function extractDate(iso: string | null): string {
   if (!iso) return "";
-  // Parse as Date and format in SAST (Africa/Johannesburg)
   const d = new Date(iso);
   const sast = new Date(d.getTime() + 2 * 60 * 60 * 1000);
   return sast.toISOString().slice(0, 10);
 }
 
-/** Extract time (HH:mm) from an ISO string in SAST, returns "" if midnight (meaning no time was set) */
 function extractTime(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -84,32 +82,19 @@ function extractTime(iso: string | null): string {
   return t === "00:00" ? "" : t;
 }
 
-/** Format a date string to SAST for display */
-function formatInSAST(iso: string): Date {
-  // Shift UTC to SAST for display purposes
-  const d = new Date(iso);
-  return new Date(d.getTime() + 2 * 60 * 60 * 1000);
-}
-
 export function AdminEventsTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<EventFormData>(emptyForm);
+  const [partners, setPartners] = useState<PartnerEntry[]>([]);
 
-  // Banner file states
   const [wideBannerFile, setWideBannerFile] = useState<File | null>(null);
   const [squareBannerFile, setSquareBannerFile] = useState<File | null>(null);
-  const [organiserLogoFile, setOrganiserLogoFile] = useState<File | null>(null);
-  const [organiser2LogoFile, setOrganiser2LogoFile] = useState<File | null>(null);
   const [existingWideUrl, setExistingWideUrl] = useState<string | null>(null);
   const [existingSquareUrl, setExistingSquareUrl] = useState<string | null>(null);
-  const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
-  const [existingLogo2Url, setExistingLogo2Url] = useState<string | null>(null);
   const [uploadingBanners, setUploadingBanners] = useState(false);
-
-  // Preview dialog
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const { data: events, isLoading } = useQuery({
@@ -128,12 +113,8 @@ export function AdminEventsTab() {
     const ext = file.name.split(".").pop() || "jpg";
     const sanitized = eventTitle.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
     const path = `${sanitized}_${aspect}_${Date.now()}.${ext}`;
-
-    const { error } = await supabase.storage
-      .from("event-banners")
-      .upload(path, file, { cacheControl: "3600", upsert: true });
+    const { error } = await supabase.storage.from("event-banners").upload(path, file, { cacheControl: "3600", upsert: true });
     if (error) throw error;
-
     const { data } = supabase.storage.from("event-banners").getPublicUrl(path);
     return data.publicUrl;
   };
@@ -141,28 +122,30 @@ export function AdminEventsTab() {
   const saveMutation = useMutation({
     mutationFn: async (formData: EventFormData) => {
       setUploadingBanners(true);
-
       let imageUrl = existingWideUrl;
       let squareUrl = existingSquareUrl;
-      let logoUrl = existingLogoUrl;
-      let logo2Url = existingLogo2Url;
 
       try {
-        if (wideBannerFile) {
-          imageUrl = await uploadBanner(wideBannerFile, formData.title, "16x9");
-        }
-        if (squareBannerFile) {
-          squareUrl = await uploadBanner(squareBannerFile, formData.title, "1x1");
-        }
-        if (organiserLogoFile) {
-          logoUrl = await uploadBanner(organiserLogoFile, formData.title, "logo");
-        }
-        if (organiser2LogoFile) {
-          logo2Url = await uploadBanner(organiser2LogoFile, formData.title, "logo2");
-        }
+        if (wideBannerFile) imageUrl = await uploadBanner(wideBannerFile, formData.title, "16x9");
+        if (squareBannerFile) squareUrl = await uploadBanner(squareBannerFile, formData.title, "1x1");
       } finally {
         setUploadingBanners(false);
       }
+
+      // Also upload partner logos
+      const partnerLogoUrls: (string | null)[] = [];
+      for (const p of partners) {
+        if (p.logoFile) {
+          const url = await uploadBanner(p.logoFile, formData.title, `partner_${Date.now()}`);
+          partnerLogoUrls.push(url);
+        } else {
+          partnerLogoUrls.push(p.existingLogoUrl);
+        }
+      }
+
+      // Build legacy organiser fields from first two partners for backward compat
+      const org1 = partners[0];
+      const org2 = partners[1];
 
       const payload: any = {
         title: formData.title,
@@ -177,21 +160,41 @@ export function AdminEventsTab() {
         max_capacity: formData.max_capacity ? parseInt(formData.max_capacity) : null,
         price: formData.price ? parseFloat(formData.price) : null,
         price_inclusions: formData.price_inclusions.length > 0 ? formData.price_inclusions : [],
-        organiser_name: formData.organiser_name || null,
-        organiser_logo_url: logoUrl,
-        organiser_website: formData.organiser_website || null,
-        organiser2_name: formData.organiser2_name || null,
-        organiser2_logo_url: logo2Url,
-        organiser2_website: formData.organiser2_website || null,
+        organiser_name: org1?.name || null,
+        organiser_logo_url: partnerLogoUrls[0] || null,
+        organiser_website: org1?.website || null,
+        organiser2_name: org2?.name || null,
+        organiser2_logo_url: partnerLogoUrls[1] || null,
+        organiser2_website: org2?.website || null,
         parking_available: formData.parking_available,
       };
 
+      let eventId = editingId;
       if (editingId) {
         const { error } = await supabase.from("events").update(payload).eq("id", editingId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("events").insert(payload);
+        const { data, error } = await supabase.from("events").insert(payload).select("id").single();
         if (error) throw error;
+        eventId = data.id;
+      }
+
+      // Save partners to event_partners table
+      if (eventId) {
+        // Delete existing partners
+        await supabase.from("event_partners").delete().eq("event_id", eventId);
+        // Insert new ones
+        if (partners.length > 0) {
+          const partnerRows = partners.map((p, idx) => ({
+            event_id: eventId!,
+            role: p.role,
+            name: p.name,
+            website: p.website || null,
+            logo_url: partnerLogoUrls[idx] || null,
+            sort_order: idx,
+          }));
+          await supabase.from("event_partners").insert(partnerRows);
+        }
       }
     },
     onSuccess: () => {
@@ -220,17 +223,14 @@ export function AdminEventsTab() {
     setDialogOpen(false);
     setEditingId(null);
     setForm(emptyForm);
+    setPartners([]);
     setWideBannerFile(null);
     setSquareBannerFile(null);
-    setOrganiserLogoFile(null);
-    setOrganiser2LogoFile(null);
     setExistingWideUrl(null);
     setExistingSquareUrl(null);
-    setExistingLogoUrl(null);
-    setExistingLogo2Url(null);
   };
 
-  const openEdit = (event: any) => {
+  const openEdit = async (event: any) => {
     setEditingId(event.id);
     setForm({
       title: event.title,
@@ -247,25 +247,69 @@ export function AdminEventsTab() {
       price: event.price?.toString() || "",
       price_inclusions: event.price_inclusions || [],
       newInclusion: "",
-      organiser_name: event.organiser_name || "",
-      organiser_website: event.organiser_website || "",
-      organiser2_name: event.organiser2_name || "",
-      organiser2_website: event.organiser2_website || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
-    setExistingLogoUrl(event.organiser_logo_url || null);
-    setExistingLogo2Url(event.organiser2_logo_url || null);
     setWideBannerFile(null);
     setSquareBannerFile(null);
-    setOrganiserLogoFile(null);
-    setOrganiser2LogoFile(null);
+
+    // Load partners from event_partners table
+    const { data: partnerData } = await supabase
+      .from("event_partners")
+      .select("*")
+      .eq("event_id", event.id)
+      .order("sort_order");
+
+    if (partnerData && partnerData.length > 0) {
+      setPartners(partnerData.map((p: any) => ({
+        id: p.id,
+        role: p.role,
+        name: p.name,
+        website: p.website || "",
+        logoFile: null,
+        existingLogoUrl: p.logo_url,
+      })));
+    } else {
+      // Fallback: load from legacy columns
+      const legacyPartners: PartnerEntry[] = [];
+      if (event.organiser_name) {
+        legacyPartners.push({
+          role: "Organised by",
+          name: event.organiser_name,
+          website: event.organiser_website || "",
+          logoFile: null,
+          existingLogoUrl: event.organiser_logo_url,
+        });
+      }
+      if (event.organiser2_name) {
+        legacyPartners.push({
+          role: "Co-organised by",
+          name: event.organiser2_name,
+          website: event.organiser2_website || "",
+          logoFile: null,
+          existingLogoUrl: event.organiser2_logo_url,
+        });
+      }
+      setPartners(legacyPartners);
+    }
     setDialogOpen(true);
   };
 
   const openCreate = () => {
     resetDialog();
     setDialogOpen(true);
+  };
+
+  const addPartner = () => {
+    setPartners([...partners, { role: "Organised by", name: "", website: "", logoFile: null, existingLogoUrl: null }]);
+  };
+
+  const updatePartner = (idx: number, field: keyof PartnerEntry, value: any) => {
+    setPartners(partners.map((p, i) => i === idx ? { ...p, [field]: value } : p));
+  };
+
+  const removePartner = (idx: number) => {
+    setPartners(partners.filter((_, i) => i !== idx));
   };
 
   const getPreviewSrc = (file: File | null, existingUrl: string | null) => {
@@ -434,151 +478,117 @@ export function AdminEventsTab() {
                 )}
               </div>
 
-              {/* Organiser Details */}
+              {/* Partners Section */}
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Organiser Details</Label>
-                <div>
-                  <Label>Organiser Name</Label>
-                  <Input
-                    value={form.organiser_name}
-                    onChange={(e) => setForm({ ...form, organiser_name: e.target.value })}
-                    placeholder="e.g. edLEAD Foundation"
-                  />
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Partners</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addPartner}>
+                    <Plus className="h-4 w-4 mr-1" /> Add Partner
+                  </Button>
                 </div>
-                <div>
-                  <Label>Organiser Website <span className="text-muted-foreground text-xs">(opens when logo is clicked)</span></Label>
-                  <Input
-                    type="url"
-                    value={form.organiser_website}
-                    onChange={(e) => setForm({ ...form, organiser_website: e.target.value })}
-                    placeholder="https://www.example.org"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Organiser Logo</Label>
-                  {getPreviewSrc(organiserLogoFile, existingLogoUrl) ? (
-                    <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[120px]">
-                      <div className="aspect-square">
-                        <img
-                          src={getPreviewSrc(organiserLogoFile, existingLogoUrl)!}
-                          alt="Organiser logo"
-                          className="w-full h-full object-contain p-2"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          className="h-7 w-7"
-                          onClick={() => { setOrganiserLogoFile(null); setExistingLogoUrl(null); }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
+
+                {partners.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4 border-2 border-dashed rounded-lg">
+                    No partners added yet. Click "+ Add Partner" to add one.
+                  </p>
+                )}
+
+                {partners.map((partner, idx) => (
+                  <div key={idx} className="border rounded-lg p-3 space-y-3 relative">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">{partner.role || "Partner"} #{idx + 1}</Badge>
+                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => removePartner(idx)}>
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
                     </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-[120px] aspect-square">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground text-center">Upload logo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => { if (e.target.files?.[0]) setOrganiserLogoFile(e.target.files[0]); }}
+                    <div>
+                      <Label>Role</Label>
+                      <Select value={partner.role} onValueChange={(v) => updatePartner(idx, "role", v)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {PARTNER_ROLES.map((r) => (
+                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Name *</Label>
+                      <Input
+                        value={partner.name}
+                        onChange={(e) => updatePartner(idx, "name", e.target.value)}
+                        placeholder="e.g. edLEAD Foundation"
+                        required
                       />
-                    </label>
-                  )}
-                </div>
+                    </div>
+                    <div>
+                      <Label>Website <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                      <Input
+                        type="url"
+                        value={partner.website}
+                        onChange={(e) => updatePartner(idx, "website", e.target.value)}
+                        placeholder="https://www.example.org"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm text-muted-foreground">Logo</Label>
+                      {getPreviewSrc(partner.logoFile, partner.existingLogoUrl) ? (
+                        <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[120px]">
+                          <div className="aspect-square">
+                            <img
+                              src={getPreviewSrc(partner.logoFile, partner.existingLogoUrl)!}
+                              alt="Partner logo"
+                              className="w-full h-full object-contain p-2"
+                            />
+                          </div>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="destructive"
+                              className="h-7 w-7"
+                              onClick={() => {
+                                updatePartner(idx, "logoFile", null);
+                                updatePartner(idx, "existingLogoUrl", null);
+                              }}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-[120px] aspect-square">
+                          <Upload className="h-6 w-6 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground text-center">Upload logo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => { if (e.target.files?.[0]) updatePartner(idx, "logoFile", e.target.files[0]); }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              {/* Co-Organiser Details */}
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Co-Organiser Details <span className="text-muted-foreground text-xs font-normal">(optional)</span></Label>
-                <div>
-                  <Label>Co-Organiser Name</Label>
-                  <Input
-                    value={form.organiser2_name}
-                    onChange={(e) => setForm({ ...form, organiser2_name: e.target.value })}
-                    placeholder="e.g. Partner Organisation"
-                  />
-                </div>
-                <div>
-                  <Label>Co-Organiser Website</Label>
-                  <Input
-                    type="url"
-                    value={form.organiser2_website}
-                    onChange={(e) => setForm({ ...form, organiser2_website: e.target.value })}
-                    placeholder="https://www.example.org"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Co-Organiser Logo</Label>
-                  {getPreviewSrc(organiser2LogoFile, existingLogo2Url) ? (
-                    <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[120px]">
-                      <div className="aspect-square">
-                        <img
-                          src={getPreviewSrc(organiser2LogoFile, existingLogo2Url)!}
-                          alt="Co-organiser logo"
-                          className="w-full h-full object-contain p-2"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          className="h-7 w-7"
-                          onClick={() => { setOrganiser2LogoFile(null); setExistingLogo2Url(null); }}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors max-w-[120px] aspect-square">
-                      <Upload className="h-6 w-6 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground text-center">Upload logo</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => { if (e.target.files?.[0]) setOrganiser2LogoFile(e.target.files[0]); }}
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
+              {/* Event Banners */}
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Event Banners</Label>
 
-                {/* 16:9 Wide Banner */}
                 <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">Wide Banner (16:9) — Desktop / Landscape</Label>
                   {getPreviewSrc(wideBannerFile, existingWideUrl) ? (
                     <div className="relative group rounded-lg overflow-hidden border bg-muted/50">
                       <div className="aspect-video">
-                        <img
-                          src={getPreviewSrc(wideBannerFile, existingWideUrl)!}
-                          alt="Wide banner preview"
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={getPreviewSrc(wideBannerFile, existingWideUrl)!} alt="Wide banner preview" className="w-full h-full object-cover" />
                       </div>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          onClick={() => setPreviewImage(getPreviewSrc(wideBannerFile, existingWideUrl))}
-                        >
+                        <Button type="button" size="icon" variant="secondary" onClick={() => setPreviewImage(getPreviewSrc(wideBannerFile, existingWideUrl))}>
                           <ZoomIn className="h-4 w-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => { setWideBannerFile(null); setExistingWideUrl(null); }}
-                        >
+                        <Button type="button" size="icon" variant="destructive" onClick={() => { setWideBannerFile(null); setExistingWideUrl(null); }}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -587,43 +597,23 @@ export function AdminEventsTab() {
                     <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition-colors aspect-video">
                       <Upload className="h-8 w-8 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Click to upload 16:9 banner</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => { if (e.target.files?.[0]) setWideBannerFile(e.target.files[0]); }}
-                      />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setWideBannerFile(e.target.files[0]); }} />
                     </label>
                   )}
                 </div>
 
-                {/* 1:1 Square Banner */}
                 <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">Square Banner (1:1) — Mobile / Social</Label>
                   {getPreviewSrc(squareBannerFile, existingSquareUrl) ? (
                     <div className="relative group rounded-lg overflow-hidden border bg-muted/50 max-w-[200px]">
                       <div className="aspect-square">
-                        <img
-                          src={getPreviewSrc(squareBannerFile, existingSquareUrl)!}
-                          alt="Square banner preview"
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={getPreviewSrc(squareBannerFile, existingSquareUrl)!} alt="Square banner preview" className="w-full h-full object-cover" />
                       </div>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="secondary"
-                          onClick={() => setPreviewImage(getPreviewSrc(squareBannerFile, existingSquareUrl))}
-                        >
+                        <Button type="button" size="icon" variant="secondary" onClick={() => setPreviewImage(getPreviewSrc(squareBannerFile, existingSquareUrl))}>
                           <ZoomIn className="h-4 w-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => { setSquareBannerFile(null); setExistingSquareUrl(null); }}
-                        >
+                        <Button type="button" size="icon" variant="destructive" onClick={() => { setSquareBannerFile(null); setExistingSquareUrl(null); }}>
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
@@ -632,12 +622,7 @@ export function AdminEventsTab() {
                     <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition-colors aspect-square max-w-[200px]">
                       <Upload className="h-8 w-8 text-muted-foreground" />
                       <span className="text-sm text-muted-foreground">Upload 1:1 banner</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => { if (e.target.files?.[0]) setSquareBannerFile(e.target.files[0]); }}
-                      />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) setSquareBannerFile(e.target.files[0]); }} />
                     </label>
                   )}
                 </div>
@@ -652,12 +637,9 @@ export function AdminEventsTab() {
         </Dialog>
       </div>
 
-      {/* Image preview dialog */}
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
         <DialogContent className="max-w-3xl p-2">
-          {previewImage && (
-            <img src={previewImage} alt="Banner preview" className="w-full h-auto rounded-lg" />
-          )}
+          {previewImage && <img src={previewImage} alt="Banner preview" className="w-full h-auto rounded-lg" />}
         </DialogContent>
       </Dialog>
 
@@ -689,16 +671,12 @@ export function AdminEventsTab() {
                         onClick={() => setPreviewImage(event.image_url)}
                       />
                     ) : (
-                      <div className="w-20 h-12 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                        No image
-                      </div>
+                      <div className="w-20 h-12 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">No image</div>
                     )}
                   </TableCell>
                   <TableCell className="font-medium">{event.title}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">
-                      {event.category === "concurrent" ? "On-going" : "Once-Off"}
-                    </Badge>
+                    <Badge variant="outline">{event.category === "concurrent" ? "On-going" : "Once-Off"}</Badge>
                   </TableCell>
                   <TableCell>
                     {event.event_date ? (
@@ -713,24 +691,16 @@ export function AdminEventsTab() {
                       </div>
                     ) : "Anytime"}
                   </TableCell>
+                  <TableCell>{event.current_bookings}{event.max_capacity ? ` / ${event.max_capacity}` : ""}</TableCell>
                   <TableCell>
-                    {event.current_bookings}{event.max_capacity ? ` / ${event.max_capacity}` : ""}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={event.status === "open" ? "default" : "secondary"}>
-                      {event.status}
-                    </Badge>
+                    <Badge variant={event.status === "open" ? "default" : "secondary"}>{event.status}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(event)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => toggleStatus.mutate({ id: event.id, current: event.status })}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => toggleStatus.mutate({ id: event.id, current: event.status })}>
                         {event.status === "open" ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>

@@ -11,6 +11,15 @@ import { CalendarDays, MapPin, Users, Banknote, CheckCircle, ArrowLeft, External
 import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { Helmet } from "react-helmet-async";
 
+interface EventPartner {
+  id: string;
+  role: string;
+  name: string;
+  website: string | null;
+  logo_url: string | null;
+  sort_order: number;
+}
+
 const EventDetail = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const [bannerOpen, setBannerOpen] = useState(false);
@@ -29,6 +38,20 @@ const EventDetail = () => {
       return data as any;
     },
     enabled: !!eventId,
+  });
+
+  const { data: partners } = useQuery({
+    queryKey: ["event-partners", event?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("event_partners")
+        .select("*")
+        .eq("event_id", event!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data as EventPartner[];
+    },
+    enabled: !!event?.id,
   });
 
   const spotsLeft = event?.max_capacity ? event.max_capacity - event.current_bookings : null;
@@ -98,7 +121,7 @@ const EventDetail = () => {
             <div className="prose max-w-none text-muted-foreground whitespace-pre-wrap text-sm">
               {event.description}
             </div>
-            <EventOrganiser event={event} />
+            <EventPartners partners={partners} event={event} />
           </div>
 
           {/* Book section */}
@@ -138,7 +161,7 @@ const EventDetail = () => {
             <div className="prose prose-lg max-w-none text-muted-foreground whitespace-pre-wrap">
               {event.description}
             </div>
-            <EventOrganiser event={event} />
+            <EventPartners partners={partners} event={event} />
           </div>
         </div>
       </div>
@@ -231,54 +254,47 @@ function EventSidebar({ event, isFull, spotsLeft, onBook }: { event: any; isFull
   );
 }
 
-function EventOrganiser({ event }: { event: any }) {
-  if (!event.organiser_name && !event.organiser2_name) return null;
+function EventPartners({ partners, event }: { partners: EventPartner[] | undefined; event: any }) {
+  // Use partners from event_partners table, fallback to legacy columns
+  const displayPartners: { role: string; name: string; website: string | null; logo_url: string | null }[] = [];
+
+  if (partners && partners.length > 0) {
+    displayPartners.push(...partners);
+  } else {
+    if (event.organiser_name) {
+      displayPartners.push({ role: "Organised by", name: event.organiser_name, website: event.organiser_website, logo_url: event.organiser_logo_url });
+    }
+    if (event.organiser2_name) {
+      displayPartners.push({ role: "Co-organised by", name: event.organiser2_name, website: event.organiser2_website, logo_url: event.organiser2_logo_url });
+    }
+  }
+
+  if (displayPartners.length === 0) return null;
+
   return (
     <div className="space-y-3">
-      {event.organiser_name && (
-        <div className="border rounded-lg p-4 flex items-center gap-4">
-          {event.organiser_logo_url && (
-            event.organiser_website ? (
-              <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
+      {displayPartners.map((p, idx) => (
+        <div key={idx} className="border rounded-lg p-4 flex items-center gap-4">
+          {p.logo_url && (
+            p.website ? (
+              <a href={p.website} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                <img src={p.logo_url} alt={p.name} className="h-14 w-14 rounded-lg object-contain border p-1" />
               </a>
             ) : (
-              <img src={event.organiser_logo_url} alt={event.organiser_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
+              <img src={p.logo_url} alt={p.name} className="h-14 w-14 rounded-lg object-contain border p-1" />
             )
           )}
           <div>
-            <p className="text-sm text-muted-foreground">Organised by</p>
-            <p className="font-semibold">{event.organiser_name}</p>
-            {event.organiser_website && (
-              <a href={event.organiser_website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
+            <p className="text-sm text-muted-foreground">{p.role}</p>
+            <p className="font-semibold">{p.name}</p>
+            {p.website && (
+              <a href={p.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
                 Visit website <ExternalLink className="h-3 w-3" />
               </a>
             )}
           </div>
         </div>
-      )}
-      {event.organiser2_name && (
-        <div className="border rounded-lg p-4 flex items-center gap-4">
-          {event.organiser2_logo_url && (
-            event.organiser2_website ? (
-              <a href={event.organiser2_website} target="_blank" rel="noopener noreferrer" className="shrink-0">
-                <img src={event.organiser2_logo_url} alt={event.organiser2_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
-              </a>
-            ) : (
-              <img src={event.organiser2_logo_url} alt={event.organiser2_name} className="h-14 w-14 rounded-lg object-contain border p-1" />
-            )
-          )}
-          <div>
-            <p className="text-sm text-muted-foreground">Co-organised by</p>
-            <p className="font-semibold">{event.organiser2_name}</p>
-            {event.organiser2_website && (
-              <a href={event.organiser2_website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-                Visit website <ExternalLink className="h-3 w-3" />
-              </a>
-            )}
-          </div>
-        </div>
-      )}
+      ))}
     </div>
   );
 }
