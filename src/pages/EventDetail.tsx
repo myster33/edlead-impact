@@ -40,6 +40,20 @@ const EventDetail = () => {
     enabled: !!eventId,
   });
 
+  const { data: partners } = useQuery({
+    queryKey: ["event-partners", event?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("event_partners")
+        .select("*")
+        .eq("event_id", event!.id)
+        .order("sort_order");
+      if (error) throw error;
+      return data as EventPartner[];
+    },
+    enabled: !!event?.id,
+  });
+
   const spotsLeft = event?.max_capacity ? event.max_capacity - event.current_bookings : null;
   const isFull = spotsLeft !== null && spotsLeft <= 0;
 
