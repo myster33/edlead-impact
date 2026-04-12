@@ -1,49 +1,30 @@
 
+## Plan: Multi-Select Bookings with Confirmation Dialog
 
-## Problem
+### What Changes
 
-WhatsApp, Facebook, Twitter etc. don't run JavaScript — they only read the raw HTML. Since this is a React SPA, the Open Graph meta tags set via `react-helmet-async` are invisible to social crawlers. That's why shared event links show the generic edLEAD description instead of the event's banner and title.
+**1. Add checkboxes for multi-selection**
+- Add a "select all" checkbox in the table header
+- Add individual checkboxes per booking row
+- Track selected booking IDs in state
 
-## Solution: Edge Function OG Proxy
+**2. Add bulk action bar**
+- When bookings are selected, show a toolbar with "Confirm Selected" and "Cancel Selected" buttons
+- Display count of selected bookings (e.g., "3 selected")
 
-Create a backend function that detects social media crawlers and serves a minimal HTML page with the correct OG tags (event title, description, square banner image). Normal users get redirected to the SPA as usual.
+**3. Add confirmation dialog (AlertDialog)**
+- Before any status change (both single and bulk), show an "Are you sure?" dialog
+- Dialog shows the action being taken and number of affected bookings
+- User must click "Yes, continue" to proceed
 
-### How it works
+**4. Keep individual status dropdown**
+- The per-row Select dropdown remains, but now also triggers the confirmation dialog before executing
 
-```text
-User shares: https://edlead.lovable.app/events/ed0001
+### Technical Details
 
-WhatsApp crawler hits URL
-  → Edge function detects bot user-agent
-  → Fetches event data from DB by short_code
-  → Returns minimal HTML with:
-      og:title = "2026 Student Leadership Masterclass | edLEAD Events"
-      og:description = event.description (truncated)
-      og:image = event.banner_square_url (1:1 square)
-      og:image:width = 1080
-      og:image:height = 1080
-  → WhatsApp renders the rich preview with square banner
+**File modified:** `src/components/admin/events/AdminEventBookingsTab.tsx`
 
-Normal user hits URL
-  → Edge function redirects to the SPA
-  → React Router handles it as before
-```
-
-### Steps
-
-1. **Create Edge Function `og-event`** — accepts the short code from the URL, queries the `events` table, returns OG HTML for bots or a 302 redirect for humans. User-agent detection covers WhatsApp, Facebook, Twitter, LinkedIn, Telegram, and Slack bots.
-
-2. **No changes to `EventDetail.tsx`** — the existing Helmet tags stay for in-app SEO; the edge function handles external crawlers only.
-
-3. **Share format** — the shareable URL stays `/events/ed0001`. The edge function will be invoked at `https://<supabase-url>/functions/v1/og-event?code=ed0001`. WhatsApp notification messages will use this URL instead of the direct SPA URL so crawlers hit the function first, which then redirects real users to the actual page.
-
-4. **Update `notify-event-booking` edge function** — change the event link in SMS/WhatsApp/Email messages to point through the OG proxy so shared links always show rich previews.
-
-### Technical details
-
-- Edge function: `supabase/functions/og-event/index.ts`
-- Bot detection via `user-agent` header matching (WhatsAppBot, facebookexternalhit, Twitterbot, LinkedInBot, TelegramBot, Slackbot)
-- Square banner (`banner_square_url`) used as `og:image` for optimal WhatsApp display (1:1 ratio)
-- Falls back to `image_url` if no square banner exists
-- Redirect URL: `https://edlead.lovable.app/events/{short_code}`
-
+- New state: `selectedIds: Set<string>`, `pendingAction: { ids: string[], status: string } | null`
+- Import `Checkbox` from `@/components/ui/checkbox` and `AlertDialog` components
+- Add a `bulkUpdateStatus` mutation that loops through selected IDs using the existing `updateStatus` logic
+- The AlertDialog opens when `pendingAction` is set; on confirm it executes, on cancel it clears
