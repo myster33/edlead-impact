@@ -62,6 +62,15 @@ export function AdminEventBookingsTab() {
       const booking = bookings?.find((b) => b.id === id);
       if (!booking) return;
 
+      // Remove attendance records when not confirmed
+      if (status === "pending" || status === "cancelled") {
+        try {
+          await supabase.from("event_attendance").delete().eq("booking_id", id);
+        } catch (e) {
+          console.error("Attendance removal error:", e);
+        }
+      }
+
       // When confirmed, create attendance records
       if (status === "confirmed") {
         const bt = booking.booker_type;
