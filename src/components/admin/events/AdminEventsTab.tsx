@@ -98,9 +98,11 @@ export function AdminEventsTab() {
   const [wideBannerFile, setWideBannerFile] = useState<File | null>(null);
   const [squareBannerFile, setSquareBannerFile] = useState<File | null>(null);
   const [organiserLogoFile, setOrganiserLogoFile] = useState<File | null>(null);
+  const [organiser2LogoFile, setOrganiser2LogoFile] = useState<File | null>(null);
   const [existingWideUrl, setExistingWideUrl] = useState<string | null>(null);
   const [existingSquareUrl, setExistingSquareUrl] = useState<string | null>(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState<string | null>(null);
+  const [existingLogo2Url, setExistingLogo2Url] = useState<string | null>(null);
   const [uploadingBanners, setUploadingBanners] = useState(false);
 
   // Preview dialog
@@ -139,6 +141,7 @@ export function AdminEventsTab() {
       let imageUrl = existingWideUrl;
       let squareUrl = existingSquareUrl;
       let logoUrl = existingLogoUrl;
+      let logo2Url = existingLogo2Url;
 
       try {
         if (wideBannerFile) {
@@ -149,6 +152,9 @@ export function AdminEventsTab() {
         }
         if (organiserLogoFile) {
           logoUrl = await uploadBanner(organiserLogoFile, formData.title, "logo");
+        }
+        if (organiser2LogoFile) {
+          logo2Url = await uploadBanner(organiser2LogoFile, formData.title, "logo2");
         }
       } finally {
         setUploadingBanners(false);
@@ -170,6 +176,9 @@ export function AdminEventsTab() {
         organiser_name: formData.organiser_name || null,
         organiser_logo_url: logoUrl,
         organiser_website: formData.organiser_website || null,
+        organiser2_name: formData.organiser2_name || null,
+        organiser2_logo_url: logo2Url,
+        organiser2_website: formData.organiser2_website || null,
         parking_available: formData.parking_available,
       };
 
@@ -210,9 +219,11 @@ export function AdminEventsTab() {
     setWideBannerFile(null);
     setSquareBannerFile(null);
     setOrganiserLogoFile(null);
+    setOrganiser2LogoFile(null);
     setExistingWideUrl(null);
     setExistingSquareUrl(null);
     setExistingLogoUrl(null);
+    setExistingLogo2Url(null);
   };
 
   const openEdit = (event: any) => {
@@ -234,13 +245,17 @@ export function AdminEventsTab() {
       newInclusion: "",
       organiser_name: event.organiser_name || "",
       organiser_website: event.organiser_website || "",
+      organiser2_name: event.organiser2_name || "",
+      organiser2_website: event.organiser2_website || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
     setExistingLogoUrl(event.organiser_logo_url || null);
+    setExistingLogo2Url(event.organiser2_logo_url || null);
     setWideBannerFile(null);
     setSquareBannerFile(null);
     setOrganiserLogoFile(null);
+    setOrganiser2LogoFile(null);
     setDialogOpen(true);
   };
 
