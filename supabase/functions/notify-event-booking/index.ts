@@ -76,14 +76,11 @@ async function sendWhatsApp(to: string, body: string) {
 async function sendEmail(to: string, subject: string, htmlBody: string) {
   if (!RESEND_API_KEY) { console.log("Resend not configured, skipping email"); return false; }
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
-    const res = await fetch(`${GATEWAY_URL}/emails`, {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": RESEND_API_KEY,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
         from: "edLEAD <noreply@edlead.co.za>",
@@ -94,6 +91,7 @@ async function sendEmail(to: string, subject: string, htmlBody: string) {
     });
     const data = await res.json();
     if (!res.ok) { console.error("Email error:", data); return false; }
+    console.log("Email sent:", data.id);
     return true;
   } catch (e) { console.error("Email error:", e); return false; }
 }
