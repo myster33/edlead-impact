@@ -169,7 +169,8 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
           email: contactTeacherEmail,
           attendee_type: "teacher",
           school_name: schoolName,
-          ticket_number: "",
+          ticket_number: ticketNumber,
+          checked_in_at: null,
         });
         extraTeachers.forEach(t => {
           attendanceRecords.push({
@@ -180,7 +181,8 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
             email: t.email || null,
             attendee_type: "teacher",
             school_name: schoolName,
-            ticket_number: "",
+            ticket_number: ticketNumber,
+            checked_in_at: null,
           });
         });
       } else if (bookerType === "student") {
@@ -195,7 +197,8 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
           parent_name: "Parent/Guardian",
           parent_phone: ensureCountryCode(studentParentPhone),
           parent_email: studentParentEmail || null,
-          ticket_number: "",
+          ticket_number: ticketNumber,
+          checked_in_at: null,
         });
       } else if (bookerType === "parent") {
         children.forEach(c => {
@@ -209,7 +212,8 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
             parent_name: parentName,
             parent_phone: ensureCountryCode(parentPhone),
             parent_email: parentEmail,
-            ticket_number: "",
+            ticket_number: ticketNumber,
+            checked_in_at: null,
           });
         });
       } else if (bookerType === "guest") {
@@ -220,7 +224,8 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
           phone: ensureCountryCode(guestPhone),
           email: guestEmail,
           attendee_type: "other",
-          ticket_number: "",
+          ticket_number: ticketNumber,
+          checked_in_at: null,
         });
       }
 

@@ -196,13 +196,8 @@ export function AdminEventAttendanceTab() {
     toast({ title: "Exported successfully" });
   };
 
-  // Determine if a record is "checked in" — we set checked_in_at to a far-future date for pre-registered
-  const isActuallyCheckedIn = (record: any) => {
-    if (!record.checked_in_at) return false;
-    // Records from booking have checked_in_at set but notification_sent = false
-    // We treat all records with checked_in_at as checked in since bookings create attendance
-    return record.notification_sent === true;
-  };
+  // A record is checked in when checked_in_at is set (not null)
+  const isCheckedIn = (record: any) => !!record.checked_in_at;
 
   return (
     <div className="space-y-4">
@@ -275,7 +270,7 @@ export function AdminEventAttendanceTab() {
             </TableHeader>
             <TableBody>
               {attendance?.map((a: any) => {
-                const checkedIn = !!a.notification_sent;
+                const checkedIn = isCheckedIn(a);
                 const checkedOut = !!a.checked_out_at;
 
                 return (

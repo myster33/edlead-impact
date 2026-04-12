@@ -1338,7 +1338,7 @@ export type Database = {
           attendee_name: string
           attendee_type: string
           booking_id: string | null
-          checked_in_at: string
+          checked_in_at: string | null
           checked_out_at: string | null
           created_at: string
           email: string | null
@@ -1357,7 +1357,7 @@ export type Database = {
           attendee_name: string
           attendee_type?: string
           booking_id?: string | null
-          checked_in_at?: string
+          checked_in_at?: string | null
           checked_out_at?: string | null
           created_at?: string
           email?: string | null
@@ -1376,7 +1376,7 @@ export type Database = {
           attendee_name?: string
           attendee_type?: string
           booking_id?: string | null
-          checked_in_at?: string
+          checked_in_at?: string | null
           checked_out_at?: string | null
           created_at?: string
           email?: string | null
