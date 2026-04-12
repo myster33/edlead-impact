@@ -244,7 +244,7 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
                 </div>
                 <h4 className="font-medium text-sm pt-1">Contact Teacher</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div><Label>Name *</Label><Input value={contactTeacherName} onChange={(e) => setContactTeacherName(e.target.value)} required /></div>
+                  <div><Label>Full Name *</Label><Input value={contactTeacherName} onChange={(e) => setContactTeacherName(e.target.value)} required /></div>
                   <div><Label>Email *</Label><Input type="email" value={contactTeacherEmail} onChange={(e) => setContactTeacherEmail(e.target.value)} required /></div>
                   <div><Label>Phone *</Label><Input value={contactTeacherPhone} onChange={(e) => setContactTeacherPhone(e.target.value)} required placeholder="+27..." /></div>
                 </div>
@@ -273,8 +273,10 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
                 <div><Label>Email *</Label><Input type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} required /></div>
                 <div><Label>Phone *</Label><Input value={studentPhone} onChange={(e) => setStudentPhone(e.target.value)} required placeholder="+27..." /></div>
                 <div><Label>School Name *</Label><Input value={studentSchoolName} onChange={(e) => setStudentSchoolName(e.target.value)} required /></div>
-                <div><Label>Parent Phone *</Label><Input value={studentParentPhone} onChange={(e) => setStudentParentPhone(e.target.value)} required placeholder="+27..." /></div>
-                <div><Label>Parent Email *</Label><Input type="email" value={studentParentEmail} onChange={(e) => setStudentParentEmail(e.target.value)} required /></div>
+                <div><Label>Grade / Education Level *</Label><Input value={studentGrade} onChange={(e) => setStudentGrade(e.target.value)} required placeholder="e.g. Grade 10" /></div>
+                <div><Label>Parent/Guardian Full Name *</Label><Input value={studentParentName} onChange={(e) => setStudentParentName(e.target.value)} required /></div>
+                <div><Label>Parent/Guardian Phone *</Label><Input value={studentParentPhone} onChange={(e) => setStudentParentPhone(e.target.value)} required placeholder="+27..." /></div>
+                <div><Label>Parent/Guardian Email *</Label><Input type="email" value={studentParentEmail} onChange={(e) => setStudentParentEmail(e.target.value)} required /></div>
               </div>
             )}
 
@@ -289,17 +291,17 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
             {bookerType === "parent" && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><Label>Parent Name *</Label><Input value={parentName} onChange={(e) => setParentName(e.target.value)} required /></div>
+                  <div><Label>Parent/Guardian Full Name *</Label><Input value={parentName} onChange={(e) => setParentName(e.target.value)} required /></div>
                   <div><Label>Email *</Label><Input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)} required /></div>
                   <div><Label>Phone *</Label><Input value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} required placeholder="+27..." /></div>
                 </div>
                 <h4 className="font-medium text-sm pt-1">Children</h4>
                 {children.map((c, i) => (
                   <div key={i} className="grid grid-cols-5 gap-2 items-end">
-                    <div><Label>Name *</Label><Input value={c.full_name} onChange={(e) => { const n = [...children]; n[i].full_name = e.target.value; setChildren(n); }} required /></div>
+                    <div><Label>Full Name *</Label><Input value={c.full_name} onChange={(e) => { const n = [...children]; n[i].full_name = e.target.value; setChildren(n); }} required /></div>
                     <div><Label>Email</Label><Input value={c.email} onChange={(e) => { const n = [...children]; n[i].email = e.target.value; setChildren(n); }} /></div>
                     <div><Label>Phone</Label><Input value={c.phone} onChange={(e) => { const n = [...children]; n[i].phone = e.target.value; setChildren(n); }} placeholder="+27..." /></div>
-                    <div><Label>Grade</Label><Input value={c.grade || ""} onChange={(e) => { const n = [...children]; n[i].grade = e.target.value; setChildren(n); }} /></div>
+                    <div><Label>Grade / Education Level</Label><Input value={c.grade || ""} onChange={(e) => { const n = [...children]; n[i].grade = e.target.value; setChildren(n); }} placeholder="e.g. Grade 8" /></div>
                     {children.length > 1 && (
                       <Button type="button" variant="ghost" size="icon" onClick={() => setChildren(children.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
                     )}
