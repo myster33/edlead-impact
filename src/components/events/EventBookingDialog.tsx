@@ -58,6 +58,8 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
   const [studentEmail, setStudentEmail] = useState("");
   const [studentPhone, setStudentPhone] = useState(COUNTRY_CODE);
   const [studentSchoolName, setStudentSchoolName] = useState("");
+  const [studentGrade, setStudentGrade] = useState("");
+  const [studentParentName, setStudentParentName] = useState("");
   const [studentParentPhone, setStudentParentPhone] = useState(COUNTRY_CODE);
   const [studentParentEmail, setStudentParentEmail] = useState("");
 
