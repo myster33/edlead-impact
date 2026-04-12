@@ -81,7 +81,7 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
     setContactTeacherName(""); setContactTeacherEmail(""); setContactTeacherPhone(COUNTRY_CODE);
     setExtraTeachers([]);
     setStudentName(""); setStudentEmail(""); setStudentPhone(COUNTRY_CODE); setStudentSchoolName("");
-    setStudentParentPhone(COUNTRY_CODE); setStudentParentEmail("");
+    setStudentGrade(""); setStudentParentName(""); setStudentParentPhone(COUNTRY_CODE); setStudentParentEmail("");
     setParentName(""); setParentEmail(""); setParentPhone(COUNTRY_CODE);
     setChildren([{ full_name: "", email: "", phone: COUNTRY_CODE, grade: "" }]);
     setGuestName(""); setGuestEmail(""); setGuestPhone(COUNTRY_CODE);
@@ -119,11 +119,13 @@ export function EventBookingDialog({ open, onOpenChange, event }: EventBookingDi
         bookingPayload.student_email = studentEmail;
         bookingPayload.student_phone = ensureCountryCode(studentPhone);
         bookingPayload.student_school_name = studentSchoolName;
+        bookingPayload.student_grade = studentGrade;
+        bookingPayload.parent_name = studentParentName;
         bookingPayload.parent_phone = ensureCountryCode(studentParentPhone);
         bookingPayload.parent_email = studentParentEmail;
         contacts.push({ name: studentName, phone: ensureCountryCode(studentPhone), email: studentEmail, role: "student" });
         if (studentParentPhone || studentParentEmail) {
-          contacts.push({ name: "Parent/Guardian", phone: ensureCountryCode(studentParentPhone), email: studentParentEmail || null, role: "parent", parentOf: studentName });
+          contacts.push({ name: studentParentName || "Parent/Guardian", phone: ensureCountryCode(studentParentPhone), email: studentParentEmail || null, role: "parent", parentOf: studentName });
         }
       } else if (bookerType === "parent") {
         bookingPayload.parent_name = parentName;
