@@ -27,7 +27,9 @@ interface EventCardProps {
     organiser_website?: string | null;
     short_code?: string | null;
     parking_available?: boolean;
-  };
+    organiser2_name?: string | null;
+    organiser2_logo_url?: string | null;
+    organiser2_website?: string | null;
 }
 
 export function EventCard({ event }: EventCardProps) {
