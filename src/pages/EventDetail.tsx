@@ -121,7 +121,7 @@ const EventDetail = () => {
             <div className="prose max-w-none text-muted-foreground whitespace-pre-wrap text-sm">
               {event.description}
             </div>
-            <EventOrganiser event={event} />
+            <EventPartners partners={partners} event={event} />
           </div>
 
           {/* Book section */}
@@ -161,7 +161,7 @@ const EventDetail = () => {
             <div className="prose prose-lg max-w-none text-muted-foreground whitespace-pre-wrap">
               {event.description}
             </div>
-            <EventOrganiser event={event} />
+            <EventPartners partners={partners} event={event} />
           </div>
         </div>
       </div>
