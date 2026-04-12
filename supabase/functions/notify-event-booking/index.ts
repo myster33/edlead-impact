@@ -13,12 +13,7 @@ const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 
-function buildEventLink(shortCode?: string): string {
-  if (shortCode && SUPABASE_URL) {
-    return `${SUPABASE_URL}/functions/v1/og-event?code=${shortCode}`;
-  }
-  return "https://edlead.co.za/events";
-}
+const EVENT_LINK = "https://edlead.co.za/events";
 
 function formatPhoneE164(phone: string): string {
   let cleaned = phone.replace(/\D/g, "");
