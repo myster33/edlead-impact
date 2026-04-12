@@ -59,9 +59,111 @@ export function AdminEventBookingsTab() {
       const { error } = await supabase.from("event_bookings").update({ status }).eq("id", id);
       if (error) throw error;
 
-      // Fetch booking details for notification
       const booking = bookings?.find((b) => b.id === id);
-      if (booking && (status === "confirmed" || status === "cancelled")) {
+      if (!booking) return;
+
+      // When confirmed, create attendance records
+      if (status === "confirmed") {
+        const bt = booking.booker_type;
+        const ticketNumber = booking.reference_number || "N/A";
+        const attendanceRecords: any[] = [];
+
+        if (bt === "school") {
+          attendanceRecords.push({
+            event_id: booking.event_id,
+            booking_id: booking.id,
+            attendee_name: booking.contact_teacher_name || booking.school_name || "Teacher",
+            phone: booking.contact_teacher_phone || booking.school_phone,
+            email: booking.contact_teacher_email || booking.school_email,
+            attendee_type: "teacher",
+            school_name: booking.school_name,
+            ticket_number: ticketNumber,
+            checked_in_at: null,
+          });
+          // Fetch extra teachers
+          try {
+            const { data: extras } = await supabase
+              .from("event_booking_extras")
+              .select("*")
+              .eq("booking_id", booking.id)
+              .eq("type", "teacher" as any);
+            extras?.forEach((t: any) => {
+              attendanceRecords.push({
+                event_id: booking.event_id,
+                booking_id: booking.id,
+                attendee_name: t.full_name,
+                phone: t.phone || null,
+                email: t.email || null,
+                attendee_type: "teacher",
+                school_name: booking.school_name,
+                ticket_number: ticketNumber,
+                checked_in_at: null,
+              });
+            });
+          } catch { /* non-critical */ }
+        } else if (bt === "student") {
+          attendanceRecords.push({
+            event_id: booking.event_id,
+            booking_id: booking.id,
+            attendee_name: booking.student_name || "Student",
+            phone: booking.student_phone,
+            email: booking.student_email,
+            attendee_type: "student",
+            school_name: booking.student_school_name,
+            parent_name: booking.parent_name || "Parent/Guardian",
+            parent_phone: booking.parent_phone,
+            parent_email: booking.parent_email,
+            ticket_number: ticketNumber,
+            checked_in_at: null,
+          });
+        } else if (bt === "parent") {
+          // Fetch children from extras
+          try {
+            const { data: extras } = await supabase
+              .from("event_booking_extras")
+              .select("*")
+              .eq("booking_id", booking.id)
+              .eq("type", "child" as any);
+            extras?.forEach((c: any) => {
+              attendanceRecords.push({
+                event_id: booking.event_id,
+                booking_id: booking.id,
+                attendee_name: c.full_name,
+                phone: c.phone || null,
+                email: c.email || null,
+                attendee_type: "student",
+                parent_name: booking.parent_name,
+                parent_phone: booking.parent_phone,
+                parent_email: booking.parent_email,
+                ticket_number: ticketNumber,
+                checked_in_at: null,
+              });
+            });
+          } catch { /* non-critical */ }
+        } else {
+          attendanceRecords.push({
+            event_id: booking.event_id,
+            booking_id: booking.id,
+            attendee_name: booking.parent_name || "Guest",
+            phone: booking.parent_phone,
+            email: booking.parent_email,
+            attendee_type: "other",
+            ticket_number: ticketNumber,
+            checked_in_at: null,
+          });
+        }
+
+        if (attendanceRecords.length > 0) {
+          try {
+            await supabase.from("event_attendance").insert(attendanceRecords);
+          } catch (e) {
+            console.error("Attendance creation error:", e);
+          }
+        }
+      }
+
+      // Send notification for confirmed/cancelled
+      if (status === "confirmed" || status === "cancelled") {
         const contacts: { name: string; phone: string | null; email: string | null; role: string; parentOf?: string }[] = [];
         const bt = booking.booker_type;
         if (bt === "school") {
