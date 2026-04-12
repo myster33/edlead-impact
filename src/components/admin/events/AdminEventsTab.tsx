@@ -15,6 +15,17 @@ import { Plus, Edit, Eye, EyeOff, Loader2, Upload, X, ZoomIn } from "lucide-reac
 import { format } from "date-fns";
 import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 
+interface PartnerEntry {
+  id?: string;
+  role: string;
+  name: string;
+  website: string;
+  logoFile: File | null;
+  existingLogoUrl: string | null;
+}
+
+const PARTNER_ROLES = ["Organised by", "Co-organised by", "Sponsored by", "Hosted by", "Powered by"];
+
 interface EventFormData {
   title: string;
   description: string;
@@ -30,10 +41,6 @@ interface EventFormData {
   price: string;
   price_inclusions: string[];
   newInclusion: string;
-  organiser_name: string;
-  organiser_website: string;
-  organiser2_name: string;
-  organiser2_website: string;
 }
 
 const emptyForm: EventFormData = {
@@ -51,10 +58,6 @@ const emptyForm: EventFormData = {
   price: "",
   price_inclusions: [],
   newInclusion: "",
-  organiser_name: "",
-  organiser_website: "",
-  organiser2_name: "",
-  organiser2_website: "",
 };
 
 /** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp with SAST offset or null */
