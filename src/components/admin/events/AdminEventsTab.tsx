@@ -32,6 +32,8 @@ interface EventFormData {
   newInclusion: string;
   organiser_name: string;
   organiser_website: string;
+  organiser2_name: string;
+  organiser2_website: string;
 }
 
 const emptyForm: EventFormData = {
@@ -51,6 +53,8 @@ const emptyForm: EventFormData = {
   newInclusion: "",
   organiser_name: "",
   organiser_website: "",
+  organiser2_name: "",
+  organiser2_website: "",
 };
 
 /** Combine a date string (YYYY-MM-DD) and optional time (HH:mm) into an ISO timestamp with SAST offset or null */
