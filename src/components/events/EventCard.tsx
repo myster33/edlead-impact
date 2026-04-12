@@ -30,6 +30,7 @@ interface EventCardProps {
     organiser2_name?: string | null;
     organiser2_logo_url?: string | null;
     organiser2_website?: string | null;
+  };
 }
 
 export function EventCard({ event }: EventCardProps) {
