@@ -40,21 +40,19 @@ function formatPhoneToE164(phone: string): string {
   return cleaned;
 }
 
-// Default SMS templates
-const SMS_FOOTER = " Please check the email sent for more details. If you have any questions, contact us on info@edlead.co.za or talk to us through our website edLEAD Chat at edlead.co.za";
-
+// Default SMS templates - kept under 160 chars to fit 1 SMS segment
 const defaultSmsTemplates: Record<string, Record<string, string>> = {
   learner: {
-    approved: `🎉 Congratulations {{applicant_name}}! Your edLEAD application ({{reference_number}}) has been APPROVED! We'll be in touch with next steps soon.${SMS_FOOTER} - edLEAD Team`,
-    rejected: `Dear {{applicant_name}}, Thank you for applying to edLEAD ({{reference_number}}). Unfortunately, we cannot offer you a place at this time. We encourage you to apply again.${SMS_FOOTER} - edLEAD Team`,
-    pending: `Dear {{applicant_name}}, Your edLEAD application ({{reference_number}}) is now under review. We'll notify you once a decision is made.${SMS_FOOTER} - edLEAD Team`,
-    cancelled: `Dear {{applicant_name}}, Your edLEAD application ({{reference_number}}) has been cancelled.${SMS_FOOTER} - edLEAD Team`,
+    approved: `edLEAD: Congrats {{applicant_name}}! Application {{reference_number}} APPROVED. Check email for next steps. edlead.co.za`,
+    rejected: `edLEAD: Hi {{applicant_name}}, application {{reference_number}} was not successful. Check email for details. edlead.co.za`,
+    pending: `edLEAD: Hi {{applicant_name}}, application {{reference_number}} is under review. We'll notify you. edlead.co.za`,
+    cancelled: `edLEAD: Hi {{applicant_name}}, application {{reference_number}} has been cancelled. Check email for details. edlead.co.za`,
   },
   parent: {
-    approved: `🎉 Great news! {{applicant_name}}'s edLEAD application ({{reference_number}}) has been APPROVED! We'll send more details soon.${SMS_FOOTER} - edLEAD Team`,
-    rejected: `Dear Parent/Guardian, {{applicant_name}}'s edLEAD application ({{reference_number}}) was not successful. We encourage them to apply again.${SMS_FOOTER} - edLEAD Team`,
-    pending: `Dear Parent/Guardian, {{applicant_name}}'s edLEAD application ({{reference_number}}) is under review. We'll notify you once decided.${SMS_FOOTER} - edLEAD Team`,
-    cancelled: `Dear Parent/Guardian, {{applicant_name}}'s edLEAD application ({{reference_number}}) has been cancelled.${SMS_FOOTER} - edLEAD Team`,
+    approved: `edLEAD: {{applicant_name}}'s application {{reference_number}} APPROVED. Check email for next steps. edlead.co.za`,
+    rejected: `edLEAD: {{applicant_name}}'s application {{reference_number}} was not successful. Check email for details. edlead.co.za`,
+    pending: `edLEAD: {{applicant_name}}'s application {{reference_number}} is under review. We'll notify you. edlead.co.za`,
+    cancelled: `edLEAD: {{applicant_name}}'s application {{reference_number}} has been cancelled. Check email for details. edlead.co.za`,
   },
 };
 

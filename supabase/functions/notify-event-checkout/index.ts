@@ -92,11 +92,11 @@ async function sendEmail(to: string, subject: string, htmlBody: string) {
 }
 
 function buildAttendeeMsg(name: string, ticketNumber: string, eventTitle: string) {
-  return `👋 edLEAD Event Check-Out\n\nHi ${name},\n\nYou have been checked out of: ${eventTitle}\n\n📋 Ticket Number: ${ticketNumber}\n\nThank you for attending!\n— edLEAD Team`;
+  return `edLEAD: Hi ${name}, checked out of "${eventTitle}". Ticket: ${ticketNumber}. Thanks for attending! edlead.co.za`;
 }
 
 function buildParentMsg(parentName: string, childName: string, ticketNumber: string, eventTitle: string) {
-  return `👋 edLEAD Event Check-Out\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${childName} has been checked out of: ${eventTitle}\n\n📋 Ticket Number: ${ticketNumber}\n\nYour child has safely departed from the event.\n\nThank you!\n— edLEAD Team`;
+  return `edLEAD: Dear ${parentName || "Parent"}, ${childName} checked out of "${eventTitle}". Ticket: ${ticketNumber}. edlead.co.za`;
 }
 
 function buildEmailHtml(heading: string, ticketNumber: string) {
