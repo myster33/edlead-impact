@@ -750,8 +750,8 @@ const handler = async (req: Request): Promise<Response> => {
       const smsEnabled = settings.sms_notifications_enabled ?? false;
       const whatsappEnabled = settings.whatsapp_notifications_enabled ?? false;
 
-      const learnerSmsMsg = `Hi ${applicationData.full_name}, your edLEAD application (Ref: ${referenceNumber}) has been received! We'll review it and be in touch. -edLEAD`;
-      const parentSmsMsg = `Dear ${applicationData.parent_name}, ${applicationData.full_name}'s edLEAD application (Ref: ${referenceNumber}) has been received. We'll be in touch with updates. -edLEAD`;
+      const learnerSmsMsg = `edLEAD: Hi ${applicationData.full_name}, application ${referenceNumber} received. Check email for details. edlead.co.za`;
+      const parentSmsMsg = `edLEAD: ${applicationData.full_name}'s application ${referenceNumber} received. Check email for details. edlead.co.za`;
 
       const learnerWaMsg = `Hi ${applicationData.full_name},\n\nYour edLEAD application has been received successfully!\n\nReference Number: ${referenceNumber}\n\nWe will review your application and get back to you soon.\n\n-The edLEAD Team`;
       const parentWaMsg = `Dear ${applicationData.parent_name},\n\nThis is to confirm that ${applicationData.full_name}'s application to the edLEAD Programme has been received.\n\nReference Number: ${referenceNumber}\n\nWe will keep you updated on the progress.\n\n-The edLEAD Team`;

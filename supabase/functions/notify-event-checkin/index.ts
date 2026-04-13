@@ -95,9 +95,9 @@ async function sendEmail(to: string, subject: string, htmlBody: string) {
 
 function buildMessage(attendeeName: string, ticketNumber: string, eventTitle: string, isParent = false, parentName?: string) {
   if (isParent) {
-    return `🎟️ edLEAD Event Check-In Confirmed!\n\nDear ${parentName || "Parent/Guardian"},\n\nYour child ${attendeeName} has been checked in for: ${eventTitle}\n\n📋 Ticket Number: ${ticketNumber}\n\nPlease keep this ticket number for reference.\n\nThank you!\n— edLEAD Team`;
+    return `edLEAD: Dear ${parentName || "Parent"}, ${attendeeName} checked in for "${eventTitle}". Ticket: ${ticketNumber}. edlead.co.za`;
   }
-  return `🎟️ edLEAD Event Check-In Confirmed!\n\nHi ${attendeeName},\n\nYou have been checked in for: ${eventTitle}\n\n📋 Your Ticket Number: ${ticketNumber}\n\nPlease keep this ticket number for reference.\n\nThank you for attending!\n— edLEAD Team`;
+  return `edLEAD: Hi ${attendeeName}, checked in for "${eventTitle}". Ticket: ${ticketNumber}. Enjoy! edlead.co.za`;
 }
 
 function buildEmailHtml(attendeeName: string, ticketNumber: string, eventTitle: string, isParent = false, parentName?: string) {
