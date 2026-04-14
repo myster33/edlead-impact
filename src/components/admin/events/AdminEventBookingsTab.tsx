@@ -186,6 +186,21 @@ export function AdminEventBookingsTab() {
       }
     }
 
+    // Sync current_bookings on the event
+    try {
+      const { count } = await supabase
+        .from("event_bookings")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", booking.event_id)
+        .eq("status", "confirmed");
+      await supabase
+        .from("events")
+        .update({ current_bookings: count || 0 })
+        .eq("id", booking.event_id);
+    } catch (e) {
+      console.error("current_bookings sync error:", e);
+    }
+
     // Send notification for confirmed/cancelled
     if (status === "confirmed" || status === "cancelled") {
       const contacts: { name: string; phone: string | null; email: string | null; role: string; parentOf?: string }[] = [];
