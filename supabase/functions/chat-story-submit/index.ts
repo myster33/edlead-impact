@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { callBedrock } from "../bedrock-utils.ts";
+import { callBedrock } from "../lovable-ai-utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
