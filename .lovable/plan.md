@@ -1,34 +1,26 @@
 
 
-## Plan: Add Counts to Tab Labels and Fix current_bookings Sync
+## Plan: Migrate AI from AWS Bedrock to Lovable AI (Temporary)
 
-### Problem
-1. The tab labels "Bookings" and "Attendance" show no counts
-2. The `current_bookings` field on the events table is out of sync -- the event "2026 STUDENT LEADERSHIP MASTERCLASS" has `current_bookings = 1` but actually has 6 confirmed bookings (26 total). This means "spots remaining" on the public page is wrong (shows 299 instead of 294)
+This switches all 4 edge functions that use AWS Bedrock over to Lovable AI so your chat works immediately while AWS billing is sorted out.
 
-### Changes
+### What changes
 
-**1. AdminEvents.tsx -- Add dynamic counts to tab labels**
-- Query total bookings count, total attendance count, checked-in count, and checked-out count
-- Display: `Bookings (26)`, `Attendance (6 | In: 0 | Out: 0)`
-- Also show events count on the Events tab
+**Create a new shared utility: `supabase/functions/lovable-ai-utils.ts`**
+- A drop-in replacement for `bedrock-utils.ts` that calls the Lovable AI Gateway (`https://ai.gateway.lovable.dev/v1/chat/completions`) using `LOVABLE_API_KEY`
+- Uses `google/gemini-2.5-flash-lite` (cheapest model, ideal for chat)
+- Exports the same `callBedrock` function signature so all 4 edge functions need only a single import change
+- Handles 429 (rate limit) and 402 (credits exhausted) errors with clear messages
 
-**2. Fix current_bookings sync**
-- Run a one-time data update to set `current_bookings` to the actual count of confirmed bookings for each event
-- The value should equal the number of bookings with `status = 'confirmed'` (currently 6 confirmed out of 26 total)
+**Update 4 edge functions (one-line import change each):**
+1. `supabase/functions/chat-ai-faq/index.ts` -- change import from `../bedrock-utils.ts` to `../lovable-ai-utils.ts`
+2. `supabase/functions/school-chat-ai/index.ts` -- same
+3. `supabase/functions/chat-apply/index.ts` -- same
+4. `supabase/functions/chat-story-submit/index.ts` -- same
 
-**3. Ensure future sync**
-- In `AdminEventBookingsTab.tsx`, after every status change mutation, also update the event's `current_bookings` by counting confirmed bookings for that event
+**Keep `bedrock-utils.ts` untouched** so you can switch back by reverting the imports when AWS billing is fixed.
 
-### Technical Details
+### Technical details
 
-**File: `src/pages/admin/AdminEvents.tsx`**
-- Add queries for booking count, attendance stats
-- Update TabsTrigger labels with counts
-
-**File: `src/components/admin/events/AdminEventBookingsTab.tsx`**
-- After each status change (single or bulk), recalculate and update `events.current_bookings` with a count of confirmed bookings
-
-**Data fix (one-time migration or insert tool)**
-- Update `events` SET `current_bookings` = (SELECT count from event_bookings WHERE status='confirmed' AND event_id matches) for the affected event
+The new utility translates the existing Bedrock request format (separate `system` param, `content` array response) to OpenAI-compatible format (system message in messages array, `choices[0].message.content` response), returning the same response shape so no other code changes are needed.
 
