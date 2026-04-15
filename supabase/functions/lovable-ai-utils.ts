@@ -2,7 +2,7 @@
 // Translates Bedrock request/response shapes to OpenAI-compatible format
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "google/gemini-2.5-flash";
 
 interface BedrockRequest {
   messages: Array<{ role: string; content: any }>;
