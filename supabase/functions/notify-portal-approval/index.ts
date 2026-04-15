@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
     // Send SMS with user_code if phone exists
     if (schoolUser.phone) {
-      try {
+      // WhatsApp/SMS via Twilio — WhatsApp is frozen, only SMS path remains if needed
         const twilioSid = Deno.env.get("TWILIO_ACCOUNT_SID");
         const twilioAuth = Deno.env.get("TWILIO_AUTH_TOKEN");
         const messagingSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
