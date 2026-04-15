@@ -111,6 +111,12 @@ export async function callBedrock(req: BedrockRequest): Promise<BedrockResponse>
     contentBlocks.push({ type: "text", text: choice.message.content });
   }
 
+  // Safety: if no content blocks were produced, log and add a fallback
+  if (contentBlocks.length === 0) {
+    console.warn("Lovable AI returned empty content. Full response:", JSON.stringify(data));
+    contentBlocks.push({ type: "text", text: "" });
+  }
+
   return {
     id: data.id || "msg_lovable",
     type: "message",
