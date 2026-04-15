@@ -20,6 +20,9 @@ function formatPhoneNumber(phone: string): string {
 }
 
 async function sendWhatsApp(to: string, body: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  // WhatsApp sending is frozen — return early
+  console.log("WhatsApp sending is frozen. Skipping message to", to);
+  return { success: false, error: "WhatsApp sending is currently frozen" };
   if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
     return { success: false, error: "WhatsApp Cloud API credentials not configured" };
   }

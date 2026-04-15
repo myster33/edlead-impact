@@ -44,6 +44,9 @@ async function sendSms(to: string, body: string) {
 }
 
 async function sendWhatsApp(to: string, body: string) {
+  // WhatsApp sending is frozen — return early
+  console.log("WhatsApp sending is frozen. Skipping message to", to);
+  return false;
   if (!WHATSAPP_PHONE_NUMBER_ID || !WHATSAPP_ACCESS_TOKEN) return false;
   const waNumber = to.replace("+", "");
   try {

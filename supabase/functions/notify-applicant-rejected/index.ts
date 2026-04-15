@@ -227,6 +227,10 @@ async function sendSms(to: string, message: string): Promise<{ success: boolean;
 }
 
 async function sendWhatsapp(to: string, message: string): Promise<{ success: boolean; error?: string; sid?: string }> {
+  // WhatsApp sending is frozen — return early
+  console.log("WhatsApp sending is frozen. Skipping message to", to);
+  return { success: false, error: "WhatsApp sending is currently frozen" };
+
   if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
     return { success: false, error: "Twilio WhatsApp not configured" };
   }
