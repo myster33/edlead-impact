@@ -1,26 +1,31 @@
 
 
-## Plan: Migrate AI from AWS Bedrock to Lovable AI (Temporary)
+## Plan: Build SNS SMS Utility (Keep Twilio Active)
 
-This switches all 4 edge functions that use AWS Bedrock over to Lovable AI so your chat works immediately while AWS billing is sorted out.
+Build the Amazon SNS SMS infrastructure alongside the existing Twilio code. Twilio remains the active SMS sender. The SNS code will be ready to swap in with a single import change per function once your AWS SNS production access is approved.
 
-### What changes
+### What gets built
 
-**Create a new shared utility: `supabase/functions/lovable-ai-utils.ts`**
-- A drop-in replacement for `bedrock-utils.ts` that calls the Lovable AI Gateway (`https://ai.gateway.lovable.dev/v1/chat/completions`) using `LOVABLE_API_KEY`
-- Uses `google/gemini-2.5-flash-lite` (cheapest model, ideal for chat)
-- Exports the same `callBedrock` function signature so all 4 edge functions need only a single import change
-- Handles 429 (rate limit) and 402 (credits exhausted) errors with clear messages
+**1. New file: `supabase/functions/sns-sms-utils.ts`**
+- Shared utility using AWS SigV4 signing (adapted from the existing `bedrock-utils.ts` pattern)
+- Exports `sendSmsSNS(to, body)` returning `{ success, sid?, error? }` — same shape as current Twilio functions
+- Uses existing `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION` secrets
+- Includes the SA phone number formatter (E.164)
+- Sets `AWS.SNS.SMS.SenderID = "edLEAD"` and `AWS.SNS.SMS.SMSType = "Transactional"`
+- Endpoint: `https://sns.{region}.amazonaws.com`
 
-**Update 4 edge functions (one-line import change each):**
-1. `supabase/functions/chat-ai-faq/index.ts` -- change import from `../bedrock-utils.ts` to `../lovable-ai-utils.ts`
-2. `supabase/functions/school-chat-ai/index.ts` -- same
-3. `supabase/functions/chat-apply/index.ts` -- same
-4. `supabase/functions/chat-story-submit/index.ts` -- same
+**2. No other files change**
+- Twilio stays active in all 15+ edge functions
+- No imports swapped, no code commented out
+- When you're ready to switch, I'll update each function to import from `sns-sms-utils.ts` instead of using inline Twilio calls
 
-**Keep `bedrock-utils.ts` untouched** so you can switch back by reverting the imports when AWS billing is fixed.
+### Technical detail
+The SNS `Publish` API is called via HTTPS POST with `Action=Publish`, `PhoneNumber`, `Message`, and `MessageAttributes` as URL-encoded form params, signed with the same SigV4 method already proven in `bedrock-utils.ts`.
 
-### Technical details
+### What you need to do (AWS Console)
+1. Request SNS SMS **production access** (exit sandbox)
+2. Enable **South Africa (+27)** in geo-permissions
+3. Raise monthly spending limit above $1.00
 
-The new utility translates the existing Bedrock request format (separate `system` param, `content` array response) to OpenAI-compatible format (system message in messages array, `choices[0].message.content` response), returning the same response shape so no other code changes are needed.
+Once those are approved, tell me and I'll swap the imports across all functions.
 
