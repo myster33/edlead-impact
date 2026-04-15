@@ -2,7 +2,7 @@
 // Translates Bedrock request/response shapes to OpenAI-compatible format
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const DEFAULT_MODEL = "google/gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "google/gemini-2.5-flash";
 
 interface BedrockRequest {
   messages: Array<{ role: string; content: any }>;
@@ -109,6 +109,12 @@ export async function callBedrock(req: BedrockRequest): Promise<BedrockResponse>
 
   if (choice?.message?.content) {
     contentBlocks.push({ type: "text", text: choice.message.content });
+  }
+
+  // Safety: if no content blocks were produced, log and add a fallback
+  if (contentBlocks.length === 0) {
+    console.warn("Lovable AI returned empty content. Full response:", JSON.stringify(data));
+    contentBlocks.push({ type: "text", text: "" });
   }
 
   return {
