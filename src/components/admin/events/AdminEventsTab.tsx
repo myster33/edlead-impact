@@ -385,6 +385,25 @@ export function AdminEventsTab() {
                 </div>
                 <Switch checked={form.parking_available} onCheckedChange={(v) => setForm({ ...form, parking_available: v })} />
               </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label>Programme / Agenda</Label>
+                  <p className="text-xs text-muted-foreground">Toggle to show programme link on event page</p>
+                </div>
+                <Switch checked={form.show_program} onCheckedChange={(v) => setForm({ ...form, show_program: v })} />
+              </div>
+              {form.show_program && (
+                <div>
+                  <Label>Programme Document URL</Label>
+                  <Input
+                    type="url"
+                    value={form.program_url}
+                    onChange={(e) => setForm({ ...form, program_url: e.target.value })}
+                    placeholder="https://drive.google.com/... or any link"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Link to the programme/agenda document (Google Drive, PDF, etc.)</p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Start Date</Label>
