@@ -251,6 +251,8 @@ export function AdminEventsTab() {
       price: event.price?.toString() || "",
       price_inclusions: event.price_inclusions || [],
       newInclusion: "",
+      show_program: event.show_program ?? false,
+      program_url: event.program_url || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
