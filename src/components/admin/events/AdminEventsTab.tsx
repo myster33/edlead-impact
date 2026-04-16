@@ -171,6 +171,8 @@ export function AdminEventsTab() {
         organiser2_logo_url: partnerLogoUrls[1] || null,
         organiser2_website: org2?.website || null,
         parking_available: formData.parking_available,
+        show_program: formData.show_program,
+        program_url: formData.program_url || null,
       };
 
       let eventId = editingId;
