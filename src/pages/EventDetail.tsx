@@ -7,7 +7,7 @@ import { EventBookingDialog } from "@/components/events/EventBookingDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { CalendarDays, MapPin, Users, Banknote, CheckCircle, ArrowLeft, ExternalLink, Loader2, Car } from "lucide-react";
+import { CalendarDays, MapPin, Users, Banknote, CheckCircle, ArrowLeft, ExternalLink, Loader2, Car, FileText } from "lucide-react";
 import { formatDateSAST, getTimeSAST } from "@/lib/date-utils";
 import { Helmet } from "react-helmet-async";
 
@@ -224,6 +224,14 @@ function EventSidebar({ event, isFull, spotsLeft, onBook }: { event: any; isFull
         <Car className="h-5 w-5 text-primary shrink-0" />
         <p>{event.parking_available ? "Parking Available" : "No Parking"}</p>
       </div>
+      {event.show_program && event.program_url && (
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 text-primary shrink-0" />
+          <a href={event.program_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+            View Programme / Agenda
+          </a>
+        </div>
+      )}
       {event.price && Number(event.price) > 0 ? (
         <div className="space-y-1">
           <div className="flex items-center gap-3">
