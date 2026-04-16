@@ -1596,7 +1596,9 @@ export type Database = {
           parking_available: boolean
           price: number | null
           price_inclusions: string[] | null
+          program_url: string | null
           short_code: string | null
+          show_program: boolean
           status: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at: string
@@ -1623,7 +1625,9 @@ export type Database = {
           parking_available?: boolean
           price?: number | null
           price_inclusions?: string[] | null
+          program_url?: string | null
           short_code?: string | null
+          show_program?: boolean
           status?: Database["public"]["Enums"]["event_status"]
           title: string
           updated_at?: string
@@ -1650,7 +1654,9 @@ export type Database = {
           parking_available?: boolean
           price?: number | null
           price_inclusions?: string[] | null
+          program_url?: string | null
           short_code?: string | null
+          show_program?: boolean
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
           updated_at?: string
