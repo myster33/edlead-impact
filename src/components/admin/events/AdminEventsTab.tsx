@@ -59,6 +59,8 @@ const emptyForm: EventFormData = {
   price: "",
   price_inclusions: [],
   newInclusion: "",
+  show_program: false,
+  program_url: "",
 };
 
 function combineDatetime(date: string, time: string): string | null {
