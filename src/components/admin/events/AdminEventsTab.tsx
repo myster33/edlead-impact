@@ -40,6 +40,8 @@ interface EventFormData {
   price: string;
   price_inclusions: string[];
   newInclusion: string;
+  show_program: boolean;
+  program_url: string;
 }
 
 const emptyForm: EventFormData = {
@@ -57,6 +59,8 @@ const emptyForm: EventFormData = {
   price: "",
   price_inclusions: [],
   newInclusion: "",
+  show_program: false,
+  program_url: "",
 };
 
 function combineDatetime(date: string, time: string): string | null {
@@ -167,6 +171,8 @@ export function AdminEventsTab() {
         organiser2_logo_url: partnerLogoUrls[1] || null,
         organiser2_website: org2?.website || null,
         parking_available: formData.parking_available,
+        show_program: formData.show_program,
+        program_url: formData.program_url || null,
       };
 
       let eventId = editingId;
@@ -247,6 +253,8 @@ export function AdminEventsTab() {
       price: event.price?.toString() || "",
       price_inclusions: event.price_inclusions || [],
       newInclusion: "",
+      show_program: event.show_program ?? false,
+      program_url: event.program_url || "",
     });
     setExistingWideUrl(event.image_url || null);
     setExistingSquareUrl(event.banner_square_url || null);
@@ -377,6 +385,25 @@ export function AdminEventsTab() {
                 </div>
                 <Switch checked={form.parking_available} onCheckedChange={(v) => setForm({ ...form, parking_available: v })} />
               </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label>Programme / Agenda</Label>
+                  <p className="text-xs text-muted-foreground">Toggle to show programme link on event page</p>
+                </div>
+                <Switch checked={form.show_program} onCheckedChange={(v) => setForm({ ...form, show_program: v })} />
+              </div>
+              {form.show_program && (
+                <div>
+                  <Label>Programme Document URL</Label>
+                  <Input
+                    type="url"
+                    value={form.program_url}
+                    onChange={(e) => setForm({ ...form, program_url: e.target.value })}
+                    placeholder="https://drive.google.com/... or any link"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Link to the programme/agenda document (Google Drive, PDF, etc.)</p>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Start Date</Label>
