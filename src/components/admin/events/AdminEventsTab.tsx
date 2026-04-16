@@ -40,6 +40,8 @@ interface EventFormData {
   price: string;
   price_inclusions: string[];
   newInclusion: string;
+  show_program: boolean;
+  program_url: string;
 }
 
 const emptyForm: EventFormData = {
