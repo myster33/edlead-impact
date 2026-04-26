@@ -14,7 +14,7 @@ import {
 import { useTheme } from "next-themes";
 import edleadLogo from "@/assets/edlead-logo.png";
 import edleadLogoDark from "@/assets/edlead-logo-dark.png";
-import programmeConference from "@/assets/programme-conference.jpg";
+import programmeConference from "@/assets/programme-dropdown.jpg";
 import admissionsHero from "@/assets/admissions-hero.jpg";
 import impactHero from "@/assets/impact-hero.jpg";
 import blogHero from "@/assets/blog-hero.jpg";
