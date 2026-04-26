@@ -1,15 +1,18 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import heroImage1 from "@/assets/hero-students.jpg";
-import heroImage2 from "@/assets/hero-students-2.jpg";
-import heroImage3 from "@/assets/hero-students-3.jpg";
-import heroImage4 from "@/assets/hero-students-4.jpg";
-import heroImage5 from "@/assets/hero-students-5.jpg";
+import heroImage1 from "@/assets/hero-event-1.jpg";
+import heroImage2 from "@/assets/hero-event-2.jpg";
+import heroImage3 from "@/assets/hero-event-3.jpg";
+import heroImage4 from "@/assets/hero-event-4.jpg";
+import heroImage5 from "@/assets/hero-event-5.jpg";
+import heroImage6 from "@/assets/hero-event-6.jpg";
+import heroImage7 from "@/assets/hero-event-7.jpg";
+import heroImage8 from "@/assets/hero-event-8.jpg";
 import { useState, useEffect } from "react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
-const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5];
+const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5, heroImage6, heroImage7, heroImage8];
 const fullHeadline = "Empowering Young Leaders to create Positive Impact";
 
 export const HeroSection = () => {
