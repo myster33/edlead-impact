@@ -10,10 +10,12 @@ import heroImage6 from "@/assets/hero-event-6.jpg";
 import heroImage8 from "@/assets/hero-event-8.jpg";
 import heroImage9 from "@/assets/hero-event-9.jpg";
 import heroImage10 from "@/assets/hero-event-10.jpg";
+import heroImage11 from "@/assets/hero-event-11.jpg";
+import heroImage12 from "@/assets/hero-event-12.jpg";
 import { useState, useEffect } from "react";
 import { useTypingAnimation } from "@/hooks/use-typing-animation";
 
-const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5, heroImage6, heroImage8, heroImage9, heroImage10];
+const heroImages = [heroImage1, heroImage2, heroImage3, heroImage4, heroImage5, heroImage6, heroImage8, heroImage9, heroImage10, heroImage11, heroImage12];
 const fullHeadline = "Empowering Young Leaders to create Positive Impact";
 
 export const HeroSection = () => {
