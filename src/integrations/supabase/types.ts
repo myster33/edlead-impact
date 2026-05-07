@@ -3301,6 +3301,17 @@ export type Database = {
         Returns: boolean
       }
       generate_user_code: { Args: never; Returns: string }
+      get_visitor_chat_messages: {
+        Args: { _conversation_id: string; _session_id: string }
+        Returns: {
+          content: string
+          created_at: string
+          id: string
+          is_ai_response: boolean
+          sender_id: string
+          sender_type: string
+        }[]
+      }
       get_visitor_conversation: {
         Args: { _session_id: string }
         Returns: {
