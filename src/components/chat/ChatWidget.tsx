@@ -639,28 +639,29 @@ export function ChatWidget() {
     setVisitorName(name.trim());
     setVisitorEmail(email.trim());
 
-    const { data, error } = await supabase
+    // Generate UUID client-side to bypass need for RLS read-back after insert
+    const newId = crypto.randomUUID();
+    const { error } = await supabase
       .from("chat_conversations")
       .insert({
+        id: newId,
         session_id: sessionId.current,
         visitor_name: name.trim(),
         visitor_email: email.trim() || null,
         visitor_phone: phone.trim() || null,
         visitor_province: province.trim() || null,
         visitor_country: "South Africa",
-      })
-      .select("id")
-      .single();
+      });
 
-    if (data && !error) {
-      setConversationId(data.id);
+    if (!error) {
+      setConversationId(newId);
       await supabase.from("chat_messages").insert({
-        conversation_id: data.id,
+        conversation_id: newId,
         sender_type: "admin",
         content: `Hi ${name.trim()}! 👋 Welcome to edLEAD. How can we help you today?`,
         is_ai_response: true,
       });
-      await fetchMessages(data.id);
+      await fetchMessages(newId);
       setStep("topics");
     }
   };
