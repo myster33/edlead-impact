@@ -82,6 +82,21 @@ export const HeroSection = () => {
               </Button>
             </Link>
           </div>
+          </div>
+
+          {/* YouTube Video */}
+          <div className="w-full">
+            <div className="aspect-video rounded-xl overflow-hidden shadow-2xl ring-2 ring-primary/40 bg-black">
+              <iframe
+                className="w-full h-full"
+                src="https://www.youtube-nocookie.com/embed/1F19ZKvwcxA"
+                title="edLEAD — Empowering Young Leaders"
+                loading="lazy"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
         </div>
       </div>
 
