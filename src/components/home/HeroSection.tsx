@@ -44,7 +44,7 @@ export const HeroSection = () => {
             }`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-secondary/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-secondary/70" />
       </div>
 
       {/* Decorative circles */}
@@ -52,8 +52,9 @@ export const HeroSection = () => {
       <div className="absolute top-20 right-0 w-24 h-24 md:w-40 md:h-40 bg-primary rounded-full translate-x-1/2 opacity-80" />
 
       {/* Content */}
-      <div className="container relative z-10">
-        <div className="max-w-3xl">
+      <div className="container relative z-10 py-12 lg:py-0">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
+          <div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-6 font-montserrat text-shadow-hero" aria-live="polite" aria-label={fullHeadline}>
             {displayedText.includes("Positive") ? (
               <>
