@@ -224,24 +224,20 @@ export function ChatWidget() {
   }, [messages, aiLoading]);
 
   const fetchMessages = async (convId: string) => {
-    const { data } = await supabase
-      .from("chat_messages")
-      .select("id, content, sender_type, created_at, is_ai_response, sender_id")
-      .eq("conversation_id", convId)
-      .order("created_at", { ascending: true });
+    const { data, error } = await (supabase as any)
+      .rpc("get_visitor_chat_messages", {
+        _session_id: sessionId.current,
+        _conversation_id: convId,
+      });
+    if (error) {
+      console.error("Chat messages fetch error:", error);
+      return;
+    }
     if (data) {
-      const adminIds = [...new Set(data.filter(m => m.sender_id).map(m => m.sender_id!))];
-      let adminNames: Record<string, string> = {};
-      if (adminIds.length > 0) {
-        const { data: admins } = await supabase
-          .from("admin_users")
-          .select("id, full_name")
-          .in("id", adminIds);
-        admins?.forEach(a => { adminNames[a.id] = a.full_name || "Team Member"; });
-      }
-      setMessages(data.map(m => ({
+      setMessages(data.map((m: any) => ({
         ...m,
-        sender_name: m.sender_id ? adminNames[m.sender_id] : undefined,
+        is_ai_response: m.is_ai_response || false,
+        sender_name: m.sender_id ? "Team Member" : undefined,
       })) as ChatMessage[]);
     }
   };
@@ -265,6 +261,7 @@ export function ChatWidget() {
         content: reply,
         is_ai_response: true,
       });
+      await fetchMessages(convId);
     } catch (e) {
       console.error("AI FAQ error:", e);
     } finally {
@@ -305,6 +302,7 @@ export function ChatWidget() {
         content: reply,
         is_ai_response: true,
       });
+      await fetchMessages(convId);
     } catch (e) {
       console.error("Apply AI error:", e);
     } finally {
@@ -488,6 +486,7 @@ export function ChatWidget() {
         content: reply,
         is_ai_response: true,
       });
+      await fetchMessages(convId);
     } catch (e) {
       console.error("Story AI error:", e);
     } finally {
