@@ -113,14 +113,9 @@ export function ChatWidget() {
   // Check for existing conversation on mount
   useEffect(() => {
     const checkExisting = async () => {
-      const { data } = await supabase
-        .from("chat_conversations")
-        .select("id, visitor_name, escalated_to_whatsapp")
-        .eq("session_id", sessionId.current)
-        .eq("status", "open")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const { data: rows } = await supabase
+        .rpc("get_visitor_conversation", { _session_id: sessionId.current });
+      const data = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 
       if (data) {
         setConversationId(data.id);

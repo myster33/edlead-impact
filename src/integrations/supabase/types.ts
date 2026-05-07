@@ -3301,6 +3301,14 @@ export type Database = {
         Returns: boolean
       }
       generate_user_code: { Args: never; Returns: string }
+      get_visitor_conversation: {
+        Args: { _session_id: string }
+        Returns: {
+          escalated_to_whatsapp: boolean
+          id: string
+          visitor_name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
